@@ -133,10 +133,11 @@ mutation centralDataErrorsFile($fileId: String!) {
   }
 }
 
-mutation centralDataImport($fileId: String!) {
+# today is the user's own date, for dates the server sets (rules.md § currencies).
+mutation centralDataImport($fileId: String!, $today: NaiveDate!) {
   centralServer {
     centralData {
-      import(fileId: $fileId) {
+      import(fileId: $fileId, today: $today) {
         ...CentralDataImportResult
       }
     }

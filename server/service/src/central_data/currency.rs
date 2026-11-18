@@ -7,6 +7,7 @@ use super::{
     sheet::Value,
 };
 use crate::currency::{UpsertCurrencyError, home_currencies, upsert_currency_leaving_home};
+use chrono::NaiveDate;
 use repository::{CurrencyRow, CurrencyRowRepository, RepositoryError, StorageConnection};
 use util::uuid::uuid;
 
@@ -70,11 +71,11 @@ impl ImportTable for CurrencyTable {
 
     fn start_sheet(
         &self,
-        connection: &StorageConnection,
-        _start: SheetStart,
+        _connection: &StorageConnection,
+        start: SheetStart,
     ) -> Result<Box<dyn SheetImport>, RepositoryError> {
         Ok(Box::new(CurrencySheet {
-            had_home: !home_currencies(connection)?.is_empty(),
+            today: start.today,
             home_removed: None,
             home_given: Vec::new(),
         }))
@@ -84,7 +85,8 @@ impl ImportTable for CurrencyTable {
 /// The home currency is checked after the sheet's last row, so rows moving it can come in any
 /// order.
 struct CurrencySheet {
-    had_home: bool,
+    /// What a changed currency's `date_updated` is set to.
+    today: NaiveDate,
     /// The last row that stops a currency being the home currency, should the sheet leave none.
     home_removed: Option<RowError>,
     /// Each row that makes a currency the home currency, with its currency, should the sheet leave
@@ -152,14 +154,14 @@ impl SheetImport for CurrencySheet {
             code: code.unwrap_or_default(),
             rate: rate.unwrap_or_default(),
             is_home_currency: is_home_currency.unwrap_or_default(),
-            // Export-only, so kept as saved.
+            // Kept, so it doesn't count as a change; the service sets it when anything else changes.
             date_updated: existing.as_ref().and_then(|saved| saved.date_updated),
             is_active: is_active.unwrap_or_default(),
         };
 
         let change = Change::between(existing.as_ref(), &currency, |currency| currency.is_active);
         if change != Change::Unchanged {
-            upsert_currency_leaving_home(connection, &currency)
+            upsert_currency_leaving_home(connection, &currency, self.today)
                 .map_err(|error| upsert_failure(row, &currency, error))?;
             let was_home = existing
                 .as_ref()
@@ -188,18 +190,39 @@ impl SheetImport for CurrencySheet {
         })
     }
 
-    /// A server with a home currency keeps exactly one. Currencies that already shared it, with
-    /// no row making another the home currency, stay as they are.
+    /// Exactly one home currency, whatever the server had before. A row to blame gets the error;
+    /// otherwise the sheet does.
     fn finish_sheet(
         &mut self,
         connection: &StorageConnection,
+        sheet: &str,
     ) -> Result<Vec<RowError>, RepositoryError> {
-        let homes = home_currencies(connection)?;
-        if homes.is_empty() && self.had_home {
-            return Ok(self.home_removed.take().into_iter().collect());
+        let mut homes = home_currencies(connection)?;
+        // So messages name them in a fixed order.
+        homes.sort_by(|a, b| a.code.cmp(&b.code));
+        let sheet_error = |message: String| RowError {
+            sheet: sheet.to_string(),
+            row: None,
+            column: Some(IS_HOME_CURRENCY.to_string()),
+            message,
+        };
+        if homes.is_empty() {
+            return Ok(vec![self.home_removed.take().unwrap_or_else(|| {
+                sheet_error(
+                    "No currency is the home currency. Set is_home_currency to TRUE for one, at a rate of 1"
+                        .to_string(),
+                )
+            })]);
         }
-        if homes.len() < 2 {
+        if homes.len() == 1 {
             return Ok(Vec::new());
+        }
+        if self.home_given.is_empty() {
+            let codes: Vec<&str> = homes.iter().map(|home| home.code.as_str()).collect();
+            return Ok(vec![sheet_error(format!(
+                "{} are each the home currency, but there can be only one. Set is_home_currency to FALSE for all but one",
+                and_list(&codes)
+            ))]);
         }
         Ok(self
             .home_given
@@ -213,7 +236,7 @@ impl SheetImport for CurrencySheet {
                 error.message = format!(
                     "{} would be the home currency, and so would {}, but there can be only one. Set is_home_currency to FALSE for all but one",
                     currency.code,
-                    others.join(", ")
+                    and_list(&others)
                 );
                 error
             })
@@ -221,16 +244,40 @@ impl SheetImport for CurrencySheet {
     }
 }
 
+/// `A`, `A and B`, `A, B and C`.
+fn and_list(items: &[&str]) -> String {
+    match items {
+        [] => String::new(),
+        [only] => only.to_string(),
+        [rest @ .., last] => format!("{} and {last}", rest.join(", ")),
+    }
+}
+
 fn upsert_failure(row: &Row, currency: &CurrencyRow, error: UpsertCurrencyError) -> RowFailure {
     match error {
         UpsertCurrencyError::CodeRequired => row.error(CODE, "code is required").into(),
         UpsertCurrencyError::RateNotPositive => row.error(RATE, "rate must be above 0").into(),
+        UpsertCurrencyError::HomeRateNotOne => row
+            .error(RATE, "The home currency's rate must be 1")
+            .into(),
+        UpsertCurrencyError::HomeCurrencyInactive => row
+            .error(
+                IS_ACTIVE,
+                format!(
+                    "{} is the home currency, so it can't be inactive. Set its is_home_currency to FALSE as well, and make another currency the home currency",
+                    currency.code
+                ),
+            )
+            .into(),
         // Unreachable here: the sheet checks the home currency after its last row.
         UpsertCurrencyError::HomeCurrencyTaken { home } => row
             .error(
                 IS_HOME_CURRENCY,
                 format!("{} is the home currency", home.code),
             )
+            .into(),
+        UpsertCurrencyError::HomeCurrencyRequired => row
+            .error(IS_HOME_CURRENCY, "There must be a home currency")
             .into(),
         // A row can't change a code, so only making a currency active brings this in.
         UpsertCurrencyError::DuplicateCode { other_id } => row

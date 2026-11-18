@@ -2,9 +2,11 @@ use super::{
     CentralDataService, CentralDataServiceTrait, CentralDataTable, Change, ExportCount,
     ExportError, ExportFilter, ExportTable, FieldChange, ImportError, MAX_IMPORT_ROWS,
     MAX_ROWS_LISTED, OpenSessions, RecordCount, RowChange, TableChanges,
+    cells::RowError,
     sheet::{self, SheetData, Value},
 };
 use crate::{
+    currency::home_currencies,
     service_provider::{ServiceContext, ServiceProvider},
     session_store::SessionStore,
     user_account::UserAccountService,
@@ -59,6 +61,11 @@ fn no_sessions() -> OpenSessions {
         store: Default::default(),
         keep: None,
     }
+}
+
+/// The importing user's date, pinned so a run across midnight can't change it.
+fn today() -> NaiveDate {
+    NaiveDate::from_ymd_opt(2026, 11, 18).unwrap()
 }
 
 fn write_file(dir: &Path, bytes: Vec<u8>) -> PathBuf {
@@ -138,7 +145,7 @@ async fn export_then_import_makes_no_changes() {
     let path = write_file(dir.path(), bytes);
 
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.tables, unit_changes(0, 0, 3));
@@ -172,7 +179,7 @@ async fn a_file_that_is_not_a_workbook_is_refused_with_the_readers_reason() {
     refused(CentralDataService.preview_import(&ctx, &path).map(|_| ()));
     refused(
         CentralDataService
-            .import(&ctx, &path, &no_sessions())
+            .import(&ctx, &path, &no_sessions(), today())
             .map(|_| ()),
     );
     refused(
@@ -307,7 +314,12 @@ async fn an_errors_file_keeps_every_row_in_place_and_imports_once_fixed() {
     )])
     .unwrap();
     let summary = CentralDataService
-        .import(&ctx, &write_file(dir.path(), fixed), &no_sessions())
+        .import(
+            &ctx,
+            &write_file(dir.path(), fixed),
+            &no_sessions(),
+            today(),
+        )
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.tables, unit_changes(3, 0, 0));
@@ -450,7 +462,7 @@ async fn one_bad_row_means_nothing_is_applied() {
     let path = write_file(dir.path(), unit_sheet(headers.clone(), rows));
 
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     let errors: Vec<_> = summary
         .errors
@@ -499,7 +511,7 @@ async fn one_bad_row_means_nothing_is_applied() {
     assert_eq!(units_named(&connection, "Vial"), vec![]);
 
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.tables, unit_changes(1, 1, 0));
     assert_eq!(units_named(&connection, "Vial").len(), 1);
@@ -538,7 +550,7 @@ async fn misspelt_columns_unknown_sheets_and_repeated_records_are_errors() {
     let path = write_file(dir.path(), bytes);
 
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     let errors: Vec<_> = summary
         .errors
@@ -590,7 +602,7 @@ async fn a_sheet_with_nothing_in_it_is_ignored() {
     let path = write_file(dir.path(), bytes);
 
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.tables, unit_changes(1, 0, 0));
@@ -669,7 +681,7 @@ async fn an_import_checks_the_file_again_after_its_preview() {
     repo.upsert_one(&saved).unwrap();
 
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.tables, unit_changes(0, 1, 0));
     assert_eq!(repo.find_all().unwrap().len(), 1);
@@ -710,7 +722,7 @@ async fn on_an_update_a_blank_required_cell_keeps_and_a_blank_optional_cell_clea
     );
 
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(
@@ -755,7 +767,7 @@ async fn a_repeated_row_that_changes_nothing_is_not_an_error() {
     );
 
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.tables, unit_changes(0, 1, 3));
@@ -793,7 +805,7 @@ async fn a_name_finds_a_unit_an_earlier_row_adds() {
     );
 
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     let errors: Vec<_> = summary
         .errors
@@ -893,7 +905,7 @@ async fn later_rows_see_a_rename_made_earlier_in_the_file() {
     );
 
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.tables, unit_changes(1, 1, 1));
@@ -934,7 +946,7 @@ async fn a_name_in_another_letter_case_finds_its_unit_and_keeps_the_saved_name()
     );
 
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.tables, unit_changes(0, 1, 0));
@@ -978,7 +990,7 @@ async fn a_name_without_the_saved_names_spaces_finds_its_unit() {
     );
 
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.tables, unit_changes(0, 1, 0));
@@ -1030,7 +1042,7 @@ async fn a_name_two_active_units_share_asks_for_the_id() {
         ),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     let errors: Vec<_> = summary
         .errors
@@ -1061,7 +1073,7 @@ async fn a_name_two_active_units_share_asks_for_the_id() {
         ),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.tables, unit_changes(0, 1, 0));
@@ -1108,7 +1120,7 @@ async fn a_new_unit_can_take_an_inactive_units_name_but_not_an_active_ones() {
         unit_sheet(headers.clone(), vec![new_unit(&existing.name)]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     let errors: Vec<_> = summary
         .errors
@@ -1120,7 +1132,7 @@ async fn a_new_unit_can_take_an_inactive_units_name_but_not_an_active_ones() {
 
     let path = write_file(dir.path(), unit_sheet(headers, vec![new_unit("Bottle")]));
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.tables, unit_changes(1, 0, 0));
@@ -1177,7 +1189,7 @@ async fn unit_rows_find_active_units_first_require_new_columns_and_delete_by_dea
     let path = write_file(dir.path(), unit_sheet(headers.clone(), rows));
 
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     let errors: Vec<_> = summary
         .errors
@@ -1206,7 +1218,7 @@ async fn unit_rows_find_active_units_first_require_new_columns_and_delete_by_dea
 
     let path = write_file(dir.path(), unit_sheet(headers, good_rows()));
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(
@@ -1358,7 +1370,7 @@ async fn location_types_export_then_import_makes_no_changes() {
     let bytes = CentralDataService.export(&ctx, &[table]).unwrap();
     let path = write_file(dir.path(), bytes);
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
 
     assert_eq!(summary.errors, vec![]);
@@ -1425,7 +1437,7 @@ async fn a_code_finds_a_location_type_an_earlier_row_adds() {
         ]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(
         row_errors(&summary),
@@ -1466,7 +1478,7 @@ async fn location_type_rows_add_and_update_by_code_and_check_temperatures() {
         ]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(
         row_errors(&summary),
@@ -1500,7 +1512,7 @@ async fn location_type_rows_add_and_update_by_code_and_check_temperatures() {
         ]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(
@@ -1585,7 +1597,7 @@ async fn a_location_type_code_is_not_changed_by_import() {
         ])]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.tables[0].inserted, 1);
@@ -1653,7 +1665,7 @@ async fn a_delete_row_removes_an_unused_location_type_only() {
         ]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(
         row_errors(&summary),
@@ -1692,7 +1704,7 @@ async fn a_delete_row_removes_an_unused_location_type_only() {
         ]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(
@@ -1756,7 +1768,7 @@ async fn a_delete_row_keeps_a_location_type_on_a_requisition_line_or_item_varian
         ]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(
         summary
@@ -1884,7 +1896,7 @@ async fn currencies_export_then_import_makes_no_changes() {
     let bytes = CentralDataService.export(&ctx, &[table]).unwrap();
     let path = write_file(dir.path(), bytes);
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
 
     assert_eq!(summary.errors, vec![]);
@@ -1947,7 +1959,7 @@ async fn currency_rows_add_and_update_by_code_or_id() {
         ]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(
         row_errors(&summary),
@@ -1986,7 +1998,7 @@ async fn currency_rows_add_and_update_by_code_or_id() {
         ]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(
@@ -2005,9 +2017,14 @@ async fn currency_rows_add_and_update_by_code_or_id() {
             to: "1.7".to_string(),
         }]
     );
+    // The server sets date_updated on each currency that changes.
     assert_eq!(
         find_currency(&connection, "nzd"),
-        Some(CurrencyRow { rate: 1.7, ..nzd() })
+        Some(CurrencyRow {
+            rate: 1.7,
+            date_updated: Some(today()),
+            ..nzd()
+        })
     );
     assert_eq!(find_currency(&connection, "usd"), Some(usd()));
     assert_eq!(find_currency(&connection, "old_nzd").unwrap().rate, 1.4);
@@ -2023,8 +2040,69 @@ async fn currency_rows_add_and_update_by_code_or_id() {
             eur.date_updated,
             eur.is_active
         ),
-        (0.9, false, None, true)
+        (0.9, false, Some(today()), true)
     );
+}
+
+// covers: OMS-REG-CDIO-01.117, .118
+
+#[actix_rt::test]
+async fn the_home_currency_has_a_rate_of_1_and_stays_active() {
+    let (connection, service_provider, dir) =
+        currency_setup("central_data_currency_home_rate_and_active").await;
+    let ctx = service_provider.basic_context().unwrap();
+
+    let path = write_file(
+        dir.path(),
+        // Made the home currency at its own rate.
+        currency_sheet(vec![currency_row(["", "NZD", "", "TRUE", "", ""])]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(2, Some("rate"), "The home currency's rate must be 1")]
+    );
+
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![
+            currency_row(["", "USD", "1.2", "", "", ""]),
+            currency_row(["", "NZD", "", "", "", ""]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(2, Some("rate"), "The home currency's rate must be 1")]
+    );
+
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![currency_row(["", "USD", "", "", "", "FALSE"])]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(
+            2,
+            Some("is_active"),
+            "USD is the home currency, so it can't be inactive. Set its is_home_currency to FALSE as well, and make another currency the home currency"
+        )]
+    );
+
+    // Given up as the home currency, it can be made inactive, in either row order.
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![
+            currency_row(["", "NZD", "1", "TRUE", "", ""]),
+            currency_row(["", "USD", "0.6", "FALSE", "", "FALSE"]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert!(!find_currency(&connection, "usd").unwrap().is_active);
 }
 
 // covers: OMS-REG-CDIO-01.24, .39, .110
@@ -2084,7 +2162,7 @@ async fn an_inactive_currency_does_not_make_an_active_ones_code_ambiguous() {
         currency_sheet(vec![currency_row(["", "NZD", "1.8", "", "", ""])]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(find_currency(&connection, "nzd").unwrap().rate, 1.8);
@@ -2142,7 +2220,7 @@ async fn a_currency_cannot_be_made_active_beside_an_active_one_with_its_code() {
         ]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert!(find_currency(&connection, "old_nzd").unwrap().is_active);
@@ -2162,10 +2240,10 @@ async fn only_one_currency_can_be_the_home_currency() {
 
     let path = write_file(
         dir.path(),
-        currency_sheet(vec![currency_row(["", "NZD", "", "TRUE", "", ""])]),
+        currency_sheet(vec![currency_row(["", "NZD", "1", "TRUE", "", ""])]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(row_errors(&summary), vec![home_error]);
     assert!(!find_currency(&connection, "nzd").unwrap().is_home_currency);
@@ -2180,23 +2258,42 @@ async fn only_one_currency_can_be_the_home_currency() {
     let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
     assert_eq!(row_errors(&summary), vec![home_error]);
 
-    // Currencies that already share it, with no row making another the home currency, stay as
-    // they are and can be edited.
+    // Currencies that already share it must be put right in the same sheet, even by a row that
+    // doesn't touch them: no row is to blame, so the sheet gets the error.
     CurrencyRowRepository::new(&connection)
         .upsert_one(&CurrencyRow {
             is_home_currency: true,
+            rate: 1.0,
             ..nzd()
         })
         .unwrap();
     let path = write_file(
         dir.path(),
-        currency_sheet(vec![currency_row(["", "NZD", "1.7", "", "", ""])]),
+        currency_sheet(vec![currency_row(["", "EUR", "0.9", "FALSE", "", "TRUE"])]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        summary.errors,
+        vec![RowError {
+            sheet: "currency".to_string(),
+            row: None,
+            column: Some("is_home_currency".to_string()),
+            message: "NZD and USD are each the home currency, but there can be only one. Set is_home_currency to FALSE for all but one".to_string(),
+        }]
+    );
+
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![
+            currency_row(["", "EUR", "0.9", "FALSE", "", "TRUE"]),
+            currency_row(["usd", "USD", "", "FALSE", "", ""]),
+        ]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
-    assert_eq!(find_currency(&connection, "nzd").unwrap().rate, 1.7);
+    assert_eq!(home_currencies(&connection).unwrap().len(), 1);
 }
 
 // covers: OMS-REG-CDIO-01.112
@@ -2216,7 +2313,7 @@ async fn the_home_currency_moves_whatever_the_row_order() {
         ]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert!(find_currency(&connection, "nzd").unwrap().is_home_currency);
@@ -2231,7 +2328,7 @@ async fn the_home_currency_moves_whatever_the_row_order() {
         ]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert!(find_currency(&connection, "usd").unwrap().is_home_currency);
@@ -2252,7 +2349,7 @@ async fn an_import_cannot_leave_no_home_currency() {
         ]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(
         row_errors(&summary),
@@ -2270,7 +2367,7 @@ async fn an_import_cannot_leave_no_home_currency() {
 // covers: OMS-REG-CDIO-01.112, .116
 
 #[actix_rt::test]
-async fn a_server_with_no_home_currency_can_import_currencies_without_one() {
+async fn a_server_with_no_home_currency_must_be_given_one() {
     let (_, connection, connection_manager, _) =
         setup_all("central_data_currency_none_home", MockDataInserts::none()).await;
     let ctx = ServiceProvider::new(connection_manager)
@@ -2278,29 +2375,54 @@ async fn a_server_with_no_home_currency_can_import_currencies_without_one() {
         .unwrap();
     let dir = TempDir::new().unwrap();
 
-    // But not with two.
-    let path = write_file(
-        dir.path(),
-        currency_sheet(vec![
-            currency_row(["", "NZD", "1", "TRUE", "", "TRUE"]),
-            currency_row(["", "USD", "1", "TRUE", "", "TRUE"]),
-        ]),
-    );
-    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
-    assert_eq!(
-        row_errors(&summary)
-            .iter()
-            .map(|(row, _, _)| *row)
-            .collect::<Vec<_>>(),
-        vec![2, 3]
-    );
-
+    // No row is to blame, so the sheet gets the error.
     let path = write_file(
         dir.path(),
         currency_sheet(vec![currency_row(["", "NZD", "1.6", "FALSE", "", "TRUE"])]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(
+        summary.errors,
+        vec![RowError {
+            sheet: "currency".to_string(),
+            row: None,
+            column: Some("is_home_currency".to_string()),
+            message: "No currency is the home currency. Set is_home_currency to TRUE for one, at a rate of 1".to_string(),
+        }]
+    );
+    assert_eq!(summary.tables[0].error_count, 1);
+
+    // Nor with two.
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![
+            currency_row(["", "NZD", "1", "TRUE", "", "TRUE"]),
+            currency_row(["", "USD", "1", "TRUE", "", "TRUE"]),
+            currency_row(["", "EUR", "1", "TRUE", "", "TRUE"]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary)[0],
+        (
+            2,
+            Some("is_home_currency"),
+            "NZD would be the home currency, and so would EUR and USD, but there can be only one. Set is_home_currency to FALSE for all but one"
+        )
+    );
+    assert_eq!(summary.error_count, 3);
+
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![
+            currency_row(["", "NZD", "1.6", "FALSE", "", "TRUE"]),
+            currency_row(["", "USD", "1", "TRUE", "", "TRUE"]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(
@@ -2308,7 +2430,7 @@ async fn a_server_with_no_home_currency_can_import_currencies_without_one() {
             .find_all()
             .unwrap()
             .len(),
-        1
+        2
     );
 }
 
@@ -2328,7 +2450,7 @@ async fn a_saved_currency_with_a_rate_of_0_stays_editable() {
         currency_sheet(vec![currency_row(["nzd", "NZD", "0", "", "", "FALSE"])]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert!(!find_currency(&connection, "nzd").unwrap().is_active);
@@ -2520,7 +2642,7 @@ async fn items_export_then_import_makes_no_changes() {
     let bytes = CentralDataService.export(&ctx, &[all_items()]).unwrap();
     let path = write_file(dir.path(), bytes);
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
 
     assert_eq!(summary.errors, vec![]);
@@ -2553,7 +2675,12 @@ async fn a_saved_code_with_a_tab_around_it_is_found() {
     // With the id column, id and code must find the same item.
     let bytes = CentralDataService.export(&ctx, &[all_items()]).unwrap();
     let summary = CentralDataService
-        .import(&ctx, &write_file(dir.path(), bytes), &no_sessions())
+        .import(
+            &ctx,
+            &write_file(dir.path(), bytes),
+            &no_sessions(),
+            today(),
+        )
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.tables[0].unchanged, 2);
@@ -2566,7 +2693,12 @@ async fn a_saved_code_with_a_tab_around_it_is_found() {
     )])
     .unwrap();
     let summary = CentralDataService
-        .import(&ctx, &write_file(dir.path(), bytes), &no_sessions())
+        .import(
+            &ctx,
+            &write_file(dir.path(), bytes),
+            &no_sessions(),
+            today(),
+        )
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(
@@ -2591,7 +2723,7 @@ async fn an_item_finds_its_unit_by_name_in_any_letter_case() {
     );
 
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(
@@ -2679,7 +2811,7 @@ async fn item_rows_add_and_update_by_code() {
         ]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(
         row_errors(&summary),
@@ -2710,7 +2842,7 @@ async fn item_rows_add_and_update_by_code() {
         item_sheet(vec![item_row(new_item), item_row(renamed)]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(
@@ -2814,7 +2946,7 @@ async fn item_references_are_found_by_code_or_id() {
         ]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     let references = |code: &str| {
@@ -2843,7 +2975,7 @@ async fn item_references_are_found_by_code_or_id() {
     .unwrap();
     let path = write_file(dir.path(), bytes);
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(
@@ -2927,7 +3059,7 @@ async fn setting_an_item_inactive_counts_as_a_delete() {
     let path = write_file(dir.path(), bytes);
 
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.tables[0].deleted, 1);
@@ -3001,7 +3133,7 @@ async fn a_shared_unit_name_location_type_code_or_item_code_asks_for_the_id() {
         ]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(
@@ -3054,7 +3186,7 @@ async fn an_item_refers_to_a_unit_and_location_type_added_by_earlier_sheets() {
     let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
     assert_eq!(summary.errors, vec![]);
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     let inserted: Vec<_> = summary
@@ -3131,7 +3263,7 @@ async fn blank_optional_item_cells_save_defaults() {
         item_sheet(vec![plain(), vaccine("10"), blank_para()]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     let defaults = |code: &str| {
@@ -3148,7 +3280,7 @@ async fn blank_optional_item_cells_save_defaults() {
         item_sheet(vec![item_row(item_named("", "VAX"))]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(defaults("VAX"), (VENCategory::NotAssigned, 10, 0.0));
@@ -3185,7 +3317,12 @@ async fn a_saved_item_with_a_pack_size_of_0_can_be_renamed_but_not_given_one() {
     };
 
     let summary = CentralDataService
-        .import(&ctx, &sheet("Paracetamol tablets", "0"), &no_sessions())
+        .import(
+            &ctx,
+            &sheet("Paracetamol tablets", "0"),
+            &no_sessions(),
+            today(),
+        )
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(
@@ -3366,7 +3503,7 @@ async fn users_export_without_passwords_then_import_makes_no_changes() {
     assert_eq!(cells, [("anna", ""), ("ben", "")]);
 
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.tables[0].unchanged, 2);
@@ -3446,7 +3583,7 @@ async fn user_rows_add_and_update_by_username_and_hash_passwords() {
         ]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     // Anna made inactive and Ben given a password; Cara is new, with no session yet.
@@ -3530,7 +3667,7 @@ async fn user_rows_add_and_update_by_username_and_hash_passwords() {
         vec![field("password", "******", "changed")]
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.tables[0].unchanged, 1);
     let path = write_file(
@@ -3538,7 +3675,7 @@ async fn user_rows_add_and_update_by_username_and_hash_passwords() {
         user_sheet(vec![user_row("", "cara", &[(2, "pw3")])]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(
         summary.changes[0].fields,
@@ -3561,7 +3698,7 @@ async fn users_sharing_a_password_get_their_own_hash() {
         user_sheet(vec![new("dan", "changeme"), new("eve", " changeme ")]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.tables[0].inserted, 2);
 
@@ -3604,7 +3741,9 @@ async fn sessions_after_new_passwords(name: &str, extra_rows: Vec<Vec<Value>>) -
         store: store.clone(),
         keep: Some(tokens[0].clone()),
     };
-    CentralDataService.import(&ctx, &path, &sessions).unwrap();
+    CentralDataService
+        .import(&ctx, &path, &sessions, today())
+        .unwrap();
     let mut store = store.write().unwrap();
     store.revoke_if_credentials_changed("anna", &anna_hash());
     tokens.map(|token| store.validate_and_slide(&token).is_some())
@@ -3651,7 +3790,7 @@ async fn a_username_finds_its_user_in_any_case_and_is_not_changed_or_taken() {
         ]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(
         row_errors(&summary),
@@ -3685,7 +3824,7 @@ async fn a_username_finds_its_user_in_any_case_and_is_not_changed_or_taken() {
         ]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     let changes: Vec<_> = summary
@@ -3722,7 +3861,7 @@ async fn a_deleted_user_keeps_their_store_access_but_cannot_log_in() {
 
     let path = write_file(dir.path(), user_sheet(vec![delete_anna()]));
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.tables[0].deleted, 1);
@@ -3759,7 +3898,7 @@ async fn a_deleted_user_keeps_their_store_access_but_cannot_log_in() {
     assert_eq!(exported[0].count.total, 1, "only ben");
     let path = write_file(dir.path(), user_sheet(vec![delete_anna()]));
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.tables[0].deleted, 0);
@@ -3796,7 +3935,7 @@ async fn a_row_without_delete_restores_a_deleted_user() {
         )]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.tables[0].updated, 1);
@@ -3864,7 +4003,7 @@ async fn a_row_cannot_change_or_take_a_protected_user() {
         ]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     let protected = |username: &str| {
         format!("{username} is protected, as the server needs it, so import can't change it")
@@ -3927,7 +4066,7 @@ async fn the_importing_user_cannot_delete_themselves_or_make_themselves_inactive
         user_sheet(vec![user_row("", "anna", &[(2, "new secret")])]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.tables[0].updated, 1);
@@ -3982,7 +4121,7 @@ async fn only_a_server_admin_can_import_or_export_users() {
     for summary in [
         CentralDataService.preview_import(&ctx, &path).unwrap(),
         CentralDataService
-            .import(&ctx, &path, &no_sessions())
+            .import(&ctx, &path, &no_sessions(), today())
             .unwrap(),
     ] {
         let errors: Vec<_> = summary

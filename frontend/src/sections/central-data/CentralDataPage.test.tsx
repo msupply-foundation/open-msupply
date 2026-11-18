@@ -468,16 +468,21 @@ describe('CentralDataPage import', () => {
     ]);
   });
 
-  it('imports the previewed upload, then replaces the preview with the counts (OMS-REG-CDIO-01.14, .18)', async () => {
+  it('imports the previewed upload, then replaces the preview with the counts (OMS-REG-CDIO-01.14, .18, .108)', async () => {
     await previewed();
     graphqlFetch.mockResolvedValueOnce(answer('import', summary()));
+    // Late evening: the user's date, not UTC's, which west of Greenwich is
+    // already the next day.
+    vi.setSystemTime(new Date(2026, 10, 18, 23, 30));
 
     shown.footer!.onConfirm();
     await settle();
     render();
+    vi.useRealTimers();
 
     expect(graphqlFetch).toHaveBeenLastCalledWith(CentralDataImport, {
       fileId: 'f1',
+      today: '2026-11-18',
     });
     // ui-surface.md § after import: the preview is replaced by the banner.
     expect(shown.previewCard).toBeUndefined();

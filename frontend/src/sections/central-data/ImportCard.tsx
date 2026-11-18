@@ -2,6 +2,7 @@ import { createSignal, Show } from 'solid-js';
 import { graphqlFetch } from '@/api/graphql';
 import { MAX_UPLOAD_BYTES, uploadFile } from '@/api/postFiles';
 import { formatNumber, t } from '@/intl';
+import { todayCalendarDate } from '@/intl/calendarDate';
 import { DetailCard } from '@/ui/layout/Detail/DetailCard';
 import { Stack } from '@/ui/layout/Stack/Stack';
 import { HStack } from '@/ui/layout/Stack/HStack';
@@ -148,7 +149,12 @@ export const createImport = () => {
     setRechecked(false);
     const outcome = importOutcome(
       unwrap(
-        await graphqlFetch(CentralDataImport, { fileId: current.fileId }),
+        // The user's own date, for dates the server sets
+        // (rules.md § currencies).
+        await graphqlFetch(CentralDataImport, {
+          fileId: current.fileId,
+          today: todayCalendarDate(),
+        }),
         data => data.centralServer.centralData.import
       )
     );

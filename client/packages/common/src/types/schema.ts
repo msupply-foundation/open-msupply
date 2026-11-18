@@ -1745,6 +1745,7 @@ export type CentralDataMutationsExportArgs = {
 
 export type CentralDataMutationsImportArgs = {
   fileId: Scalars['String']['input'];
+  today: Scalars['NaiveDate']['input'];
 };
 
 export type CentralDataQueries = {

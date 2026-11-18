@@ -167,6 +167,7 @@ export const CentralDataErrorsFile = {
 
 export type CentralDataImportVariables = {
   fileId: string;
+  today: string;
 };
 
 export type CentralDataImportResult = {
@@ -178,5 +179,5 @@ export type CentralDataImportResult = {
 };
 
 export const CentralDataImport = {
-  query: "mutation centralDataImport($fileId: String!) {\n  centralServer {\n    centralData {\n      import(fileId: $fileId) {\n        ...CentralDataImportResult\n      }\n    }\n  }\n}\n\nfragment CentralDataImportResult on CentralDataImportResponse {\n  __typename\n  ... on CentralDataImportNode {\n    tables {\n      table\n      inserted\n      updated\n      deleted\n      unchanged\n      errorCount\n    }\n    changes {\n      sheet\n      row\n      record\n      change\n      fields {\n        column\n        from\n        to\n      }\n    }\n    errors {\n      sheet\n      row\n      column\n      message\n    }\n    errorCount\n  }\n  ... on CentralDataImportError {\n    ...CentralDataImportProblem\n  }\n}\n\nfragment CentralDataImportProblem on CentralDataImportError {\n  error {\n    __typename\n    description\n    ... on CentralDataTooManyRows {\n      rowCount\n      maxRows\n    }\n    ... on CentralDataTooManyCells {\n      cellCount\n      maxCells\n    }\n    ... on CentralDataCannotReadFile {\n      description\n    }\n    ... on CentralDataUploadExpired {\n      description\n    }\n  }\n}",
+  query: "mutation centralDataImport($fileId: String!, $today: NaiveDate!) {\n  centralServer {\n    centralData {\n      import(fileId: $fileId, today: $today) {\n        ...CentralDataImportResult\n      }\n    }\n  }\n}\n\nfragment CentralDataImportResult on CentralDataImportResponse {\n  __typename\n  ... on CentralDataImportNode {\n    tables {\n      table\n      inserted\n      updated\n      deleted\n      unchanged\n      errorCount\n    }\n    changes {\n      sheet\n      row\n      record\n      change\n      fields {\n        column\n        from\n        to\n      }\n    }\n    errors {\n      sheet\n      row\n      column\n      message\n    }\n    errorCount\n  }\n  ... on CentralDataImportError {\n    ...CentralDataImportProblem\n  }\n}\n\nfragment CentralDataImportProblem on CentralDataImportError {\n  error {\n    __typename\n    description\n    ... on CentralDataTooManyRows {\n      rowCount\n      maxRows\n    }\n    ... on CentralDataTooManyCells {\n      cellCount\n      maxCells\n    }\n    ... on CentralDataCannotReadFile {\n      description\n    }\n    ... on CentralDataUploadExpired {\n      description\n    }\n  }\n}",
 } as TypedDocument<CentralDataImportResult, CentralDataImportVariables>;
