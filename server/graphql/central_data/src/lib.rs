@@ -38,13 +38,18 @@ impl CentralDataQueries {
         tables: Vec<CentralDataExportTableInput>,
     ) -> Result<CentralDataExportCountsNode> {
         let user_id = validate(ctx)?;
-        let service_provider = ctx.service_provider();
-        let context = service_provider.context(String::new(), user_id)?;
+        let service_provider = ctx.data_unchecked::<Data<ServiceProvider>>().clone();
         let tables: Vec<ExportTable> = tables.into_iter().map(Into::into).collect();
-        let counts = service_provider
-            .central_data_service
-            .export_counts(&context, &tables)
-            .map_err(export_error)?;
+        // Blocking pool, as for `export`.
+        let counts = tokio::task::spawn_blocking(move || -> Result<_> {
+            let context = service_provider.context(String::new(), user_id)?;
+            service_provider
+                .central_data_service
+                .export_counts(&context, &tables)
+                .map_err(export_error)
+        })
+        .await
+        .map_err(StandardGraphqlError::from_join_error)??;
         Ok(CentralDataExportCountsNode {
             tables: counts
                 .into_iter()
@@ -730,6 +735,25 @@ mod tests {
                 );
             }
         }
+        // covers: OMS-REG-CDIO-01.47
+
+        #[actix_rt::test]
+        async fn export_counts_give_the_matching_and_total_records() {
+            let (_, settings) = setup("central_data_graphql_export_counts").await;
+            CentralServerConfig::set_standalone_central();
+            let query = "query($contains: String!) { exportCounts(tables: [{ table: UNIT, contains: $contains }]) { tables { table matching total } } }";
+
+            for (contains, matching) in [("QUERY_TEST2", 1), ("nothing", 0)] {
+                let variables = Some(json!({ "contains": contains }));
+                let result = run_test_gql_query(&settings, query, &variables, None).await;
+                assert_eq!(
+                    result["data"]["exportCounts"]["tables"],
+                    json!([{ "table": "UNIT", "matching": matching, "total": 1 }]),
+                    "{result}"
+                );
+            }
+        }
+
         // covers: OMS-REG-CDIO-01.8, .12
 
         /// Each upload operation, through `with_upload`: a workbook is read, and a file that
