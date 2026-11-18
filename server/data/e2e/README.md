@@ -24,28 +24,40 @@ users, stores, periods, programs. Plus injected login wiring
 (`user_store_join` / `user_permission` — a v7 pull doesn't deliver those) for
 Admin on GRY + FEAT and the three auth-profile users above.
 
-Deliberately **no stock, no documents** on the stores the suites use —
+Next to **no stock and few documents** on the stores the suites use —
 store-local state is created through the GraphQL API by
 `frontend/e2e/specs/data.setup.ts` at suite start ("seed nouns, create verbs").
-Don't add stock here for a suite; extend the arrange step. The one store that
-does hold stock is `DEMO`, which no suite opens — see
-[A store to demo from](#a-store-to-demo-from).
+Don't add stock here for a suite; extend the arrange step. What the file does
+hold:
+
+- **Stock at two stores.** SLY holds one bandage batch,
+  `e2e-sly-bandage-stock` (500 units), which `internal-orders-regression`
+  orders from. `DEMO` holds the demo stock, and no suite opens DEMO — see
+  [A store to demo from](#a-store-to-demo-from).
+- **Documents from the capture.** GRY has 4 shipped inbound shipments and 3
+  requisitions; GEN, GRYDSP, RAV and HUF have more.
+- **The fixtures below that the API cannot make**, such as the stocktake at
+  ESTB and the two purchase orders at EPOA.
 
 ### A store to demo from
 
-A PR preview (the `deploy` label) and a fresh `pnpm e2e:local` stack restore
-this file and nothing else: `data.setup.ts` never runs on a preview, so GRY
-opens there with no stock and no patients. `DEMO` is set up so the Simple
-dispensing screen (#2188) can be shown straight away. Log in as **`demo` /
-`pass`**: DEMO is that user's only store, so the app opens in it, and Dispensary
-› Dispensing › Simple view shows the cards.
+A PR preview (the `deploy` label) restores this file and nothing else:
+`data.setup.ts` runs only in an e2e run, never on a preview. (A plain
+`pnpm e2e:local` run does run it, once per server before any suite: every
+suite's Playwright project depends on `data-setup`. A plugin-profile run uses
+the plugin's own setup instead.) So on a preview GRY has no stock,
+and its patient list shows only DEMO's four patients (patients are not
+store-scoped). `DEMO` is set up so the Simple dispensing screen (#2188) can be
+shown straight away. Log in as **`demo` / `pass`**: DEMO is that user's only
+store, so the app opens in it, and Dispensary › Dispensing › Simple view shows
+the cards.
 
 | What                                                                                                                                                                                                                                                 | Why                                                                                                                                                                                                                                                                                                                                                                 |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `DEMO` "Demo Health Centre" (site 900), a dispensary, vaccine and program modules off, joined to the `Health Centre` and `District Store` master lists                                                                                                | a store of its own, so nothing here changes what a suite sees. No suite user can open it, Admin included                                                                                                                                                                                                                                                         |
 | `demo` / `pass`, Admin's GRY permissions (none context-scoped) at DEMO only, DEMO its default store                                                                                                                                                   | logs straight into DEMO. Admin is not given DEMO: its store list, and the Simple suite's "another store the user can open", stay as they were                                                                                                                                                                                                                       |
-| `common_medicines` on DEMO: Paracetamol 500mg tabs (10, 20, 30), Amoxicillin 250mg tabs (15, 21, 30), Amoxicillin suspension 125mg/5ml (1, 2 bottles), ORS sachets (2, 4, 6), Ibuprofen 200mg (10, 20), Salbutamol 2mg tabs (10, 30), Captopril 25mg tabs (no amounts, so its card asks) | the cards. The store preference can only be set through the API until its editor is built                                                                                                                                                                                                                                                                      |
-| One verified inventory addition (`Demo opening stock`, #1) at DEMO: a batch of each card's medicine, two for Paracetamol and Amoxicillin tabs (first expiry first), and Vitamin A caps, which has no card, for the screen's search. Expiries 5 to 21 months after the refreshed dates | stock with a ledger that agrees with it. Every timestamp is no later than the newest one already here (2026-10-01), so the restore's date refresh shifts everything by what it did before                                                                                                                                                                          |
+| `common_medicines` on DEMO (row id `common_medicines_e2e_demo_store`, the `{key}_{store_id}` shape the server's own save writes, so an edit replaces it): Paracetamol 500mg tabs (10, 20, 30), Amoxicillin 250mg tabs (15, 21, 30), Amoxicillin suspension 125mg/5ml (1, 2 bottles), ORS sachets (2, 4, 6), Ibuprofen 200mg (10, 20), Salbutamol 2mg tabs (10, 30), Captopril 25mg tabs (no amounts, so its card asks) | the cards. The store preference can only be set through the API until its editor is built                                                                                                                                                                                                                                                                      |
+| One verified inventory addition (`Demo opening stock`, #1) at DEMO: a batch of each card's medicine, two for Paracetamol and Amoxicillin tabs (first expiry first), and Vitamin A caps, which has no card, for the screen's search. Expiries 13 to 30 months after the refreshed dates. Vitamin A's volume is the item's 0.25 per 500, so 0.05 a pack of 100 | stock with a ledger that agrees with it. Every timestamp is no later than the newest one already here (2026-10-01), so the restore's date refresh shifts everything by what it did before. That shift is measured from the newest timestamp, so a later fixture dated after 2026-10-01 brings every expiry closer to the restore date; the expiries start a year out to leave room for that |
 | Four patients, `DEMO-PAT-01`–`04` (Khamla Phommachanh, Bounmy Sisouphanh, Noy Vongsavath — a child, Somphone Keomany), joined to DEMO                                                                                                              | someone to dispense to. Patients are not store-scoped, so they are listed at GRY too; no suite filter or search term (`E2E…`, `First…`, `Last…`, `E2E-PAT-…`) matches them                                                                                                                                                                                    |
 
 **Prices come from the batches**, not the default price list. The default price
