@@ -16,11 +16,8 @@ impl From<RepositoryError> for UpsertUnitError {
     }
 }
 
-/// The active units among those a name matches, or the inactive ones when none is active, so an
-/// old inactive namesake doesn't make the name ambiguous.
 pub fn active_first(units: Vec<UnitRow>) -> Vec<UnitRow> {
-    let (active, inactive): (Vec<_>, Vec<_>) = units.into_iter().partition(|unit| unit.is_active);
-    if active.is_empty() { inactive } else { active }
+    crate::active_first_by(units, |unit| unit.is_active)
 }
 
 /// Adds or updates one unit. Joins the caller's transaction when there is one, so an import's

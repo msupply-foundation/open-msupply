@@ -311,20 +311,26 @@ pub struct InputWithResult<I, R> {
     pub result: R,
 }
 
-/// The id of another record that has `code`, spaces around either code not counting. Only a save
-/// that brings in the clash is checked, so existing duplicates stay editable.
-pub(crate) fn other_with_code(
-    saved_code: Option<&str>,
+/// The active records among those a name matches, or the inactive ones when none is active, so an
+/// old inactive namesake doesn't make the name ambiguous.
+pub(crate) fn active_first_by<R>(records: Vec<R>, is_active: impl Fn(&R) -> bool) -> Vec<R> {
+    let (active, inactive): (Vec<_>, Vec<_>) = records.into_iter().partition(|r| is_active(r));
+    if active.is_empty() { inactive } else { active }
+}
+
+/// The id of another record with `key`, such as a code, spaces around either key not counting.
+/// Only a save that brings in the clash is checked, so existing duplicates stay editable.
+pub(crate) fn other_with_key(
+    saved_key: Option<&str>,
     id: &str,
-    code: &str,
-    find_by_trimmed_code: impl FnOnce(&str) -> Result<Vec<String>, RepositoryError>,
+    key: &str,
+    find_by_trimmed_key: impl FnOnce(&str) -> Result<Vec<String>, RepositoryError>,
 ) -> Result<Option<String>, RepositoryError> {
-    if saved_code
-        .is_some_and(|saved| repository::trim_spaces(saved) == repository::trim_spaces(code))
+    if saved_key.is_some_and(|saved| repository::trim_spaces(saved) == repository::trim_spaces(key))
     {
         return Ok(None);
     }
-    Ok(find_by_trimmed_code(code)?
+    Ok(find_by_trimmed_key(key)?
         .into_iter()
         .find(|other| other != id))
 }

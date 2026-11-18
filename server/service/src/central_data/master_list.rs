@@ -3,11 +3,10 @@ use super::{
     SheetImport, SheetStart,
     cells::{Row, RowError, collect, keep_or_saved},
     field_changes,
-    lookup::find_record,
-    name_with_code,
+    lookup::LookupError,
     sheet::Value,
 };
-use crate::master_list::upsert::{UpsertMasterListError, upsert_master_list};
+use crate::master_list::upsert::{UpsertMasterListError, active_first, upsert_master_list};
 use repository::{MasterListRow, MasterListRowRepository, RepositoryError, StorageConnection};
 use util::{constants::MISSING_PROGRAM, uuid::uuid};
 
@@ -28,8 +27,10 @@ const COLUMNS: &[&str] = &[
     DISCOUNT_PERCENTAGE,
 ];
 
-/// Matched by `id`, else `code`. On an update a blank cell keeps the value, except in
-/// `description` and `discount_percentage`, where it clears it.
+/// Matched by `id`, else `name` among active lists first; with an id, a different name renames
+/// the list. On an update a
+/// blank cell keeps the value, except in the optional `code`, `description` and
+/// `discount_percentage`, where it clears it.
 pub(super) struct MasterListTable;
 
 impl ImportTable for MasterListTable {
@@ -90,38 +91,32 @@ impl SheetImport for MasterListSheet {
         let is_default_price_list = collect(&mut errors, row.bool(IS_DEFAULT_PRICE_LIST));
         let discount_percentage = collect(&mut errors, row.number(DISCOUNT_PERCENTAGE));
         let id = row.text(ID);
-        let code = row.text(CODE);
+        let name = row.text(NAME);
 
-        // Without its record, the row's other checks would treat it as a new master list.
-        let existing = match find_record(
-            &MasterListRowRepository::new(connection),
-            row,
-            CODE,
-            id.as_deref(),
-            code.as_deref(),
-            |saved| &saved.name,
-        )? {
-            Ok(existing) => existing,
-            Err(e) => {
-                errors.push(e);
-                return Err(RowFailure::Invalid(errors));
+        let repo = MasterListRowRepository::new(connection);
+        let existing = match (&id, &name) {
+            (Some(id), _) => repo.find_one_by_id(id)?,
+            (None, Some(name)) => {
+                let mut candidates = active_first(repo.find_by_trimmed_name(name)?);
+                if candidates.len() > 1 {
+                    errors.push(row.error(NAME, LookupError::Ambiguous.message(name)));
+                    return Err(RowFailure::Invalid(errors));
+                }
+                candidates.pop()
             }
+            (None, None) => None,
         };
         let saved = existing.as_ref();
         // Here, not only in the save, as an unchanged row isn't saved.
         if saved.map(|saved| saved.id.as_str()).or(id.as_deref()) == Some(MISSING_PROGRAM) {
             errors.push(protected_error(
                 row,
-                saved.map_or(MISSING_PROGRAM, |saved| &saved.code),
+                saved.map_or(MISSING_PROGRAM, |saved| &saved.name),
             ));
             return Err(RowFailure::Invalid(errors));
         }
 
-        let code = keep_or_saved(code, saved.map(|master_list| master_list.code.as_str()));
-        let name = keep_or_saved(
-            row.text(NAME),
-            saved.map(|master_list| master_list.name.as_str()),
-        );
+        let name = keep_or_saved(name, saved.map(|master_list| master_list.name.as_str()));
         let is_active = is_active.or(saved.map(|master_list| master_list.is_active));
         let is_default_price_list =
             is_default_price_list.or(saved.map(|master_list| master_list.is_default_price_list));
@@ -129,7 +124,6 @@ impl SheetImport for MasterListSheet {
             &mut errors,
             "master list",
             &[
-                (CODE, code.is_none()),
                 (NAME, name.is_none()),
                 (IS_ACTIVE, is_active.is_none()),
                 (IS_DEFAULT_PRICE_LIST, is_default_price_list.is_none()),
@@ -144,7 +138,9 @@ impl SheetImport for MasterListSheet {
                 .map(|master_list| master_list.id.clone())
                 .or(id)
                 .unwrap_or_else(uuid),
-            code: code.unwrap_or_default(),
+            code: row
+                .optional_text(CODE, saved.map(|master_list| master_list.code.as_str()))
+                .unwrap_or_default(),
             name: name.unwrap_or_default(),
             description: row
                 .optional_text(
@@ -170,7 +166,7 @@ impl SheetImport for MasterListSheet {
             fields: existing
                 .map(|saved| field_changes(COLUMNS, cells(&saved), cells(&master_list)))
                 .unwrap_or_default(),
-            record: name_with_code(&master_list.name, &master_list.code),
+            record: master_list.name,
             record_id: master_list.id,
             change,
         })
@@ -178,19 +174,20 @@ impl SheetImport for MasterListSheet {
 }
 
 /// On the column the row found it by.
-fn protected_error(row: &Row, code: &str) -> RowError {
-    let column = if row.text(ID).is_some() { ID } else { CODE };
+fn protected_error(row: &Row, name: &str) -> RowError {
+    let column = if row.text(ID).is_some() { ID } else { NAME };
     row.error(
         column,
-        format!("{code} is protected, as the server needs it, so import can't change it"),
+        format!("{name} is protected, as the server needs it, so import can't change it"),
     )
 }
 
 fn upsert_failure(row: &Row, error: UpsertMasterListError) -> RowFailure {
     match error {
-        UpsertMasterListError::CodeRequired => row.error(CODE, "code is required").into(),
         UpsertMasterListError::NameRequired => row.error(NAME, "name is required").into(),
-        // Unreachable here: `find_record` turns a saved code into a match or a conflict first.
+        UpsertMasterListError::DuplicateName { other_id } => row
+            .error(NAME, format!("master list {other_id} has this name"))
+            .into(),
         UpsertMasterListError::DuplicateCode { other_id } => row
             .error(CODE, format!("master list {other_id} has this code"))
             .into(),

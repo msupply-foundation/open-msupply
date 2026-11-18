@@ -71,19 +71,21 @@ impl KeyedTable for ItemRowRepository<'_> {
     }
 }
 
+/// Looked up by name, as legacy master lists often have no code. Narrow a name's matches with
+/// `master_list::upsert::active_first`.
 impl KeyedTable for MasterListRowRepository<'_> {
     type Record = MasterListRow;
     fn id(master_list: &MasterListRow) -> &str {
         &master_list.id
     }
     fn key(master_list: &MasterListRow) -> &str {
-        &master_list.code
+        &master_list.name
     }
     fn find_by_id(&self, id: &str) -> Result<Option<MasterListRow>, RepositoryError> {
         self.find_one_by_id(id)
     }
-    fn find_by_key(&self, code: &str) -> Result<Vec<MasterListRow>, RepositoryError> {
-        self.find_by_trimmed_code(code)
+    fn find_by_key(&self, name: &str) -> Result<Vec<MasterListRow>, RepositoryError> {
+        self.find_by_trimmed_name(name)
     }
 }
 

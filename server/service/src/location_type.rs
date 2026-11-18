@@ -1,4 +1,4 @@
-use crate::{ListError, ListResult, get_pagination_or_default, i64_to_u32, other_with_code};
+use crate::{ListError, ListResult, get_pagination_or_default, i64_to_u32, other_with_key};
 use repository::{
     LocationType, LocationTypeFilter, LocationTypeRepository, LocationTypeRow,
     LocationTypeRowRepository, LocationTypeSort, LocationTypeUser, PaginationOption,
@@ -100,7 +100,7 @@ fn validate(
     // Trimmed on purpose; sync's `code_is_taken` is exact.
     let repo = LocationTypeRowRepository::new(connection);
     let saved = repo.find_one_by_id(&row.id)?;
-    match other_with_code(
+    match other_with_key(
         saved.as_ref().map(|saved| saved.code.as_str()),
         &row.id,
         &row.code,

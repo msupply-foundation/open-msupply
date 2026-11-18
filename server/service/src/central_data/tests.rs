@@ -3607,20 +3607,21 @@ async fn a_master_list_export_searches_code_and_name_and_filters_by_status() {
 // covers: OMS-REG-CDIO-01.12, .27, .35, .58, .63, .76, .107
 
 #[actix_rt::test]
-async fn master_list_rows_add_and_update_by_code() {
+async fn master_list_rows_add_and_update_by_name() {
     let (connection, service_provider, dir) =
         master_list_setup("central_data_master_list_upsert").await;
     let ctx = service_provider.basic_context().unwrap();
-    let new_list = ["", "HIV", "HIV program", "", "TRUE", "0", "5"];
-    // Found by code; blank required cells keep their values, blank optional ones clear them.
-    let renamed = ["", "EML", "Essential medicines 2026", "", "", "", ""];
+    // No code needed.
+    let new_list = ["", "", "HIV program", "", "TRUE", "0", "5"];
+    // Found by name; blank required cells keep their values, blank optional ones clear them.
+    let edited = ["", "EML", "Essential medicines", "", "", "", ""];
 
     let path = write_file(
         dir.path(),
         master_list_sheet(vec![
             master_list_row(new_list),
-            master_list_row(renamed),
-            master_list_row(["", "NEW", "", "", "yes", "", "ten"]),
+            master_list_row(edited),
+            master_list_row(["", "", "", "", "yes", "", "ten"]),
         ]),
     );
     let summary = CentralDataService
@@ -3646,7 +3647,7 @@ async fn master_list_rows_add_and_update_by_code() {
 
     let path = write_file(
         dir.path(),
-        master_list_sheet(vec![master_list_row(new_list), master_list_row(renamed)]),
+        master_list_sheet(vec![master_list_row(new_list), master_list_row(edited)]),
     );
     let summary = CentralDataService
         .import(&ctx, &path, &no_sessions())
@@ -3656,15 +3657,10 @@ async fn master_list_rows_add_and_update_by_code() {
         (summary.tables[0].inserted, summary.tables[0].updated),
         (1, 1)
     );
-    assert_eq!(summary.changes[0].record, "HIV program (HIV)");
+    assert_eq!(summary.changes[0].record, "HIV program");
     assert_eq!(
         summary.changes[1].fields,
         vec![
-            FieldChange {
-                column: "name",
-                from: "Essential medicines".to_string(),
-                to: "Essential medicines 2026".to_string(),
-            },
             FieldChange {
                 column: "description",
                 from: "WHO list".to_string(),
@@ -3680,21 +3676,20 @@ async fn master_list_rows_add_and_update_by_code() {
     assert_eq!(
         find_master_list(&connection, "eml"),
         Some(MasterListRow {
-            name: "Essential medicines 2026".to_string(),
             description: String::new(),
             discount_percentage: None,
             ..essential_medicines()
         })
     );
     let added = MasterListRowRepository::new(&connection)
-        .find_by_trimmed_code("HIV")
+        .find_by_trimmed_name("HIV program")
         .unwrap()
         .remove(0);
     assert_eq!(
         added,
         MasterListRow {
             id: added.id.clone(),
-            code: "HIV".to_string(),
+            code: String::new(),
             name: "HIV program".to_string(),
             description: String::new(),
             is_active: true,
@@ -3704,10 +3699,10 @@ async fn master_list_rows_add_and_update_by_code() {
     );
 }
 
-// covers: OMS-REG-CDIO-01.39, .51, .73, .74
+// covers: OMS-REG-CDIO-01.74, .111
 
 #[actix_rt::test]
-async fn a_master_list_code_is_not_changed_or_taken_by_import() {
+async fn a_master_list_is_renamed_by_its_id_but_no_name_or_code_is_taken() {
     let (connection, service_provider, dir) =
         master_list_setup("central_data_master_list_conflicts").await;
     let ctx = service_provider.basic_context().unwrap();
@@ -3716,32 +3711,22 @@ async fn a_master_list_code_is_not_changed_or_taken_by_import() {
         dir.path(),
         master_list_sheet(vec![
             master_list_row(["hiv", "HIV", "HIV program", "", "TRUE", "FALSE", ""]),
-            // A new id beside a code added earlier in the file, then beside a saved one.
-            master_list_row(["copy_id", "HIV", "", "", "", "", ""]),
-            master_list_row(["new_id", "EML", "", "", "", "", ""]),
-            // The id's master list has another code.
-            master_list_row(["eml", "HIV", "", "", "", "", ""]),
+            // A new active list named as one added earlier in the file, then as a saved one.
+            master_list_row(["copy_id", "", "HIV program", "", "TRUE", "FALSE", ""]),
+            master_list_row(["new_id", "", "Essential medicines", "", "TRUE", "FALSE", ""]),
+            // Renamed to another list's name, then a new list with another list's code.
+            master_list_row(["eml", "EML", "HIV program", "", "", "", ""]),
+            master_list_row(["", "HIV", "Clinic", "", "TRUE", "FALSE", ""]),
         ]),
     );
     let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
     assert_eq!(
         row_errors(&summary),
         vec![
-            (
-                3,
-                Some("code"),
-                "code and id conflict: HIV program has code HIV and id hiv, but this row has code HIV and id copy_id"
-            ),
-            (
-                4,
-                Some("code"),
-                "code and id conflict: Essential medicines has code EML and id eml, but this row has code EML and id new_id"
-            ),
-            (
-                5,
-                Some("code"),
-                "code and id conflict: Essential medicines has code EML and id eml, but this row has code HIV and id eml"
-            ),
+            (3, Some("name"), "master list hiv has this name"),
+            (4, Some("name"), "master list eml has this name"),
+            (5, Some("name"), "master list hiv has this name"),
+            (6, Some("code"), "master list hiv has this code"),
         ]
     );
     assert_eq!(
@@ -3749,6 +3734,148 @@ async fn a_master_list_code_is_not_changed_or_taken_by_import() {
         Some(essential_medicines())
     );
     assert_eq!(find_master_list(&connection, "hiv"), None);
+
+    // With its id, a new name renames it.
+    let path = write_file(
+        dir.path(),
+        master_list_sheet(vec![master_list_row([
+            "eml",
+            "EML",
+            "Essential medicines 2026",
+            "",
+            "",
+            "",
+            "12.5",
+        ])]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].updated, 1);
+    assert_eq!(
+        find_master_list(&connection, "eml").map(|master_list| master_list.name),
+        Some("Essential medicines 2026".to_string())
+    );
+}
+
+// covers: OMS-REG-CDIO-01.113
+
+#[actix_rt::test]
+async fn an_inactive_master_list_does_not_hold_on_to_its_name() {
+    let (connection, service_provider, dir) =
+        master_list_setup("central_data_master_list_inactive_name").await;
+    // An old list with the name of the saved active one.
+    MasterListRowRepository::new(&connection)
+        .upsert_one(&MasterListRow {
+            id: "old_eml".to_string(),
+            code: String::new(),
+            is_active: false,
+            ..essential_medicines()
+        })
+        .unwrap();
+    let ctx = service_provider.basic_context().unwrap();
+
+    let path = write_file(
+        dir.path(),
+        master_list_sheet(vec![
+            // Without an id, the name finds the active list, not the inactive one.
+            master_list_row(["", "", "Essential medicines", "Changed", "", "", ""]),
+            // A new id with an inactive list's name adds a list, which can be inactive too.
+            master_list_row([
+                "older_eml",
+                "",
+                "Essential medicines",
+                "",
+                "FALSE",
+                "FALSE",
+                "",
+            ]),
+            // Making the old one active would leave two active lists with one name.
+            master_list_row(["old_eml", "", "", "", "TRUE", "", ""]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(4, Some("name"), "master list eml has this name")]
+    );
+
+    let path = write_file(
+        dir.path(),
+        master_list_sheet(vec![
+            master_list_row(["", "", "Essential medicines", "Changed", "", "", ""]),
+            master_list_row([
+                "older_eml",
+                "",
+                "Essential medicines",
+                "",
+                "FALSE",
+                "FALSE",
+                "",
+            ]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(
+        (summary.tables[0].inserted, summary.tables[0].updated),
+        (1, 1)
+    );
+    assert_eq!(
+        find_master_list(&connection, "eml").map(|master_list| master_list.description),
+        Some("Changed".to_string())
+    );
+    assert!(find_master_list(&connection, "older_eml").is_some());
+}
+
+// covers: OMS-REG-CDIO-01.112
+
+#[actix_rt::test]
+async fn a_master_list_without_a_code_is_edited_and_can_be_given_one() {
+    let (connection, service_provider, dir) =
+        master_list_setup("central_data_master_list_no_code").await;
+    // As legacy mSupply sends them.
+    let repo = MasterListRowRepository::new(&connection);
+    let no_code = |id: &str, name: &str| MasterListRow {
+        id: id.to_string(),
+        name: name.to_string(),
+        is_active: true,
+        ..Default::default()
+    };
+    repo.upsert_one(&no_code("health_centre", "Health Centre"))
+        .unwrap();
+    repo.upsert_one(&no_code("hospital", "Hospital")).unwrap();
+    let ctx = service_provider.basic_context().unwrap();
+
+    let path = write_file(
+        dir.path(),
+        master_list_sheet(vec![
+            master_list_row(["", "", "Health Centre", "Clinics", "", "", ""]),
+            master_list_row(["hospital", "HOSP", "Hospital", "", "", "", ""]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].updated, 2);
+    assert_eq!(
+        find_master_list(&connection, "health_centre"),
+        Some(MasterListRow {
+            description: "Clinics".to_string(),
+            ..no_code("health_centre", "Health Centre")
+        })
+    );
+    assert_eq!(
+        find_master_list(&connection, "hospital"),
+        Some(MasterListRow {
+            code: "HOSP".to_string(),
+            ..no_code("hospital", "Hospital")
+        })
+    );
 }
 
 // covers: OMS-REG-CDIO-01.108
@@ -3761,8 +3888,11 @@ async fn setting_a_master_list_inactive_counts_as_a_delete() {
     // The other columns are left out, so they keep their values.
     let bytes = sheet::write(vec![sheet_data(
         "master_list",
-        &["code", "is_active"],
-        vec![vec![Value::Text("EML".to_string()), false.into()]],
+        &["name", "is_active"],
+        vec![vec![
+            Value::Text("Essential medicines".to_string()),
+            false.into(),
+        ]],
     )])
     .unwrap();
     let path = write_file(dir.path(), bytes);
@@ -3785,7 +3915,7 @@ async fn setting_a_master_list_inactive_counts_as_a_delete() {
 // covers: OMS-REG-CDIO-01.24
 
 #[actix_rt::test]
-async fn a_shared_master_list_code_asks_for_the_id() {
+async fn a_shared_master_list_name_asks_for_the_id() {
     let (connection, service_provider, dir) =
         master_list_setup("central_data_master_list_ambiguous").await;
     let ctx = service_provider.basic_context().unwrap();
@@ -3800,7 +3930,13 @@ async fn a_shared_master_list_code_asks_for_the_id() {
     let path = write_file(
         dir.path(),
         master_list_sheet(vec![master_list_row([
-            "", "EML", "Renamed", "", "", "", "",
+            "",
+            "EML",
+            "Essential medicines",
+            "Changed",
+            "",
+            "",
+            "",
         ])]),
     );
     let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
@@ -3808,7 +3944,7 @@ async fn a_shared_master_list_code_asks_for_the_id() {
         row_errors(&summary),
         vec![(
             2,
-            Some("code"),
+            Some("name"),
             "ambiguous reference, please provide id instead"
         )]
     );
@@ -3817,7 +3953,13 @@ async fn a_shared_master_list_code_asks_for_the_id() {
     let path = write_file(
         dir.path(),
         master_list_sheet(vec![master_list_row([
-            "eml_copy", "EML", "Renamed", "", "", "", "",
+            "eml_copy",
+            "EML",
+            "Essential medicines",
+            "Changed",
+            "",
+            "",
+            "12.5",
         ])]),
     );
     let summary = CentralDataService
@@ -3825,8 +3967,8 @@ async fn a_shared_master_list_code_asks_for_the_id() {
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(
-        find_master_list(&connection, "eml_copy").map(|master_list| master_list.name),
-        Some("Renamed".to_string())
+        find_master_list(&connection, "eml_copy").map(|master_list| master_list.description),
+        Some("Changed".to_string())
     );
     assert_eq!(
         find_master_list(&connection, "eml"),
@@ -3854,11 +3996,11 @@ async fn the_missing_program_master_list_is_not_exported_or_imported() {
         }
     );
 
-    // By code, then by id.
+    // By name, then by id.
     let path = write_file(
         dir.path(),
         master_list_sheet(vec![
-            master_list_row(["", MISSING_PROGRAM, "", "", "TRUE", "", ""]),
+            master_list_row(["", "", MISSING_PROGRAM, "", "TRUE", "", ""]),
             master_list_row([MISSING_PROGRAM, "", "", "", "TRUE", "", ""]),
         ]),
     );
@@ -3869,7 +4011,7 @@ async fn the_missing_program_master_list_is_not_exported_or_imported() {
         "missing_program is protected, as the server needs it, so import can't change it";
     assert_eq!(
         row_errors(&summary),
-        vec![(2, Some("code"), protected), (3, Some("id"), protected)]
+        vec![(2, Some("name"), protected), (3, Some("id"), protected)]
     );
     assert_eq!(
         find_master_list(&connection, MISSING_PROGRAM),

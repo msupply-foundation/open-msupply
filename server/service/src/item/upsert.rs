@@ -1,4 +1,4 @@
-use crate::other_with_code;
+use crate::other_with_key;
 use repository::{
     ItemRow, ItemRowRepository, LocationTypeRowRepository, RepositoryError, StorageConnection,
     UnitRowRepository,
@@ -64,7 +64,7 @@ fn save(
     row: &ItemRow,
 ) -> Result<(), UpsertItemError> {
     let repo = ItemRowRepository::new(connection);
-    if let Some(other_id) = other_with_code(
+    if let Some(other_id) = other_with_key(
         saved.map(|saved| saved.code.as_str()),
         &row.id,
         &row.code,

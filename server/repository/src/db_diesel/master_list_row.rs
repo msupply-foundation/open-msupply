@@ -107,6 +107,17 @@ impl<'a> MasterListRowRepository<'a> {
             .load(self.connection.lock().connection())?)
     }
 
+    /// Letter case counts; spaces around either name don't.
+    pub fn find_by_trimmed_name(
+        &self,
+        master_list_name: &str,
+    ) -> Result<Vec<MasterListRow>, RepositoryError> {
+        Ok(master_list::table
+            .filter(trim(master_list::name).eq(trim_spaces(master_list_name)))
+            .order(master_list::id.asc())
+            .load(self.connection.lock().connection())?)
+    }
+
     pub fn check_exists_by_id(&self, record_id: &str) -> Result<bool, RepositoryError> {
         let exists: bool = diesel::select(diesel::dsl::exists(
             master_list::table.filter(master_list::id.eq(record_id)),
