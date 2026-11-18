@@ -2353,17 +2353,33 @@ async fn an_import_cannot_leave_no_home_currency() {
     let summary = CentralDataService
         .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
-    assert_eq!(
-        row_errors(&summary),
-        vec![(
-            3,
-            Some("is_home_currency"),
-            "USD is the home currency, and no row makes another currency the home currency. Set another currency's is_home_currency to TRUE"
-        )]
+    let no_other_home = (
+        3,
+        Some("is_home_currency"),
+        "USD is the home currency, and the sheet leaves no other home currency. Set another currency's is_home_currency to TRUE",
     );
+    assert_eq!(row_errors(&summary), vec![no_other_home]);
     assert_eq!(summary.tables[0].error_count, 1);
     assert_eq!(find_currency(&connection, "usd"), Some(usd()));
     assert_eq!(find_currency(&connection, "nzd").unwrap().rate, 1.6);
+
+    // A row that tries to make another currency the home currency, but fails on its own, leaves
+    // none, and the message says so without claiming no row tried.
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![
+            currency_row(["", "NZD", "1.7", "TRUE", "", ""]),
+            currency_row(["", "USD", "", "FALSE", "", ""]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (2, Some("rate"), "The home currency's rate must be 1"),
+            no_other_home,
+        ]
+    );
 }
 
 // covers: OMS-REG-CDIO-01.112, .116

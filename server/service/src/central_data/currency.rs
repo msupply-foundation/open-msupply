@@ -172,7 +172,7 @@ impl SheetImport for CurrencySheet {
                 self.home_removed = Some(row.error(
                     IS_HOME_CURRENCY,
                     format!(
-                        "{} is the home currency, and no row makes another currency the home currency. Set another currency's is_home_currency to TRUE",
+                        "{} is the home currency, and the sheet leaves no other home currency. Set another currency's is_home_currency to TRUE",
                         currency.code
                     ),
                 ));
