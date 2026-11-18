@@ -104,6 +104,54 @@ describe('prescriptionsToCsv (OMS-REG-DIS-03.52 — the list columns, in file fo
     expect(line).not.toContain('Unnamed patient');
   });
 
+  // OMS-REG-DIS-12.219
+  it('carries Time and Medicines after the date in a store on the Simple screen', () => {
+    const csv = prescriptionsToCsv(
+      [
+        {
+          ...row,
+          lines: {
+            nodes: [
+              {
+                type: 'STOCK_OUT',
+                itemName: 'Paracetamol 500mg',
+                packSize: 10,
+                numberOfPacks: 2,
+              },
+              {
+                type: 'STOCK_OUT',
+                itemName: 'ORS sachet',
+                packSize: 1,
+                numberOfPacks: 2,
+              },
+            ],
+          },
+        },
+      ],
+      [],
+      { withMedicines: true }
+    );
+    const [header, line] = csv.trim().split(/\r?\n/);
+    expect(header.split(',')).toEqual([
+      'label.name',
+      'label.status',
+      'label.invoice-number',
+      'label.dispensed-date',
+      'label.time',
+      'label.medicines',
+      'label.reference',
+      'label.comment',
+    ]);
+    expect(line).toContain('"Paracetamol 500mg (20), ORS sachet (2)"');
+  });
+
+  // OMS-REG-DIS-12.220
+  it('has no Time or Medicines column in a store on the list', () => {
+    const csv = prescriptionsToCsv([row]);
+    expect(csv).not.toContain('label.time');
+    expect(csv).not.toContain('label.medicines');
+  });
+
   it('leaves the columns off entirely when the scope configures none', () => {
     const csv = prescriptionsToCsv([row]);
     expect(csv.trim().split(/\r?\n/)[0].split(',')).toHaveLength(6);

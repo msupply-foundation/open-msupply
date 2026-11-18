@@ -1796,6 +1796,7 @@
   "label.max-mos": "Max MOS",
   "label.medicine-count_one": "{{count}} medicine",
   "label.medicine-count_other": "{{count}} medicines",
+  "label.medicines": "Medicines",
   "label.menu": "Menu",
   "label.message": "Message",
   "label.min": "Min",
