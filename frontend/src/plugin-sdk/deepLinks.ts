@@ -153,6 +153,21 @@ export const stocktakeDetailPath = (stocktakeId: string): string =>
 export const stockListPath = (): string => 'inventory/stock';
 
 /**
+ * One item's stock: the register searched by the item's code, as the old UI's
+ * item page links it (#1790). It goes through the list's own search chip, so
+ * the user sees the filter and can clear it. Carrying its own filter, it
+ * replaces the list's default "not expired" chip — the item's stock on hand
+ * counts expired lines too, so the register shows them.
+ *
+ * Host-shared, NOT plugin surface (like listPath): only the item page links
+ * here.
+ */
+export const itemStockPath = (itemCode: string): string =>
+  listPath(stockListPath(), {
+    search: { like: itemCode },
+  } satisfies StockFilter);
+
+/**
  * Expired: expiry before today — a batch is usable to the end of its expiry
  * day (OMS-REG-DB-01.41, #1786).
  */
