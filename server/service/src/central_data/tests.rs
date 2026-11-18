@@ -9,11 +9,12 @@ use crate::{
     session_store::SessionStore,
     user_account::UserAccountService,
 };
+use chrono::NaiveDate;
 use repository::{
-    ItemRow, ItemRowRepository, ItemType, ItemVariantRow, ItemVariantRowRepository, KeyType,
-    KeyValueStoreRepository, LanguageType, LocationTypeRow, LocationTypeRowRepository,
-    RequisitionLineRow, RequisitionLineRowRepository, StorageConnection, UnitRow,
-    UnitRowRepository, UserAccountRow, UserAccountRowRepository, UserStoreJoinRow,
+    CurrencyRow, CurrencyRowRepository, ItemRow, ItemRowRepository, ItemType, ItemVariantRow,
+    ItemVariantRowRepository, KeyType, KeyValueStoreRepository, LanguageType, LocationTypeRow,
+    LocationTypeRowRepository, RequisitionLineRow, RequisitionLineRowRepository, StorageConnection,
+    UnitRow, UnitRowRepository, UserAccountRow, UserAccountRowRepository, UserStoreJoinRow,
     UserStoreJoinRowRepository, VENCategory,
     mock::{
         MockDataInserts, mock_draft_request_requisition_line, mock_item_a_variant_1, mock_store_a,
@@ -1779,6 +1780,449 @@ async fn a_delete_row_keeps_a_location_type_on_a_requisition_line_or_item_varian
     );
     assert!(repo.find_one_by_id("requested_type").unwrap().is_some());
     assert!(repo.find_one_by_id("variant_type").unwrap().is_some());
+}
+
+const CURRENCY_HEADERS: [&str; 6] = [
+    "id",
+    "code",
+    "rate",
+    "is_home_currency",
+    "date_updated",
+    "is_active",
+];
+
+fn currency_sheet(rows: Vec<Vec<Value>>) -> Vec<u8> {
+    sheet::write(vec![sheet_data("currency", &CURRENCY_HEADERS, rows)]).unwrap()
+}
+
+/// One row of `CURRENCY_HEADERS`; blank cells are `""`.
+fn currency_row(cells: [&str; 6]) -> Vec<Value> {
+    cells
+        .into_iter()
+        .map(|cell| match cell {
+            "" => Value::Empty,
+            cell => Value::Text(cell.to_string()),
+        })
+        .collect()
+}
+
+fn usd() -> CurrencyRow {
+    CurrencyRow {
+        id: "usd".to_string(),
+        code: "USD".to_string(),
+        rate: 1.0,
+        is_home_currency: true,
+        date_updated: NaiveDate::from_ymd_opt(2026, 1, 15),
+        is_active: true,
+    }
+}
+
+fn nzd() -> CurrencyRow {
+    CurrencyRow {
+        id: "nzd".to_string(),
+        code: "NZD".to_string(),
+        rate: 1.6,
+        is_home_currency: false,
+        date_updated: None,
+        is_active: true,
+    }
+}
+
+fn find_currency(connection: &StorageConnection, id: &str) -> Option<CurrencyRow> {
+    CurrencyRowRepository::new(connection)
+        .find_one_by_id(id)
+        .unwrap()
+}
+
+/// USD, the home currency; NZD; and an inactive NZD with the same code.
+async fn currency_setup(name: &str) -> (StorageConnection, ServiceProvider, TempDir) {
+    let (_, connection, connection_manager, _) = setup_all(name, MockDataInserts::none()).await;
+    let repo = CurrencyRowRepository::new(&connection);
+    for currency in [
+        usd(),
+        nzd(),
+        CurrencyRow {
+            id: "old_nzd".to_string(),
+            rate: 1.4,
+            is_active: false,
+            ..nzd()
+        },
+    ] {
+        repo.upsert_one(&currency).unwrap();
+    }
+    (
+        connection,
+        ServiceProvider::new(connection_manager),
+        TempDir::new().unwrap(),
+    )
+}
+
+// covers: OMS-REG-CDIO-01.10, .11, .65, .107
+
+#[actix_rt::test]
+async fn currencies_export_then_import_makes_no_changes() {
+    let (connection, service_provider, dir) =
+        currency_setup("central_data_currency_round_trip").await;
+    // A rate with many decimals and a padded code must survive too.
+    CurrencyRowRepository::new(&connection)
+        .upsert_one(&CurrencyRow {
+            id: "aud".to_string(),
+            code: "AUD ".to_string(),
+            rate: 0.123456789012345,
+            is_home_currency: false,
+            date_updated: NaiveDate::from_ymd_opt(2025, 12, 31),
+            is_active: true,
+        })
+        .unwrap();
+    let before = CurrencyRowRepository::new(&connection).find_all().unwrap();
+    let ctx = service_provider.basic_context().unwrap();
+
+    let table = ExportTable {
+        table: CentralDataTable::Currency,
+        filter: ExportFilter::default(),
+    };
+    let bytes = CentralDataService.export(&ctx, &[table]).unwrap();
+    let path = write_file(dir.path(), bytes);
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions())
+        .unwrap();
+
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].unchanged, 4);
+    assert_eq!(summary.changes, vec![]);
+    assert_eq!(
+        CurrencyRowRepository::new(&connection).find_all().unwrap(),
+        before
+    );
+}
+
+// covers: OMS-REG-CDIO-01.46
+
+#[actix_rt::test]
+async fn a_currency_export_searches_codes_and_filters_by_status() {
+    let (_, service_provider, _) = currency_setup("central_data_currency_filter").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let count = |contains: &str, is_active: Option<bool>| {
+        CentralDataService
+            .export_counts(
+                &ctx,
+                &[ExportTable {
+                    table: CentralDataTable::Currency,
+                    filter: ExportFilter {
+                        contains: Some(contains.to_string()),
+                        is_active,
+                    },
+                }],
+            )
+            .unwrap()[0]
+            .count
+    };
+
+    assert_eq!(
+        count("nz", None),
+        RecordCount {
+            matching: 2,
+            total: 3
+        }
+    );
+    assert_eq!(count("nz", Some(false)).matching, 1);
+    assert_eq!(count("", Some(true)).matching, 2);
+}
+
+// covers: OMS-REG-CDIO-01.12, .63, .76, .108, .109
+
+#[actix_rt::test]
+async fn currency_rows_add_and_update_by_code_or_id() {
+    let (connection, service_provider, dir) = currency_setup("central_data_currency_upsert").await;
+    let ctx = service_provider.basic_context().unwrap();
+
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![
+            currency_row(["", "EUR", "0.9", "FALSE", "", "TRUE"]),
+            // date_updated is export-only, so even a value that isn't a date is ignored.
+            currency_row(["", "GBP", "", "", "18/11/2026", ""]),
+            currency_row(["", "JPY", "0", "FALSE", "", "TRUE"]),
+            currency_row(["", "XYZ", "abc", "FALSE", "", "TRUE"]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions())
+        .unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (3, Some("rate"), "rate is required for a new currency"),
+            (
+                3,
+                Some("is_home_currency"),
+                "is_home_currency is required for a new currency"
+            ),
+            (
+                3,
+                Some("is_active"),
+                "is_active is required for a new currency"
+            ),
+            (4, Some("rate"), "rate must be above 0"),
+            (5, Some("rate"), "\"abc\" must be a number"),
+        ]
+    );
+    assert_eq!(
+        CurrencyRowRepository::new(&connection)
+            .find_all()
+            .unwrap()
+            .len(),
+        3
+    );
+
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![
+            currency_row(["", "EUR", "0.9", "FALSE", "2020-01-01", "TRUE"]),
+            // Found by code, the active NZD; blank required cells keep their values.
+            currency_row(["", "NZD", "1.7", "", "2020-01-01", ""]),
+            // Found by id. A new date_updated alone changes nothing.
+            currency_row(["usd", "USD", "", "", "2020-01-01", ""]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(
+        (
+            summary.tables[0].inserted,
+            summary.tables[0].updated,
+            summary.tables[0].unchanged
+        ),
+        (1, 1, 1)
+    );
+    assert_eq!(
+        summary.changes[1].fields,
+        vec![FieldChange {
+            column: "rate",
+            from: "1.6".to_string(),
+            to: "1.7".to_string(),
+        }]
+    );
+    assert_eq!(
+        find_currency(&connection, "nzd"),
+        Some(CurrencyRow { rate: 1.7, ..nzd() })
+    );
+    assert_eq!(find_currency(&connection, "usd"), Some(usd()));
+    assert_eq!(find_currency(&connection, "old_nzd").unwrap().rate, 1.4);
+    let eur = CurrencyRowRepository::new(&connection)
+        .find_by_trimmed_code("EUR")
+        .unwrap()
+        .pop()
+        .unwrap();
+    assert_eq!(
+        (
+            eur.rate,
+            eur.is_home_currency,
+            eur.date_updated,
+            eur.is_active
+        ),
+        (0.9, false, None, true)
+    );
+}
+
+// covers: OMS-REG-CDIO-01.24, .39, .110
+
+#[actix_rt::test]
+async fn a_code_two_active_currencies_share_asks_for_the_id() {
+    let (connection, service_provider, dir) =
+        currency_setup("central_data_currency_ambiguous_code").await;
+    let ctx = service_provider.basic_context().unwrap();
+    // Legacy data can hold duplicates the import would refuse.
+    CurrencyRowRepository::new(&connection)
+        .upsert_one(&CurrencyRow {
+            id: "nzd_copy".to_string(),
+            ..nzd()
+        })
+        .unwrap();
+
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![
+            currency_row(["", "NZD", "1.8", "", "", ""]),
+            currency_row(["nzd_copy", "NZD", "1.8", "", "", ""]),
+            // An inactive currency's id finds it, whatever shares its code.
+            currency_row(["old_nzd", "NZD", "1.5", "", "", ""]),
+            currency_row(["usd", "NZD", "", "", "", ""]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                2,
+                Some("code"),
+                "ambiguous reference, please provide id instead"
+            ),
+            (
+                5,
+                Some("code"),
+                "code and id conflict: USD has code USD and id usd, but this row has code NZD and id usd"
+            ),
+        ]
+    );
+    assert_eq!(summary.tables[0].updated, 2);
+}
+
+// covers: OMS-REG-CDIO-01.110, .115
+
+#[actix_rt::test]
+async fn an_inactive_currency_does_not_make_an_active_ones_code_ambiguous() {
+    let (connection, service_provider, dir) =
+        currency_setup("central_data_currency_active_first").await;
+    let ctx = service_provider.basic_context().unwrap();
+
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![currency_row(["", "NZD", "1.8", "", "", ""])]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(find_currency(&connection, "nzd").unwrap().rate, 1.8);
+    assert_eq!(find_currency(&connection, "old_nzd").unwrap().rate, 1.4);
+
+    // Making the active one inactive is a delete. With none active, the code finds the
+    // inactive ones, so both now share it.
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![
+            currency_row(["nzd", "NZD", "", "", "", "FALSE"]),
+            currency_row(["", "NZD", "1.9", "", "", ""]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(summary.tables[0].deleted, 1);
+    assert_eq!(
+        row_errors(&summary),
+        vec![(
+            3,
+            Some("code"),
+            "ambiguous reference, please provide id instead"
+        )]
+    );
+}
+
+// covers: OMS-REG-CDIO-01.111
+
+#[actix_rt::test]
+async fn a_currency_cannot_be_made_active_beside_an_active_one_with_its_code() {
+    let (connection, service_provider, dir) =
+        currency_setup("central_data_currency_reactivate").await;
+    let ctx = service_provider.basic_context().unwrap();
+
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![currency_row(["old_nzd", "NZD", "", "", "", "TRUE"])]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(
+            2,
+            Some("is_active"),
+            "Currency nzd is active with code NZD. Make one of them inactive"
+        )]
+    );
+
+    // Once the other is inactive, on an earlier row, it can be.
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![
+            currency_row(["nzd", "NZD", "", "", "", "FALSE"]),
+            currency_row(["old_nzd", "NZD", "", "", "", "TRUE"]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert!(find_currency(&connection, "old_nzd").unwrap().is_active);
+}
+
+// covers: OMS-REG-CDIO-01.112
+
+#[actix_rt::test]
+async fn only_one_currency_can_be_the_home_currency() {
+    let (connection, service_provider, dir) = currency_setup("central_data_currency_home").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let home_error = (
+        2,
+        Some("is_home_currency"),
+        "USD is the home currency, and there can be only one. Set its is_home_currency to FALSE on an earlier row",
+    );
+
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![currency_row(["", "NZD", "", "TRUE", "", ""])]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(row_errors(&summary), vec![home_error]);
+
+    // An inactive home currency is still the home currency.
+    CurrencyRowRepository::new(&connection)
+        .upsert_one(&CurrencyRow {
+            is_active: false,
+            ..usd()
+        })
+        .unwrap();
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(row_errors(&summary), vec![home_error]);
+
+    // Moved on an earlier row, it can be given to another.
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![
+            currency_row(["", "USD", "", "FALSE", "", ""]),
+            currency_row(["", "NZD", "1", "TRUE", "", ""]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert!(!find_currency(&connection, "usd").unwrap().is_home_currency);
+    assert!(find_currency(&connection, "nzd").unwrap().is_home_currency);
+}
+
+// covers: OMS-REG-CDIO-01.113
+
+#[actix_rt::test]
+async fn a_saved_currency_with_a_rate_of_0_stays_editable() {
+    let (connection, service_provider, dir) =
+        currency_setup("central_data_currency_zero_rate").await;
+    let ctx = service_provider.basic_context().unwrap();
+    CurrencyRowRepository::new(&connection)
+        .upsert_one(&CurrencyRow { rate: 0.0, ..nzd() })
+        .unwrap();
+
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![currency_row(["nzd", "NZD", "0", "", "", "FALSE"])]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert!(!find_currency(&connection, "nzd").unwrap().is_active);
+
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![currency_row(["nzd", "NZD", "-1", "", "", ""])]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(2, Some("rate"), "rate must be above 0")]
+    );
 }
 
 const ITEM_HEADERS: [&str; 16] = [

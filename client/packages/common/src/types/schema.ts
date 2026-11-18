@@ -1795,6 +1795,7 @@ export type CentralDataTableChangesNode = {
 };
 
 export enum CentralDataTableNode {
+  Currency = 'CURRENCY',
   Item = 'ITEM',
   LocationType = 'LOCATION_TYPE',
   Unit = 'UNIT',

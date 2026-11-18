@@ -13,6 +13,7 @@ use std::{
 use umya_spreadsheet::helper::coordinate::string_from_column_index;
 
 pub mod cells;
+mod currency;
 pub mod delete;
 mod item;
 mod location_type;
@@ -38,6 +39,7 @@ pub const ERROR_COLUMN: &str = "error";
 pub enum CentralDataTable {
     Unit,
     LocationType,
+    Currency,
     User,
     Item,
 }
@@ -109,6 +111,7 @@ impl CentralDataTable {
         match self {
             CentralDataTable::Unit => "unit",
             CentralDataTable::LocationType => "location_type",
+            CentralDataTable::Currency => "currency",
             CentralDataTable::User => "user",
             CentralDataTable::Item => "item",
         }
@@ -119,6 +122,7 @@ impl CentralDataTable {
 static TABLES: &[&(dyn ImportTable + Sync)] = &[
     &unit::UnitTable,
     &location_type::LocationTypeTable,
+    &currency::CurrencyTable,
     &user::UserTable,
     &item::ItemTable,
 ];

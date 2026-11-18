@@ -16,10 +16,10 @@ const RATE: &str = "rate";
 const IS_HOME_CURRENCY: &str = "is_home_currency";
 const DATE_UPDATED: &str = "date_updated";
 const IS_ACTIVE: &str = "is_active";
-const COLUMNS: &[&str] = &[ID, CODE, RATE, IS_HOME_CURRENCY, DATE_UPDATED, IS_ACTIVE];
+const COLUMNS: &[&str] = &[ID, CODE, RATE, IS_HOME_CURRENCY, IS_ACTIVE];
 
 /// Matched by `id`, else `code`, among active currencies first. On an update a blank cell keeps
-/// the value, except `date_updated`, which it clears.
+/// the value. `date_updated` is the server's to set, so it's export-only.
 pub(super) struct CurrencyTable;
 
 impl ImportTable for CurrencyTable {
@@ -36,6 +36,10 @@ impl ImportTable for CurrencyTable {
         &[ID, CODE, DATE_UPDATED]
     }
 
+    fn export_only_columns(&self) -> &'static [&'static str] {
+        &[DATE_UPDATED]
+    }
+
     fn export(
         &self,
         connection: &StorageConnection,
@@ -45,7 +49,11 @@ impl ImportTable for CurrencyTable {
             .find_all()?
             .into_iter()
             .filter(|currency| matches(filter, currency))
-            .map(|currency| cells(&currency))
+            .map(|currency| {
+                let mut row = cells(&currency);
+                row.push(currency.date_updated.map(|date| date.to_string()).into());
+                row
+            })
             .collect())
     }
 
@@ -80,7 +88,6 @@ impl SheetImport for CurrencySheet {
         let mut errors = Vec::new();
         let rate = collect(&mut errors, row.number(RATE));
         let is_home_currency = collect(&mut errors, row.bool(IS_HOME_CURRENCY));
-        let date_updated = collect(&mut errors, row.date(DATE_UPDATED));
         let is_active = collect(&mut errors, row.bool(IS_ACTIVE));
         let id = row.text(ID);
         let code = row.text(CODE);
@@ -131,11 +138,8 @@ impl SheetImport for CurrencySheet {
             code: code.unwrap_or_default(),
             rate: rate.unwrap_or_default(),
             is_home_currency: is_home_currency.unwrap_or_default(),
-            date_updated: if row.has(DATE_UPDATED) {
-                date_updated
-            } else {
-                existing.as_ref().and_then(|saved| saved.date_updated)
-            },
+            // Export-only, so kept as saved.
+            date_updated: existing.as_ref().and_then(|saved| saved.date_updated),
             is_active: is_active.unwrap_or_default(),
         };
 
@@ -200,14 +204,14 @@ fn matches(filter: &ExportFilter, currency: &CurrencyRow) -> bool {
     filter.matches(&[&currency.code], Some(currency.is_active))
 }
 
-/// One per column, as the export writes them and the preview shows them.
+/// One per column, as the export writes them and the preview shows them. The export adds
+/// `date_updated`.
 fn cells(currency: &CurrencyRow) -> Vec<Value> {
     vec![
         currency.id.clone().into(),
         currency.code.clone().into(),
         Value::Number(currency.rate),
         currency.is_home_currency.into(),
-        currency.date_updated.map(|date| date.to_string()).into(),
         currency.is_active.into(),
     ]
 }

@@ -287,6 +287,7 @@ fn store_temporary(base_dir: &str, name: &str, bytes: &[u8]) -> Result<String> {
 pub enum CentralDataTableNode {
     Unit,
     LocationType,
+    Currency,
     User,
     Item,
 }

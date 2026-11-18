@@ -1,7 +1,8 @@
 use super::cells::{Row, RowError};
 use repository::{
-    ItemRow, ItemRowRepository, LocationTypeRow, LocationTypeRowRepository, RepositoryError,
-    UnitRow, UnitRowRepository, UserAccountRow, UserAccountRowRepository, trim_spaces,
+    CurrencyRow, CurrencyRowRepository, ItemRow, ItemRowRepository, LocationTypeRow,
+    LocationTypeRowRepository, RepositoryError, UnitRow, UnitRowRepository, UserAccountRow,
+    UserAccountRowRepository, trim_spaces,
 };
 use std::collections::HashMap;
 
@@ -48,6 +49,23 @@ impl KeyedTable for LocationTypeRowRepository<'_> {
         self.find_one_by_id(id)
     }
     fn find_by_key(&self, code: &str) -> Result<Vec<LocationTypeRow>, RepositoryError> {
+        self.find_by_trimmed_code(code)
+    }
+}
+
+/// Looked up by code.
+impl KeyedTable for CurrencyRowRepository<'_> {
+    type Record = CurrencyRow;
+    fn id(currency: &CurrencyRow) -> &str {
+        &currency.id
+    }
+    fn key(currency: &CurrencyRow) -> &str {
+        &currency.code
+    }
+    fn find_by_id(&self, id: &str) -> Result<Option<CurrencyRow>, RepositoryError> {
+        self.find_one_by_id(id)
+    }
+    fn find_by_key(&self, code: &str) -> Result<Vec<CurrencyRow>, RepositoryError> {
         self.find_by_trimmed_code(code)
     }
 }
