@@ -4,12 +4,13 @@ import {
   createSignal,
   For,
   Match,
+  onCleanup,
   Show,
   Switch,
   untrack,
 } from 'solid-js';
 import type { Component } from 'solid-js';
-import { createStore, produce, reconcile } from 'solid-js/store';
+import { produce, reconcile } from 'solid-js/store';
 import { useParams } from '@solidjs/router';
 import {
   graphqlFetch,
@@ -27,7 +28,7 @@ import {
   t,
 } from '@/intl';
 import { prescriptionPreferences } from '@/store/storeContext';
-import { fetchPatientOptionById, type PatientOption } from '@/domain/patient';
+import { fetchPatientOptionById } from '@/domain/patient';
 import { ItemSearch } from '@/domain/item';
 import { round9 } from '@/domain/allocation';
 import { Page } from '@/ui/layout/Page/Page';
@@ -69,12 +70,12 @@ import {
   type DispenseInput,
   type DispensedTo,
   type SaveReply,
-  type VisitRecord,
 } from './simpleDispensingLogic';
 import { MedicineCardView } from './MedicineCard';
 import { DispensingList } from './DispensingList';
 import { StepHeading } from './StepHeading';
 import { WhoIsItFor } from './WhoIsItFor';
+import { leaveVisit, visitFor } from './keptVisit';
 import styles from './SimpleDispensing.module.css';
 
 /*
@@ -87,6 +88,37 @@ import styles from './SimpleDispensing.module.css';
 const SimpleDispensingPage: Component = () => {
   const params = useParams<{ storeId: string }>();
   const recordsHref = () => `/${params.storeId}/dispensary/dispensing/records`;
+
+  // The visit in progress, kept while staff go elsewhere (rules › Dispensing
+  // records): read once, as the screen opens, since a store switch remounts
+  // it. A new visit starts with the unnamed patient where the store says so;
+  // the preferences are in before this screen opens, since it waits for the
+  // dispensing screen.
+  const visitState = untrack(() =>
+    visitFor(params.storeId, () => startsWithUnnamed(prescriptionPreferences()))
+  );
+  const storeOpened = untrack(() => params.storeId);
+  onCleanup(() => leaveVisit(storeOpened, visitState));
+  // Setters and accessors are stable, so taking them apart is safe.
+  const {
+    patient,
+    setPatient,
+    unnamed,
+    setUnnamed,
+    lines,
+    setLines,
+    searchedIds,
+    setSearchedIds,
+    notice,
+    setNotice,
+    dispensing,
+    setDispensing,
+    unconfirmed,
+    setUnconfirmed,
+    looking,
+    setLooking,
+  } = visitState;
+  const visit = visitState.record;
 
   // Undefined until the store context resolves, so "loading" is never shown
   // as "none set up".
@@ -159,7 +191,6 @@ const SimpleDispensingPage: Component = () => {
   // price and stock. In the background: the screen says what a failure means
   // (searchFailed), and the app's error dialog would offer a reload that
   // loses the visit.
-  const [searchedIds, setSearchedIds] = createSignal<string[]>([]);
   const [searchedItems, { mutate: setSearchedItems }] = createResource<
     CardItem[] | undefined,
     { storeId: string; ids: string[] }
@@ -201,22 +232,14 @@ const SimpleDispensingPage: Component = () => {
 
   // Who the visit is for (rules › who it's for and the list): nothing can be
   // added until someone is chosen, and choosing someone else keeps the list.
-  const [patient, setPatient] = createSignal<PatientOption | null>(null);
-  // Or the store's unnamed patient (rules › the unnamed patient), which a
-  // new visit starts with where the store says so. The preferences are in
-  // before this screen opens, since it waits for the dispensing screen.
-  const [unnamed, setUnnamed] = createSignal(
-    untrack(() => startsWithUnnamed(prescriptionPreferences()))
-  );
+  // Or the store's unnamed patient (rules › the unnamed patient). Both are
+  // the kept visit's.
   const chosen = () => unnamed() || patient() !== null;
   const chooseUnnamed = (on: boolean) => {
     setNotice(undefined);
     setPatient(null);
     setUnnamed(on);
   };
-  // The unnamed patient's record, once the server has given it: the same
-  // one for every visit.
-  let unnamedPatient: DispensedTo | undefined;
   const [createPatientOpen, setCreatePatientOpen] = createSignal(false);
   // A patient just created comes back with its id and name only: read its
   // record so its code, date of birth and gender show like anyone else's.
@@ -225,9 +248,7 @@ const SimpleDispensingPage: Component = () => {
     if (full && patient()?.id === id) setPatient(full);
   };
 
-  // The list: client state until the visit is dispensed. A store keyed by
-  // medicine, so editing one line's amount never rebuilds its row.
-  const [lines, setLines] = createStore<ListLine[]>([]);
+  // The list: client state until the visit is dispensed, the kept visit's.
   const update = (next: ListLine[]) =>
     setLines(reconcile(next, { key: 'itemId' }));
   // Below zero once the check finds less stock than the list holds: the card
@@ -283,21 +304,11 @@ const SimpleDispensingPage: Component = () => {
   // Dispense (rules › dispensing the visit): check the stock again, stop with
   // the short lines marked if anything ran out, else save the whole visit in
   // one transaction and clear the screen for the next person.
-  const [dispensing, setDispensing] = createSignal(false);
-  const [notice, setNotice] = createSignal<
-    { severity: 'success' | 'error'; text: string } | undefined
-  >();
-  // The visit's record (rules › dispensing the visit): its id, from its first
-  // save until it is finished or the list is cleared, so a save repeated after
-  // a lost reply can never make a second record; and, once a save's reply was
-  // lost, who it was for, until the visit is finished. Read only by Dispense
-  // and Clear, so not a signal.
-  const visit: { current?: VisitRecord } = {};
-  // A save whose reply never came may have gone through. Until Dispense finds
-  // out, the visit can't be changed: only Dispense is offered.
-  const [unconfirmed, setUnconfirmed] = createSignal(false);
-  // Clear looking for a save whose reply was lost.
-  const [looking, setLooking] = createSignal(false);
+  // The save's state, the notice and the visit's record (rules › dispensing
+  // the visit) are the kept visit's: a save still out when staff leave
+  // finishes into it. A save whose reply never came may have gone through:
+  // until Dispense finds out, the visit can't be changed, and only Dispense
+  // is offered.
   // While a save is in flight or unconfirmed, nothing about the visit can
   // change: a press or an edit then would miss the save, or be cleared with
   // the list once it lands.
@@ -406,7 +417,7 @@ const SimpleDispensingPage: Component = () => {
     DispensedTo | { failed: true; missing?: string[] } | undefined
   > => {
     if (!unnamed()) return patient() ?? undefined;
-    if (unnamedPatient) return unnamedPatient;
+    if (visitState.unnamedPatient) return visitState.unnamedPatient;
     // Background: a failure is this screen's to say, as Dispense's is.
     const result = await graphqlFetch(
       SimpleUnnamedPatient,
@@ -421,11 +432,11 @@ const SimpleDispensingPage: Component = () => {
             ? missingPermissions(result.errors)
             : undefined,
       };
-    unnamedPatient = {
+    visitState.unnamedPatient = {
       ...result.data.getOrCreateUnnamedPatient,
       isUnnamed: true,
     };
-    return unnamedPatient;
+    return visitState.unnamedPatient;
   };
 
   /** Check the list against the stock now; save it if it is all there. */

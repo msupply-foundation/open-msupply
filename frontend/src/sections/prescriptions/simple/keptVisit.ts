@@ -1,0 +1,156 @@
+import {
+  createEffect,
+  createRoot,
+  createSignal,
+  on,
+  type Accessor,
+  type Setter,
+} from 'solid-js';
+import { createStore, type SetStoreFunction } from 'solid-js/store';
+import { authUser } from '../../../auth/authContext';
+import type { PatientOption } from '../../../domain/patient';
+import type {
+  DispensedTo,
+  ListLine,
+  VisitRecord,
+} from './simpleDispensingLogic';
+
+// The Simple screen's visit in progress, kept while staff go elsewhere in the
+// app (spec/prescriptions rules › Dispensing records): the list, who it is for,
+// the notice, and the state of a save. It lives here rather than in the
+// screen, so leaving the screen doesn't drop it, and a save still out when
+// staff leave finishes into the same visit the screen shows on return. That
+// is what stops a visit being saved twice by leaving and coming back: the
+// record id and the hold after a lost reply are the visit's, not the
+// screen's.
+//
+// In memory only: a reload starts afresh, and nothing reaches browser
+// storage (contract › Dispensing records). One per signed-in user and store;
+// signing out drops them all.
+
+export type Notice = { severity: 'success' | 'error'; text: string };
+
+export interface KeptVisit {
+  patient: Accessor<PatientOption | null>;
+  setPatient: Setter<PatientOption | null>;
+  unnamed: Accessor<boolean>;
+  setUnnamed: Setter<boolean>;
+  /** Keyed by medicine, so editing one line's amount never rebuilds its row. */
+  lines: ListLine[];
+  setLines: SetStoreFunction<ListLine[]>;
+  /** Medicines chosen from the search, read like the cards. */
+  searchedIds: Accessor<string[]>;
+  setSearchedIds: Setter<string[]>;
+  notice: Accessor<Notice | undefined>;
+  setNotice: Setter<Notice | undefined>;
+  /** A save in flight. */
+  dispensing: Accessor<boolean>;
+  setDispensing: Setter<boolean>;
+  /**
+   * A save whose reply never came: only Dispense is offered until it is
+   * known.
+   */
+  unconfirmed: Accessor<boolean>;
+  setUnconfirmed: Setter<boolean>;
+  /** Clear looking for a save whose reply was lost. */
+  looking: Accessor<boolean>;
+  setLooking: Setter<boolean>;
+  /**
+   * The visit's record: its id from its first save until it is finished or
+   * cleared, so a save repeated after a lost reply can never make a second
+   * record. Read only by Dispense and Clear, so not a signal.
+   */
+  record: { current?: VisitRecord };
+  /** The store's unnamed patient, once the server has given it. */
+  unnamedPatient?: DispensedTo;
+}
+
+const newVisit = (startsWithUnnamed: boolean): KeptVisit => {
+  const [patient, setPatient] = createSignal<PatientOption | null>(null);
+  const [unnamed, setUnnamed] = createSignal(startsWithUnnamed);
+  const [lines, setLines] = createStore<ListLine[]>([]);
+  const [searchedIds, setSearchedIds] = createSignal<string[]>([]);
+  const [notice, setNotice] = createSignal<Notice | undefined>();
+  const [dispensing, setDispensing] = createSignal(false);
+  const [unconfirmed, setUnconfirmed] = createSignal(false);
+  const [looking, setLooking] = createSignal(false);
+  return {
+    patient,
+    setPatient,
+    unnamed,
+    setUnnamed,
+    lines,
+    setLines,
+    searchedIds,
+    setSearchedIds,
+    notice,
+    setNotice,
+    dispensing,
+    setDispensing,
+    unconfirmed,
+    setUnconfirmed,
+    looking,
+    setLooking,
+    record: {},
+  };
+};
+
+const kept = new Map<string, KeptVisit>();
+const keyOf = (storeId: string) => `${authUser()?.userId ?? ''}:${storeId}`;
+
+// Signing out drops every kept visit: the next person to sign in on this
+// screen must not find the last one's list. Set up once, on first use; a
+// re-login after a timeout keeps the user, so it keeps their visit too.
+let watching = false;
+const dropOnSignOut = () => {
+  if (watching) return;
+  watching = true;
+  createRoot(() =>
+    createEffect(
+      on(authUser, user => {
+        if (!user) kept.clear();
+      })
+    )
+  );
+};
+
+/**
+ * The store's visit in progress: the one kept from an earlier visit to the
+ * screen, or a new one, starting with the unnamed patient where the store
+ * says so.
+ */
+export const visitFor = (
+  storeId: string,
+  startsWithUnnamed: () => boolean
+): KeptVisit => {
+  dropOnSignOut();
+  const key = keyOf(storeId);
+  let visit = kept.get(key);
+  if (!visit) {
+    visit = newVisit(startsWithUnnamed());
+    kept.set(key, visit);
+  }
+  return visit;
+};
+
+/** Whether leaving now leaves anything to come back to. */
+export const worthKeeping = (visit: KeptVisit): boolean =>
+  visit.lines.length > 0 ||
+  visit.patient() !== null ||
+  visit.dispensing() ||
+  visit.unconfirmed() ||
+  visit.looking() ||
+  visit.record.current !== undefined;
+
+/**
+ * The screen is closing. A visit with nothing on its list, no registered
+ * patient chosen and no save out is dropped, so the screen next starts as a
+ * new visit does; anything else is kept for the way back.
+ */
+export const leaveVisit = (storeId: string, visit: KeptVisit): void => {
+  const key = keyOf(storeId);
+  if (!worthKeeping(visit) && kept.get(key) === visit) kept.delete(key);
+};
+
+/** Tests only: start every store afresh. */
+export const forgetKeptVisits = (): void => kept.clear();
