@@ -3431,9 +3431,19 @@ async fn only_a_server_admin_can_import_or_export_users() {
             errors,
             [("user", None, "Only a server admin can import this sheet")]
         );
-        // Its rows don't run.
-        let tables: Vec<_> = summary.tables.iter().map(|changes| changes.table).collect();
-        assert_eq!(tables, [CentralDataTable::Unit]);
+        // Its rows don't run, but it's listed with its error.
+        let tables: Vec<_> = summary
+            .tables
+            .iter()
+            .map(|changes| (changes.table, changes.error_count, changes.unchanged))
+            .collect();
+        assert_eq!(
+            tables,
+            [
+                (CentralDataTable::Unit, 0, 0),
+                (CentralDataTable::User, 1, 0)
+            ]
+        );
     }
     // With an error nothing is applied, the unit included.
     assert_eq!(

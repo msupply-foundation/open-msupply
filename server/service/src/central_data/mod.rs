@@ -651,22 +651,27 @@ fn import_sheets<'a>(
         let Some(sheet) = sheet_for(*table, sheets) else {
             continue;
         };
-        // None of its rows run, so their errors can't tell the user about records they can't see.
-        if refused.contains(&table.table()) {
+        let errors_before = summary.error_count;
+        let is_refused = refused.contains(&table.table());
+        if is_refused {
             summary.add_errors([RowError {
                 sheet: sheet.name.clone(),
                 row: None,
                 column: None,
                 message: "Only a server admin can import this sheet".to_string(),
             }]);
-            continue;
+        } else {
+            summary.add_errors(check_headers(*table, sheet));
         }
-        let errors_before = summary.error_count;
-        summary.add_errors(check_headers(*table, sheet));
-        table_sheets.push((*table, sheet, summary.error_count - errors_before));
+        table_sheets.push((
+            *table,
+            sheet,
+            summary.error_count - errors_before,
+            is_refused,
+        ));
     }
 
-    for (table, sheet, heading_errors) in table_sheets {
+    for (table, sheet, heading_errors, is_refused) in table_sheets {
         let row_errors_before = summary.error_count;
 
         let mut changes = TableChanges {
@@ -677,6 +682,13 @@ fn import_sheets<'a>(
             unchanged: 0,
             error_count: 0,
         };
+        // Listed with its error, but none of its rows run, so their errors can't tell the user
+        // about records they can't see.
+        if is_refused {
+            changes.error_count = heading_errors;
+            summary.tables.push(changes);
+            continue;
+        }
         let mut rows = table.start_sheet(connection, start(table.table()))?;
         // Record id → first row that changes it.
         let mut seen: HashMap<String, u32> = HashMap::new();
