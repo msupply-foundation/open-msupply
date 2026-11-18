@@ -202,6 +202,9 @@ pub(crate) struct RowOutcome {
 pub enum Change {
     Inserted,
     Updated,
+    /// An update that brings back a deleted record, with what it had before, such as a user's
+    /// store access. Counted as updated, and labelled so the preview shows it.
+    Restored,
     Deleted,
     Unchanged,
 }
@@ -690,7 +693,7 @@ fn import_sheets<'a>(
             // Unchanged rows may repeat; two rows changing one record can't.
             let count = match outcome.change {
                 Change::Inserted => &mut changes.inserted,
-                Change::Updated => &mut changes.updated,
+                Change::Updated | Change::Restored => &mut changes.updated,
                 Change::Deleted => &mut changes.deleted,
                 Change::Unchanged => {
                     changes.unchanged += 1;

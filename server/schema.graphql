@@ -1315,6 +1315,10 @@ type CentralDataCannotReadFile implements CentralDataImportErrorInterface {
 enum CentralDataChangeNode {
 	INSERTED
 	UPDATED
+	"""
+	Counted as updated.
+	"""
+	RESTORED
 	DELETED
 	UNCHANGED
 }

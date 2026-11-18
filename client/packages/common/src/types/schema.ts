@@ -1644,6 +1644,8 @@ export type CentralDataCannotReadFile = CentralDataImportErrorInterface & {
 export enum CentralDataChangeNode {
   Deleted = 'DELETED',
   Inserted = 'INSERTED',
+  /** Counted as updated. */
+  Restored = 'RESTORED',
   Unchanged = 'UNCHANGED',
   Updated = 'UPDATED',
 }

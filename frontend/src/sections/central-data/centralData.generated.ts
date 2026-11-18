@@ -47,7 +47,7 @@ export type CentralDataImportResultFragment = ({
   sheet: string;
   row: number;
   record: string;
-  change: "INSERTED" | "UPDATED" | "DELETED" | "UNCHANGED";
+  change: "INSERTED" | "UPDATED" | "RESTORED" | "DELETED" | "UNCHANGED";
   fields: Array<{
   column: string;
   from: string;

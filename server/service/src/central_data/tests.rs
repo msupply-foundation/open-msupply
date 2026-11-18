@@ -3237,6 +3237,7 @@ async fn a_row_without_delete_restores_a_deleted_user() {
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.tables[0].updated, 1);
+    assert_eq!(summary.changes[0].change, Change::Restored);
     assert_eq!(
         summary.changes[0]
             .fields

@@ -301,8 +301,13 @@ impl SheetImport for UserSheet {
             deleted_datetime: None,
         };
 
-        // Restoring a deleted user is an update.
-        let change = Change::between_upserts(saved, &user);
+        // Restoring a deleted user is an update, labelled as a restore.
+        let change = match Change::between_upserts(saved, &user) {
+            Change::Updated if saved.is_some_and(|saved| saved.deleted_datetime.is_some()) => {
+                Change::Restored
+            }
+            change => change,
+        };
         if change != Change::Unchanged {
             save_user(connection, &self.importer, &user)
                 .map_err(|error| upsert_failure(row, error))?;

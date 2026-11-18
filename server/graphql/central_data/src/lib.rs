@@ -337,6 +337,8 @@ pub struct CentralDataExportCountNode {
 pub enum CentralDataChangeNode {
     Inserted,
     Updated,
+    /// Counted as updated.
+    Restored,
     Deleted,
     Unchanged,
 }

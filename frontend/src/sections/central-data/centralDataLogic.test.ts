@@ -5,6 +5,7 @@ import type { GraphqlResult } from '@/api/graphql';
 import type { CentralDataImportResultFragment } from './centralData.generated';
 import {
   IMPORT_ACCEPT,
+  changeBadge,
   changeCount,
   describeFields,
   emptyFilters,
@@ -242,6 +243,19 @@ describe('OMS-REG-CDIO-01.35 — the changed rows list', () => {
     expect(
       describeFields([{ column: 'code', from: 'A1', to: 'B2' }])
     ).toContain('"from":"\u2068A1\u2069"');
+  });
+});
+
+describe('OMS-REG-CDIO-01.96 — a restored user in the changed rows list', () => {
+  it('badges a restore apart from an update, as a warning', () => {
+    expect(changeBadge('RESTORED')).toEqual({
+      labelKey: 'label.change-restored',
+      tone: 'warning',
+    });
+    expect(changeBadge('UPDATED')).toEqual({
+      labelKey: 'label.change-updated',
+    });
+    expect(changeBadge('UNCHANGED')).toBeUndefined();
   });
 });
 

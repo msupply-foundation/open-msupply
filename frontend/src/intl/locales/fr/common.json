@@ -1323,6 +1323,7 @@
   "label.change-deleted": "Suppression",
   "label.change-kind": "Type de modification",
   "label.change-new": "Ajout",
+  "label.change-restored": "Restauration",
   "label.change-status": "Modifier le statut",
   "label.change-updated": "Mise à jour",
   "label.characters": "Caractères",

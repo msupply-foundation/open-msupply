@@ -253,6 +253,21 @@ export const changeCount = (summary: Summary) => {
   return inserted + updated + deleted;
 };
 
+/** The changed-row badge; unchanged rows are never listed. A restore counts
+ *  as updated, but has its own badge, as it brings back a deleted record. */
+const CHANGE_BADGE: Record<
+  Exclude<Summary['changes'][number]['change'], 'UNCHANGED'>,
+  { labelKey: LocaleKey; tone?: 'info' | 'warning' }
+> = {
+  INSERTED: { labelKey: 'label.change-new', tone: 'info' },
+  UPDATED: { labelKey: 'label.change-updated' },
+  RESTORED: { labelKey: 'label.change-restored', tone: 'warning' },
+  DELETED: { labelKey: 'label.change-deleted', tone: 'warning' },
+};
+
+export const changeBadge = (change: Summary['changes'][number]['change']) =>
+  change === 'UNCHANGED' ? undefined : CHANGE_BADGE[change];
+
 /** Isolates a value's direction (FSI…PDI), so a Latin code in a
  *  right-to-left line keeps its place around the arrow. */
 const isolate = (value: string) => `\u2068${value}\u2069`;

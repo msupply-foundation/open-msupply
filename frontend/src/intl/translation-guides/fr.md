@@ -74,6 +74,7 @@ Where this file and the glossary disagree, the glossary wins. Fix this file to m
 | import / export (data screen)                      | importation / exportation                                      | the screen name; see open questions                                                    |
 | count chips: N new / updated / deleted / unchanged | N ajout(s) / mise(s) à jour / suppression(s) / sans changement | nouns, so they agree with any table's records; see open questions                      |
 | change badges: New / Updated / Deleted / Unchanged | Ajout / Mise à jour / Suppression / Sans changement            | `label.change-*`, the same nouns as the count chips; not `label.new` (_Créé_)          |
+| change badge: Restored                             | Restauration                                                   | `label.change-restored`, a deleted record brought back                                 |
 | Change (the kind of change, a column header)       | Type de modification                                           | `label.change-kind`; `label.change` is a stock quantity's _Variation (unités)_         |
 
 ## `fr-DJ` (Djibouti) watch list

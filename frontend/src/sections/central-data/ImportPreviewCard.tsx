@@ -1,5 +1,5 @@
 import { For, Show } from 'solid-js';
-import { formatNumber, t, tPlural, type LocaleKey } from '@/intl';
+import { formatNumber, t, tPlural } from '@/intl';
 import { CardGrid } from '@/ui/layout/CardGrid/CardGrid';
 import { DetailCard } from '@/ui/layout/Detail/DetailCard';
 import { Stack } from '@/ui/layout/Stack/Stack';
@@ -21,6 +21,7 @@ import {
   AccordionTrigger,
 } from '@/ui/elements/accordion/Accordion';
 import {
+  changeBadge,
   changeCount,
   describeFields,
   tableEntry,
@@ -36,20 +37,7 @@ export type Preview = {
   summary: Extract<ImportOutcome, { kind: 'summary' }>['summary'];
 };
 
-/** The changed-row badge; unchanged rows are never listed. */
-const CHANGE_BADGE: Record<
-  Exclude<Preview['summary']['changes'][number]['change'], 'UNCHANGED'>,
-  { labelKey: LocaleKey; tone?: 'info' | 'warning' }
-> = {
-  INSERTED: { labelKey: 'label.change-new', tone: 'info' },
-  UPDATED: { labelKey: 'label.change-updated' },
-  DELETED: { labelKey: 'label.change-deleted', tone: 'warning' },
-};
-
 type RowChange = Preview['summary']['changes'][number];
-
-const changeBadge = (change: RowChange['change']) =>
-  change === 'UNCHANGED' ? undefined : CHANGE_BADGE[change];
 type RowError = Preview['summary']['errors'][number];
 
 /** Rows per page of either list. */
