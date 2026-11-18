@@ -6,9 +6,9 @@ use std::{
 use chrono::Utc;
 use repository::{
     ChangelogCondition, ChangelogFilter, EqualFilter, KeyType, KeyValueStoreRepository,
-    NameRowRepository, Pagination, PatientFilter, PatientRepository, PatientSort,
-    PatientSortField, RepositoryError, SiteFilter, SiteRepository, SiteRow, SiteRowRepository,
-    SourceSiteId, StorageConnection, SyncBufferRepository, SyncVersion, is_unnamed_patient_id,
+    NameRowRepository, Pagination, PatientFilter, PatientRepository, PatientSort, PatientSortField,
+    RepositoryError, SiteFilter, SiteRepository, SiteRow, SiteRowRepository, SourceSiteId,
+    StorageConnection, SyncBufferRepository, SyncVersion, is_unnamed_patient_id,
     migrations::Version,
     syncv7::{SiteLockError, SyncError},
 };
@@ -1546,6 +1546,92 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(ids(second), ["d1980", "d1990"]);
+    }
+
+    // OMS-REG-DIS-12.208, .211: central's search leaves every store's unnamed
+    // patient out whatever filter the remote sends, and central refuses to
+    // link one, whatever the remote's version
+    #[actix_rt::test]
+    async fn central_never_finds_or_links_a_stores_unnamed_patient() {
+        use repository::{
+            EqualFilter, NameRow, NameRowRepository, NameRowType, NameStoreJoinFilter,
+            NameStoreJoinRepository, PatientFilter, StringFilter, unnamed_patient_id,
+        };
+
+        let (
+            ServiceTestContext {
+                service_provider,
+                connection,
+                ..
+            },
+            common,
+        ) = setup_with(
+            "sync_v7_unnamed_patient",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+
+        let unnamed = unnamed_patient_id(&mock_store_a().id);
+        let repo = NameRowRepository::new(&connection);
+        repo.upsert_one(&NameRow {
+            id: unnamed.clone(),
+            name: "Unnamed patient".to_string(),
+            code: "UNNAMED".to_string(),
+            r#type: NameRowType::Patient,
+            ..Default::default()
+        })
+        .unwrap();
+        repo.upsert_one(&NameRow {
+            id: "registered".to_string(),
+            name: "Unnamed, Ali".to_string(),
+            code: "UNNAMED-2".to_string(),
+            r#type: NameRowType::Patient,
+            ..Default::default()
+        })
+        .unwrap();
+
+        // The filter a site sends, which doesn't ask for it to be left out:
+        // a page (this version's sites) and every match (an older site)
+        for limit in [Some(10), None] {
+            let found = patient_search(
+                service_provider.clone(),
+                common.clone(),
+                patient_search::Input {
+                    filter: PatientFilter::new().code(StringFilter::starts_with("unnamed")),
+                    limit,
+                    offset: None,
+                },
+            )
+            .await
+            .unwrap();
+            let ids: Vec<String> = found.into_iter().map(|patient| patient.id).collect();
+            assert_eq!(ids, ["registered"], "limit {limit:?}");
+        }
+
+        // Linking it to another store is refused, and no link is made
+        let result = patient_data_for_site(
+            service_provider,
+            common,
+            patient_data_for_site::Input {
+                patient_id: unnamed.clone(),
+                store_id: mock_store_b().id,
+                name_store_join_id: "unnamed_join".to_string(),
+            },
+        )
+        .await;
+        match result {
+            Err(SyncError::Other(message)) => assert!(message.contains("unnamed patient")),
+            Err(error) => panic!("refused for the wrong reason: {error:?}"),
+            Ok(_) => panic!("the unnamed patient was linked"),
+        }
+        assert!(
+            NameStoreJoinRepository::new(&connection)
+                .query_by_filter(
+                    NameStoreJoinFilter::new().name_id(EqualFilter::equal_to(unnamed.clone()))
+                )
+                .unwrap()
+                .is_empty()
+        );
     }
 
     #[actix_rt::test]

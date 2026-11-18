@@ -440,8 +440,65 @@ mod test {
 
     use super::{
         CentralPatientRequestError, CentralPatientSearch, central_search_filter, legacy_can_filter,
-        map_v7_sync_error,
+        link_patient_to_store, map_v7_sync_error, without_unnamed_patients,
     };
+    use crate::{apis::patient_v4::PatientV4, test_helpers::setup_all_and_service_provider};
+    use repository::{mock::MockDataInserts, unnamed_patient_id};
+
+    fn legacy_patient(id: &str, code: &str) -> PatientV4 {
+        PatientV4 {
+            id: id.to_string(),
+            name: code.to_string(),
+            phone: String::new(),
+            email: String::new(),
+            code: code.to_string(),
+            last: String::new(),
+            first: String::new(),
+            date_of_birth: None,
+            gender: None,
+            code_2: None,
+            is_deceased: false,
+            address1: None,
+            next_of_kin_name: None,
+        }
+    }
+
+    // OMS-REG-DIS-12.208: legacy mSupply can't be asked to leave it out, so
+    // the site drops every store's unnamed patient from its results
+    #[test]
+    fn legacy_results_leave_out_every_stores_unnamed_patient() {
+        let ids: Vec<String> = without_unnamed_patients(vec![
+            legacy_patient(&unnamed_patient_id("store_a"), "UNNAMED"),
+            legacy_patient("unnamed_patients_list", "LOOKALIKE"),
+            legacy_patient(&unnamed_patient_id("store_b"), "UNNAMED"),
+            legacy_patient("registered", "REG-1"),
+        ])
+        .into_iter()
+        .map(|patient| patient.id)
+        .collect();
+        // Only the fixed id counts, not a name that starts the same way
+        assert_eq!(ids, ["unnamed_patients_list", "registered"]);
+    }
+
+    // OMS-REG-DIS-12.211: the site refuses before it asks central, so a
+    // site without sync settings still refuses
+    #[actix_rt::test]
+    async fn linking_the_unnamed_patient_is_refused_on_the_site() {
+        let context =
+            setup_all_and_service_provider("link_unnamed_patient_refused", MockDataInserts::none())
+                .await;
+        let result = link_patient_to_store(
+            &context.service_provider,
+            &context.service_context,
+            "store_b",
+            &unnamed_patient_id("store_a"),
+        )
+        .await;
+        assert!(
+            matches!(result, Err(CentralPatientRequestError::InternalError(ref message)) if message.contains("unnamed patient")),
+            "{result:?}"
+        );
+    }
 
     fn date(y: i32, m: u32, d: u32) -> NaiveDate {
         NaiveDate::from_ymd_opt(y, m, d).unwrap()

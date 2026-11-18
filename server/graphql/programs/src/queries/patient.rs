@@ -2,7 +2,7 @@ use async_graphql::*;
 use graphql_core::dynamic_filter::{parse_dynamic_filter, validate_custom_field_filter_keys};
 use graphql_core::pagination::PaginationInput;
 use graphql_core::{ContextExt, standard_graphql_error::validate_auth};
-use graphql_types::types::patient::{PatientFilterInput, PatientNode};
+use graphql_types::types::patient::{PatientFilterInput, PatientNode, patients_query_filter};
 use repository::{
     EqualFilter, NameCondition, PaginationOption, PatientFilter, PatientSort, PatientSortField,
 };
@@ -78,22 +78,23 @@ pub fn patients(
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
 
-    let filter = filter
-        .map(|filter| -> Result<PatientFilter> {
-            let dynamic_filter: Option<NameCondition::Inner> =
-                parse_dynamic_filter(filter.dynamic_filter.clone())?;
-            if let Some(condition) = &dynamic_filter {
-                validate_custom_field_filter_keys(
-                    &context.connection,
-                    "patient",
-                    &condition.custom_field_conditions(),
-                )?;
-            }
-            let mut filter = PatientFilter::from(filter);
-            filter.dynamic_filter = dynamic_filter;
-            Ok(filter)
-        })
-        .transpose()?;
+    // A store's unnamed patient is left out unless the filter looks it up by
+    // id, and with no filter at all (spec/prescriptions rules › the unnamed
+    // patient)
+    let dynamic_filter: Option<NameCondition::Inner> = match &filter {
+        Some(filter) => parse_dynamic_filter(filter.dynamic_filter.clone())?,
+        None => None,
+    };
+    if let Some(condition) = &dynamic_filter {
+        validate_custom_field_filter_keys(
+            &context.connection,
+            "patient",
+            &condition.custom_field_conditions(),
+        )?;
+    }
+    let mut filter = patients_query_filter(filter);
+    filter.dynamic_filter = dynamic_filter;
+    let filter = Some(filter);
 
     let patients = service_provider
         .patient_service

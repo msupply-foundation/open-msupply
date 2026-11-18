@@ -166,6 +166,27 @@ mod test {
         assert_eq!(joins.len(), 1);
         assert!(joins[0].name_store_join.visible);
 
+        // A deleted one comes back, as the same record: the id is fixed
+        NameRowRepository::new(&connection)
+            .upsert_one(&NameRow {
+                deleted_datetime: Some(Utc::now().naive_utc()),
+                ..NameRowRepository::new(&connection)
+                    .find_one_by_id(&first.id)
+                    .unwrap()
+                    .unwrap()
+            })
+            .unwrap();
+        let restored = get_or_create_unnamed_patient(&ctx, &store_a).unwrap();
+        assert_eq!(restored.id, first.id);
+        assert_eq!(
+            NameRowRepository::new(&connection)
+                .find_one_by_id(&first.id)
+                .unwrap()
+                .unwrap()
+                .deleted_datetime,
+            None
+        );
+
         // Another store gets its own
         let store_b = mock_store_b().id;
         use_unnamed_patient(&connection, &store_b, true);
