@@ -12,7 +12,7 @@ use service::{
         ImportSummary, MAX_IMPORT_ROWS, OpenSessions, RowChange, TableChanges, cells::RowError,
         sheet::MAX_CELLS,
     },
-    service_provider::ServiceProvider,
+    service_provider::{ServiceContext, ServiceProvider},
     settings::Settings,
     static_files::{StaticFileCategory, StaticFileService},
 };
@@ -147,37 +147,55 @@ async fn import(
     file_id: String,
     commit: bool,
 ) -> Result<CentralDataImportResponse> {
-    let user_id = validate(ctx)?;
-    let service_provider = ctx.data_unchecked::<Data<ServiceProvider>>().clone();
-    let settings = ctx.data_unchecked::<Data<Settings>>().clone();
     let sessions = OpenSessions {
         store: ctx.get_auth_data().session_store.clone(),
         keep: ctx.get_auth_token(),
     };
+    let result = with_upload(ctx, file_id, move |service_provider, context, path| {
+        let service = &service_provider.central_data_service;
+        if commit {
+            service.import(context, path, &sessions)
+        } else {
+            service.preview_import(context, path)
+        }
+    })
+    .await?;
+    Ok(match result {
+        Ok(summary) => CentralDataImportResponse::Response(summary.into()),
+        Err(error) => CentralDataImportResponse::Error(error),
+    })
+}
+
+/// Checks the user may import, then runs `read` on the upload as them. An expired upload, or
+/// one the service refuses, comes back as the error the client shows.
+async fn with_upload<T: Send + 'static>(
+    ctx: &Context<'_>,
+    file_id: String,
+    read: impl FnOnce(&ServiceProvider, &ServiceContext, &Path) -> Result<T, ImportError>
+    + Send
+    + 'static,
+) -> Result<Result<T, CentralDataImportError>> {
+    let user_id = validate(ctx)?;
+    let service_provider = ctx.data_unchecked::<Data<ServiceProvider>>().clone();
+    let settings = ctx.data_unchecked::<Data<Settings>>().clone();
 
     // Blocking pool, to free the worker; the transaction is as long either way.
     let result = tokio::task::spawn_blocking(move || -> Result<_> {
         let context = service_provider.context(String::new(), user_id)?;
-        let service = &service_provider.central_data_service;
         read_upload(&settings, file_id, |path| {
-            if commit {
-                service.import(&context, path, &sessions)
-            } else {
-                service.preview_import(&context, path)
-            }
+            read(&service_provider, &context, path)
         })
     })
     .await
     .map_err(StandardGraphqlError::from_join_error)??;
 
-    let error = match result {
-        None => upload_expired(),
-        Some(Ok(summary)) => return Ok(CentralDataImportResponse::Response(summary.into())),
-        Some(Err(error)) => CentralDataImportError {
+    Ok(match result {
+        None => Err(upload_expired()),
+        Some(Ok(value)) => Ok(value),
+        Some(Err(error)) => Err(CentralDataImportError {
             error: import_error(error)?,
-        },
-    };
-    Ok(CentralDataImportResponse::Error(error))
+        }),
+    })
 }
 
 /// Runs `read` on the upload. `None` once the upload is deleted, an hour after it's made, even
@@ -226,40 +244,28 @@ fn internal_import_error(error: ImportError) -> Error {
 }
 
 async fn errors_file(ctx: &Context<'_>, file_id: String) -> Result<CentralDataErrorsFileResponse> {
-    let user_id = validate(ctx)?;
-    let service_provider = ctx.data_unchecked::<Data<ServiceProvider>>().clone();
-    let settings = ctx.data_unchecked::<Data<Settings>>().clone();
-
-    let file_id = tokio::task::spawn_blocking(move || -> Result<_> {
-        let context = service_provider.context(String::new(), user_id)?;
-        let Some(result) = read_upload(&settings, file_id, |path| {
-            service_provider
-                .central_data_service
-                .import_errors_file(&context, path)
-        })?
-        else {
-            return Ok(None);
-        };
-        Ok(Some(match result {
-            Ok(bytes) => Ok(store_temporary(
-                &settings.server.base_dir,
-                "central_data_errors.xlsx",
-                &bytes,
-            )?),
-            Err(error) => Err(error),
-        }))
+    let base_dir = ctx
+        .data_unchecked::<Data<Settings>>()
+        .server
+        .base_dir
+        .clone();
+    // Stored on the blocking pool too, as it writes a file.
+    let result = with_upload(ctx, file_id, move |service_provider, context, path| {
+        let bytes = service_provider
+            .central_data_service
+            .import_errors_file(context, path)?;
+        Ok(store_temporary(
+            &base_dir,
+            "central_data_errors.xlsx",
+            &bytes,
+        ))
     })
-    .await
-    .map_err(StandardGraphqlError::from_join_error)??;
-
-    Ok(match file_id {
-        None => CentralDataErrorsFileResponse::Error(upload_expired()),
-        Some(Ok(file_id)) => {
-            CentralDataErrorsFileResponse::Response(CentralDataExportNode { file_id })
+    .await?;
+    Ok(match result {
+        Ok(stored) => {
+            CentralDataErrorsFileResponse::Response(CentralDataExportNode { file_id: stored? })
         }
-        Some(Err(error)) => CentralDataErrorsFileResponse::Error(CentralDataImportError {
-            error: import_error(error)?,
-        }),
+        Err(error) => CentralDataErrorsFileResponse::Error(error),
     })
 }
 
@@ -596,6 +602,7 @@ mod tests {
                 ValidatedUser,
             },
             auth_data::AuthData,
+            central_data::{CentralDataService, CentralDataServiceTrait, CentralDataTable},
             service_provider::ServiceContext,
             sync::{CentralServerConfig, test_util_set_is_central_server},
         };
@@ -721,6 +728,59 @@ mod tests {
                     }),
                     "{result}"
                 );
+            }
+        }
+        // covers: OMS-REG-CDIO-01.8, .12
+
+        /// Each upload operation, through `with_upload`: a workbook is read, and a file that
+        /// isn't one is refused as such.
+        #[actix_rt::test]
+        async fn an_upload_is_previewed_imported_and_given_its_errors_file() {
+            let (connection_manager, mut settings) = setup("central_data_graphql_upload").await;
+            CentralServerConfig::set_standalone_central();
+            let dir = tempfile::tempdir().unwrap();
+            settings.settings.server.base_dir = dir.path().to_string_lossy().to_string();
+            let files = StaticFileService::new(&settings.settings.server.base_dir).unwrap();
+            let store = |bytes: &[u8]| {
+                files
+                    .store_file("units.xlsx", StaticFileCategory::Temporary, bytes)
+                    .unwrap()
+                    .id
+            };
+            let context = ServiceProvider::new(connection_manager)
+                .basic_context()
+                .unwrap();
+            let workbook = CentralDataService
+                .export(
+                    &context,
+                    &[ExportTable {
+                        table: CentralDataTable::Unit,
+                        filter: ExportFilter::default(),
+                    }],
+                )
+                .unwrap();
+            let (workbook, not_a_workbook) = (store(&workbook), store(b"x"));
+
+            for (operation, field, done) in [
+                (OPERATIONS[1], "importPreview", "CentralDataImportNode"),
+                (OPERATIONS[3], "errorsFile", "CentralDataExportNode"),
+                (OPERATIONS[4], "import", "CentralDataImportNode"),
+            ] {
+                for (id, typename) in [
+                    (&workbook, done),
+                    (&not_a_workbook, "CentralDataImportError"),
+                ] {
+                    let variables = Some(json!({ "id": id }));
+                    let result = run_test_gql_query(&settings, operation, &variables, None).await;
+                    assert_eq!(result["data"][field]["__typename"], typename, "{result}");
+                    if id == &not_a_workbook {
+                        assert_eq!(
+                            result["data"][field]["error"]["__typename"],
+                            "CentralDataCannotReadFile",
+                            "{result}"
+                        );
+                    }
+                }
             }
         }
     }
