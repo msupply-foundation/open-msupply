@@ -1,5 +1,5 @@
 import { createRoot } from 'solid-js';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { LayeredConfig } from '../ui/elements/table/tableConfig';
 
 /*
@@ -28,6 +28,8 @@ vi.mock('../appData', async () => ({
   ).isEmptyLayeredConfig,
   getUserTableConfig: vi.fn(),
   setUserTableConfig: vi.fn(),
+  getLegacyTableImport: () => undefined,
+  setLegacyTableImport: vi.fn(),
 }));
 
 type Document = { query: string };
@@ -140,6 +142,40 @@ describe('createTableConfig shared layouts', () => {
         storeId: 'store-1',
         input: { globalTableDefaultConfigs: { 'other-table': other } },
       });
+      dispose();
+    });
+  });
+});
+
+describe('createTableConfig and the import of the React front end layouts', () => {
+  beforeEach(() => vi.clearAllMocks());
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('re-reads the user layer of an open table when an import finishes (OMS-REG-LGN-01.36)', async () => {
+    const { createTableConfig, getUserTableConfig } = await load({});
+    // The fresh module graph load() imported, so the import below bumps the
+    // same signal createTableConfig tracks.
+    const { createLegacyTableImport, LEGACY_TABLE_KEY_PREFIX } =
+      await import('../legacyTableImport/legacyTableImportState');
+    vi.stubGlobal('localStorage', {
+      length: 1,
+      key: () => `${LEGACY_TABLE_KEY_PREFIX}stock-list`,
+    });
+    getUserTableConfig.mockReturnValue({});
+
+    await createRoot(async dispose => {
+      const table = createTableConfig({ tableId: 'stock-list' });
+      table.config(); // arms the shared fetch
+      await settle(); // and lets it land, so nothing else re-reads the layers
+      expect(table.config().viewMode).toBeUndefined();
+
+      createLegacyTableImport(
+        () => 'user-1',
+        async () => {
+          getUserTableConfig.mockReturnValue({ base: { viewMode: 'card' } });
+        }
+      );
+      await vi.waitFor(() => expect(table.config().viewMode).toBe('card'));
       dispose();
     });
   });

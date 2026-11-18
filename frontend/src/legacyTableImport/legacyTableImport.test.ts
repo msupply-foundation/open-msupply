@@ -13,6 +13,7 @@ import {
   LEGACY_TABLE_KEY_PREFIX,
   needsLegacyTableImport,
 } from './legacyTableImportState';
+import { legacyTableImportVersion } from './legacyTableImportVersion';
 
 /*
  * The one-time import of the React front end's personal table layouts
@@ -62,9 +63,9 @@ describe('needsLegacyTableImport', () => {
     expect(needsLegacyTableImport('user-1')).toBe(false);
   });
 
-  it('with no old layouts on the device, is false and marks the import done', () => {
+  it('with no old layouts on the device, is false, and writes nothing', () => {
     expect(needsLegacyTableImport('user-1')).toBe(false);
-    expect(getLegacyTableImport('user-1')).toBe(0);
+    expect(getLegacyTableImport('user-1')).toBeUndefined();
   });
 
   it('with old layouts and no flag, is true', () => {
@@ -137,6 +138,7 @@ describe('createLegacyTableImport', () => {
       expect(legacyImport.ready()).toBe(true);
       await settle();
       expect(runImport).not.toHaveBeenCalled();
+      expect(getLegacyTableImport('user-1')).toBe(0);
       dispose();
     }));
 
@@ -153,7 +155,7 @@ describe('createLegacyTableImport', () => {
       dispose();
     }));
 
-  it('runs again for a different user signing in, and holds back until it has (OMS-REG-LGN-01.35)', () =>
+  it('runs again for a different user signing in, without holding the open app back (OMS-REG-LGN-01.35, OMS-REG-LGN-01.36)', () =>
     createRoot(async dispose => {
       setOldLayout('stock-movement-detail', OLD_STOCK_MOVEMENT);
       setLegacyTableImport('user-1', 1);
@@ -161,17 +163,23 @@ describe('createLegacyTableImport', () => {
       const runImport = vi.fn(async (id: string) => importLegacyTables(id));
       const legacyImport = createLegacyTableImport(userId, runImport);
       expect(legacyImport.ready()).toBe(true);
+      const versionBefore = legacyTableImportVersion();
 
       setUserId('user-2');
-      expect(legacyImport.ready()).toBe(false);
-      await vi.waitFor(() => expect(legacyImport.ready()).toBe(true));
+      expect(legacyImport.ready()).toBe(true);
+      await vi.waitFor(() =>
+        expect(legacyTableImportVersion()).toBe(versionBefore + 1)
+      );
+      expect(legacyImport.ready()).toBe(true);
       expect(runImport).toHaveBeenCalledTimes(1);
       expect(runImport).toHaveBeenCalledWith('user-2');
-      expect(getLegacyTableImport('user-2')).toBeGreaterThan(0);
+      expect(getUserTableConfig('user-2', 'stock-movement-lines')).toEqual(
+        IMPORTED_STOCK_MOVEMENT
+      );
       dispose();
     }));
 
-  it('opens anyway when the import fails, leaving it to run again next time', () =>
+  it('opens anyway when the import fails, and runs it again at the next sign-in', () =>
     createRoot(async dispose => {
       setOldLayout('stock-movement-detail', OLD_STOCK_MOVEMENT);
       const consoleError = vi
@@ -186,5 +194,14 @@ describe('createLegacyTableImport', () => {
       expect(needsLegacyTableImport('user-1')).toBe(true);
       consoleError.mockRestore();
       dispose();
+
+      // The next sign-in mounts the gate afresh.
+      await createRoot(async disposeNext => {
+        const nextSignIn = createLegacyTableImport(() => 'user-1');
+        expect(nextSignIn.ready()).toBe(false);
+        await vi.waitFor(() => expect(nextSignIn.ready()).toBe(true));
+        expect(getLegacyTableImport('user-1')).toBeGreaterThan(0);
+        disposeNext();
+      });
     }));
 });

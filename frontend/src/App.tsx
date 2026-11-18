@@ -295,10 +295,11 @@ export const App: Component = () => {
                 visibility gate. */}
             <PluginGate>
               {/* The one-time import of the React front end's table layouts
-                  (#2072) finishes before any table mounts, since a table
-                  reads its layout when it mounts. Inside the session, and
+                  (#2072) finishes before the first screen renders, so it
+                  opens with the imported layouts. Inside the session, and
                   tracking the user, because the re-login modal can sign a
-                  different user in without unmounting this. */}
+                  different user in without unmounting this: that user's
+                  import runs with the screen left in place. */}
               <LegacyTableImportGate>
                 {/* `routerBase` matches Vite's `base` config so the same build
                 can be mounted at a non-root path — the deployed /rc/ track,

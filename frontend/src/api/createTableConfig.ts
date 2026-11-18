@@ -17,6 +17,7 @@ import {
 } from '../appData';
 import { currentStoreId, hasPermission } from '../store/storeContext';
 import { currentUserId } from '../auth/authContext';
+import { legacyTableImportVersion } from '../legacyTableImport/legacyTableImportVersion';
 import { isCentralServer } from './serverInfo';
 import { createStoreScopedResource } from './storeScopedResource';
 import { graphqlFetch } from './graphql';
@@ -138,11 +139,13 @@ export function createTableConfig(options: {
   const global = (): LayeredConfig | undefined => globalConfigs()[tableId];
 
   // User layer: read from appData, re-read on every write via a version bump
-  // (appData is plain localStorage, not reactive). Keyed by the current user;
-  // empty until customised.
+  // (appData is plain localStorage, not reactive), and when an import of the
+  // React front end's layouts finishes for a user who signed in on an open
+  // screen. Keyed by the current user; empty until customised.
   const [userVersion, bumpUser] = createSignal(0);
   const user = (): LayeredConfig => {
     userVersion(); // track: writes bump this so the memo recomputes
+    legacyTableImportVersion();
     const userId = currentUserId();
     return userId ? getUserTableConfig(userId, tableId) : {};
   };
