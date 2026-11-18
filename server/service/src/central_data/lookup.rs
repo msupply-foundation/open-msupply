@@ -1,7 +1,8 @@
 use super::cells::{Row, RowError};
 use repository::{
-    ItemRow, ItemRowRepository, LocationTypeRow, LocationTypeRowRepository, RepositoryError,
-    UnitRow, UnitRowRepository, UserAccountRow, UserAccountRowRepository, trim_spaces,
+    ItemRow, ItemRowRepository, LocationTypeRow, LocationTypeRowRepository, MasterListRow,
+    MasterListRowRepository, RepositoryError, UnitRow, UnitRowRepository, UserAccountRow,
+    UserAccountRowRepository, trim_spaces,
 };
 use std::collections::HashMap;
 
@@ -67,6 +68,22 @@ impl KeyedTable for ItemRowRepository<'_> {
     }
     fn find_by_key(&self, code: &str) -> Result<Vec<ItemRow>, RepositoryError> {
         self.find_by_trimmed_code_without_legacy_record(code)
+    }
+}
+
+impl KeyedTable for MasterListRowRepository<'_> {
+    type Record = MasterListRow;
+    fn id(master_list: &MasterListRow) -> &str {
+        &master_list.id
+    }
+    fn key(master_list: &MasterListRow) -> &str {
+        &master_list.code
+    }
+    fn find_by_id(&self, id: &str) -> Result<Option<MasterListRow>, RepositoryError> {
+        self.find_one_by_id(id)
+    }
+    fn find_by_key(&self, code: &str) -> Result<Vec<MasterListRow>, RepositoryError> {
+        self.find_by_trimmed_code(code)
     }
 }
 

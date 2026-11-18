@@ -12,9 +12,9 @@ use crate::{
 use repository::{
     ItemRow, ItemRowRepository, ItemType, ItemVariantRow, ItemVariantRowRepository, KeyType,
     KeyValueStoreRepository, LanguageType, LocationTypeRow, LocationTypeRowRepository,
-    RequisitionLineRow, RequisitionLineRowRepository, StorageConnection, UnitRow,
-    UnitRowRepository, UserAccountRow, UserAccountRowRepository, UserStoreJoinRow,
-    UserStoreJoinRowRepository, VENCategory,
+    MasterListRow, MasterListRowRepository, RequisitionLineRow, RequisitionLineRowRepository,
+    StorageConnection, UnitRow, UnitRowRepository, UserAccountRow, UserAccountRowRepository,
+    UserStoreJoinRow, UserStoreJoinRowRepository, VENCategory,
     mock::{
         MockDataInserts, mock_draft_request_requisition_line, mock_item_a_variant_1, mock_store_a,
     },
@@ -26,7 +26,7 @@ use std::{
     sync::{Arc, RwLock},
 };
 use tempfile::TempDir;
-use util::constants::{PLUGIN_USER_ID, SYSTEM_USER_ID};
+use util::constants::{MISSING_PROGRAM, PLUGIN_USER_ID, SYSTEM_USER_ID};
 
 fn mock_unit(connection: &StorageConnection) -> UnitRow {
     UnitRowRepository::new(connection)
@@ -3460,4 +3460,461 @@ async fn only_a_server_admin_can_import_or_export_users() {
     let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
     let rows: Vec<_> = summary.errors.iter().map(|error| error.row).collect();
     assert_eq!(rows, [Some(3)], "only the conflict");
+}
+
+// Master lists
+
+const MASTER_LIST_HEADERS: [&str; 7] = [
+    "id",
+    "code",
+    "name",
+    "description",
+    "is_active",
+    "is_default_price_list",
+    "discount_percentage",
+];
+
+fn master_list_sheet(rows: Vec<Vec<Value>>) -> Vec<u8> {
+    sheet::write(vec![sheet_data("master_list", &MASTER_LIST_HEADERS, rows)]).unwrap()
+}
+
+/// One row of `MASTER_LIST_HEADERS`; blank cells are `""`.
+fn master_list_row(cells: [&str; 7]) -> Vec<Value> {
+    cells
+        .into_iter()
+        .map(|cell| match cell {
+            "" => Value::Empty,
+            cell => Value::Text(cell.to_string()),
+        })
+        .collect()
+}
+
+fn essential_medicines() -> MasterListRow {
+    MasterListRow {
+        id: "eml".to_string(),
+        code: "EML".to_string(),
+        name: "Essential medicines".to_string(),
+        description: "WHO list".to_string(),
+        is_active: true,
+        is_default_price_list: true,
+        discount_percentage: Some(12.5),
+    }
+}
+
+fn find_master_list(connection: &StorageConnection, id: &str) -> Option<MasterListRow> {
+    MasterListRowRepository::new(connection)
+        .find_one_by_id(id)
+        .unwrap()
+}
+
+fn all_master_lists() -> ExportTable {
+    ExportTable {
+        table: CentralDataTable::MasterList,
+        filter: ExportFilter::default(),
+    }
+}
+
+async fn master_list_setup(name: &str) -> (StorageConnection, ServiceProvider, TempDir) {
+    let (_, connection, connection_manager, _) = setup_all(name, MockDataInserts::none()).await;
+    MasterListRowRepository::new(&connection)
+        .upsert_one(&essential_medicines())
+        .unwrap();
+    (
+        connection,
+        ServiceProvider::new(connection_manager),
+        TempDir::new().unwrap(),
+    )
+}
+
+// covers: OMS-REG-CDIO-01.10, .11, .22, .65
+
+#[actix_rt::test]
+async fn master_lists_export_then_import_makes_no_changes() {
+    let (connection, service_provider, dir) =
+        master_list_setup("central_data_master_list_round_trip").await;
+    // Leading zeros, padded text, no description or discount and inactive must survive.
+    MasterListRowRepository::new(&connection)
+        .upsert_one(&MasterListRow {
+            id: "old".to_string(),
+            code: "007".to_string(),
+            name: "Old list ".to_string(),
+            description: String::new(),
+            is_active: false,
+            is_default_price_list: false,
+            discount_percentage: None,
+        })
+        .unwrap();
+    let before = MasterListRowRepository::new(&connection)
+        .find_all()
+        .unwrap();
+    let ctx = service_provider.basic_context().unwrap();
+
+    let bytes = CentralDataService
+        .export(&ctx, &[all_master_lists()])
+        .unwrap();
+    let path = write_file(dir.path(), bytes);
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions())
+        .unwrap();
+
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].unchanged, 2);
+    assert_eq!(summary.changes, vec![]);
+    assert_eq!(
+        MasterListRowRepository::new(&connection)
+            .find_all()
+            .unwrap(),
+        before
+    );
+}
+
+// covers: OMS-REG-CDIO-01.46, .47
+
+#[actix_rt::test]
+async fn a_master_list_export_searches_code_and_name_and_filters_by_status() {
+    let (connection, service_provider, _) =
+        master_list_setup("central_data_master_list_filter").await;
+    MasterListRowRepository::new(&connection)
+        .upsert_one(&MasterListRow {
+            id: "hiv".to_string(),
+            code: "ARV".to_string(),
+            name: "HIV program".to_string(),
+            is_active: false,
+            ..Default::default()
+        })
+        .unwrap();
+    let ctx = service_provider.basic_context().unwrap();
+    let matching = |contains: Option<&str>, is_active: Option<bool>| {
+        let table = ExportTable {
+            table: CentralDataTable::MasterList,
+            filter: ExportFilter {
+                contains: contains.map(str::to_string),
+                is_active,
+            },
+        };
+        let count = CentralDataService.export_counts(&ctx, &[table]).unwrap()[0].count;
+        assert_eq!(count.total, 2);
+        count.matching
+    };
+
+    assert_eq!(matching(Some(" essential "), None), 1);
+    assert_eq!(matching(Some("arv"), None), 1);
+    assert_eq!(matching(None, Some(false)), 1);
+    assert_eq!(matching(Some("essential"), Some(false)), 0);
+    assert_eq!(matching(Some(""), None), 2);
+}
+
+// covers: OMS-REG-CDIO-01.12, .27, .35, .58, .63, .76, .107
+
+#[actix_rt::test]
+async fn master_list_rows_add_and_update_by_code() {
+    let (connection, service_provider, dir) =
+        master_list_setup("central_data_master_list_upsert").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let new_list = ["", "HIV", "HIV program", "", "TRUE", "0", "5"];
+    // Found by code; blank required cells keep their values, blank optional ones clear them.
+    let renamed = ["", "EML", "Essential medicines 2026", "", "", "", ""];
+
+    let path = write_file(
+        dir.path(),
+        master_list_sheet(vec![
+            master_list_row(new_list),
+            master_list_row(renamed),
+            master_list_row(["", "NEW", "", "", "yes", "", "ten"]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions())
+        .unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (4, Some("is_active"), "\"yes\" must be TRUE, FALSE, 1 or 0"),
+            (4, Some("discount_percentage"), "\"ten\" must be a number"),
+            (4, Some("name"), "name is required for a new master list"),
+            (
+                4,
+                Some("is_default_price_list"),
+                "is_default_price_list is required for a new master list"
+            ),
+        ]
+    );
+    assert_eq!(
+        find_master_list(&connection, "eml"),
+        Some(essential_medicines())
+    );
+
+    let path = write_file(
+        dir.path(),
+        master_list_sheet(vec![master_list_row(new_list), master_list_row(renamed)]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(
+        (summary.tables[0].inserted, summary.tables[0].updated),
+        (1, 1)
+    );
+    assert_eq!(summary.changes[0].record, "HIV program (HIV)");
+    assert_eq!(
+        summary.changes[1].fields,
+        vec![
+            FieldChange {
+                column: "name",
+                from: "Essential medicines".to_string(),
+                to: "Essential medicines 2026".to_string(),
+            },
+            FieldChange {
+                column: "description",
+                from: "WHO list".to_string(),
+                to: String::new(),
+            },
+            FieldChange {
+                column: "discount_percentage",
+                from: "12.5".to_string(),
+                to: String::new(),
+            },
+        ]
+    );
+    assert_eq!(
+        find_master_list(&connection, "eml"),
+        Some(MasterListRow {
+            name: "Essential medicines 2026".to_string(),
+            description: String::new(),
+            discount_percentage: None,
+            ..essential_medicines()
+        })
+    );
+    let added = MasterListRowRepository::new(&connection)
+        .find_by_trimmed_code("HIV")
+        .unwrap()
+        .remove(0);
+    assert_eq!(
+        added,
+        MasterListRow {
+            id: added.id.clone(),
+            code: "HIV".to_string(),
+            name: "HIV program".to_string(),
+            description: String::new(),
+            is_active: true,
+            is_default_price_list: false,
+            discount_percentage: Some(5.0),
+        }
+    );
+}
+
+// covers: OMS-REG-CDIO-01.39, .51, .73, .74
+
+#[actix_rt::test]
+async fn a_master_list_code_is_not_changed_or_taken_by_import() {
+    let (connection, service_provider, dir) =
+        master_list_setup("central_data_master_list_conflicts").await;
+    let ctx = service_provider.basic_context().unwrap();
+
+    let path = write_file(
+        dir.path(),
+        master_list_sheet(vec![
+            master_list_row(["hiv", "HIV", "HIV program", "", "TRUE", "FALSE", ""]),
+            // A new id beside a code added earlier in the file, then beside a saved one.
+            master_list_row(["copy_id", "HIV", "", "", "", "", ""]),
+            master_list_row(["new_id", "EML", "", "", "", "", ""]),
+            // The id's master list has another code.
+            master_list_row(["eml", "HIV", "", "", "", "", ""]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                3,
+                Some("code"),
+                "code and id conflict: HIV program has code HIV and id hiv, but this row has code HIV and id copy_id"
+            ),
+            (
+                4,
+                Some("code"),
+                "code and id conflict: Essential medicines has code EML and id eml, but this row has code EML and id new_id"
+            ),
+            (
+                5,
+                Some("code"),
+                "code and id conflict: Essential medicines has code EML and id eml, but this row has code HIV and id eml"
+            ),
+        ]
+    );
+    assert_eq!(
+        find_master_list(&connection, "eml"),
+        Some(essential_medicines())
+    );
+    assert_eq!(find_master_list(&connection, "hiv"), None);
+}
+
+// covers: OMS-REG-CDIO-01.108
+
+#[actix_rt::test]
+async fn setting_a_master_list_inactive_counts_as_a_delete() {
+    let (connection, service_provider, dir) =
+        master_list_setup("central_data_master_list_deactivate").await;
+    let ctx = service_provider.basic_context().unwrap();
+    // The other columns are left out, so they keep their values.
+    let bytes = sheet::write(vec![sheet_data(
+        "master_list",
+        &["code", "is_active"],
+        vec![vec![Value::Text("EML".to_string()), false.into()]],
+    )])
+    .unwrap();
+    let path = write_file(dir.path(), bytes);
+
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].deleted, 1);
+    assert_eq!(summary.changes[0].change, Change::Deleted);
+    assert_eq!(
+        find_master_list(&connection, "eml"),
+        Some(MasterListRow {
+            is_active: false,
+            ..essential_medicines()
+        })
+    );
+}
+
+// covers: OMS-REG-CDIO-01.24
+
+#[actix_rt::test]
+async fn a_shared_master_list_code_asks_for_the_id() {
+    let (connection, service_provider, dir) =
+        master_list_setup("central_data_master_list_ambiguous").await;
+    let ctx = service_provider.basic_context().unwrap();
+    // Legacy data can hold duplicates the import would refuse.
+    MasterListRowRepository::new(&connection)
+        .upsert_one(&MasterListRow {
+            id: "eml_copy".to_string(),
+            ..essential_medicines()
+        })
+        .unwrap();
+
+    let path = write_file(
+        dir.path(),
+        master_list_sheet(vec![master_list_row([
+            "", "EML", "Renamed", "", "", "", "",
+        ])]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(
+            2,
+            Some("code"),
+            "ambiguous reference, please provide id instead"
+        )]
+    );
+
+    // The id settles it.
+    let path = write_file(
+        dir.path(),
+        master_list_sheet(vec![master_list_row([
+            "eml_copy", "EML", "Renamed", "", "", "", "",
+        ])]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(
+        find_master_list(&connection, "eml_copy").map(|master_list| master_list.name),
+        Some("Renamed".to_string())
+    );
+    assert_eq!(
+        find_master_list(&connection, "eml"),
+        Some(essential_medicines())
+    );
+}
+
+// covers: OMS-REG-CDIO-01.109
+
+#[actix_rt::test]
+async fn the_missing_program_master_list_is_not_exported_or_imported() {
+    let (connection, service_provider, dir) =
+        master_list_setup("central_data_master_list_protected").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let placeholder = find_master_list(&connection, MISSING_PROGRAM).unwrap();
+
+    let counts = CentralDataService
+        .export_counts(&ctx, &[all_master_lists()])
+        .unwrap();
+    assert_eq!(
+        counts[0].count,
+        RecordCount {
+            matching: 1,
+            total: 1
+        }
+    );
+
+    // By code, then by id.
+    let path = write_file(
+        dir.path(),
+        master_list_sheet(vec![
+            master_list_row(["", MISSING_PROGRAM, "", "", "TRUE", "", ""]),
+            master_list_row([MISSING_PROGRAM, "", "", "", "TRUE", "", ""]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions())
+        .unwrap();
+    let protected =
+        "missing_program is protected, as the server needs it, so import can't change it";
+    assert_eq!(
+        row_errors(&summary),
+        vec![(2, Some("code"), protected), (3, Some("id"), protected)]
+    );
+    assert_eq!(
+        find_master_list(&connection, MISSING_PROGRAM),
+        Some(placeholder)
+    );
+}
+
+// covers: OMS-REG-CDIO-01.109
+
+#[actix_rt::test]
+async fn a_row_cannot_add_the_missing_program_master_list() {
+    let (_, _, connection_manager, _) = setup_all(
+        "central_data_master_list_protected_missing",
+        MockDataInserts::none(),
+    )
+    .await;
+    // As on a database whose placeholder was removed.
+    connection_manager
+        .execute(&format!(
+            "DELETE FROM master_list WHERE id = '{MISSING_PROGRAM}'"
+        ))
+        .unwrap();
+    let service_provider = ServiceProvider::new(connection_manager);
+    let ctx = service_provider.basic_context().unwrap();
+    let dir = TempDir::new().unwrap();
+
+    let path = write_file(
+        dir.path(),
+        master_list_sheet(vec![master_list_row([
+            MISSING_PROGRAM,
+            "NEW",
+            "New",
+            "",
+            "TRUE",
+            "FALSE",
+            "",
+        ])]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(
+            2,
+            Some("id"),
+            "missing_program is protected, as the server needs it, so import can't change it"
+        )]
+    );
 }

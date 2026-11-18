@@ -289,6 +289,7 @@ pub enum CentralDataTableNode {
     LocationType,
     User,
     Item,
+    MasterList,
 }
 
 #[derive(InputObject)]

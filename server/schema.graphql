@@ -1464,6 +1464,7 @@ enum CentralDataTableNode {
 	LOCATION_TYPE
 	USER
 	ITEM
+	MASTER_LIST
 }
 
 type CentralDataTooManyCells implements CentralDataImportErrorInterface {

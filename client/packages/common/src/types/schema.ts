@@ -1797,6 +1797,7 @@ export type CentralDataTableChangesNode = {
 export enum CentralDataTableNode {
   Item = 'ITEM',
   LocationType = 'LOCATION_TYPE',
+  MasterList = 'MASTER_LIST',
   Unit = 'UNIT',
   User = 'USER',
 }

@@ -17,6 +17,7 @@ pub mod delete;
 mod item;
 mod location_type;
 pub mod lookup;
+mod master_list;
 pub mod sheet;
 mod unit;
 mod user;
@@ -40,6 +41,7 @@ pub enum CentralDataTable {
     LocationType,
     User,
     Item,
+    MasterList,
 }
 
 /// Empty exports every record.
@@ -111,6 +113,7 @@ impl CentralDataTable {
             CentralDataTable::LocationType => "location_type",
             CentralDataTable::User => "user",
             CentralDataTable::Item => "item",
+            CentralDataTable::MasterList => "master_list",
         }
     }
 }
@@ -121,6 +124,7 @@ static TABLES: &[&(dyn ImportTable + Sync)] = &[
     &location_type::LocationTypeTable,
     &user::UserTable,
     &item::ItemTable,
+    &master_list::MasterListTable,
 ];
 
 pub(crate) trait ImportTable {
