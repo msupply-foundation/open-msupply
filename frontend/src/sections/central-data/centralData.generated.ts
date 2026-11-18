@@ -36,7 +36,7 @@ export type CentralDataImportResultFragment = ({
   __typename: "CentralDataImportNode";
 } & {
   tables: Array<{
-  table: "UNIT" | "LOCATION_TYPE" | "USER" | "ITEM";
+  table: "UNIT" | "LOCATION_TYPE" | "CURRENCY" | "USER" | "ITEM";
   inserted: number;
   updated: number;
   deleted: number;
@@ -67,7 +67,7 @@ export type CentralDataImportResultFragment = ({
 
 export type CentralDataExportCountsVariables = {
   tables: Array<{
-    table: "UNIT" | "LOCATION_TYPE" | "USER" | "ITEM";
+    table: "UNIT" | "LOCATION_TYPE" | "CURRENCY" | "USER" | "ITEM";
     contains?: string | null;
     isActive?: boolean | null;
   }>;
@@ -78,7 +78,7 @@ export type CentralDataExportCountsResult = {
   centralData: {
   exportCounts: {
   tables: Array<{
-  table: "UNIT" | "LOCATION_TYPE" | "USER" | "ITEM";
+  table: "UNIT" | "LOCATION_TYPE" | "CURRENCY" | "USER" | "ITEM";
   matching: number;
   total: number;
 }>;
@@ -94,7 +94,7 @@ export const CentralDataExportCounts = {
 
 export type CentralDataExportVariables = {
   tables: Array<{
-    table: "UNIT" | "LOCATION_TYPE" | "USER" | "ITEM";
+    table: "UNIT" | "LOCATION_TYPE" | "CURRENCY" | "USER" | "ITEM";
     contains?: string | null;
     isActive?: boolean | null;
   }>;
