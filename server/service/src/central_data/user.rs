@@ -30,7 +30,6 @@ const LAST_NAME: &str = "last_name";
 const PHONE_NUMBER: &str = "phone_number";
 const JOB_TITLE: &str = "job_title";
 const IS_ACTIVE: &str = "is_active";
-const LAST_SUCCESSFUL_SYNC: &str = "last_successful_sync_utc";
 const COLUMNS: &[&str] = &[
     ID,
     USERNAME,
@@ -96,12 +95,7 @@ impl ImportTable for UserTable {
             PHONE_NUMBER,
             JOB_TITLE,
             DELETE_COLUMN,
-            LAST_SUCCESSFUL_SYNC,
         ]
-    }
-
-    fn export_only_columns(&self) -> &'static [&'static str] {
-        &[LAST_SUCCESSFUL_SYNC]
     }
 
     fn export(
@@ -114,15 +108,7 @@ impl ImportTable for UserTable {
         users.sort_by(|a, b| a.username.cmp(&b.username));
         Ok(users
             .into_iter()
-            .map(|user| {
-                let mut row = cells(&user, Value::Empty);
-                row.push(
-                    user.last_successful_sync
-                        .map(|synced| synced.format("%Y-%m-%d %H:%M:%S").to_string())
-                        .into(),
-                );
-                row
-            })
+            .map(|user| cells(&user, Value::Empty))
             .collect())
     }
 

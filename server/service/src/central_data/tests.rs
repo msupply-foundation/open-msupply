@@ -2754,26 +2754,14 @@ async fn users_export_without_passwords_then_import_makes_no_changes() {
         .unwrap()
         .pop()
         .unwrap();
-    assert_eq!(
-        exported.headers,
-        [USER_HEADERS.as_slice(), &["last_successful_sync_utc"]].concat()
-    );
+    assert_eq!(exported.headers, USER_HEADERS);
     // Built-in users left out, and no password or hash.
-    let cells: Vec<(&str, &str, &str)> = exported
+    let cells: Vec<(&str, &str)> = exported
         .rows
         .iter()
-        .map(|row| {
-            (
-                row.cells[1].as_str(),
-                row.cells[2].as_str(),
-                row.cells[11].as_str(),
-            )
-        })
+        .map(|row| (row.cells[1].as_str(), row.cells[2].as_str()))
         .collect();
-    assert_eq!(
-        cells,
-        [("anna", "", "2026-01-02 03:04:05"), ("ben", "", "")]
-    );
+    assert_eq!(cells, [("anna", ""), ("ben", "")]);
 
     let summary = CentralDataService
         .import(&ctx, &path, &no_sessions())
