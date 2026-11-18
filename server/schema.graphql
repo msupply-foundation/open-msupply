@@ -1409,7 +1409,12 @@ type CentralDataMutations {
 	"""
 	Applies nothing if any row has an error.
 	"""
-	import(fileId: String!): CentralDataImportResponse!
+	import(		fileId: String!,
+		"""
+		The user's date in their own time zone, for dates the server sets. Without it, the server's local date
+		"""
+		today: NaiveDate
+	): CentralDataImportResponse!
 }
 
 type CentralDataQueries {
@@ -1462,6 +1467,7 @@ type CentralDataTableChangesNode {
 enum CentralDataTableNode {
 	UNIT
 	LOCATION_TYPE
+	CURRENCY
 	USER
 	ITEM
 }

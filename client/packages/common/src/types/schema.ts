@@ -1745,6 +1745,7 @@ export type CentralDataMutationsExportArgs = {
 
 export type CentralDataMutationsImportArgs = {
   fileId: Scalars['String']['input'];
+  today?: InputMaybe<Scalars['NaiveDate']['input']>;
 };
 
 export type CentralDataQueries = {
@@ -1795,6 +1796,7 @@ export type CentralDataTableChangesNode = {
 };
 
 export enum CentralDataTableNode {
+  Currency = 'CURRENCY',
   Item = 'ITEM',
   LocationType = 'LOCATION_TYPE',
   Unit = 'UNIT',

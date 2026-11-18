@@ -1,5 +1,6 @@
 use actix_web::web::Data;
 use async_graphql::*;
+use chrono::{Local, NaiveDate};
 use graphql_core::{
     ContextExt,
     standard_graphql_error::{StandardGraphqlError, validate_auth},
@@ -29,7 +30,7 @@ impl CentralDataQueries {
         ctx: &Context<'_>,
         file_id: String,
     ) -> Result<CentralDataImportResponse> {
-        import(ctx, file_id, false).await
+        import(ctx, file_id, None).await
     }
 
     pub async fn export_counts(
@@ -118,8 +119,14 @@ impl CentralDataMutations {
         &self,
         ctx: &Context<'_>,
         file_id: String,
+        #[graphql(
+            desc = "The user's date in their own time zone, for dates the server sets. Without it, the server's local date"
+        )]
+        today: Option<NaiveDate>,
     ) -> Result<CentralDataImportResponse> {
-        import(ctx, file_id, true).await
+        // Optional, as `timezoneOffset` is elsewhere, so existing callers still work.
+        let today = today.unwrap_or_else(|| Local::now().date_naive());
+        import(ctx, file_id, Some(today)).await
     }
 }
 
@@ -147,10 +154,11 @@ fn validate(ctx: &Context<'_>) -> Result<String> {
     Ok(user.user_id)
 }
 
+/// Applies the upload on the user's `today`; `None` previews it.
 async fn import(
     ctx: &Context<'_>,
     file_id: String,
-    commit: bool,
+    today: Option<NaiveDate>,
 ) -> Result<CentralDataImportResponse> {
     let sessions = OpenSessions {
         store: ctx.get_auth_data().session_store.clone(),
@@ -158,10 +166,9 @@ async fn import(
     };
     let result = with_upload(ctx, file_id, move |service_provider, context, path| {
         let service = &service_provider.central_data_service;
-        if commit {
-            service.import(context, path, &sessions)
-        } else {
-            service.preview_import(context, path)
+        match today {
+            Some(today) => service.import(context, path, &sessions, today),
+            None => service.preview_import(context, path),
         }
     })
     .await?;
@@ -287,6 +294,7 @@ fn store_temporary(base_dir: &str, name: &str, bytes: &[u8]) -> Result<String> {
 pub enum CentralDataTableNode {
     Unit,
     LocationType,
+    Currency,
     User,
     Item,
 }
@@ -623,7 +631,7 @@ mod tests {
             "query($id: String!) { importPreview(fileId: $id) { __typename ... on CentralDataImportError { error { __typename } } } }",
             "mutation { export(tables: [{ table: UNIT }]) { __typename } }",
             "mutation($id: String!) { errorsFile(fileId: $id) { __typename ... on CentralDataImportError { error { __typename } } } }",
-            "mutation($id: String!) { import(fileId: $id) { __typename ... on CentralDataImportError { error { __typename } } } }",
+            "mutation($id: String!) { import(fileId: $id, today: \\\"2026-11-18\\\") { __typename ... on CentralDataImportError { error { __typename } } } }",
         ];
 
         async fn setup(db_name: &str) -> (StorageConnectionManager, Settings) {

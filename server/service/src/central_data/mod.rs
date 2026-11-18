@@ -3,6 +3,7 @@ use crate::{
     sync::maintenance_mode::is_server_admin,
 };
 use cells::{Row, RowError};
+use chrono::NaiveDate;
 use repository::{RepositoryError, StorageConnection};
 use std::{
     any::Any,
@@ -11,8 +12,10 @@ use std::{
     sync::{Arc, PoisonError, RwLock},
 };
 use umya_spreadsheet::helper::coordinate::string_from_column_index;
+use util::date_now;
 
 pub mod cells;
+mod currency;
 pub mod delete;
 mod item;
 mod location_type;
@@ -38,6 +41,7 @@ pub const ERROR_COLUMN: &str = "error";
 pub enum CentralDataTable {
     Unit,
     LocationType,
+    Currency,
     User,
     Item,
 }
@@ -109,6 +113,7 @@ impl CentralDataTable {
         match self {
             CentralDataTable::Unit => "unit",
             CentralDataTable::LocationType => "location_type",
+            CentralDataTable::Currency => "currency",
             CentralDataTable::User => "user",
             CentralDataTable::Item => "item",
         }
@@ -119,6 +124,7 @@ impl CentralDataTable {
 static TABLES: &[&(dyn ImportTable + Sync)] = &[
     &unit::UnitTable,
     &location_type::LocationTypeTable,
+    &currency::CurrencyTable,
     &user::UserTable,
     &item::ItemTable,
 ];
@@ -172,6 +178,8 @@ pub(crate) struct SheetStart<'a> {
     pub commit: bool,
     /// What `ImportTable::prepare` returned.
     pub prepared: Option<Box<dyn Any>>,
+    /// The importing user's date, for a date the server sets, such as when a currency changed.
+    pub today: NaiveDate,
 }
 
 /// Each row sees the writes of the rows before it.
@@ -182,6 +190,16 @@ pub(crate) trait SheetImport {
         connection: &StorageConnection,
         row: &Row,
     ) -> Result<RowOutcome, RowFailure>;
+
+    /// Run after the sheet's last row, for a rule about the whole table rather than one row.
+    /// `sheet` names the sheet, for an error no row is to blame for.
+    fn finish_sheet(
+        &mut self,
+        _connection: &StorageConnection,
+        _sheet: &str,
+    ) -> Result<Vec<RowError>, RepositoryError> {
+        Ok(Vec::new())
+    }
 
     /// Users whose open sessions must end once the import is applied.
     fn sessions_to_end(&mut self) -> Vec<EndSessions> {
@@ -392,18 +410,21 @@ pub trait CentralDataServiceTrait: Sync + Send {
         ctx: &ServiceContext,
         path: &Path,
     ) -> Result<ImportSummary, ImportError> {
-        run_import(ctx, path, false)
+        // Rolled back, so the date is never kept or shown.
+        run_import(ctx, path, false, date_now())
     }
 
     /// Once applied, ends the open sessions of the users it made inactive, deleted or gave a new
-    /// password, so they don't last until they expire.
+    /// password, so they don't last until they expire. `today` is the date in the importing
+    /// user's time zone, not the server's.
     fn import(
         &self,
         ctx: &ServiceContext,
         path: &Path,
         sessions: &OpenSessions,
+        today: NaiveDate,
     ) -> Result<ImportSummary, ImportError> {
-        let summary = run_import(ctx, path, true)?;
+        let summary = run_import(ctx, path, true, today)?;
         // With errors, nothing was applied.
         if summary.error_count == 0 && !summary.sessions_to_end.is_empty() {
             // Applied by now, so a poisoned lock still ends them rather than fail the import.
@@ -523,9 +544,10 @@ fn run_import(
     ctx: &ServiceContext,
     path: &Path,
     commit: bool,
+    today: NaiveDate,
 ) -> Result<ImportSummary, ImportError> {
     let sheets = read_file(path)?;
-    run_sheets(ctx, &sheets, commit, MAX_ROWS_LISTED)
+    run_sheets(ctx, &sheets, commit, today, MAX_ROWS_LISTED)
 }
 
 fn read_file(path: &Path) -> Result<Vec<sheet::Sheet>, ImportError> {
@@ -540,6 +562,7 @@ fn run_sheets(
     ctx: &ServiceContext,
     sheets: &[sheet::Sheet],
     commit: bool,
+    today: NaiveDate,
     errors_listed: usize,
 ) -> Result<ImportSummary, ImportError> {
     let refused = refused_tables(ctx, sheets).map_err(ImportError::DatabaseError)?;
@@ -569,6 +592,7 @@ fn run_sheets(
                     user_id: &ctx.user_id,
                     commit,
                     prepared: prepared.remove(&table),
+                    today,
                 };
                 let summary = import_sheets(connection, start, sheets, &refused, errors_listed)?;
                 if commit && summary.error_count == 0 {
@@ -733,6 +757,7 @@ fn import_sheets<'a>(
                 });
             }
         }
+        summary.add_errors(rows.finish_sheet(connection, &sheet.name)?);
         summary.sessions_to_end.extend(rows.sessions_to_end());
         changes.error_count = heading_errors + (summary.error_count - row_errors_before);
         summary.tables.push(changes);
@@ -788,7 +813,8 @@ fn check_headers(table: &dyn ImportTable, sheet: &sheet::Sheet) -> Vec<RowError>
 
 fn errors_file(ctx: &ServiceContext, path: &Path) -> Result<Vec<u8>, ImportError> {
     let sheets = read_file(path)?;
-    let summary = run_sheets(ctx, &sheets, false, usize::MAX)?;
+    // Rolled back, so the date is never kept or shown.
+    let summary = run_sheets(ctx, &sheets, false, date_now(), usize::MAX)?;
     sheet::write(errors_file_sheets(&sheets, &summary.errors)).map_err(ImportError::CannotWriteFile)
 }
 

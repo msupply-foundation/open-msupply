@@ -147,6 +147,7 @@ impl ImportTable for UserTable {
                 row.text(ID).as_deref(),
                 row.text(USERNAME).as_deref(),
                 |user| &user.username,
+                std::convert::identity,
             )?
             .ok()
             .flatten();
@@ -223,6 +224,7 @@ impl SheetImport for UserSheet {
             id.as_deref(),
             username.as_deref(),
             |saved| &saved.username,
+            std::convert::identity,
         )? {
             Ok(existing) => existing,
             Err(e) => {
