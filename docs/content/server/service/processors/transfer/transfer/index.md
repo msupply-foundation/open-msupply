@@ -60,7 +60,7 @@ So a step that writes the linked record reads it again inside its own transactio
 
 The re-read is `find_one_by_id_for_update` on the row's repository, called through `lock_invoice_row` / `lock_requisition_row` in the processor module. On Postgres it takes a row lock (`SELECT … FOR NO KEY UPDATE`) that lasts until the step's transaction ends, so nothing else can commit a change to the row between the step's read and its write. On SQLite the transaction is already `BEGIN IMMEDIATE`, which lets only one writer in at a time.
 
-API mutations don't take the lock. So on Postgres an API save that read the row before the step committed can still write its copy over the step's change once the step commits: the same mistake, the other way round. See [#2492](https://github.com/msupply-foundation/open-msupply-internal/issues/2492).
+API mutations don't take the lock. So on Postgres an API save that read the row before the step committed can still write its copy over the step's change once the step commits: the same mistake, the other way round.
 
 ## Potential for Circular/Infinite processing
 
