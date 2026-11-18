@@ -94,7 +94,7 @@ describe('prescriptionsToCsv (OMS-REG-DIS-03.52 — the list columns, in file fo
     expect(line.split(',').slice(-2)).toEqual(['Acute', 'Outpatient']);
   });
 
-  // OMS-REG-DIS-12.211: its saved name is English on every site.
+  // OMS-REG-DIS-12.212: its saved name is English on every site.
   it("names the unnamed patient's records by the translated label", () => {
     const csv = prescriptionsToCsv([
       { ...row, otherPartyName: 'Unnamed patient', isForUnnamedPatient: true },

@@ -1352,7 +1352,7 @@ describe('who a visit starts with', () => {
     startWithUnnamedPatient,
   });
 
-  it('starts with the unnamed patient only where both preferences are on (OMS-REG-DIS-12.199, .205)', () => {
+  it('starts with the unnamed patient only where both preferences are on (OMS-REG-DIS-12.200, .206)', () => {
     expect(startsWithUnnamed(prefs(true, true))).toBe(true);
     expect(startsWithUnnamed(prefs(true, false))).toBe(false);
     // "Start with" does nothing while "Use" is off
@@ -1367,12 +1367,12 @@ describe('who a visit starts with', () => {
   };
   const registered = { id: 'p1', name: 'Smith, Jo' };
 
-  it('keeps the unnamed patient chosen after a visit to it, even without "Start with" (OMS-REG-DIS-12.203)', () => {
+  it('keeps the unnamed patient chosen after a visit to it, even without "Start with" (OMS-REG-DIS-12.204)', () => {
     expect(unnamedAfterDispense(unnamed, prefs(true, false))).toBe(true);
     expect(unnamedAfterDispense(unnamed, prefs(true, true))).toBe(true);
   });
 
-  it('after a registered patient, starts as a new visit does (OMS-REG-DIS-12.206)', () => {
+  it('after a registered patient, starts as a new visit does (OMS-REG-DIS-12.207)', () => {
     expect(unnamedAfterDispense(registered, prefs(true, true))).toBe(true);
     expect(unnamedAfterDispense(registered, prefs(true, false))).toBe(false);
   });
