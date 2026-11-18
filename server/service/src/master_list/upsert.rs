@@ -1,6 +1,5 @@
-use repository::{
-    MasterListRow, MasterListRowRepository, RepositoryError, StorageConnection, trim_spaces,
-};
+use crate::other_with_code;
+use repository::{MasterListRow, MasterListRowRepository, RepositoryError, StorageConnection};
 use util::constants::MISSING_PROGRAM;
 
 #[derive(Debug, PartialEq)]
@@ -49,20 +48,21 @@ fn validate(
     if row.name.trim().is_empty() {
         return Err(UpsertMasterListError::NameRequired);
     }
-    // Only a save that brings in the clash is refused, so existing duplicates stay editable.
     let repo = MasterListRowRepository::new(connection);
-    let brings_in_clash = repo
-        .find_one_by_id(&row.id)?
-        .is_none_or(|saved| trim_spaces(&saved.code) != trim_spaces(&row.code));
-    if !brings_in_clash {
-        return Ok(());
-    }
-    match repo
-        .find_by_trimmed_code(&row.code)?
-        .into_iter()
-        .find(|other| other.id != row.id)
-    {
-        Some(other) => Err(UpsertMasterListError::DuplicateCode { other_id: other.id }),
+    let saved = repo.find_one_by_id(&row.id)?;
+    match other_with_code(
+        saved.as_ref().map(|saved| saved.code.as_str()),
+        &row.id,
+        &row.code,
+        |code| {
+            Ok(repo
+                .find_by_trimmed_code(code)?
+                .into_iter()
+                .map(|other| other.id)
+                .collect())
+        },
+    )? {
+        Some(other_id) => Err(UpsertMasterListError::DuplicateCode { other_id }),
         None => Ok(()),
     }
 }

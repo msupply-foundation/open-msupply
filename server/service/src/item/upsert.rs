@@ -1,6 +1,7 @@
+use crate::other_with_code;
 use repository::{
     ItemRow, ItemRowRepository, LocationTypeRowRepository, RepositoryError, StorageConnection,
-    UnitRowRepository, trim_spaces,
+    UnitRowRepository,
 };
 
 #[derive(Debug, PartialEq)]
@@ -63,16 +64,19 @@ fn save(
     row: &ItemRow,
 ) -> Result<(), UpsertItemError> {
     let repo = ItemRowRepository::new(connection);
-    // Only a save that brings in the clash is refused, so existing duplicates stay editable.
-    let brings_in_clash =
-        saved.is_none_or(|saved| trim_spaces(&saved.code) != trim_spaces(&row.code));
-    if brings_in_clash
-        && let Some(other) = repo
-            .find_by_trimmed_code_without_legacy_record(&row.code)?
-            .into_iter()
-            .find(|other| other.id != row.id)
-    {
-        return Err(UpsertItemError::DuplicateCode { other_id: other.id });
+    if let Some(other_id) = other_with_code(
+        saved.map(|saved| saved.code.as_str()),
+        &row.id,
+        &row.code,
+        |code| {
+            Ok(repo
+                .find_by_trimmed_code_without_legacy_record(code)?
+                .into_iter()
+                .map(|other| other.id)
+                .collect())
+        },
+    )? {
+        return Err(UpsertItemError::DuplicateCode { other_id });
     }
     match saved {
         Some(_) => repo.update_keeping_legacy_record(row)?,

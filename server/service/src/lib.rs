@@ -311,6 +311,24 @@ pub struct InputWithResult<I, R> {
     pub result: R,
 }
 
+/// The id of another record that has `code`, spaces around either code not counting. Only a save
+/// that brings in the clash is checked, so existing duplicates stay editable.
+pub(crate) fn other_with_code(
+    saved_code: Option<&str>,
+    id: &str,
+    code: &str,
+    find_by_trimmed_code: impl FnOnce(&str) -> Result<Vec<String>, RepositoryError>,
+) -> Result<Option<String>, RepositoryError> {
+    if saved_code
+        .is_some_and(|saved| repository::trim_spaces(saved) == repository::trim_spaces(code))
+    {
+        return Ok(None);
+    }
+    Ok(find_by_trimmed_code(code)?
+        .into_iter()
+        .find(|other| other != id))
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct NullableUpdate<T> {
     pub value: Option<T>,
