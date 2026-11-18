@@ -20,3 +20,4 @@ export {
   type NewPatientSeed,
   type PatientSearchDialogProps,
 } from './PatientSearchDialog';
+export { dateOfBirthWithAge } from './age';

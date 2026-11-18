@@ -273,6 +273,7 @@ export type NoStockItemCountVariables = {
     record: "stocktake" | "requisition" | "invoice";
     id: string;
   } | null;
+    notCountedSince?: string | null;
     dynamicFilter?: unknown | null;
   } | null;
 };

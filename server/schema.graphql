@@ -1308,6 +1308,180 @@ type CannotReverseInvoiceStatus implements UpdateErrorInterface & UpdateInboundS
 	description: String!
 }
 
+type CentralDataCannotReadFile implements CentralDataImportErrorInterface {
+	description: String!
+}
+
+enum CentralDataChangeNode {
+	INSERTED
+	UPDATED
+	"""
+	Counted as updated.
+	"""
+	RESTORED
+	DELETED
+	UNCHANGED
+}
+
+union CentralDataErrorsFileResponse = CentralDataImportError | CentralDataExportNode
+
+type CentralDataExportCountNode {
+	table: CentralDataTableNode!
+	matching: Int!
+	total: Int!
+}
+
+type CentralDataExportCountsNode {
+	tables: [CentralDataExportCountNode!]!
+	"""
+	Across all tables, as for an import.
+	"""
+	maxRows: Int!
+}
+
+type CentralDataExportError {
+	error: CentralDataExportErrorInterface!
+}
+
+interface CentralDataExportErrorInterface {
+	description: String!
+}
+
+type CentralDataExportNode {
+	fileId: String!
+}
+
+union CentralDataExportResponse = CentralDataExportError | CentralDataExportNode
+
+input CentralDataExportTableInput {
+	table: CentralDataTableNode!
+	"""
+	Any letter case.
+	"""
+	contains: String
+	"""
+	Ignored by a table with no active flag.
+	"""
+	isActive: Boolean
+}
+
+type CentralDataFieldChangeNode {
+	column: String!
+	from: String!
+	to: String!
+}
+
+type CentralDataImportError {
+	error: CentralDataImportErrorInterface!
+}
+
+interface CentralDataImportErrorInterface {
+	description: String!
+}
+
+type CentralDataImportNode {
+	tables: [CentralDataTableChangesNode!]!
+	"""
+	The first 100; `tables` counts them all.
+	"""
+	changes: [CentralDataRowChangeNode!]!
+	"""
+	The first 100.
+	"""
+	errors: [CentralDataRowErrorNode!]!
+	"""
+	With any, nothing was applied.
+	"""
+	errorCount: Int!
+}
+
+union CentralDataImportResponse = CentralDataImportError | CentralDataImportNode
+
+type CentralDataMutations {
+	"""
+	Returns a file id for /files. Refused over the import cap.
+	"""
+	export(tables: [CentralDataExportTableInput!]!): CentralDataExportResponse!
+	"""
+	The upload with each row's errors in an `error` column, as a file id for /files.
+	"""
+	errorsFile(fileId: String!): CentralDataErrorsFileResponse!
+	"""
+	Applies nothing if any row has an error.
+	"""
+	import(fileId: String!): CentralDataImportResponse!
+}
+
+type CentralDataQueries {
+	"""
+	Writes nothing.
+	"""
+	importPreview(fileId: String!): CentralDataImportResponse!
+	exportCounts(tables: [CentralDataExportTableInput!]!): CentralDataExportCountsNode!
+}
+
+type CentralDataRowChangeNode {
+	sheet: String!
+	"""
+	As Excel shows it.
+	"""
+	row: Int!
+	"""
+	E.g. the unit's name.
+	"""
+	record: String!
+	change: CentralDataChangeNode!
+	"""
+	For an update, the columns that change.
+	"""
+	fields: [CentralDataFieldChangeNode!]!
+}
+
+type CentralDataRowErrorNode {
+	sheet: String!
+	"""
+	As Excel shows it. Null on a sheet name, which has no row.
+	"""
+	row: Int
+	column: String
+	message: String!
+}
+
+type CentralDataTableChangesNode {
+	table: CentralDataTableNode!
+	inserted: Int!
+	updated: Int!
+	deleted: Int!
+	unchanged: Int!
+	"""
+	Heading errors included.
+	"""
+	errorCount: Int!
+}
+
+enum CentralDataTableNode {
+	UNIT
+	LOCATION_TYPE
+	USER
+	ITEM
+}
+
+type CentralDataTooManyCells implements CentralDataImportErrorInterface {
+	description: String!
+	cellCount: Int!
+	maxCells: Int!
+}
+
+type CentralDataTooManyRows implements CentralDataImportErrorInterface & CentralDataExportErrorInterface {
+	description: String!
+	rowCount: Int!
+	maxRows: Int!
+}
+
+type CentralDataUploadExpired implements CentralDataImportErrorInterface {
+	description: String!
+}
+
 type CentralGeneralMutations {
 	configureNameProperties(input: [ConfigureNamePropertyInput!]!): ConfigureNamePropertiesResponse!
 	"""
@@ -1435,6 +1609,7 @@ type CentralServerMutationNode {
 	customField: CustomFieldMutations!
 	reports: CentralReportMutations!
 	site: CentralSiteMutations!
+	centralData: CentralDataMutations!
 }
 
 type CentralServerNoAnswer implements CentralPatientSearchErrorInterface {
@@ -1445,6 +1620,7 @@ type CentralServerQueryNode {
 	plugin: CentralPluginQueries!
 	syncMessage: SyncMessageQueries!
 	site: CentralSiteQueries!
+	centralData: CentralDataQueries!
 	customField: CustomFieldConfigQueries!
 }
 
@@ -1547,6 +1723,25 @@ union CliniciansResponse = ClinicianConnector
 
 type CodeRequired implements UpsertSiteErrorInterface {
 	description: String!
+}
+
+input CommonMedicineInput {
+	itemId: String!
+	amounts: [Float!]!
+}
+
+type CommonMedicineNode {
+	itemId: String!
+	"""
+	The one-press amounts, in the item's own unit. Empty when the card asks
+	for the amount instead.
+	"""
+	amounts: [Float!]!
+}
+
+input CommonMedicinesInput {
+	storeId: String!
+	value: [CommonMedicineInput!]!
 }
 
 union ConfigureNamePropertiesResponse = Success
@@ -2676,6 +2871,29 @@ type DiagnosisNode {
 	id: String!
 	code: String!
 	description: String!
+}
+
+"""
+Which screen dispensing opens on (the `dispensingScreen` preference).
+"""
+enum DispensingScreenNode {
+	"""
+	The dispensing list
+	"""
+	STANDARD
+	"""
+	The Simple dispensing screen
+	"""
+	SIMPLE
+}
+
+"""
+One store's edit of the dispensing screen. A null `value` CLEARS the
+store's own value, returning the store to the global value.
+"""
+input DispensingScreenStoreOverrideInput {
+	storeId: String!
+	value: DispensingScreenNode
 }
 
 type DisplaySettingNode {
@@ -5466,6 +5684,11 @@ input ItemFilterInput {
 	"""
 	notInRecord: ItemNotInRecordFilterInput
 	"""
+	Items with no counted line in a finalised stocktake of this store since the given
+	datetime, including items never counted in this store
+	"""
+	notCountedSince: DateTime
+	"""
 	Dynamic filter condition AST, currently supporting property conditions
 	on keys visible for the "item" table scope, e.g.
 	`{"And": [{"CustomField": {"key": "k", "filter": {"Text": {"Like": "abc"}}}}]}`
@@ -5574,6 +5797,13 @@ type ItemNode {
 	those links (`ancillaryFor`), so an item no link orders has none.
 	"""
 	supplyWastageRate: Float!
+	"""
+	The item's price per unit on the default price list, null when it is on none.
+	The same price `itemPrice` gives as `defaultPricePerUnit`, and what the server
+	charges a patient for each unit of a stock-out line. Not store-specific: the
+	default price list is the same in every store.
+	"""
+	defaultPricePerUnit: Float
 	itemDirections: [ItemDirectionNode!]!
 	warnings: [WarningNode!]!
 	categories: [ItemCategoryNode!]!
@@ -7134,6 +7364,11 @@ enum PreferenceKey {
 	showIndicativePriceInRequisitions
 	doNotPrintPlaceholderLineLabels
 	promptForBatchAndExpiryOnInboundShipments
+	commonMedicines
+	dispensingScreen
+	useUnnamedPatient
+	startWithUnnamedPatient
+	askForPatientType
 }
 
 type PreferenceMutations {
@@ -7168,6 +7403,8 @@ enum PreferenceValueNodeType {
 	STRING
 	COLOUR
 	IMAGE
+	COMMON_MEDICINES
+	DISPENSING_SCREEN
 }
 
 type PreferencesNode {
@@ -7221,6 +7458,29 @@ type PreferencesNode {
 	invoiceStatusOptions: [InvoiceNodeStatus!]!
 	doNotPrintPlaceholderLineLabels: Boolean!
 	promptForBatchAndExpiryOnInboundShipments: Boolean!
+	"""
+	The medicines shown as cards on the Simple dispensing screen, in order.
+	"""
+	commonMedicines: [CommonMedicineNode!]!
+	"""
+	Which screen dispensing opens on: the store's own value where it has
+	one, else the global value.
+	"""
+	dispensingScreen: DispensingScreenNode!
+	"""
+	Whether the store can dispense to its unnamed patient.
+	"""
+	useUnnamedPatient: Boolean!
+	"""
+	Whether each new visit on the Simple screen starts with the unnamed
+	patient chosen.
+	"""
+	startWithUnnamedPatient: Boolean!
+	"""
+	Whether the Simple screen asks if the patient is an outpatient or an
+	inpatient.
+	"""
+	askForPatientType: Boolean!
 }
 
 input PrescriptionLineInput {
@@ -10096,6 +10356,7 @@ input StocktakeLineFilterInput {
 	donorId: EqualFilterStringInput
 	campaignId: EqualFilterStringInput
 	batch: StringFilterInput
+	expiryDate: DateFilterInput
 	manufactureDate: DateFilterInput
 	campaignName: StringFilterInput
 }
@@ -12203,6 +12464,15 @@ input UpsertPreferencesInput {
 	showIndicativePriceInRequisitions: [BoolStorePrefInput!]
 	doNotPrintPlaceholderLineLabels: [BoolStorePrefInput!]
 	promptForBatchAndExpiryOnInboundShipments: [BoolStorePrefInput!]
+	commonMedicines: [CommonMedicinesInput!]
+	dispensingScreen: DispensingScreenNode
+	dispensingScreenStoreOverride: [DispensingScreenStoreOverrideInput!]
+	useUnnamedPatient: Boolean
+	useUnnamedPatientStoreOverride: [BoolStoreOverrideInput!]
+	startWithUnnamedPatient: Boolean
+	startWithUnnamedPatientStoreOverride: [BoolStoreOverrideInput!]
+	askForPatientType: Boolean
+	askForPatientTypeStoreOverride: [BoolStoreOverrideInput!]
 }
 
 input UpsertPrescriptionRequestLineInput {

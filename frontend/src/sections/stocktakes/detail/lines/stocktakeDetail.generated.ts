@@ -178,6 +178,11 @@ export type StocktakeLinesVariables = {
     like?: string | null;
     startsWith?: string | null;
   } | null;
+    expiryDate?: {
+    equalTo?: string | null;
+    beforeOrEqualTo?: string | null;
+    afterOrEqualTo?: string | null;
+  } | null;
     manufactureDate?: {
     equalTo?: string | null;
     beforeOrEqualTo?: string | null;

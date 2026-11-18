@@ -317,6 +317,8 @@ Note, to speed-up tests database templates are used (Sqlite + Postrgres), e.g. t
 To disable this you can set the environment variable `MSUPPLY_NO_TEST_DB_TEMPLATE=true`.
 However, in general this should not be needed but might be useful if you suspect a bug in the test template code.
 
+Postgres test databases are kept after a run, so you can look at one after a failure. A full run leaves many GB of them; set `MSUPPLY_DROP_TEST_DBS=true` to drop each test's database when it finishes (CI does this).
+
 ## Building docs
 
 Docs are built via github action, but can build local version with docker: [how to build docs locally](docker/zola_docs/README.md)

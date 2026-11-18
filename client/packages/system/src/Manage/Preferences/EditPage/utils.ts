@@ -21,6 +21,20 @@ export const PREFERENCE_GROUP_CONFIG: Partial<
   ],
 };
 
+// Set only in the new front end (#2188): they change nothing but its Simple
+// dispensing screen, which this UI doesn't have. The server lists them, so
+// they're left out here rather than shown with no labels.
+const NEW_FRONT_END_ONLY: PreferenceKey[] = [
+  PreferenceKey.DispensingScreen,
+  PreferenceKey.UseUnnamedPatient,
+  PreferenceKey.StartWithUnnamedPatient,
+  PreferenceKey.AskForPatientType,
+];
+
+export const withoutNewFrontEndOnly = <T extends { key: PreferenceKey }>(
+  preferences: T[]
+): T[] => preferences.filter(pref => !NEW_FRONT_END_ONLY.includes(pref.key));
+
 export const isAnyAmcPrefOn = (
   preferences: AdminPreferenceFragment[]
 ): boolean => {

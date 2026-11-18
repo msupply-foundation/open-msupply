@@ -247,15 +247,32 @@ ARG CARGO_BUILD_JOBS
 # version. Also covers the files build scripts watch outside server/ (locales,
 # generated reports).
 #
-# The registry mount is sharing=shared: it is append-mostly downloaded .crate
-# files and cargo does its own locking, exactly as it does on a dev machine
-# running two projects at once. Leaving it `locked` would serialise EVERY pair
-# of concurrent builds on the registry even when their target dirs differ,
-# which defeats the per-db and per-arch ids entirely.
+# The registry mount is sharing=shared for the build: it is append-mostly
+# downloaded .crate files, and `locked` would serialise EVERY pair of
+# concurrent builds on the registry even when their target dirs differ, which
+# defeats the per-db and per-arch ids entirely.
+#
+# But cargo's own locking does NOT cover it. The lock is
+# $CARGO_HOME/.package-cache, outside the mount, so each container has its own
+# and two builds unpacking the same crate into registry/src collide: "failed to
+# unpack package ... File exists". A warm registry hides it - there is nothing
+# to unpack - so it shows when the cache is cold, as after a GC under disk
+# pressure. Hence the `cargo fetch` before each build, under a flock on a file
+# IN the mount: every shared user mounts the same directory, so fetches take
+# turns, and the build that follows has nothing left to unpack. Seconds when
+# warm, and the lock is gone before the compile starts.
+#
+# Not a separate RUN with the mount `sharing=locked`. BuildKit's modes don't
+# exclude each other both ways: a `shared` request that finds the cache locked
+# doesn't wait, it is handed a NEW, empty cache under the same id - so a build
+# starting during another's fetch would compile against an empty registry, and
+# race on every crate. .github/ci/server.Dockerfile does the same, on the debug
+# mount it shares with these builds.
 RUN --mount=type=cache,id=cargo-target-sqlite-$CARGO_PROFILE-$TARGETARCH,target=/src/server/target,sharing=private \
     --mount=type=cache,id=cargo-registry-$CARGO_PROFILE,target=/usr/local/cargo/registry,sharing=shared \
     set -eux; \
     find /src -path /src/server/target -prune -o -type f -exec touch {} +; \
+    flock /usr/local/cargo/registry/.fetch-lock cargo fetch --manifest-path server/Cargo.toml; \
     . /cross.env; export $(cut -d= -f1 /cross.env); \
     . /profile.env; \
     cargo build --profile "$PROFILE_ARG" --manifest-path server/Cargo.toml $TARGET_FLAG \
@@ -278,6 +295,7 @@ RUN --mount=type=cache,id=cargo-target-postgres-$CARGO_PROFILE-$TARGETARCH,targe
     --mount=type=cache,id=cargo-registry-$CARGO_PROFILE,target=/usr/local/cargo/registry,sharing=shared \
     set -eux; \
     find /src -path /src/server/target -prune -o -type f -exec touch {} +; \
+    flock /usr/local/cargo/registry/.fetch-lock cargo fetch --manifest-path server/Cargo.toml; \
     . /cross.env; export $(cut -d= -f1 /cross.env); \
     . /profile.env; \
     cargo build --profile "$PROFILE_ARG" --manifest-path server/Cargo.toml $TARGET_FLAG \
@@ -334,7 +352,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       ca-certificates git make gcc libc6-dev \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /usr/src/
-RUN git clone https://github.com/wolfcw/libfaketime.git
+# Pinned to a release. It is preloaded into every process in the image, apt
+# included, so an unpinned master breaks the build whenever master breaks - as
+# it did in November 2026, with apt's `sqv` dying mid-install.
+ARG LIBFAKETIME_VERSION=v0.9.13
+RUN git clone --depth 1 --branch ${LIBFAKETIME_VERSION} https://github.com/wolfcw/libfaketime.git
 WORKDIR /usr/src/libfaketime/src
 RUN make install
 
@@ -370,6 +392,15 @@ RUN echo "/usr/local/lib/faketime/libfaketime.so.1" > /etc/ld.so.preload
 # This keeps the monotonic clock real while FAKETIME still moves the date.
 # See issue #12289.
 ENV FAKETIME_DONT_FAKE_MONOTONIC=1
+# libfaketime keeps shared memory in /dev/shm, which is only for handing a faked
+# time between processes started by the `faketime` wrapper. The image does not
+# use the wrapper - FAKETIME is set in the environment - so turn it off. Built
+# from an unpinned master, it left a faketime_shm_<pid> and faketime_lock_<pid>
+# behind for every process: the healthcheck every 10s filled the container's
+# 64MB /dev/shm in a couple of days, and from then on every new process (the
+# healthcheck, `docker exec`) died with SIGBUS, exit 135, while the server
+# itself kept running.
+ENV FAKETIME_DISABLE_SHM=1
 
 # PDF report export renders HTML through headless Chromium. Install the headless
 # shell (chromium-headless-shell) — the GUI-less build, roughly half the installed

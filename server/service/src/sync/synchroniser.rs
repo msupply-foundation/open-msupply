@@ -38,10 +38,10 @@ use super::{
 /// Pending sync buffer rows fetched per query during integration (v5/v6 and v7), so memory stays
 /// bounded however much is pending.
 pub(crate) const INTEGRATION_BATCH_SIZE: i64 = 10_000;
-/// Without the outer integration transaction, how many buffer rows commit together. Small enough
+/// Without the outer integration transaction (v5/v6 and v7), how many buffer rows commit together. Small enough
 /// to release SQLite's write lock regularly, large enough that commits are not the bottleneck on
 /// Postgres (one WAL flush per chunk rather than per record).
-const INTEGRATION_COMMIT_SIZE: usize = 500;
+pub(crate) const INTEGRATION_COMMIT_SIZE: usize = 500;
 const INTEGRATION_POLL_PERIOD_SECONDS: u64 = 1;
 const INTEGRATION_TIMEOUT_SECONDS: u64 = 30;
 
@@ -324,13 +324,9 @@ impl SynchroniserV5V6 {
         // INTEGRATE RECORDS
         logger.start_step(SyncStep::Integrate)?;
 
-        // Without the outer transaction only in maintenance mode (#840), or while initialising
-        // with `disable_integration_transaction` set. See `integration_uses_transaction`.
-        let use_transaction = integration_uses_transaction(
-            &ctx.connection,
-            is_initialised,
-            self.settings.disable_integration_transaction,
-        )?;
+        // Without the outer transaction only in maintenance mode (#840) or while initialising
+        // (#845). See `integration_uses_transaction`.
+        let use_transaction = integration_uses_transaction(&ctx.connection, is_initialised)?;
         let (upserts, deletes, merges) = integrate_and_translate_sync_outer(
             &self.service_provider,
             logger,
@@ -506,8 +502,8 @@ pub fn integrate_and_translate_sync_buffer(
     // and maintain logical data integrity, with a sub transaction for every upsert and every delete
     // (needed to 'skip' errors in postgres, see IntegrationRecords.integrate).
     //
-    // Without `use_transaction` (see `integration_uses_transaction`: maintenance mode, or initialising
-    // with `disable_integration_transaction`) there is no outer transaction, and each
+    // Without `use_transaction` (see `integration_uses_transaction`: maintenance mode, or
+    // initialising) there is no outer transaction, and each
     // INTEGRATION_COMMIT_SIZE chunk commits in its own transaction instead (see `process_action`).
 
     // Closure, to be run in a transaction or without a transaction
@@ -627,14 +623,14 @@ impl<'a> SyncBufferIntegrator<'a> {
                 let integrate_started = Instant::now();
                 // One transaction per `INTEGRATION_COMMIT_SIZE` chunk of the fetched batch.
                 // Inside the outer integration transaction this reuses it and changes nothing.
-                // Without it (maintenance mode, or initialising with
-                // `disable_integration_transaction`) each chunk commits on its own, instead of a
-                // WAL flush for every record and every buffer mark, which on Postgres made
-                // integration commit-bound. A failing write does not abort the chunk: its record
-                // is marked errored and the chunk carries on. On Postgres each write (a row and
-                // its changelog row) is a savepoint inside it; SQLite only undoes the failing
-                // statement. Either way the record's earlier writes are not undone (#847). A crash loses at most the chunk in progress, and
-                // its buffer marks roll back with it, so those rows are pending again.
+                // Without it (maintenance mode, or initialising) each chunk commits on its own,
+                // instead of a WAL flush for every record and every buffer mark, which on
+                // Postgres made integration commit-bound. A failing write does not abort the
+                // chunk: its record is marked errored and the chunk carries on. On Postgres each
+                // write (a row and its changelog row) is a savepoint inside it; SQLite only undoes
+                // the failing statement. Either way the record's earlier writes are not undone
+                // (#847). A crash loses at most the chunk in progress, and its buffer marks roll
+                // back with it, so those rows are pending again.
                 let mut batch_errors = 0;
                 for chunk in records.chunks(INTEGRATION_COMMIT_SIZE) {
                     batch_errors += self
@@ -689,7 +685,8 @@ mod tests {
 
     use super::*;
 
-    /// Without the outer transaction each batch commits on its own (maintenance mode, #840).
+    /// Without the outer transaction each batch commits on its own (maintenance mode #840, or
+    /// initialising #845).
     /// Both shapes must integrate the same rows and mark a failing one as an error, rather than
     /// the failure aborting its batch.
     #[actix_rt::test]
@@ -738,6 +735,138 @@ mod tests {
                 .find(|row| row.record_id == "broken_unit")
                 .unwrap();
             assert_eq!(broken.integration_result, Some(IntegrationResult::Error));
+        }
+    }
+
+    /// A crash part way through integration. With the outer transaction it loses everything.
+    /// Without it (how an initialising site integrates, #845) the chunks before the crash stay
+    /// committed, and the next run integrates only the rest instead of starting over.
+    #[actix_rt::test]
+    async fn integration_without_the_outer_transaction_resumes_after_a_crash() {
+        use repository::{SyncBufferRowInsert, UnitRowRepository};
+
+        // Fails marking this row integrated, which aborts the run like a crash would.
+        const CRASH_RECORD_ID: &str = "crash_here";
+        let (create_crash_trigger, drop_crash_trigger) = if cfg!(feature = "postgres") {
+            (
+                format!(
+                    r#"
+                    CREATE FUNCTION simulated_crash() RETURNS trigger AS $$
+                    BEGIN RAISE EXCEPTION 'simulated crash'; END $$ LANGUAGE plpgsql;
+                    CREATE TRIGGER simulated_crash BEFORE UPDATE ON sync_buffer FOR EACH ROW
+                    WHEN (NEW.record_id = '{CRASH_RECORD_ID}' AND NEW.is_integrated)
+                    EXECUTE FUNCTION simulated_crash();
+                    "#
+                ),
+                "DROP TRIGGER simulated_crash ON sync_buffer;",
+            )
+        } else {
+            (
+                format!(
+                    r#"
+                    CREATE TRIGGER simulated_crash BEFORE UPDATE ON sync_buffer
+                    WHEN NEW.record_id = '{CRASH_RECORD_ID}' AND NEW.is_integrated
+                    BEGIN SELECT RAISE(ABORT, 'simulated crash'); END;
+                    "#
+                ),
+                "DROP TRIGGER simulated_crash;",
+            )
+        };
+
+        for use_transaction in [true, false] {
+            let ServiceTestContext { connection, .. } = setup_all_and_service_provider(
+                &format!("integration_resumes_after_a_crash_{use_transaction}"),
+                MockDataInserts::none(),
+            )
+            .await;
+
+            // Two full chunks, then one more row. The crash is in the second chunk.
+            let template = SyncBufferRowInsert::from(
+                crate::sync::test::test_data::unit::test_pull_upsert_records()[0]
+                    .sync_buffer_row
+                    .clone(),
+            );
+            let crash_index = INTEGRATION_COMMIT_SIZE + 10;
+            let rows: Vec<SyncBufferRowInsert> = (0..INTEGRATION_COMMIT_SIZE * 2 + 1)
+                .map(|index| {
+                    let id = if index == crash_index {
+                        CRASH_RECORD_ID.to_string()
+                    } else {
+                        format!("unit_{index:04}")
+                    };
+                    SyncBufferRowInsert {
+                        record_id: id.clone(),
+                        data: repository::SyncRecordData(serde_json::json!({
+                            "ID": id,
+                            "units": format!("Unit {index}"),
+                            "comment": "",
+                            "order_number": index,
+                        })),
+                        ..template.clone()
+                    }
+                })
+                .collect();
+            SyncBufferRepository::new(&connection)
+                .insert_many(&rows)
+                .unwrap();
+            connection.batch_execute(&create_crash_trigger).unwrap();
+
+            // The trigger's error, not some earlier failure, so the rollback below is really tested.
+            let error = integrate_and_translate_sync_buffer(&connection, None, 0, use_transaction)
+                .unwrap_err();
+            assert!(
+                format!("{error:?}").contains("simulated crash"),
+                "{error:?}"
+            );
+
+            let buffer = SyncBufferRepository::new(&connection).get_all().unwrap();
+            let integrated: Vec<_> = buffer.iter().filter(|row| row.is_integrated).collect();
+            let unit_count = UnitRowRepository::new(&connection)
+                .find_many_by_id(
+                    &rows
+                        .iter()
+                        .map(|row| row.record_id.clone())
+                        .collect::<Vec<_>>(),
+                )
+                .unwrap()
+                .len();
+            if use_transaction {
+                assert!(integrated.is_empty(), "the crash rolls back every chunk");
+                assert_eq!(unit_count, 0);
+                continue;
+            }
+            // Exactly the first chunk committed, with its rows and their buffer marks.
+            assert_eq!(
+                integrated
+                    .iter()
+                    .map(|row| row.record_id.as_str())
+                    .collect::<Vec<_>>(),
+                rows[..INTEGRATION_COMMIT_SIZE]
+                    .iter()
+                    .map(|row| row.record_id.as_str())
+                    .collect::<Vec<_>>()
+            );
+            assert_eq!(unit_count, INTEGRATION_COMMIT_SIZE);
+
+            // Restart: only the pending rows are integrated, the first chunk isn't touched again.
+            connection.batch_execute(drop_crash_trigger).unwrap();
+            integrate_and_translate_sync_buffer(&connection, None, 0, use_transaction).unwrap();
+
+            let resumed = SyncBufferRepository::new(&connection).get_all().unwrap();
+            assert!(resumed.iter().all(|row| row.is_integrated));
+            for before in integrated {
+                let after = resumed
+                    .iter()
+                    .find(|row| row.cursor == before.cursor)
+                    .unwrap();
+                assert_eq!(after.integration_datetime, before.integration_datetime);
+            }
+            assert!(
+                UnitRowRepository::new(&connection)
+                    .find_one_by_id(CRASH_RECORD_ID)
+                    .unwrap()
+                    .is_some()
+            );
         }
     }
 

@@ -21,6 +21,15 @@ query isCentralServer {
   isCentralServer
 }
 
+# Whether this central server keeps central data itself rather than sharing it
+# with legacy mSupply (spec/navigation § the gate vocabulary). Unauthenticated,
+# but only on the operational schema, so it is its own document: before
+# initialisation it fails without failing the role read, and startup re-runs
+# once initialised.
+query isCentralStandalone {
+  isCentralStandalone
+}
+
 # The server's own version, displayed on the pre-session screens
 # (spec/startup/contract.md § App version). Unauthenticated on both schemas —
 # but the field only exists on servers carrying open-msupply#12566 (apiVersion

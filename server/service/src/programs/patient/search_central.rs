@@ -113,6 +113,12 @@ fn map_v7_sync_error(err: repository::syncv7::SyncError) -> CentralPatientReques
         repository::syncv7::SyncError::ConnectionError { .. } => {
             CentralPatientRequestError::ConnectionError(format_error(&err))
         }
+        // Central is there but turning searches away for now: its sync is
+        // paused, or it's integrating a push from this site
+        repository::syncv7::SyncError::SyncApiPaused
+        | repository::syncv7::SyncError::SiteLockError(_) => {
+            CentralPatientRequestError::NoAnswer(format_error(&err))
+        }
         _ => CentralPatientRequestError::InternalError(format_error(&err)),
     }
 }
@@ -125,7 +131,8 @@ pub enum CentralPatientRequestError {
     InternalError(String),
     #[error("Connection error: {0}")]
     ConnectionError(String),
-    /// Reached central, but it didn't answer in time
+    /// Reached central, but it didn't answer in time, or is refusing
+    /// searches for now (sync paused, or integrating a push from this site)
     #[error("No answer: {0}")]
     NoAnswer(String),
 }
@@ -430,7 +437,12 @@ mod test {
     use chrono::NaiveDate;
     use repository::{DateFilter, PatientFilter, StringFilter};
 
-    use super::{CentralPatientSearch, central_search_filter, legacy_can_filter};
+    use repository::syncv7::{SiteLockError, SyncError};
+
+    use super::{
+        CentralPatientRequestError, CentralPatientSearch, central_search_filter, legacy_can_filter,
+        map_v7_sync_error,
+    };
 
     fn date(y: i32, m: u32, d: u32) -> NaiveDate {
         NaiveDate::from_ymd_opt(y, m, d).unwrap()
@@ -592,5 +604,32 @@ mod test {
             .collect();
         visible_here.sort();
         assert_eq!(visible_here, ["hidden_here", "new_here"]);
+    }
+
+    // Central turning a search away for now reads as no answer, so the user
+    // sees the "couldn't reach other facilities" warning, not an error
+    #[test]
+    fn central_refusing_for_now_is_no_answer() {
+        assert!(matches!(
+            map_v7_sync_error(SyncError::SyncApiPaused),
+            CentralPatientRequestError::NoAnswer(_)
+        ));
+        assert!(matches!(
+            map_v7_sync_error(SyncError::SiteLockError(
+                SiteLockError::IntegrationInProgress
+            )),
+            CentralPatientRequestError::NoAnswer(_)
+        ));
+        assert!(matches!(
+            map_v7_sync_error(SyncError::ConnectionError {
+                url: "https://central".to_string(),
+                e: "refused".to_string()
+            }),
+            CentralPatientRequestError::ConnectionError(_)
+        ));
+        assert!(matches!(
+            map_v7_sync_error(SyncError::Authentication),
+            CentralPatientRequestError::InternalError(_)
+        ));
     }
 }

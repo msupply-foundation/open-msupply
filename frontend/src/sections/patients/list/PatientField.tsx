@@ -8,14 +8,15 @@ import {
 } from 'solid-js';
 import { t } from '../../../intl';
 import { IconButton } from '../../../ui/elements/buttons/IconButton';
-import { EditIcon } from '../../../ui/icons';
+import { CloseIcon, EditIcon } from '../../../ui/icons';
 import { PickerField } from '../../../ui/elements/selectors/PickerField';
 import type { FocusTarget } from '../../../ui/utils/createFocusTarget';
 import { ChoosePatient } from './ChoosePatient';
 
 // A record's patient (#631 spike; spec/patients S4): a picker box showing the
 // name, which opens the patient search to choose another, never a type-ahead.
-// A record's patient is only ever swapped, never cleared.
+// A record's patient is only ever swapped, never cleared; a surface that
+// isn't a record yet (the Simple screen's who it's for) can pass `onClear`.
 
 export interface PatientFieldProps {
   storeId: string;
@@ -30,6 +31,12 @@ export interface PatientFieldProps {
   onEditPatient?: (patientId: string) => void;
   /** Another patient was chosen; not called when the same one is chosen. */
   onChange: (patient: { id: string; name: string }) => void;
+  /**
+   * Empties the field; the clear button shows when given, while it holds a
+   * patient and isn't disabled, in the pencil's place. Not for a record's
+   * patient, which is never cleared.
+   */
+  onClear?: () => void;
   /** The create form's save button, when a new patient is made here. */
   saveLabel?: string;
   /**
@@ -66,18 +73,29 @@ export const PatientField = (props: PatientFieldProps): JSX.Element => {
         focusTarget={props.focusTarget}
         onOpen={() => setChoosing(true)}
         endAction={
-          // Edits the patient, not the record, so it ignores the record's
-          // own editability (spec/patients S4 allow-edit).
-          <Show when={props.onEditPatient && props.patient}>
-            {patient => (
+          props.onClear ? (
+            <Show when={props.patient && !props.disabled}>
               <IconButton
-                icon={<EditIcon />}
-                label={t('label.edit')}
-                data-testid="edit-patient-button"
-                onClick={() => props.onEditPatient?.(patient().id)}
+                icon={<CloseIcon />}
+                label={t('common.clear')}
+                data-testid={`${props.testId ?? 'patient-field'}-clear`}
+                onClick={() => props.onClear?.()}
               />
-            )}
-          </Show>
+            </Show>
+          ) : (
+            // Edits the patient, not the record, so it ignores the record's
+            // own editability (spec/patients S4 allow-edit).
+            <Show when={props.onEditPatient && props.patient}>
+              {patient => (
+                <IconButton
+                  icon={<EditIcon />}
+                  label={t('label.edit')}
+                  data-testid="edit-patient-button"
+                  onClick={() => props.onEditPatient?.(patient().id)}
+                />
+              )}
+            </Show>
+          )
         }
       />
       <ChoosePatient

@@ -11,6 +11,7 @@ import { graphqlFetch } from '../../../api/graphql';
 import { gated } from '../../../api/gated';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { isCentralServer } from '../../../api/serverInfo';
+import { itemStockPath } from '@/plugin-sdk/deepLinks';
 import { t } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
@@ -163,8 +164,10 @@ const ItemDetailView: Component = () => {
 
   const tabs = (): TabDef[] => visibleTabs(isCentralServer());
 
-  const stockHref = () =>
-    `/${params.storeId}/inventory/stock?itemId=${params.itemId}`;
+  // The stock-on-hand figures drill down to the register searched by this
+  // item's code (spec/items rules, #1790).
+  const stockHref = (itemCode: string) =>
+    `/${params.storeId}/${itemStockPath(itemCode)}`;
 
   // Column config for the Master lists tab's table — also what puts the Columns
   // + Settings controls in its toolbar (DataTable renders both only when
@@ -300,14 +303,14 @@ const ItemDetailView: Component = () => {
                     <StatsPanel
                       testId="item-stat-stock-on-hand"
                       title={t('title.stock-on-hand')}
-                      titleHref={stockHref()}
+                      titleHref={stockHref(i().code)}
                       state={{ status: 'ready' }}
                     >
                       <Statistic
                         testId="item-stat-stock-on-hand-units"
                         label={t('label.units')}
                         value={formatUnits(i().stats.stockOnHand)}
-                        href={stockHref()}
+                        href={stockHref(i().code)}
                       />
                       <Show when={showDoses()}>
                         <Statistic
@@ -316,7 +319,7 @@ const ItemDetailView: Component = () => {
                           value={formatUnits(
                             dosesEquivalent(i().stats.stockOnHand, i().doses)
                           )}
-                          href={stockHref()}
+                          href={stockHref(i().code)}
                         />
                       </Show>
                     </StatsPanel>

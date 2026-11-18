@@ -57,6 +57,7 @@ Rule #0 must read `Filters: type==exec.cachemount` with `Keep Duration: 336h0m0s
 - **The first rule is the cargo caches**: the target dirs (per database, architecture and profile; CI's test builds share the debug ones) and the registry. 50 GB holds the ones pull requests and develop merges use; a rarely built one (an arm64 release, say) is evicted and builds cold. `docker buildx du --verbose` shows what they actually take.
 - **The second bounds the whole build cache** at 70 GB and keeps 50 GB of the disk free, for images, deployments' databases and what a CI job writes while it runs: its test archive, postgres's test databases, sqlite's `test_output`. GC runs only when a build finishes, so the free space has to last a whole test run — at 30 GB, a postgres run filled the disk.
 - `docker builder prune --filter type=exec.cachemount` empties the cargo caches by hand; the next build of each is cold.
+- **A server CI job killed before its clean-up** (the runner lost, a reboot, a full disk) leaves its postgres container, with its test databases, and its 2.4 GB CI image. The first step of every server CI job removes those of any run that has finished, using [`.github/scripts/server-ci-cleanup.sh`](https://github.com/msupply-foundation/open-msupply-internal/blob/develop/.github/scripts/server-ci-cleanup.sh). It only finds what is named for a run. Volumes left with no container have no name to go by, so remove those by hand while nothing is running: `docker volume prune -f` removes only unnamed volumes no container uses, never a deployment's.
 
 ## Sizing
 
@@ -254,7 +255,7 @@ flowchart LR
 
 | file | |
 |---|---|
-| `.github/deploy/proxy/compose.proxy.yaml` | the Caddy container, its two ports and the shared network |
+| `.github/deploy/proxy/compose.proxy.yaml` | the Caddy container, its ports and the shared network |
 | `.github/deploy/proxy/proxy.Caddyfile` | the one route for every deployment, the gate on the internet door, and why it is Caddy (see its comments) |
 
 Set up once, outside CI. This is the full setup, with deployments on the internet behind the gate; for the dashboard alone on the internet, see [VPN-only deployments](#vpn-only-deployments).
@@ -267,7 +268,7 @@ Set up once, outside CI. This is the full setup, with deployments on the interne
    The edge must **never send the internet to 80**. If office machines reach the edge through the office's public address, that address counts as the office.
 3. **Run `docker-deploy-services.yaml`.** It creates the `oms-edge` network if it is missing and brings the proxy up.
 
-It takes 80 and 8080. If something already holds them, set `PROXY_PORT` (open) / `PROXY_GATED_PORT` (gated) in `~/proxy/.env` and rerun the workflow — compose sees the changed value and recreates the proxy. `PROXY_BIND` publishes the open door on one address only; it is only needed if the box has an interface the internet can reach, since docker's published ports bypass `ufw`/firewalld. Behind NAT, leave it unset. CI reads the open door's address back from the container and needs no variable.
+It takes 80, 8080 and 443. If something already holds them, set `PROXY_PORT` (open) / `PROXY_GATED_PORT` (gated) / `PROXY_TLS_PORT` (open, over TLS) in `~/proxy/.env` and rerun the workflow — compose sees the changed value and recreates the proxy. `PROXY_BIND` publishes the open door, on 80 and 443, on one address only; it is only needed if the box has an interface the internet can reach, since docker's published ports bypass `ufw`/firewalld. Behind NAT, leave it unset. CI reads the open door's address back from the container and needs no variable.
 
 Routing is a pure function of the hostname — `pr-470.<domain>` goes to the container `pr-470` on port 8000, and the bare `<domain>` to the dashboard — so a new deployment is routable the moment it is up and nothing is ever reloaded. Two consequences: **anything attached to `oms-edge` is reachable as a subdomain**, so attach nothing unrelated; and a deploy creates `oms-edge` if missing but **never the proxy**, so a box without one gives healthy, unroutable deployments (the deploy's route check says so).
 
@@ -287,7 +288,7 @@ The setup without a wildcard: the dashboard is on the internet, the deployments 
    ```
 4. **Set the `DEPLOY_SCHEME` repository variable to `http`**, and rerun `docker-deploy-services.yaml` so the dashboard's links follow.
 
-Deployments are plain HTTP on the VPN, which encrypts the hop already. What that costs is the browser's secure-context features — in practice the copy-to-clipboard buttons, which fail on http. There is deliberately no local certificate: one from a private CA works only on machines that trust its root, and nobody installs it.
+Deployments are plain HTTP on the VPN, which encrypts the hop already, and the links CI posts are `http://`. The open door also answers on 443, with a certificate from Caddy's internal CA, so an `https://` deployment link reaches the deployment behind a certificate warning instead of failing. See [Local HTTPS](#local-https).
 
 #### The gate in front of every deployment
 
@@ -324,7 +325,15 @@ The Schema page's schemas are captured per **image**, never from a deployment. A
 - **Files:** each file is named by a hash of exactly what it holds. Two versions share a file only when their schemas are identical.
 - **Upgrading from schema 1:** an older store was captured from deployments. The first publish clears it, and develop and the PR previews come back as they next deploy. Dispatch `publish-schema.yaml` with the release tags you want listed, e.g. `v2.20.0 v3.00.00 v3.04.00`.
 
-There is no local HTTPS on the box any more: everything comes through the edge, which serves the real certificate. A box set up before this keeps the `oms-proxy_caddy-data` and `oms-proxy_caddy-config` volumes, which held the old internal CA — `docker volume rm` them, and anyone who trusted its root can remove it.
+#### Local HTTPS
+
+The open door answers on 443 too, for `*.<DEPLOY_DOMAIN>` and the old dashboard address, with certificates from Caddy's own CA (`tls internal`) — no ACME and no credentials on the box. It is there so the office and the VPN don't get stuck on https: without it, an `https://` deployment link — copied, or upgraded by the browser — fails, with nothing saying http would work. Like 80 it is ungated, so the edge must never send the internet to it.
+
+Not the bare domain: that goes to the edge (see [VPN-only deployments](#vpn-only-deployments)), and the dashboard sends HSTS, so a browser that has signed in once refuses a self-signed certificate there outright rather than warning. The same goes for a deployment if its domain ever comes under HSTS.
+
+Use `http://` links: the 443 door is only there so an `https://` one doesn't dead-end. **Don't add the CA's root to a machine's trust store.** It can sign a certificate for any site, not just this domain, and its key is in a docker volume on a box whose runners run any branch's workflows - so anyone who can push a branch could intercept that machine's HTTPS traffic.
+
+The CA is in the `oms-proxy_caddy-data` volume, so it survives the new container each Caddyfile edit makes and a browser's click-through for a deployment keeps working. `docker compose down -v` on the proxy deletes it, and the warnings come back once.
 
 ### Deployments dashboard
 
@@ -421,7 +430,7 @@ Why the box is set up this way, so nobody has to rediscover it. Decisions record
 - **Distro `docker.io`, not Docker's own repo.** Nothing these jobs do is version-sensitive, and the distro package updates through normal `apt` with no third-party repo or GPG key on a machine that holds registry credentials.
 - **Lane roles are exclusive.** A lane carries one label so a 19-minute build never queues ahead of a one-minute deploy or teardown. That is why `e2e` became a role of its own rather than borrowing `build`; the reasoning is in the header of `frontend-e2e-nightly.yaml`.
 - **One machine-id per deployment**, not the host's: two deployments sharing one collide when both pair to the same central server. See `docker-deploy.yaml`.
-- **No local HTTPS.** There was a site on the box with Caddy's internal CA, for secure-context features when reaching a deployment directly. It needed every machine to trust its root, which nobody did, so VPN-only deployments are plain HTTP and the real certificate is the edge's.
+- **Local HTTPS with a self-signed CA, not a real certificate.** The office and the VPN reach deployments without the edge, so the edge's certificate is not there. A private CA is the only certificate the box can issue itself. It was removed once, when the edge took over TLS and nobody had installed its root; but office and VPN users still followed `https://` deployment links and got nothing. A warning to click through beats a page that doesn't load.
 - **Two front doors split by port, not by client address.** Every request reaches the proxy from the edge's address, so telling the internet from the office there would mean trusting `X-Forwarded-For`, and a mistake in that is a way past the gate. The edge knows the real client and picks the port. The open door is 80 because people reach it directly and type its addresses; the gated door is 8080 because only the edge connects to it, and is told the port once. See the header of `.github/deploy/proxy/proxy.Caddyfile`.
 - **No sync exception in the gate.** Sync credentials ship in the seeded datasets, so letting `/central/*` through would open every deployment's sync to the internet. Remote sites sync from the office or the VPN.
 - **A gate cookie separate from the dashboard's session.** It has to reach every deployment, and deployments run branch code, so it carries nothing but "signed in" — never the GitHub token. See the header of `.github/deploy/dashboard/web.mjs`.
