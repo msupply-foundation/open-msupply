@@ -53,6 +53,7 @@ export type SdkActiveProgramEventsVariables = {
     data?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     activeStartDatetime?: {
     equalTo?: string | null;

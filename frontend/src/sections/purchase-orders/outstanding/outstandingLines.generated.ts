@@ -53,6 +53,7 @@ export type OutstandingLinesVariables = {
     supplierName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     purchaseOrderNumber?: {
     equalTo?: number | null;
@@ -64,10 +65,12 @@ export type OutstandingLinesVariables = {
     itemName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     itemCodeOrName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     expectedDeliveryDate?: {
     equalTo?: string | null;

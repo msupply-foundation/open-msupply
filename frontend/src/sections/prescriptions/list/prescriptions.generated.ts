@@ -29,10 +29,12 @@ export type PrescriptionsVariables = {
     invoiceNumberOrStatus?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     otherPartyName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     otherPartyId?: {
     equalTo?: string | null;
@@ -71,10 +73,12 @@ export type PrescriptionsVariables = {
     comment?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     theirReference?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     transportReference?: {
     equalTo?: string | null;

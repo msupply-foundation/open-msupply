@@ -1,11 +1,11 @@
 import { Show } from 'solid-js';
 import { t } from '@/intl';
 import {
-  PatientSearch,
   dateOfBirthWithAge,
   genderLabel,
   type PatientOption,
 } from '@/domain/patient';
+import { PatientField } from '../../patients';
 import { HeaderField } from '@/ui/layout/Header/HeaderField';
 import { Button } from '@/ui/elements/buttons/Button';
 import { UserIcon } from '@/ui/icons';
@@ -27,11 +27,12 @@ export const WhoIsItFor = (props: {
   unnamed: boolean;
   /** While the visit is being dispensed: who it is for can't change. */
   disabled?: boolean;
-  onSelect: (patient: PatientOption | null) => void;
+  /** Someone was chosen in the patient search, or created there. */
+  onSelect: (patient: { id: string; name: string }) => void;
+  onClear: () => void;
   onUnnamed: () => void;
   /** Chooses nobody, from the unnamed patient. */
   onChange: () => void;
-  onCreatePatient: () => void;
 }) => {
   let change: HTMLButtonElement | undefined;
   return (
@@ -48,7 +49,7 @@ export const WhoIsItFor = (props: {
         when={props.unnamed}
         fallback={
           <div class={styles.choose}>
-            {/* The commonest answer as one press, before the picker for
+            {/* The commonest answer as one press, before the search for
                 everyone else. */}
             <Show when={props.useUnnamed}>
               <Button
@@ -65,26 +66,30 @@ export const WhoIsItFor = (props: {
                 {t('label.unnamed-patient')}
               </Button>
             </Show>
-            <PatientSearch
-              label={
-                props.useUnnamed
-                  ? t('label.choose-a-patient-or-unnamed')
-                  : t('label.who-is-it-for')
-              }
-              hideLabel
-              width="full"
-              class={styles.picker}
-              placeholder={
-                props.useUnnamed
-                  ? t('placeholder.or-choose-a-patient')
-                  : undefined
-              }
-              storeId={props.storeId}
-              selected={props.patient ?? undefined}
-              disabled={props.disabled}
-              onSelect={props.onSelect}
-              onCreatePatient={props.onCreatePatient}
-            />
+            {/* Picked in the patient search (patients S4), which also
+                creates a patient. Unlike a record's patient it can be
+                cleared: nothing is saved until Dispense. */}
+            <div class={styles.picker}>
+              <PatientField
+                label={
+                  props.useUnnamed
+                    ? t('label.choose-a-patient-or-unnamed')
+                    : t('label.who-is-it-for')
+                }
+                hideLabel
+                placeholder={
+                  props.useUnnamed
+                    ? t('placeholder.or-choose-a-patient')
+                    : undefined
+                }
+                testId="who-is-it-for"
+                storeId={props.storeId}
+                patient={props.patient ?? undefined}
+                disabled={props.disabled}
+                onChange={props.onSelect}
+                onClear={props.onClear}
+              />
+            </div>
           </div>
         }
       >
@@ -111,9 +116,9 @@ export const WhoIsItFor = (props: {
 
 /*
  * The facts the record carries, in the spec's order; one it doesn't carry is
- * left out rather than shown as a dash. A patient just created from the
- * picker comes back with its id and name only; the page reads its record and
- * hands it back, so its facts show a moment later.
+ * left out rather than shown as a dash. The patient search hands back a
+ * patient's id and name only; the page reads their record and hands it back,
+ * so the facts show a moment later.
  */
 const ChosenPatientDetails = (props: { patient: PatientOption }) => (
   <Show

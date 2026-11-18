@@ -27,7 +27,11 @@ import {
   t,
 } from '@/intl';
 import { prescriptionPreferences } from '@/store/storeContext';
-import { fetchPatientOptionById, type PatientOption } from '@/domain/patient';
+import {
+  fetchPatientOptionById,
+  minimalPatientOption,
+  type PatientOption,
+} from '@/domain/patient';
 import { ItemSearch } from '@/domain/item';
 import { round9 } from '@/domain/allocation';
 import { Page } from '@/ui/layout/Page/Page';
@@ -40,7 +44,6 @@ import { LinkButton } from '@/ui/elements/buttons/LinkButton';
 import { EmptyState } from '@/ui/elements/feedback/EmptyState';
 import { ClockIcon } from '@/ui/icons';
 import { useIsCompact } from '@/ui/utils/createMediaQuery';
-import { CreatePatientModal } from '../../patients';
 import { generateUUID } from '@/uuid';
 import { SimpleDispensingItems } from './simpleDispensing.generated';
 import {
@@ -217,10 +220,10 @@ const SimpleDispensingPage: Component = () => {
   // The unnamed patient's record, once the server has given it: the same
   // one for every visit.
   let unnamedPatient: DispensedTo | undefined;
-  const [createPatientOpen, setCreatePatientOpen] = createSignal(false);
-  // A patient just created comes back with its id and name only: read its
-  // record so its code, date of birth and gender show like anyone else's.
-  const showCreatedDetails = async (id: string) => {
+  // The patient search hands back an id and name only, for someone found or
+  // just created: read the record so their code, date of birth and gender
+  // show.
+  const showDetails = async (id: string) => {
     const full = await fetchPatientOptionById(params.storeId, id);
     if (full && patient()?.id === id) setPatient(full);
   };
@@ -555,11 +558,15 @@ const SimpleDispensingPage: Component = () => {
             onSelect={chosen => {
               setNotice(undefined);
               setUnnamed(false);
-              setPatient(chosen);
+              setPatient(minimalPatientOption(chosen.id, chosen.name));
+              void showDetails(chosen.id);
+            }}
+            onClear={() => {
+              setNotice(undefined);
+              setPatient(null);
             }}
             onUnnamed={() => chooseUnnamed(true)}
             onChange={() => chooseUnnamed(false)}
-            onCreatePatient={() => setCreatePatientOpen(true)}
           />
           {/* Staff can't switch screens (rules › the Simple screen): the list
               is where past records are found. Nothing on this screen's list
@@ -715,22 +722,6 @@ const SimpleDispensingPage: Component = () => {
             onClose={closeAmount}
           />
         )}
-      </Show>
-      {/* Create-patient-on-no-match, as on the create flow: on success the
-          new patient is the one the visit is for. Mounted only while open,
-          so its test ids are never on the page twice (e2e/TESTIDS.md). */}
-      <Show when={createPatientOpen()}>
-        <CreatePatientModal
-          open
-          storeId={params.storeId}
-          onClose={() => setCreatePatientOpen(false)}
-          onCreated={created => {
-            setUnnamed(false);
-            setPatient(created);
-            setCreatePatientOpen(false);
-            void showCreatedDetails(created.id);
-          }}
-        />
       </Show>
     </Page>
   );

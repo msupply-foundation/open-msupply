@@ -1675,6 +1675,8 @@ export type CentralGeneralMutationsSetSyncApiPausedArgs = {
 
 export type CentralPatientNode = {
   __typename: 'CentralPatientNode';
+  /** Not filled by legacy mSupply or an older central */
+  address1?: Maybe<Scalars['String']['output']>;
   code: Scalars['String']['output'];
   code2?: Maybe<Scalars['String']['output']>;
   dateOfBirth?: Maybe<Scalars['NaiveDate']['output']>;
@@ -1683,6 +1685,9 @@ export type CentralPatientNode = {
   id: Scalars['String']['output'];
   isDeceased: Scalars['Boolean']['output'];
   lastName: Scalars['String']['output'];
+  /** Not filled by legacy mSupply or an older central */
+  nextOfKinName?: Maybe<Scalars['String']['output']>;
+  phone?: Maybe<Scalars['String']['output']>;
 };
 
 export type CentralPatientSearchConnector = {
@@ -1701,11 +1706,27 @@ export type CentralPatientSearchErrorInterface = {
 };
 
 export type CentralPatientSearchInput = {
-  /** Patient code */
+  /**
+   * Patient code: the start of the code or code 2, ignoring case. Exactly
+   * the code on legacy mSupply.
+   */
   code?: InputMaybe<Scalars['String']['input']>;
+  /** An exact date of birth */
   dateOfBirth?: InputMaybe<Scalars['NaiveDate']['input']>;
+  /** The earliest date of birth, for a year or a month (not on legacy mSupply) */
+  dateOfBirthFrom?: InputMaybe<Scalars['NaiveDate']['input']>;
+  /** The latest date of birth, for a year or a month (not on legacy mSupply) */
+  dateOfBirthTo?: InputMaybe<Scalars['NaiveDate']['input']>;
+  /**
+   * Max number of returned patients, in name order. There's no total: ask
+   * for one more than you show to know whether there are more. Not on
+   * legacy mSupply, which returns every match.
+   */
+  first?: InputMaybe<Scalars['Int']['input']>;
   firstName?: InputMaybe<Scalars['String']['input']>;
   lastName?: InputMaybe<Scalars['String']['input']>;
+  /** First returned patient is at this position in the name order */
+  offset?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type CentralPatientSearchResponse =
@@ -1779,6 +1800,11 @@ export type CentralServerMutationNode = {
   reports: CentralReportMutations;
   site: CentralSiteMutations;
   vaccineCourse: VaccineCourseMutations;
+};
+
+export type CentralServerNoAnswer = CentralPatientSearchErrorInterface & {
+  __typename: 'CentralServerNoAnswer';
+  description: Scalars['String']['output'];
 };
 
 export type CentralServerQueryNode = {
@@ -8328,6 +8354,8 @@ export type PatientFilterInput = {
   address2?: InputMaybe<StringFilterInput>;
   code?: InputMaybe<StringFilterInput>;
   code2?: InputMaybe<StringFilterInput>;
+  /** Matches the code or the secondary code (code 2) */
+  codeOrCode2?: InputMaybe<StringFilterInput>;
   country?: InputMaybe<StringFilterInput>;
   dateOfBirth?: InputMaybe<DateFilterInput>;
   dateOfDeath?: InputMaybe<DateFilterInput>;
@@ -10269,6 +10297,7 @@ export type QueriesPatientSearchArgs = {
 };
 
 export type QueriesPatientsArgs = {
+  countLimit?: InputMaybe<Scalars['Int']['input']>;
   filter?: InputMaybe<PatientFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<PatientSortInput>>;
@@ -12128,6 +12157,7 @@ export type StocktakeLineFilterInput = {
   campaignId?: InputMaybe<EqualFilterStringInput>;
   campaignName?: InputMaybe<StringFilterInput>;
   donorId?: InputMaybe<EqualFilterStringInput>;
+  expiryDate?: InputMaybe<DateFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   itemCodeOrName?: InputMaybe<StringFilterInput>;
   itemId?: InputMaybe<EqualFilterStringInput>;
@@ -12366,6 +12396,8 @@ export type StringFilterInput = {
   equalTo?: InputMaybe<Scalars['String']['input']>;
   /** Search term must be included in search candidate (case insensitive) */
   like?: InputMaybe<Scalars['String']['input']>;
+  /** Search candidate must start with the search term (case insensitive) */
+  startsWith?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type StringStorePrefInput = {

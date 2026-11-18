@@ -88,6 +88,7 @@ export type InternalOrdersVariables = {
     otherPartyName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     otherPartyId?: {
     equalTo?: string | null;
@@ -106,10 +107,12 @@ export type InternalOrdersVariables = {
     theirReference?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     comment?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     orderType?: {
     equalTo?: string | null;

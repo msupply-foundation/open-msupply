@@ -144,8 +144,12 @@ impl ProgramsQueries {
         page: Option<PaginationInput>,
         filter: Option<PatientFilterInput>,
         sort: Option<Vec<PatientSortInput>>,
+        #[graphql(
+            desc = "Stop counting at this many: totalCount is then at most this. For a search: the page is also sorted from only the first 1000 matches found, so past that paging may repeat or miss a patient"
+        )]
+        count_limit: Option<u32>,
     ) -> Result<PatientResponse> {
-        patients(ctx, store_id, page, filter, sort)
+        patients(ctx, store_id, page, filter, sort, count_limit)
     }
     pub async fn patient(
         &self,
