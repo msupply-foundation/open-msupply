@@ -92,7 +92,7 @@ impl<'a> MasterListRowRepository<'a> {
 
     pub fn find_all(&self) -> Result<Vec<MasterListRow>, RepositoryError> {
         Ok(master_list::table
-            .order((master_list::code.asc(), master_list::id.asc()))
+            .order((master_list::name.asc(), master_list::id.asc()))
             .load(self.connection.lock().connection())?)
     }
 
