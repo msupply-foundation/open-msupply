@@ -14,6 +14,7 @@ export type AssetCatalogueItemsVariables = {
     category?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     categoryId?: {
     equalTo?: string | null;
@@ -25,6 +26,7 @@ export type AssetCatalogueItemsVariables = {
     class?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     classId?: {
     equalTo?: string | null;
@@ -36,18 +38,22 @@ export type AssetCatalogueItemsVariables = {
     code?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     manufacturer?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     model?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     type?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     typeId?: {
     equalTo?: string | null;
@@ -59,10 +65,12 @@ export type AssetCatalogueItemsVariables = {
     search?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     subCatalogue?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
   } | null;
   sort?: Array<{

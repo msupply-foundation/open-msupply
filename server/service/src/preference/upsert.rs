@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use super::{Preference, PreferenceProvider, UpsertPreferenceError, get_preference_provider};
 use crate::{
     preference::{
-        BackdatingData, CommonMedicine, CustomTranslationsV2Value,
+        BackdatingData, CommonMedicine, CustomTranslationsV2Value, DispensingScreenOption,
         WarnWhenMissingRecentStocktakeData,
     },
     service_provider::ServiceContext,
@@ -83,6 +83,17 @@ pub struct UpsertPreferences {
     pub do_not_print_placeholder_line_labels: Option<Vec<StorePrefUpdate<bool>>>,
     pub prompt_for_batch_and_expiry_on_inbound_shipments: Option<Vec<StorePrefUpdate<bool>>>,
     pub common_medicines: Option<Vec<StorePrefUpdate<Vec<CommonMedicine>>>>,
+
+    // Dispensing (#2188): the global value, and a store's own value (a None
+    // value removes it)
+    pub dispensing_screen: Option<DispensingScreenOption>,
+    pub dispensing_screen_store_override: Option<Vec<StoreOverrideUpdate<DispensingScreenOption>>>,
+    pub use_unnamed_patient: Option<bool>,
+    pub use_unnamed_patient_store_override: Option<Vec<StoreOverrideUpdate<bool>>>,
+    pub start_with_unnamed_patient: Option<bool>,
+    pub start_with_unnamed_patient_store_override: Option<Vec<StoreOverrideUpdate<bool>>>,
+    pub ask_for_patient_type: Option<bool>,
+    pub ask_for_patient_type_store_override: Option<Vec<StoreOverrideUpdate<bool>>>,
 }
 
 pub fn upsert_preferences(
@@ -148,6 +159,14 @@ pub fn upsert_preferences(
         prompt_for_batch_and_expiry_on_inbound_shipments:
             prompt_for_batch_and_expiry_on_inbound_shipments_input,
         common_medicines: common_medicines_input,
+        dispensing_screen: dispensing_screen_input,
+        dispensing_screen_store_override: dispensing_screen_store_override_input,
+        use_unnamed_patient: use_unnamed_patient_input,
+        use_unnamed_patient_store_override: use_unnamed_patient_store_override_input,
+        start_with_unnamed_patient: start_with_unnamed_patient_input,
+        start_with_unnamed_patient_store_override: start_with_unnamed_patient_store_override_input,
+        ask_for_patient_type: ask_for_patient_type_input,
+        ask_for_patient_type_store_override: ask_for_patient_type_store_override_input,
     }: UpsertPreferences,
 ) -> Result<(), UpsertPreferenceError> {
     let PreferenceProvider {
@@ -201,6 +220,10 @@ pub fn upsert_preferences(
         do_not_print_placeholder_line_labels,
         prompt_for_batch_and_expiry_on_inbound_shipments,
         common_medicines,
+        dispensing_screen,
+        use_unnamed_patient,
+        start_with_unnamed_patient,
+        ask_for_patient_type,
     }: PreferenceProvider = get_preference_provider();
 
     ctx.connection
@@ -433,6 +456,32 @@ pub fn upsert_preferences(
                 upsert_store_input(connection, common_medicines, input)?;
             }
 
+            // Dispensing (#2188)
+            if let Some(input) = dispensing_screen_input {
+                dispensing_screen.upsert(connection, input, None)?;
+            }
+            if let Some(input) = dispensing_screen_store_override_input {
+                upsert_store_override_input(connection, dispensing_screen, input)?;
+            }
+            if let Some(input) = use_unnamed_patient_input {
+                use_unnamed_patient.upsert(connection, input, None)?;
+            }
+            if let Some(input) = use_unnamed_patient_store_override_input {
+                upsert_store_override_input(connection, use_unnamed_patient, input)?;
+            }
+            if let Some(input) = start_with_unnamed_patient_input {
+                start_with_unnamed_patient.upsert(connection, input, None)?;
+            }
+            if let Some(input) = start_with_unnamed_patient_store_override_input {
+                upsert_store_override_input(connection, start_with_unnamed_patient, input)?;
+            }
+            if let Some(input) = ask_for_patient_type_input {
+                ask_for_patient_type.upsert(connection, input, None)?;
+            }
+            if let Some(input) = ask_for_patient_type_store_override_input {
+                upsert_store_override_input(connection, ask_for_patient_type, input)?;
+            }
+
             Ok(())
         })
         .map_err(|error: TransactionError<UpsertPreferenceError>| error.to_inner_error())?;
@@ -542,5 +591,236 @@ mod tests {
                 .unwrap()
                 .is_empty()
         );
+    }
+
+    #[actix_rt::test]
+    async fn dispensing_preferences_save_globally_and_per_store() {
+        use crate::preference::{
+            AskForPatientType, DispensingScreen, DispensingScreenOption, StartWithUnnamedPatient,
+            UseUnnamedPatient,
+        };
+        use repository::mock::{mock_store_a, mock_store_b};
+
+        let (_, _, connection_manager, _) = setup_all(
+            "dispensing_preferences_save_globally_and_per_store",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+        let service_provider = ServiceProvider::new(connection_manager);
+        let ctx = service_provider.basic_context().unwrap();
+        test_util_set_is_central_server(true);
+        let (a, b) = (mock_store_a().id, mock_store_b().id);
+        fn override_for<T>(store: &str, value: Option<T>) -> Option<Vec<StoreOverrideUpdate<T>>> {
+            Some(vec![StoreOverrideUpdate {
+                store_id: store.to_string(),
+                value,
+            }])
+        }
+
+        // spec rules › dispensing preferences: Standard and off until set.
+        assert_eq!(
+            DispensingScreen
+                .load(&ctx.connection, Some(a.clone()))
+                .unwrap(),
+            DispensingScreenOption::Standard
+        );
+        for loaded in [
+            UseUnnamedPatient.load(&ctx.connection, Some(a.clone())),
+            StartWithUnnamedPatient.load(&ctx.connection, Some(a.clone())),
+            AskForPatientType.load(&ctx.connection, Some(a.clone())),
+        ] {
+            assert!(!loaded.unwrap());
+        }
+
+        // One save sets every global value, and store A's own values.
+        upsert_preferences(
+            &ctx,
+            UpsertPreferences {
+                dispensing_screen: Some(DispensingScreenOption::Simple),
+                dispensing_screen_store_override: override_for(
+                    &a,
+                    Some(DispensingScreenOption::Standard),
+                ),
+                use_unnamed_patient: Some(true),
+                use_unnamed_patient_store_override: override_for(&a, Some(false)),
+                start_with_unnamed_patient: Some(true),
+                start_with_unnamed_patient_store_override: override_for(&a, Some(false)),
+                ask_for_patient_type: Some(true),
+                ask_for_patient_type_store_override: override_for(&a, Some(false)),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+
+        // Store A keeps its own values; store B follows the global ones.
+        let screen = |store: &str| {
+            DispensingScreen
+                .load(&ctx.connection, Some(store.to_string()))
+                .unwrap()
+        };
+        assert_eq!(screen(&a), DispensingScreenOption::Standard);
+        assert_eq!(screen(&b), DispensingScreenOption::Simple);
+        for (pref, store, expected) in [
+            (
+                &UseUnnamedPatient as &dyn Preference<Value = bool>,
+                &a,
+                false,
+            ),
+            (&UseUnnamedPatient, &b, true),
+            (&StartWithUnnamedPatient, &a, false),
+            (&StartWithUnnamedPatient, &b, true),
+            (&AskForPatientType, &a, false),
+            (&AskForPatientType, &b, true),
+        ] {
+            assert_eq!(
+                pref.load(&ctx.connection, Some(store.clone())).unwrap(),
+                expected,
+                "{} at {store}",
+                pref.key_str()
+            );
+        }
+
+        // A null value removes store A's own value: it follows global again.
+        upsert_preferences(
+            &ctx,
+            UpsertPreferences {
+                dispensing_screen_store_override: override_for(&a, None),
+                use_unnamed_patient_store_override: override_for(&a, None),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        assert_eq!(screen(&a), DispensingScreenOption::Simple);
+        assert!(
+            UseUnnamedPatient
+                .load(&ctx.connection, Some(a.clone()))
+                .unwrap()
+        );
+        // The others were not in that save, so A still has its own.
+        assert!(
+            !AskForPatientType
+                .load(&ctx.connection, Some(a.clone()))
+                .unwrap()
+        );
+    }
+
+    #[actix_rt::test]
+    async fn dispensing_preferences_are_listed_globally_and_per_store() {
+        use crate::preference::{
+            DispensingScreenOption, PrefKey, PreferenceService, PreferenceServiceTrait,
+            PreferenceType,
+        };
+        use repository::mock::{mock_store_a, mock_store_b};
+
+        let (_, _, connection_manager, _) = setup_all(
+            "dispensing_preferences_are_listed_globally_and_per_store",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+        let service_provider = ServiceProvider::new(connection_manager.clone());
+        let ctx = service_provider.basic_context().unwrap();
+        test_util_set_is_central_server(true);
+        let (a, b) = (mock_store_a().id, mock_store_b().id);
+        fn own<T>(store: &str, value: Option<T>) -> StoreOverrideUpdate<T> {
+            StoreOverrideUpdate {
+                store_id: store.to_string(),
+                value,
+            }
+        }
+
+        // Simple and on for every store; A has its own value for each, and B
+        // its own dispensing screen too.
+        upsert_preferences(
+            &ctx,
+            UpsertPreferences {
+                dispensing_screen: Some(DispensingScreenOption::Simple),
+                dispensing_screen_store_override: Some(vec![
+                    own(&a, Some(DispensingScreenOption::Standard)),
+                    own(&b, Some(DispensingScreenOption::Standard)),
+                ]),
+                use_unnamed_patient: Some(true),
+                use_unnamed_patient_store_override: Some(vec![own(&a, Some(false))]),
+                start_with_unnamed_patient: Some(true),
+                start_with_unnamed_patient_store_override: Some(vec![own(&a, Some(false))]),
+                ask_for_patient_type: Some(true),
+                ask_for_patient_type_store_override: Some(vec![own(&a, Some(false))]),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+
+        let service = PreferenceService {};
+        let listed = |store_id: Option<&str>, pref_type: PreferenceType| {
+            service
+                .get_preference_descriptions(
+                    connection_manager.connection().unwrap(),
+                    store_id.map(str::to_string),
+                    pref_type,
+                )
+                .unwrap()
+        };
+        let overriding = |key: PrefKey| {
+            let mut ids: Vec<String> = listed(None, PreferenceType::Global)
+                .into_iter()
+                .find(|d| d.key.to_string() == key.to_string())
+                .unwrap_or_else(|| panic!("{key} is listed globally"))
+                .overriding_stores
+                .unwrap_or_default()
+                .into_iter()
+                .map(|s| s.store_id)
+                .collect();
+            ids.sort();
+            ids
+        };
+        let mut a_and_b = vec![a.clone(), b.clone()];
+        a_and_b.sort();
+        let switches = [
+            PrefKey::UseUnnamedPatient,
+            PrefKey::StartWithUnnamedPatient,
+            PrefKey::AskForPatientType,
+        ];
+
+        // The global listing has all four, each naming the stores with their
+        // own value (spec global-preferences, OMS-REG-GPREF-01.38).
+        assert_eq!(overriding(PrefKey::DispensingScreen), a_and_b);
+        for key in switches.clone() {
+            assert_eq!(overriding(key.clone()), vec![a.clone()], "{key}");
+        }
+
+        // A store's listing has all four too, each saying whether the store
+        // has its own value and what the global value is.
+        let in_store = |store: &str, key: PrefKey| {
+            listed(Some(store), PreferenceType::Store)
+                .into_iter()
+                .find(|d| d.key.to_string() == key.to_string())
+                .unwrap_or_else(|| panic!("{key} is listed for {store}"))
+        };
+        let screen_a = in_store(&a, PrefKey::DispensingScreen);
+        assert_eq!(screen_a.value, serde_json::json!("STANDARD"));
+        let screen_override = screen_a.store_override.unwrap();
+        assert!(screen_override.is_overridden);
+        assert_eq!(screen_override.global_value, serde_json::json!("SIMPLE"));
+        for key in switches.clone() {
+            let at_a = in_store(&a, key.clone());
+            assert_eq!(at_a.value, serde_json::json!(false), "{key} at A");
+            assert!(at_a.store_override.unwrap().is_overridden, "{key} at A");
+            let at_b = in_store(&b, key.clone());
+            assert_eq!(at_b.value, serde_json::json!(true), "{key} at B");
+            assert!(!at_b.store_override.unwrap().is_overridden, "{key} at B");
+        }
+
+        // Removing A's own dispensing screen leaves B's alone, and removing a
+        // value B never had is not an error.
+        upsert_preferences(
+            &ctx,
+            UpsertPreferences {
+                dispensing_screen_store_override: Some(vec![own(&a, None)]),
+                use_unnamed_patient_store_override: Some(vec![own(&b, None)]),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        assert_eq!(overriding(PrefKey::DispensingScreen), vec![b.clone()]);
+        assert_eq!(overriding(PrefKey::UseUnnamedPatient), vec![a.clone()]);
     }
 }

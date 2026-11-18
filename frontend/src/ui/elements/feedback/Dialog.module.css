@@ -184,8 +184,11 @@
      that fits. */
   --field-row-label: min(10rem, 40%);
   /* Reserve a minimum height (Dialog's minBodyHeightRem) so a dialog whose content changes
-     size doesn't jump; inherits the default (0) or the caller's inline override from .dialog. */
-  min-block-size: var(--dialog-min-body-height);
+     size doesn't jump; inherits the default (0) or the caller's inline override from .dialog.
+     Never past the viewport cap below, as holdHeight's floor: min-block-size beats
+     max-block-size, so an on-screen keyboard shrinking the viewport left the body at its
+     minimum, spilling past the dialog with the actions out of reach (#1383). */
+  min-block-size: min(var(--dialog-min-body-height), calc(100vh - 2rem));
   /* Bounded so content can't push the dialog past the viewport. The body itself does NOT
      scroll — only the .scroll region between the header and the bottom region does (it
      shrinks and takes over when content is over-tall), so the header and the footer/actions

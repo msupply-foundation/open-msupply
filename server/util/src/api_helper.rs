@@ -27,6 +27,14 @@ pub fn redact_url_for_log(url: &Url) -> String {
 
 pub struct RetrySeconds(Vec<u64>);
 
+impl RetrySeconds {
+    /// The connect timeout for each attempt, in seconds; one attempt per entry.
+    pub fn new(connect_timeouts: Vec<u64>) -> Self {
+        assert!(!connect_timeouts.is_empty(), "at least one attempt");
+        Self(connect_timeouts)
+    }
+}
+
 impl Default for RetrySeconds {
     fn default() -> Self {
         Self(vec![

@@ -44,6 +44,12 @@ pub struct PatientV4 {
     pub code_2: Option<String>,
     #[serde(default, alias = "isDeceased")]
     pub is_deceased: bool,
+    // Added for the v7 patient search, which open mSupply central fills. A
+    // reply without them (legacy mSupply, or an older central) still parses.
+    #[serde(default)]
+    pub address1: Option<String>,
+    #[serde(default)]
+    pub next_of_kin_name: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -213,6 +219,8 @@ mod test {
             gender: Some(GenderType::Female),
             code_2: Some("CODE1234567".to_string()),
             is_deceased: true,
+            address1: Some("12 Rue du Marché".to_string()),
+            next_of_kin_name: Some("Awa Koné".to_string()),
         };
 
         let json = serde_json::to_string(&patient).unwrap();
@@ -225,5 +233,23 @@ mod test {
         assert_eq!(parsed.gender, Some(GenderType::Female));
         assert_eq!(parsed.code_2, Some("CODE1234567".to_string()));
         assert!(parsed.is_deceased);
+        assert_eq!(parsed.address1, Some("12 Rue du Marché".to_string()));
+        assert_eq!(parsed.next_of_kin_name, Some("Awa Koné".to_string()));
+    }
+
+    // A central from before address1 and next_of_kin_name were added (and
+    // legacy mSupply) replies without them
+    #[test]
+    fn deserialize_reply_without_address_or_next_of_kin() {
+        let patient: PatientV4 = serde_json::from_value(serde_json::json!({
+            "ID": "p1", "name": "Patient, A", "phone": "555 0100", "email": "",
+            "code": "1234567", "last": "A", "first": "Patient",
+            "date_of_birth": "2000-01-02", "gender": "FEMALE", "code_2": null,
+            "is_deceased": false,
+        }))
+        .unwrap();
+        assert_eq!(patient.phone, "555 0100");
+        assert_eq!(patient.address1, None);
+        assert_eq!(patient.next_of_kin_name, None);
     }
 }

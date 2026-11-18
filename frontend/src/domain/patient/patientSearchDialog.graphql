@@ -1,0 +1,63 @@
+# Finding a patient (spec/patients S2 step ①, and the create form's duplicate
+# check; #631 spike). The `patients` list query, not `patientSearch`, because
+# each typed field is its own filter (a name matches the start of any word,
+# ignoring case and accents) and the date of birth can be a range. Sorted by
+# name ("last, first") and paged by the caller with no total: it asks for one
+# more than it shows, to know whether there's a next page. countLimit 1 keeps
+# the server from counting.
+fragment PatientFindRow on PatientNode {
+  id
+  code
+  code2
+  name
+  firstName
+  lastName
+  gender
+  dateOfBirth
+  isDeceased
+  address1
+  phone
+}
+
+query patientFind(
+  $storeId: String!
+  $filter: PatientFilterInput
+  $first: Int!
+  $offset: Int!
+) {
+  patients(
+    storeId: $storeId
+    filter: $filter
+    sort: [{ key: name }]
+    page: { first: $first, offset: $offset }
+    countLimit: 1
+  ) {
+    __typename
+    ... on PatientConnector {
+      nodes {
+        ...PatientFindRow
+      }
+    }
+  }
+}
+
+# Recent patients in this store (#631 spike): the patients of its latest
+# prescriptions, newest first. The caller keeps the first of each patient.
+query recentPrescriptionPatients($storeId: String!, $first: Int!) {
+  invoices(
+    storeId: $storeId
+    sort: [{ key: createdDatetime, desc: true }]
+    page: { first: $first }
+    type: [PRESCRIPTION]
+  ) {
+    __typename
+    ... on InvoiceConnector {
+      nodes {
+        id
+        patient {
+          ...PatientFindRow
+        }
+      }
+    }
+  }
+}

@@ -1337,6 +1337,15 @@ type CentralPatientNode {
 	dateOfBirth: NaiveDate
 	gender: GenderTypeNode
 	isDeceased: Boolean!
+	phone: String
+	"""
+	Not filled by legacy mSupply or an older central
+	"""
+	address1: String
+	"""
+	Not filled by legacy mSupply or an older central
+	"""
+	nextOfKinName: String
 }
 
 type CentralPatientSearchConnector {
@@ -1354,12 +1363,34 @@ interface CentralPatientSearchErrorInterface {
 
 input CentralPatientSearchInput {
 	"""
-	Patient code
+	Patient code: the start of the code or code 2, ignoring case. Exactly
+	the code on legacy mSupply.
 	"""
 	code: String
 	firstName: String
 	lastName: String
+	"""
+	An exact date of birth
+	"""
 	dateOfBirth: NaiveDate
+	"""
+	The earliest date of birth, for a year or a month (not on legacy mSupply)
+	"""
+	dateOfBirthFrom: NaiveDate
+	"""
+	The latest date of birth, for a year or a month (not on legacy mSupply)
+	"""
+	dateOfBirthTo: NaiveDate
+	"""
+	Max number of returned patients, in name order. There's no total: ask
+	for one more than you show to know whether there are more. Not on
+	legacy mSupply, which returns every match.
+	"""
+	first: Int
+	"""
+	First returned patient is at this position in the name order
+	"""
+	offset: Int
 }
 
 union CentralPatientSearchResponse = CentralPatientSearchConnector | CentralPatientSearchError
@@ -1404,6 +1435,10 @@ type CentralServerMutationNode {
 	customField: CustomFieldMutations!
 	reports: CentralReportMutations!
 	site: CentralSiteMutations!
+}
+
+type CentralServerNoAnswer implements CentralPatientSearchErrorInterface {
+	description: String!
 }
 
 type CentralServerQueryNode {
@@ -2660,6 +2695,29 @@ type DiagnosisNode {
 	id: String!
 	code: String!
 	description: String!
+}
+
+"""
+Which screen dispensing opens on (the `dispensingScreen` preference).
+"""
+enum DispensingScreenNode {
+	"""
+	The dispensing list
+	"""
+	STANDARD
+	"""
+	The Simple dispensing screen
+	"""
+	SIMPLE
+}
+
+"""
+One store's edit of the dispensing screen. A null `value` CLEARS the
+store's own value, returning the store to the global value.
+"""
+input DispensingScreenStoreOverrideInput {
+	storeId: String!
+	value: DispensingScreenNode
 }
 
 type DisplaySettingNode {
@@ -6766,6 +6824,10 @@ input PatientFilterInput {
 	country: StringFilterInput
 	email: StringFilterInput
 	identifier: StringFilterInput
+	"""
+	Matches the code or the secondary code (code 2)
+	"""
+	codeOrCode2: StringFilterInput
 	dateOfDeath: DateFilterInput
 	programEnrolmentName: StringFilterInput
 	nextOfKinName: StringFilterInput
@@ -7120,6 +7182,10 @@ enum PreferenceKey {
 	doNotPrintPlaceholderLineLabels
 	promptForBatchAndExpiryOnInboundShipments
 	commonMedicines
+	dispensingScreen
+	useUnnamedPatient
+	startWithUnnamedPatient
+	askForPatientType
 }
 
 type PreferenceMutations {
@@ -7155,6 +7221,7 @@ enum PreferenceValueNodeType {
 	COLOUR
 	IMAGE
 	COMMON_MEDICINES
+	DISPENSING_SCREEN
 }
 
 type PreferencesNode {
@@ -7212,6 +7279,25 @@ type PreferencesNode {
 	The medicines shown as cards on the Simple dispensing screen, in order.
 	"""
 	commonMedicines: [CommonMedicineNode!]!
+	"""
+	Which screen dispensing opens on: the store's own value where it has
+	one, else the global value.
+	"""
+	dispensingScreen: DispensingScreenNode!
+	"""
+	Whether the store can dispense to its unnamed patient.
+	"""
+	useUnnamedPatient: Boolean!
+	"""
+	Whether each new visit on the Simple screen starts with the unnamed
+	patient chosen.
+	"""
+	startWithUnnamedPatient: Boolean!
+	"""
+	Whether the Simple screen asks if the patient is an outpatient or an
+	inpatient.
+	"""
+	askForPatientType: Boolean!
 }
 
 input PrescriptionLineInput {
@@ -8516,7 +8602,12 @@ type Queries {
 		name: String!
 	): DocumentHistoryResponse!
 	documentRegistries(filter: DocumentRegistryFilterInput, sort: [DocumentRegistrySortInput!], storeId: String!): DocumentRegistryResponse!
-	patients(storeId: String!, page: PaginationInput, filter: PatientFilterInput, sort: [PatientSortInput!]): PatientResponse!
+	patients(		storeId: String!,		page: PaginationInput,		filter: PatientFilterInput,		sort: [PatientSortInput!],
+		"""
+		Stop counting at this many: totalCount is then at most this. For a search: the page is also sorted from only the first 1000 matches found, so past that paging may repeat or miss a patient
+		"""
+		countLimit: Int
+	): PatientResponse!
 	patient(storeId: String!, patientId: String!): PatientNode
 	patientSearch(storeId: String!, input: PatientSearchInput!): PatientSearchResponse!
 	centralPatientSearch(storeId: String!, input: CentralPatientSearchInput!): CentralPatientSearchResponse!
@@ -10082,6 +10173,7 @@ input StocktakeLineFilterInput {
 	donorId: EqualFilterStringInput
 	campaignId: EqualFilterStringInput
 	batch: StringFilterInput
+	expiryDate: DateFilterInput
 	manufactureDate: DateFilterInput
 	campaignName: StringFilterInput
 }
@@ -10310,6 +10402,10 @@ input StringFilterInput {
 	Search term must be included in search candidate (case insensitive)
 	"""
 	like: String
+	"""
+	Search candidate must start with the search term (case insensitive)
+	"""
+	startsWith: String
 }
 
 input StringStorePrefInput {
@@ -12186,6 +12282,14 @@ input UpsertPreferencesInput {
 	doNotPrintPlaceholderLineLabels: [BoolStorePrefInput!]
 	promptForBatchAndExpiryOnInboundShipments: [BoolStorePrefInput!]
 	commonMedicines: [CommonMedicinesInput!]
+	dispensingScreen: DispensingScreenNode
+	dispensingScreenStoreOverride: [DispensingScreenStoreOverrideInput!]
+	useUnnamedPatient: Boolean
+	useUnnamedPatientStoreOverride: [BoolStoreOverrideInput!]
+	startWithUnnamedPatient: Boolean
+	startWithUnnamedPatientStoreOverride: [BoolStoreOverrideInput!]
+	askForPatientType: Boolean
+	askForPatientTypeStoreOverride: [BoolStoreOverrideInput!]
 }
 
 input UpsertPrescriptionRequestLineInput {

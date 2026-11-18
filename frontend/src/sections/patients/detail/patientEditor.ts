@@ -1,4 +1,10 @@
-import { createEffect, createMemo, createSignal, on } from 'solid-js';
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  on,
+  type Accessor,
+} from 'solid-js';
 import { createStore } from 'solid-js/store';
 import { hasPermission } from '../../../store/storeContext';
 import { runUpdatePatient } from '../patientApi';
@@ -28,6 +34,8 @@ export interface PatientEditorParams {
 
 export interface PatientEditor {
   edit: PatientDraft;
+  /** The patient the draft was last seeded from; undefined until then. */
+  seededId: Accessor<string | undefined>;
   setField: <K extends keyof PatientDraft>(
     key: K,
     value: PatientDraft[K]
@@ -211,6 +219,7 @@ export const createPatientEditor = (
 
   return {
     edit,
+    seededId,
     setField,
     validation,
     isDirty,

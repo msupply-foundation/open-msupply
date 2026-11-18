@@ -141,6 +141,10 @@ impl diesel::r2d2::CustomizeConnection<diesel::SqliteConnection, diesel::r2d2::E
                 .expect("Can't set synchronous in sqlite");
         }
 
+        // Patient name search (db_diesel/name_search.rs)
+        crate::db_diesel::name_search::register_sqlite_functions(conn)
+            .expect("Can't register search functions in sqlite");
+
         Ok(())
     }
 }
@@ -242,11 +246,12 @@ fn check_postgres_version(connection: &mut DBBackendConnection) -> Result<(), St
     check_min_postgres_version(version_num)
 }
 
-/// Postgres 12.0. From 12, `ATTACH PARTITION` takes `SHARE UPDATE EXCLUSIVE`
+/// Postgres 13.0. From 12, `ATTACH PARTITION` takes `SHARE UPDATE EXCLUSIVE`
 /// rather than `ACCESS EXCLUSIVE`; the changelog partition top-up relies on
-/// that not blocking inserts.
+/// that not blocking inserts. From 13, `normalize()` exists, which patient
+/// search's `search_fold` uses (migration `add_patient_search_indexes`).
 #[cfg(feature = "postgres")]
-const MIN_POSTGRES_VERSION_NUM: i64 = 120_000;
+const MIN_POSTGRES_VERSION_NUM: i64 = 130_000;
 
 #[cfg(feature = "postgres")]
 #[derive(diesel::QueryableByName)]
@@ -261,7 +266,7 @@ fn check_min_postgres_version(version_num: i64) -> Result<(), String> {
         return Ok(());
     }
     Err(format!(
-        "Unsupported PostgreSQL version: server_version_num {} is below the minimum {} (PostgreSQL 12)",
+        "Unsupported PostgreSQL version: server_version_num {} is below the minimum {} (PostgreSQL 13)",
         version_num, MIN_POSTGRES_VERSION_NUM
     ))
 }
@@ -316,18 +321,18 @@ mod database_setting_test {
 
     /// The floor is a comparison on `server_version_num`; the real check runs
     /// against whatever postgres the test suite uses (which must pass it), so
-    /// the boundary is pinned here without needing a Postgres 11 to hand.
+    /// the boundary is pinned here without needing a Postgres 12 to hand.
     #[cfg(feature = "postgres")]
     #[test]
     fn test_min_postgres_version_boundary() {
         use super::check_min_postgres_version;
 
-        // Last 11.x patch.
-        let rejected = check_min_postgres_version(110_022).unwrap_err();
-        assert!(rejected.contains("110022 is below the minimum 120000"));
+        // Last 12.x patch.
+        let rejected = check_min_postgres_version(120_022).unwrap_err();
+        assert!(rejected.contains("120022 is below the minimum 130000"));
 
         // Exactly the floor, and a current release.
-        assert!(check_min_postgres_version(120_000).is_ok());
+        assert!(check_min_postgres_version(130_000).is_ok());
         assert!(check_min_postgres_version(170_007).is_ok());
     }
 

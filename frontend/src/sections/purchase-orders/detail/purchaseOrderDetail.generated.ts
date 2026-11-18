@@ -137,6 +137,7 @@ export type PurchaseOrderDetailLinesVariables = {
     supplierName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     purchaseOrderNumber?: {
     equalTo?: number | null;
@@ -148,10 +149,12 @@ export type PurchaseOrderDetailLinesVariables = {
     itemName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     itemCodeOrName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     expectedDeliveryDate?: {
     equalTo?: string | null;

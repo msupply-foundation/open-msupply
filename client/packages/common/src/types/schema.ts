@@ -1675,6 +1675,8 @@ export type CentralGeneralMutationsSetSyncApiPausedArgs = {
 
 export type CentralPatientNode = {
   __typename: 'CentralPatientNode';
+  /** Not filled by legacy mSupply or an older central */
+  address1?: Maybe<Scalars['String']['output']>;
   code: Scalars['String']['output'];
   code2?: Maybe<Scalars['String']['output']>;
   dateOfBirth?: Maybe<Scalars['NaiveDate']['output']>;
@@ -1683,6 +1685,9 @@ export type CentralPatientNode = {
   id: Scalars['String']['output'];
   isDeceased: Scalars['Boolean']['output'];
   lastName: Scalars['String']['output'];
+  /** Not filled by legacy mSupply or an older central */
+  nextOfKinName?: Maybe<Scalars['String']['output']>;
+  phone?: Maybe<Scalars['String']['output']>;
 };
 
 export type CentralPatientSearchConnector = {
@@ -1701,11 +1706,27 @@ export type CentralPatientSearchErrorInterface = {
 };
 
 export type CentralPatientSearchInput = {
-  /** Patient code */
+  /**
+   * Patient code: the start of the code or code 2, ignoring case. Exactly
+   * the code on legacy mSupply.
+   */
   code?: InputMaybe<Scalars['String']['input']>;
+  /** An exact date of birth */
   dateOfBirth?: InputMaybe<Scalars['NaiveDate']['input']>;
+  /** The earliest date of birth, for a year or a month (not on legacy mSupply) */
+  dateOfBirthFrom?: InputMaybe<Scalars['NaiveDate']['input']>;
+  /** The latest date of birth, for a year or a month (not on legacy mSupply) */
+  dateOfBirthTo?: InputMaybe<Scalars['NaiveDate']['input']>;
+  /**
+   * Max number of returned patients, in name order. There's no total: ask
+   * for one more than you show to know whether there are more. Not on
+   * legacy mSupply, which returns every match.
+   */
+  first?: InputMaybe<Scalars['Int']['input']>;
   firstName?: InputMaybe<Scalars['String']['input']>;
   lastName?: InputMaybe<Scalars['String']['input']>;
+  /** First returned patient is at this position in the name order */
+  offset?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type CentralPatientSearchResponse =
@@ -1779,6 +1800,11 @@ export type CentralServerMutationNode = {
   reports: CentralReportMutations;
   site: CentralSiteMutations;
   vaccineCourse: VaccineCourseMutations;
+};
+
+export type CentralServerNoAnswer = CentralPatientSearchErrorInterface & {
+  __typename: 'CentralServerNoAnswer';
+  description: Scalars['String']['output'];
 };
 
 export type CentralServerQueryNode = {
@@ -3196,6 +3222,23 @@ export type DiagnosisNode = {
   code: Scalars['String']['output'];
   description: Scalars['String']['output'];
   id: Scalars['String']['output'];
+};
+
+/** Which screen dispensing opens on (the `dispensingScreen` preference). */
+export enum DispensingScreenNode {
+  /** The Simple dispensing screen */
+  Simple = 'SIMPLE',
+  /** The dispensing list */
+  Standard = 'STANDARD',
+}
+
+/**
+ * One store's edit of the dispensing screen. A null `value` CLEARS the
+ * store's own value, returning the store to the global value.
+ */
+export type DispensingScreenStoreOverrideInput = {
+  storeId: Scalars['String']['input'];
+  value?: InputMaybe<DispensingScreenNode>;
 };
 
 export type DisplaySettingNode = {
@@ -8295,6 +8338,8 @@ export type PatientFilterInput = {
   address2?: InputMaybe<StringFilterInput>;
   code?: InputMaybe<StringFilterInput>;
   code2?: InputMaybe<StringFilterInput>;
+  /** Matches the code or the secondary code (code 2) */
+  codeOrCode2?: InputMaybe<StringFilterInput>;
   country?: InputMaybe<StringFilterInput>;
   dateOfBirth?: InputMaybe<DateFilterInput>;
   dateOfDeath?: InputMaybe<DateFilterInput>;
@@ -8618,6 +8663,7 @@ export type PreferenceDescriptionNode = {
 export enum PreferenceKey {
   AdjustForNumberOfDaysOutOfStock = 'adjustForNumberOfDaysOutOfStock',
   AllowTrackingOfStockByDonor = 'allowTrackingOfStockByDonor',
+  AskForPatientType = 'askForPatientType',
   AuthorisePurchaseOrder = 'authorisePurchaseOrder',
   Backdating = 'backdating',
   BlindStocktake = 'blindStocktake',
@@ -8629,6 +8675,7 @@ export enum PreferenceKey {
   DaysInMonth = 'daysInMonth',
   DecimalPlacesForNumbers = 'decimalPlacesForNumbers',
   DisableManualReturns = 'disableManualReturns',
+  DispensingScreen = 'dispensingScreen',
   DisplayPopulationBasedForecasting = 'displayPopulationBasedForecasting',
   DoNotPrintPlaceholderLineLabels = 'doNotPrintPlaceholderLineLabels',
   ExpiredStockIssueThreshold = 'expiredStockIssueThreshold',
@@ -8658,10 +8705,12 @@ export enum PreferenceKey {
   ShowIndicativePriceInRequisitions = 'showIndicativePriceInRequisitions',
   SkipIntermediateStatusesInOutbound = 'skipIntermediateStatusesInOutbound',
   SortByVvmStatusThenExpiry = 'sortByVvmStatusThenExpiry',
+  StartWithUnnamedPatient = 'startWithUnnamedPatient',
   StoreCustomColour = 'storeCustomColour',
   SyncRecordsDisplayThreshold = 'syncRecordsDisplayThreshold',
   TransferStockToInternalCustomersAtCostPrice = 'transferStockToInternalCustomersAtCostPrice',
   UseSimplifiedMobileUi = 'useSimplifiedMobileUi',
+  UseUnnamedPatient = 'useUnnamedPatient',
   WarnWhenMissingRecentStocktake = 'warnWhenMissingRecentStocktake',
   WarningForExcessRequest = 'warningForExcessRequest',
 }
@@ -8707,6 +8756,7 @@ export enum PreferenceValueNodeType {
   CommonMedicines = 'COMMON_MEDICINES',
   CustomTranslations = 'CUSTOM_TRANSLATIONS',
   CustomTranslationsV2 = 'CUSTOM_TRANSLATIONS_V2',
+  DispensingScreen = 'DISPENSING_SCREEN',
   Float = 'FLOAT',
   Image = 'IMAGE',
   Integer = 'INTEGER',
@@ -8719,6 +8769,11 @@ export type PreferencesNode = {
   __typename: 'PreferencesNode';
   adjustForNumberOfDaysOutOfStock: Scalars['Boolean']['output'];
   allowTrackingOfStockByDonor: Scalars['Boolean']['output'];
+  /**
+   * Whether the Simple screen asks if the patient is an outpatient or an
+   * inpatient.
+   */
+  askForPatientType: Scalars['Boolean']['output'];
   authorisePurchaseOrder: Scalars['Boolean']['output'];
   backdating: BackdatingNode;
   blindStocktake: Scalars['Boolean']['output'];
@@ -8731,6 +8786,11 @@ export type PreferencesNode = {
   daysInMonth: Scalars['Float']['output'];
   decimalPlacesForNumbers: Scalars['Int']['output'];
   disableManualReturns: Scalars['Boolean']['output'];
+  /**
+   * Which screen dispensing opens on: the store's own value where it has
+   * one, else the global value.
+   */
+  dispensingScreen: DispensingScreenNode;
   displayPopulationBasedForecasting: Scalars['Boolean']['output'];
   doNotPrintPlaceholderLineLabels: Scalars['Boolean']['output'];
   expiredStockIssueThreshold: Scalars['Int']['output'];
@@ -8763,10 +8823,17 @@ export type PreferencesNode = {
   showContactTracing: Scalars['Boolean']['output'];
   showIndicativePriceInRequisitions: Scalars['Boolean']['output'];
   sortByVvmStatusThenExpiry: Scalars['Boolean']['output'];
+  /**
+   * Whether each new visit on the Simple screen starts with the unnamed
+   * patient chosen.
+   */
+  startWithUnnamedPatient: Scalars['Boolean']['output'];
   storeCustomColour: Scalars['String']['output'];
   syncRecordsDisplayThreshold: Scalars['Int']['output'];
   transferStockToInternalCustomersAtCostPrice: Scalars['Boolean']['output'];
   useSimplifiedMobileUi: Scalars['Boolean']['output'];
+  /** Whether the store can dispense to its unnamed patient. */
+  useUnnamedPatient: Scalars['Boolean']['output'];
   warnWhenMissingRecentStocktake: WarnWhenMissingRecentStocktakeDataNode;
   warningForExcessRequest: Scalars['Boolean']['output'];
 };
@@ -10209,6 +10276,7 @@ export type QueriesPatientSearchArgs = {
 };
 
 export type QueriesPatientsArgs = {
+  countLimit?: InputMaybe<Scalars['Int']['input']>;
   filter?: InputMaybe<PatientFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<PatientSortInput>>;
@@ -12068,6 +12136,7 @@ export type StocktakeLineFilterInput = {
   campaignId?: InputMaybe<EqualFilterStringInput>;
   campaignName?: InputMaybe<StringFilterInput>;
   donorId?: InputMaybe<EqualFilterStringInput>;
+  expiryDate?: InputMaybe<DateFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   itemCodeOrName?: InputMaybe<StringFilterInput>;
   itemId?: InputMaybe<EqualFilterStringInput>;
@@ -12306,6 +12375,8 @@ export type StringFilterInput = {
   equalTo?: InputMaybe<Scalars['String']['input']>;
   /** Search term must be included in search candidate (case insensitive) */
   like?: InputMaybe<Scalars['String']['input']>;
+  /** Search candidate must start with the search term (case insensitive) */
+  startsWith?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type StringStorePrefInput = {
@@ -14252,6 +14323,8 @@ export type UpsertPackVariantResponse =
 export type UpsertPreferencesInput = {
   adjustForNumberOfDaysOutOfStock?: InputMaybe<Scalars['Boolean']['input']>;
   allowTrackingOfStockByDonor?: InputMaybe<Scalars['Boolean']['input']>;
+  askForPatientType?: InputMaybe<Scalars['Boolean']['input']>;
+  askForPatientTypeStoreOverride?: InputMaybe<Array<BoolStoreOverrideInput>>;
   authorisePurchaseOrder?: InputMaybe<Scalars['Boolean']['input']>;
   authorisePurchaseOrderStoreOverride?: InputMaybe<
     Array<BoolStoreOverrideInput>
@@ -14272,6 +14345,10 @@ export type UpsertPreferencesInput = {
   daysInMonth?: InputMaybe<Scalars['Float']['input']>;
   decimalPlacesForNumbers?: InputMaybe<Scalars['Int']['input']>;
   disableManualReturns?: InputMaybe<Array<BoolStorePrefInput>>;
+  dispensingScreen?: InputMaybe<DispensingScreenNode>;
+  dispensingScreenStoreOverride?: InputMaybe<
+    Array<DispensingScreenStoreOverrideInput>
+  >;
   displayPopulationBasedForecasting?: InputMaybe<Scalars['Boolean']['input']>;
   doNotPrintPlaceholderLineLabels?: InputMaybe<Array<BoolStorePrefInput>>;
   expiredStockIssueThreshold?: InputMaybe<Scalars['Int']['input']>;
@@ -14314,12 +14391,18 @@ export type UpsertPreferencesInput = {
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
   showIndicativePriceInRequisitions?: InputMaybe<Array<BoolStorePrefInput>>;
   sortByVvmStatusThenExpiry?: InputMaybe<Array<BoolStorePrefInput>>;
+  startWithUnnamedPatient?: InputMaybe<Scalars['Boolean']['input']>;
+  startWithUnnamedPatientStoreOverride?: InputMaybe<
+    Array<BoolStoreOverrideInput>
+  >;
   storeCustomColour?: InputMaybe<Array<StringStorePrefInput>>;
   syncRecordsDisplayThreshold?: InputMaybe<Scalars['Int']['input']>;
   transferStockToInternalCustomersAtCostPrice?: InputMaybe<
     Scalars['Boolean']['input']
   >;
   useSimplifiedMobileUi?: InputMaybe<Array<BoolStorePrefInput>>;
+  useUnnamedPatient?: InputMaybe<Scalars['Boolean']['input']>;
+  useUnnamedPatientStoreOverride?: InputMaybe<Array<BoolStoreOverrideInput>>;
   warnWhenMissingRecentStocktake?: InputMaybe<
     Array<WarnWhenMissingRecentStocktakeInput>
   >;

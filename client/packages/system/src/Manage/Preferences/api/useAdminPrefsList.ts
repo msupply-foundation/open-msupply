@@ -1,6 +1,7 @@
 import { PreferenceNodeType, useQuery } from '@openmsupply-client/common';
 import { usePreferencesGraphQL } from './usePreferencesGraphQL';
 import { PREFERENCE_DESCRIPTION_QUERY_KEY } from './keys';
+import { withoutNewFrontEndOnly } from '../EditPage/utils';
 
 export const useAdminPrefsList = (
   prefType: PreferenceNodeType,
@@ -19,7 +20,7 @@ export const useAdminPrefsList = (
         },
       });
 
-      return result.preferenceDescriptions;
+      return withoutNewFrontEndOnly(result.preferenceDescriptions);
     },
     // Store preferences require a store id to load - skip the query until one
     // is available (e.g. while the store is loading, or for non-store names)
