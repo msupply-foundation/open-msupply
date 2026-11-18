@@ -5,6 +5,7 @@ mod add_consumption_estimate_table;
 mod add_item_trim_code_index;
 mod add_location_type_fk_indexes;
 mod add_location_type_trim_code_index;
+mod add_master_list_trim_code_index;
 mod add_patient_search_indexes;
 mod add_standalone_central_admin_key_pg_enum;
 mod add_unit_lower_trim_name_index;
@@ -37,6 +38,7 @@ impl Migration for V3_05_00 {
             Box::new(record_standalone_central_admin::Migrate),
             Box::new(add_user_deleted_datetime::Migrate),
             Box::new(add_user_lower_trim_username_index::Migrate),
+            Box::new(add_master_list_trim_code_index::Migrate),
         ]
     }
 }

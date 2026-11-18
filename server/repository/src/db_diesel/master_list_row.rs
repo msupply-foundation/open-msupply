@@ -2,7 +2,7 @@ use super::{StorageConnection, item_link_row::item_link, master_list_row::master
 
 use crate::{
     ChangelogRepository, ChangelogSyncType, RowActionType, SourceSiteId, Upsert,
-    repository_error::RepositoryError,
+    repository_error::RepositoryError, trim, trim_spaces,
 };
 
 use diesel::prelude::*;
@@ -87,6 +87,23 @@ impl<'a> MasterListRowRepository<'a> {
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<MasterListRow>, RepositoryError> {
         Ok(master_list::table
             .filter(master_list::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
+
+    pub fn find_all(&self) -> Result<Vec<MasterListRow>, RepositoryError> {
+        Ok(master_list::table
+            .order((master_list::code.asc(), master_list::id.asc()))
+            .load(self.connection.lock().connection())?)
+    }
+
+    /// Letter case counts; spaces around either code don't.
+    pub fn find_by_trimmed_code(
+        &self,
+        master_list_code: &str,
+    ) -> Result<Vec<MasterListRow>, RepositoryError> {
+        Ok(master_list::table
+            .filter(trim(master_list::code).eq(trim_spaces(master_list_code)))
+            .order(master_list::id.asc())
             .load(self.connection.lock().connection())?)
     }
 
