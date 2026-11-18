@@ -68,9 +68,26 @@ pub fn upsert_currency(
     connection: &StorageConnection,
     currency: &CurrencyRow,
 ) -> Result<(), UpsertCurrencyError> {
+    save(connection, currency, true)
+}
+
+/// As `upsert_currency`, but never refuses a second home currency: the caller checks the home
+/// currency once all its saves are made, so a batch such as an import can move it in either order.
+pub fn upsert_currency_leaving_home(
+    connection: &StorageConnection,
+    currency: &CurrencyRow,
+) -> Result<(), UpsertCurrencyError> {
+    save(connection, currency, false)
+}
+
+fn save(
+    connection: &StorageConnection,
+    currency: &CurrencyRow,
+    check_home: bool,
+) -> Result<(), UpsertCurrencyError> {
     connection
         .transaction_sync(|connection| -> Result<(), UpsertCurrencyError> {
-            validate(connection, currency)?;
+            validate(connection, currency, check_home)?;
             CurrencyRowRepository::new(connection).upsert_one(currency)?;
             Ok(())
         })
@@ -82,6 +99,7 @@ pub fn upsert_currency(
 fn validate(
     connection: &StorageConnection,
     currency: &CurrencyRow,
+    check_home: bool,
 ) -> Result<(), UpsertCurrencyError> {
     if currency.code.trim().is_empty() {
         return Err(UpsertCurrencyError::CodeRequired);
@@ -94,7 +112,8 @@ fn validate(
         return Err(UpsertCurrencyError::RateNotPositive);
     }
     // Inactive ones count too: the home currency is found whether it's active or not.
-    if currency.is_home_currency
+    if check_home
+        && currency.is_home_currency
         && saved.is_none_or(|saved| !saved.is_home_currency)
         && let Some(home) = repo
             .find_all()?
@@ -193,6 +212,9 @@ mod tests {
         );
         // The home currency itself can still be edited.
         upsert_currency(&connection, &currency("usd", "USD", true, true)).unwrap();
+        // A batch that checks the home currency itself can add a second for now.
+        upsert_currency_leaving_home(&connection, &currency("aud", "AUD", true, true)).unwrap();
+        upsert_currency_leaving_home(&connection, &currency("aud", "AUD", false, true)).unwrap();
 
         upsert_currency(&connection, &currency("usd", "USD", false, true)).unwrap();
         upsert_currency(&connection, &currency("nzd", "NZD", true, true)).unwrap();

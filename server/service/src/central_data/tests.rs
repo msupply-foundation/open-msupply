@@ -2157,15 +2157,18 @@ async fn only_one_currency_can_be_the_home_currency() {
     let home_error = (
         2,
         Some("is_home_currency"),
-        "USD is the home currency, and there can be only one. Set its is_home_currency to FALSE on an earlier row",
+        "NZD would be the home currency, and so would USD, but there can be only one. Set is_home_currency to FALSE for all but one",
     );
 
     let path = write_file(
         dir.path(),
         currency_sheet(vec![currency_row(["", "NZD", "", "TRUE", "", ""])]),
     );
-    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions())
+        .unwrap();
     assert_eq!(row_errors(&summary), vec![home_error]);
+    assert!(!find_currency(&connection, "nzd").unwrap().is_home_currency);
 
     // An inactive home currency is still the home currency.
     CurrencyRowRepository::new(&connection)
@@ -2177,20 +2180,61 @@ async fn only_one_currency_can_be_the_home_currency() {
     let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
     assert_eq!(row_errors(&summary), vec![home_error]);
 
-    // Moved on an earlier row, it can be given to another.
+    // Currencies that already share it, with no row making another the home currency, stay as
+    // they are and can be edited.
+    CurrencyRowRepository::new(&connection)
+        .upsert_one(&CurrencyRow {
+            is_home_currency: true,
+            ..nzd()
+        })
+        .unwrap();
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![currency_row(["", "NZD", "1.7", "", "", ""])]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(find_currency(&connection, "nzd").unwrap().rate, 1.7);
+}
+
+// covers: OMS-REG-CDIO-01.112
+
+#[actix_rt::test]
+async fn the_home_currency_moves_whatever_the_row_order() {
+    let (connection, service_provider, dir) =
+        currency_setup("central_data_currency_move_home").await;
+    let ctx = service_provider.basic_context().unwrap();
+
+    // In code order, as an export writes them: the new home currency comes first.
     let path = write_file(
         dir.path(),
         currency_sheet(vec![
-            currency_row(["", "USD", "", "FALSE", "", ""]),
             currency_row(["", "NZD", "1", "TRUE", "", ""]),
+            currency_row(["", "USD", "0.6", "FALSE", "", ""]),
         ]),
     );
     let summary = CentralDataService
         .import(&ctx, &path, &no_sessions())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
-    assert!(!find_currency(&connection, "usd").unwrap().is_home_currency);
     assert!(find_currency(&connection, "nzd").unwrap().is_home_currency);
+    assert!(!find_currency(&connection, "usd").unwrap().is_home_currency);
+
+    // And back, with the old home currency first.
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![
+            currency_row(["", "NZD", "1.6", "FALSE", "", ""]),
+            currency_row(["", "USD", "1", "TRUE", "", ""]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert!(find_currency(&connection, "usd").unwrap().is_home_currency);
 }
 
 // covers: OMS-REG-CDIO-01.116
@@ -2203,8 +2247,8 @@ async fn an_import_cannot_leave_no_home_currency() {
     let path = write_file(
         dir.path(),
         currency_sheet(vec![
-            currency_row(["", "USD", "", "FALSE", "", ""]),
             currency_row(["", "NZD", "1.7", "", "", ""]),
+            currency_row(["", "USD", "", "FALSE", "", ""]),
         ]),
     );
     let summary = CentralDataService
@@ -2213,31 +2257,17 @@ async fn an_import_cannot_leave_no_home_currency() {
     assert_eq!(
         row_errors(&summary),
         vec![(
-            2,
+            3,
             Some("is_home_currency"),
-            "USD is the home currency, and no row makes another currency the home currency. Set another currency's is_home_currency to TRUE on a later row"
+            "USD is the home currency, and no row makes another currency the home currency. Set another currency's is_home_currency to TRUE"
         )]
     );
     assert_eq!(summary.tables[0].error_count, 1);
     assert_eq!(find_currency(&connection, "usd"), Some(usd()));
     assert_eq!(find_currency(&connection, "nzd").unwrap().rate, 1.6);
-
-    // Given to another on a later row, it moves.
-    let path = write_file(
-        dir.path(),
-        currency_sheet(vec![
-            currency_row(["", "USD", "", "FALSE", "", ""]),
-            currency_row(["", "NZD", "1", "TRUE", "", ""]),
-        ]),
-    );
-    let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
-        .unwrap();
-    assert_eq!(summary.errors, vec![]);
-    assert!(find_currency(&connection, "nzd").unwrap().is_home_currency);
 }
 
-// covers: OMS-REG-CDIO-01.116
+// covers: OMS-REG-CDIO-01.112, .116
 
 #[actix_rt::test]
 async fn a_server_with_no_home_currency_can_import_currencies_without_one() {
@@ -2247,6 +2277,23 @@ async fn a_server_with_no_home_currency_can_import_currencies_without_one() {
         .basic_context()
         .unwrap();
     let dir = TempDir::new().unwrap();
+
+    // But not with two.
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![
+            currency_row(["", "NZD", "1", "TRUE", "", "TRUE"]),
+            currency_row(["", "USD", "1", "TRUE", "", "TRUE"]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary)
+            .iter()
+            .map(|(row, _, _)| *row)
+            .collect::<Vec<_>>(),
+        vec![2, 3]
+    );
 
     let path = write_file(
         dir.path(),
