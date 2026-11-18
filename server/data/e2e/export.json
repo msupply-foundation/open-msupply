@@ -108432,6 +108432,56 @@
    "patient_id": null,
    "reference_id": null,
    "is_integrated": false
+  },
+  {
+   "cursor": 3504,
+   "record_id": "sort_by_vvm_status_then_expiry_e2e_vax_store",
+   "received_datetime": "2026-11-19T00:00:00",
+   "integration_started_datetime": null,
+   "integration_datetime": null,
+   "integration_error": null,
+   "integration_result": null,
+   "table_name": "preference",
+   "action": "Upsert",
+   "data": {
+    "id": "sort_by_vvm_status_then_expiry_e2e_vax_store",
+    "key": "sort_by_vvm_status_then_expiry",
+    "value": "true",
+    "store_id": "e2e_vax_store"
+   },
+   "sync_version": "V7",
+   "app_version": null,
+   "source_site_id": 6,
+   "store_id": null,
+   "transfer_store_id": null,
+   "patient_id": null,
+   "reference_id": null,
+   "is_integrated": false
+  },
+  {
+   "cursor": 3505,
+   "record_id": "common_medicines_e2e_vax_store",
+   "received_datetime": "2026-11-19T00:00:00",
+   "integration_started_datetime": null,
+   "integration_datetime": null,
+   "integration_error": null,
+   "integration_result": null,
+   "table_name": "preference",
+   "action": "Upsert",
+   "data": {
+    "id": "common_medicines_e2e_vax_store",
+    "key": "common_medicines",
+    "value": "[{\"itemId\":\"e2e_item_dis_vvm\",\"amounts\":[5.0]}]",
+    "store_id": "e2e_vax_store"
+   },
+   "sync_version": "V7",
+   "app_version": null,
+   "source_site_id": 6,
+   "store_id": null,
+   "transfer_store_id": null,
+   "patient_id": null,
+   "reference_id": null,
+   "is_integrated": false
   }
  ],
  "users": [],
