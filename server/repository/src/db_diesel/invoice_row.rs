@@ -233,7 +233,7 @@ impl<'a> InvoiceRowRepository<'a> {
         Ok(result)
     }
 
-    /// Like `find_one_by_id`, but takes a row-level lock (`SELECT ... FOR UPDATE`) on the
+    /// Like `find_one_by_id`, but takes a row-level lock (`SELECT ... FOR NO KEY UPDATE`) on the
     /// invoice row for the rest of the current transaction, so nothing else can change the row
     /// between this read and a write based on it.
     ///
@@ -250,7 +250,11 @@ impl<'a> InvoiceRowRepository<'a> {
         let locked_id: Option<String> = invoice_with_links::table
             .filter(invoice_with_links::id.eq(invoice_id))
             .select(invoice_with_links::id)
-            .for_update()
+            // FOR NO KEY UPDATE, not the FOR UPDATE `StocktakeRowRepository` uses: it still
+            // conflicts with every UPDATE and DELETE of the row, but not with the KEY SHARE lock a
+            // foreign-key check takes. So inserting a line that points at this row doesn't wait
+            // for the lock, and taking the lock doesn't wait for such an insert in progress.
+            .for_no_key_update()
             .first(self.connection.lock().connection())
             .optional()?;
         match locked_id {
@@ -434,7 +438,7 @@ mod test {
                     .transaction_sync(|connection| {
                         let repo = InvoiceRowRepository::new(connection);
                         let row = repo.find_one_by_id_for_update(&outbound_id)?.unwrap();
-                        locked_sender.send(()).unwrap();
+                        locked_sender.send(Instant::now()).unwrap();
                         thread::sleep(Duration::from_millis(500));
                         repo.upsert_one(&InvoiceRow {
                             linked_invoice_id: Some(inbound_id),
@@ -445,9 +449,10 @@ mod test {
             })
         };
 
-        // The second writer: ship the outbound while the step holds it
-        locked.recv().unwrap();
-        let started = Instant::now();
+        // The second writer: ship the outbound while the step holds it. It's timed from when the
+        // step took the lock, not from here, so a slow wake-up of this thread under load can't
+        // make the wait look shorter than it was
+        let locked_at = locked.recv().unwrap();
         let connection = connection_manager.connection().unwrap();
         connection
             .transaction_sync(|connection| {
@@ -459,12 +464,13 @@ mod test {
                 })
             })
             .unwrap();
-        let waited = started.elapsed();
+        let finished_after = locked_at.elapsed();
         step.join().unwrap();
 
         assert!(
-            waited >= Duration::from_millis(400),
-            "the second writer should wait for the step to commit, waited {waited:?}"
+            finished_after >= Duration::from_millis(500),
+            "the second writer should finish after the step commits, 500 ms after it took the \
+             lock, but finished {finished_after:?} after"
         );
         let outbound_after = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&outbound.id)

@@ -363,6 +363,8 @@ trait InvoiceTransferProcessor {
     /// since. A step that writes an invoice re-reads and locks it here with `lock_invoice_row`,
     /// checks its conditions against that row and changes only the fields it owns. Writing back
     /// the record's copy would undo the newer change, e.g. put a shipped outbound back to Picked.
+    /// API mutations don't take the lock, so on Postgres an API save that read the invoice before
+    /// the step committed can still write its copy over the step's change.
     fn try_process_record(
         &self,
         ctx: &ServiceContext,

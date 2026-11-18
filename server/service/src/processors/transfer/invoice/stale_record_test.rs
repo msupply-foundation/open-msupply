@@ -219,6 +219,39 @@ async fn link_skips_outbound_linked_after_record_read() {
     );
 }
 
+/// The outbound can be deleted after the record was read. The step then has nothing to link, and
+/// must skip rather than fail or write the record's copy back as a new row
+#[actix_rt::test]
+async fn link_skips_outbound_deleted_after_record_read() {
+    let outbound = outbound_row("link_deleted_outbound", InvoiceStatus::Picked);
+    let inbound = inbound_row("link_deleted_inbound", &outbound.id, InvoiceStatus::Picked);
+    let ctx = setup(
+        "link_skips_outbound_deleted_after_record_read",
+        vec![outbound.clone(), inbound.clone()],
+        vec![],
+    )
+    .await;
+
+    let record = read_record(&ctx.connection, &inbound.id, &outbound.id);
+
+    InvoiceRowRepository::new(&ctx.connection)
+        .delete(&outbound.id)
+        .unwrap();
+
+    let result = LinkOutboundInvoiceProcessor
+        .try_process_record(&ctx, &record)
+        .unwrap();
+    assert!(
+        matches!(result, InvoiceTransferOutput::NoLinkedInvoice),
+        "expected NoLinkedInvoice, got {result:?}"
+    );
+    assert_eq!(
+        InvoiceRowRepository::new(&ctx.connection).find_one_by_id(&outbound.id),
+        Ok(None),
+        "the deleted outbound must not be written back"
+    );
+}
+
 /// The transfer processor runs every step on one record in turn. When an inbound shipment reaches
 /// the outbound's site already Delivered, linking and the status update both run on it, and the
 /// status update must not write back the outbound the record read before it was linked

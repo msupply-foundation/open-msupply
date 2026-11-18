@@ -213,7 +213,9 @@ trait RequisitionTransferProcessor {
     /// them since. A step that writes a requisition re-reads and locks it here with
     /// `lock_requisition_row`, checks its conditions against that row and changes only the fields
     /// it owns. Writing back the record's copy would undo the newer change, e.g. finalising would
-    /// drop the link and approval written just before.
+    /// drop the link and approval written just before. API mutations don't take the lock, so on
+    /// Postgres an API save that read the requisition before the step committed can still write
+    /// its copy over the step's change.
     fn try_process_record(
         &self,
         connection: &StorageConnection,

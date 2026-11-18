@@ -225,3 +225,84 @@ async fn processor_run_links_approves_and_finalises_request_from_one_record() {
     assert_eq!(request_after.status, RequisitionStatus::Finalised);
     assert_eq!(request_after.finalised_datetime, Some(datetime(4)));
 }
+
+/// Linking sets the link and leaves the request's other fields as they are now, not as the record
+/// read them
+#[actix_rt::test]
+async fn link_keeps_request_changes_made_after_record_read() {
+    let request = request_row("link_race_request");
+    let response = response_row("link_race_response", &request.id);
+    let (_, connection, _, _) = setup_all_with_data(
+        "link_keeps_request_changes_made_after_record_read",
+        MockDataInserts::none().names().stores(),
+        MockData {
+            requisitions: vec![request.clone(), response.clone()],
+            ..Default::default()
+        },
+    )
+    .await;
+
+    let record = read_record(&connection, &response.id, &request.id);
+
+    RequisitionRowRepository::new(&connection)
+        .upsert_one(&RequisitionRow {
+            comment: Some("edited after the record was read".to_string()),
+            ..request.clone()
+        })
+        .unwrap();
+
+    let result = LinkRequestRequisitionProcessor
+        .try_process_record(&connection, &record)
+        .unwrap();
+    assert!(
+        matches!(result, RequisitionTransferOutput::Processed(_)),
+        "expected the link to be written, got {result:?}"
+    );
+
+    let request_after = requisition_row(&connection, &request.id);
+    assert_eq!(
+        request_after.linked_requisition_id,
+        Some(response.id.clone())
+    );
+    assert_eq!(
+        request_after.comment,
+        Some("edited after the record was read".to_string()),
+        "linking must not undo a change made after the record was read"
+    );
+}
+
+/// The request can be deleted after the record was read. The step then has nothing to link, and
+/// must skip rather than fail or write the record's copy back as a new row
+#[actix_rt::test]
+async fn link_skips_request_deleted_after_record_read() {
+    let request = request_row("link_deleted_request");
+    let response = response_row("link_deleted_response", &request.id);
+    let (_, connection, _, _) = setup_all_with_data(
+        "link_skips_request_deleted_after_record_read",
+        MockDataInserts::none().names().stores(),
+        MockData {
+            requisitions: vec![request.clone(), response.clone()],
+            ..Default::default()
+        },
+    )
+    .await;
+
+    let record = read_record(&connection, &response.id, &request.id);
+
+    RequisitionRowRepository::new(&connection)
+        .delete(&request.id)
+        .unwrap();
+
+    let result = LinkRequestRequisitionProcessor
+        .try_process_record(&connection, &record)
+        .unwrap();
+    assert!(
+        matches!(result, RequisitionTransferOutput::NoLinkedRequisition),
+        "expected NoLinkedRequisition, got {result:?}"
+    );
+    assert_eq!(
+        RequisitionRowRepository::new(&connection).find_one_by_id(&request.id),
+        Ok(None),
+        "the deleted request must not be written back"
+    );
+}
