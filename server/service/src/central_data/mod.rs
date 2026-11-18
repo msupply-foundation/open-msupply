@@ -184,7 +184,7 @@ pub(crate) trait SheetImport {
     ) -> Result<RowOutcome, RowFailure>;
 
     /// Users whose open sessions must end once the import is applied.
-    fn sessions_to_end(&mut self) -> Vec<String> {
+    fn sessions_to_end(&mut self) -> Vec<EndSessions> {
         Vec::new()
     }
 }
@@ -299,6 +299,13 @@ pub struct OpenSessions {
     pub keep: Option<String>,
 }
 
+/// A user whose open sessions `import` ends, with their password hash once it's applied.
+#[derive(Debug, PartialEq)]
+pub(crate) struct EndSessions {
+    pub user_id: String,
+    pub hashed_password: String,
+}
+
 #[derive(Debug)]
 pub struct ImportSummary {
     pub tables: Vec<TableChanges>,
@@ -309,7 +316,7 @@ pub struct ImportSummary {
     /// Every row error. With any, nothing was applied.
     pub error_count: u32,
     /// Users made inactive, deleted or given a new password, whose open sessions `import` ends.
-    sessions_to_end: Vec<String>,
+    sessions_to_end: Vec<EndSessions>,
     errors_listed: usize,
 }
 
@@ -401,8 +408,12 @@ pub trait CentralDataServiceTrait: Sync + Send {
                 .store
                 .write()
                 .unwrap_or_else(PoisonError::into_inner);
-            for user_id in &summary.sessions_to_end {
-                store.revoke_all_for_user_except(user_id, sessions.keep.as_deref());
+            for end in &summary.sessions_to_end {
+                store.revoke_after_account_change(
+                    &end.user_id,
+                    &end.hashed_password,
+                    sessions.keep.as_deref(),
+                );
             }
         }
         Ok(summary)

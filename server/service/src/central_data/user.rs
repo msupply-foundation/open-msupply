@@ -1,6 +1,6 @@
 use super::{
-    CentralDataTable, Change, ExportFilter, ImportTable, RecordCount, RowFailure, RowOutcome,
-    SheetImport, SheetStart,
+    CentralDataTable, Change, EndSessions, ExportFilter, ImportTable, RecordCount, RowFailure,
+    RowOutcome, SheetImport, SheetStart,
     cells::{Row, RowError, choice_cell, collect},
     delete::{DELETE, DELETE_COLUMN, already_deleted, check_unchanged, is_delete},
     field_changes,
@@ -199,7 +199,7 @@ struct UserSheet {
     commit: bool,
     passwords: Passwords,
     /// Made inactive or given a new password.
-    sessions_to_end: Vec<String>,
+    sessions_to_end: Vec<EndSessions>,
 }
 
 impl SheetImport for UserSheet {
@@ -303,7 +303,10 @@ impl SheetImport for UserSheet {
             save_user(connection, &self.importer, &user)
                 .map_err(|error| upsert_failure(row, error))?;
             if ends_sessions(saved, &user) {
-                self.sessions_to_end.push(user.id.clone());
+                self.sessions_to_end.push(EndSessions {
+                    user_id: user.id.clone(),
+                    hashed_password: user.hashed_password.clone(),
+                });
             }
         }
         Ok(RowOutcome {
@@ -329,7 +332,7 @@ impl SheetImport for UserSheet {
         })
     }
 
-    fn sessions_to_end(&mut self) -> Vec<String> {
+    fn sessions_to_end(&mut self) -> Vec<EndSessions> {
         std::mem::take(&mut self.sessions_to_end)
     }
 }
@@ -370,7 +373,10 @@ impl UserSheet {
             DeleteUserError::Protected => protected_error(row, &saved).into(),
             DeleteUserError::DatabaseError(error) => RowFailure::Database(error),
         })?;
-        self.sessions_to_end.push(saved.id.clone());
+        self.sessions_to_end.push(EndSessions {
+            user_id: saved.id.clone(),
+            hashed_password: saved.hashed_password.clone(),
+        });
         Ok(RowOutcome {
             record: saved.username,
             record_id: saved.id,

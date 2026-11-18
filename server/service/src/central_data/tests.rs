@@ -45,6 +45,14 @@ fn units_named(connection: &StorageConnection, name: &str) -> Vec<UnitRow> {
 }
 
 /// For an import whose users' sessions don't matter to the test.
+fn ending_sessions(summary: &super::ImportSummary) -> Vec<&str> {
+    summary
+        .sessions_to_end
+        .iter()
+        .map(|end| end.user_id.as_str())
+        .collect()
+}
+
 fn no_sessions() -> OpenSessions {
     OpenSessions {
         store: Default::default(),
@@ -2848,7 +2856,7 @@ async fn user_rows_add_and_update_by_username_and_hash_passwords() {
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     // Anna made inactive and Ben given a password; Cara is new, with no session yet.
-    assert_eq!(summary.sessions_to_end, ["anna", "ben"]);
+    assert_eq!(ending_sessions(&summary), ["anna", "ben"]);
     let changes: Vec<_> = summary
         .changes
         .iter()
@@ -2976,16 +2984,19 @@ async fn users_sharing_a_password_get_their_own_hash() {
     assert!(users.verify_password("eve", "changeme").is_ok());
 }
 
-/// Anna, running the import from one of her two sessions, and Ben each get a new password.
-/// Returns whether each session is still open afterwards: Anna's here and elsewhere, Ben's, and
-/// the importer's, whom the import doesn't change.
+/// Anna, running the import from one of her two sessions, and Ben each get a new password, then
+/// Anna logs in again somewhere. Returns whether each session is still open afterwards: Anna's
+/// here and elsewhere, Ben's, and the importer's, whom the import doesn't change.
 async fn sessions_after_new_passwords(name: &str, extra_rows: Vec<Vec<Value>>) -> [bool; 4] {
     let (connection, service_provider, dir, _) = user_setup(name).await;
     grant_server_admin(&connection, "anna");
     let ctx = as_user(&service_provider, "anna");
     let store: Arc<RwLock<SessionStore>> = Default::default();
+    let anna_hash = || find_user(&connection, "anna").unwrap().hashed_password;
     let tokens = {
         let mut sessions = store.write().unwrap();
+        // As her login records it.
+        sessions.revoke_if_credentials_changed("anna", &anna_hash());
         ["anna", "anna", "ben", IMPORTER].map(|user_id| sessions.create(user_id))
     };
     let mut rows = vec![
@@ -3001,6 +3012,7 @@ async fn sessions_after_new_passwords(name: &str, extra_rows: Vec<Vec<Value>>) -
     };
     CentralDataService.import(&ctx, &path, &sessions).unwrap();
     let mut store = store.write().unwrap();
+    store.revoke_if_credentials_changed("anna", &anna_hash());
     tokens.map(|token| store.validate_and_slide(&token).is_some())
 }
 
@@ -3008,6 +3020,7 @@ async fn sessions_after_new_passwords(name: &str, extra_rows: Vec<Vec<Value>>) -
 
 #[actix_rt::test]
 async fn a_new_password_ends_the_users_sessions_but_not_the_importers_own() {
+    // The importer's own session outlives their next login with the new password too.
     let [anna_here, anna_elsewhere, ben, importer] =
         sessions_after_new_passwords("central_data_user_sessions_end", vec![]).await;
     assert!(anna_here);
@@ -3120,7 +3133,7 @@ async fn a_deleted_user_keeps_their_store_access_but_cannot_log_in() {
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.tables[0].deleted, 1);
     assert_eq!(summary.changes[0].change, Change::Deleted);
-    assert_eq!(summary.sessions_to_end, ["anna"]);
+    assert_eq!(ending_sessions(&summary), ["anna"]);
 
     // Kept, with their store access, but can't log in.
     let anna_now = find_user(&connection, "anna").unwrap();

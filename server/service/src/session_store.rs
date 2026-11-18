@@ -116,6 +116,23 @@ impl SessionStore {
             .retain(|token, entry| entry.user_id != user_id || Some(token.as_str()) == keep);
     }
 
+    /// Ends the user's sessions but `keep` after their account changed outside a login, as an
+    /// import changes it, and records `hashed_password`, their hash now, as what a kept session
+    /// was issued against. Otherwise their next login would take the new hash for a password
+    /// change and end the kept session too.
+    pub fn revoke_after_account_change(
+        &mut self,
+        user_id: &str,
+        hashed_password: &str,
+        keep: Option<&str>,
+    ) {
+        self.revoke_all_for_user_except(user_id, keep);
+        self.issued_against.insert(
+            user_id.to_string(),
+            IssuedAgainst::StoredHash(hashed_password.to_string()),
+        );
+    }
+
     /// Remove every session whose user `keep` rejects. Returns how many were removed.
     ///
     /// Maintenance mode (#840) calls this with "is a server admin" as it turns on, so users
@@ -397,6 +414,20 @@ mod tests {
         // Another user's token keeps none of this user's.
         store.revoke_all_for_user_except("u", Some(&someone_else));
         assert!(store.validate_and_slide(&kept).is_none());
+    }
+
+    #[test]
+    fn a_session_kept_through_a_new_password_outlives_the_next_login() {
+        let mut store = SessionStore::new();
+        store.revoke_if_credentials_changed("u", "hash-1");
+        let kept = store.create("u");
+        let other = store.create("u");
+
+        store.revoke_after_account_change("u", "hash-2", Some(&kept));
+        assert!(store.validate_and_slide(&other).is_none());
+        // The next login finds the new hash, which the kept session already belongs to.
+        assert!(!store.revoke_if_credentials_changed("u", "hash-2"));
+        assert!(store.validate_and_slide(&kept).is_some());
     }
 
     #[test]
