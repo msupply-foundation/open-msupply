@@ -3,14 +3,13 @@ use super::{
     SheetImport, SheetStart,
     cells::{Row, choice_cell, collect, keep_or_saved},
     field_changes,
-    lookup::{InMemory, NOT_FOUND, find_record, find_reference},
+    lookup::{InMemory, NOT_FOUND, active_first, find_record, find_reference},
     name_with_code,
     sheet::Value,
 };
 use crate::{
     i64_to_u32,
     item::upsert::{UpsertItemError, upsert_resolved_item},
-    unit::active_first,
 };
 use repository::{
     ItemFilter, ItemRepository, ItemRow, ItemRowRepository, ItemSortField, ItemType,
@@ -192,13 +191,9 @@ impl SheetImport for ItemSheet {
         let volume_per_pack = collect(&mut errors, row.number(VOLUME_PER_PACK));
         let unit_id = collect(
             &mut errors,
-            find_reference(
-                &self.references.units,
-                row,
-                UNIT_NAME,
-                UNIT_ID,
-                active_first,
-            )?,
+            find_reference(&self.references.units, row, UNIT_NAME, UNIT_ID, |units| {
+                active_first(units, |unit| unit.is_active)
+            })?,
         );
         let location_type_id = collect(
             &mut errors,
@@ -221,6 +216,7 @@ impl SheetImport for ItemSheet {
             id.as_deref(),
             code.as_deref(),
             |saved| &saved.name,
+            std::convert::identity,
         )? {
             Ok(existing) => existing,
             Err(e) => {

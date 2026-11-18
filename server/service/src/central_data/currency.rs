@@ -3,7 +3,7 @@ use super::{
     RowOutcome, SheetImport, SheetStart,
     cells::{Row, RowError, collect, keep_or_saved},
     field_changes,
-    lookup::{LookupError, find_record},
+    lookup::{active_first, find_record},
     sheet::Value,
 };
 use crate::currency::{UpsertCurrencyError, upsert_currency_leaving_home};
@@ -116,16 +116,17 @@ impl SheetImport for CurrencySheet {
         let code = row.text(CODE);
 
         let repo = CurrencyRowRepository::new(connection);
-        // Without an id, an inactive currency doesn't make an active one's code ambiguous.
-        let found = match (&id, &code) {
-            (None, Some(code)) => pick_by_code(repo.find_by_trimmed_code(code)?)
-                .map_err(|e| row.error(CODE, e.message(code))),
-            _ => find_record(&repo, row, CODE, id.as_deref(), code.as_deref(), |saved| {
-                &saved.code
-            })?,
-        };
         // Without its record, the row's other checks would treat it as a new currency.
-        let existing = match found {
+        let existing = match find_record(
+            &repo,
+            row,
+            CODE,
+            id.as_deref(),
+            code.as_deref(),
+            |saved| &saved.code,
+            // An inactive currency doesn't make an active one's code ambiguous.
+            |currencies| active_first(currencies, |currency| currency.is_active),
+        )? {
             Ok(existing) => existing,
             Err(e) => {
                 errors.push(e);
@@ -252,19 +253,6 @@ fn upsert_failure(row: &Row, currency: &CurrencyRow, error: UpsertCurrencyError)
             )
             .into(),
         UpsertCurrencyError::DatabaseError(error) => RowFailure::Database(error),
-    }
-}
-
-/// The active currencies among those a code matches, or the inactive ones when none is active.
-fn pick_by_code(currencies: Vec<CurrencyRow>) -> Result<Option<CurrencyRow>, LookupError> {
-    let (active, inactive): (Vec<_>, Vec<_>) = currencies
-        .into_iter()
-        .partition(|currency| currency.is_active);
-    let mut candidates = if active.is_empty() { inactive } else { active };
-    match candidates.len() {
-        0 => Ok(None),
-        1 => Ok(candidates.pop()),
-        _ => Err(LookupError::Ambiguous),
     }
 }
 

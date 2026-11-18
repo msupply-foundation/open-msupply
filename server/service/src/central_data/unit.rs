@@ -3,10 +3,10 @@ use super::{
     RowOutcome, SheetImport, SheetStart,
     cells::{Row, collect, keep_or_saved},
     field_changes,
-    lookup::LookupError,
+    lookup::{active_first, find_record},
     sheet::Value,
 };
-use crate::unit::{UpsertUnitError, active_first, upsert_unit};
+use crate::unit::{UpsertUnitError, upsert_unit};
 use repository::{RepositoryError, StorageConnection, UnitRow, UnitRowRepository};
 use util::uuid::uuid;
 
@@ -80,14 +80,22 @@ impl SheetImport for UnitSheet {
         let name = row.text(NAME);
 
         let repo = UnitRowRepository::new(connection);
-        let existing = match (&id, &name) {
-            (Some(id), _) => repo.find_one_by_id(id)?,
-            (None, Some(name)) => pick_by_name(repo.find_by_trimmed_name_any_case(name)?)
-                .unwrap_or_else(|e| {
-                    errors.push(row.error(NAME, e.message(name)));
-                    None
-                }),
-            (None, None) => None,
+        let existing = match find_record(
+            &repo,
+            row,
+            NAME,
+            id.as_deref(),
+            // With an id, the name isn't checked against it: a different name renames the unit.
+            name.as_deref().filter(|_| id.is_none()),
+            |saved| &saved.name,
+            // An inactive unit doesn't make an active one's name ambiguous.
+            |units| active_first(units, |unit| unit.is_active),
+        )? {
+            Ok(existing) => existing,
+            Err(e) => {
+                errors.push(e);
+                return Err(RowFailure::Invalid(errors));
+            }
         };
 
         let saved_name = existing.as_ref().map(|unit| unit.name.as_str());
@@ -174,13 +182,4 @@ fn cells(unit: &UnitRow) -> Vec<Value> {
 
 fn changed_fields(old: &UnitRow, new: &UnitRow) -> Vec<FieldChange> {
     field_changes(COLUMNS, cells(old), cells(new))
-}
-
-fn pick_by_name(units: Vec<UnitRow>) -> Result<Option<UnitRow>, LookupError> {
-    let mut candidates = active_first(units);
-    match candidates.len() {
-        0 => Ok(None),
-        1 => Ok(candidates.pop()),
-        _ => Err(LookupError::Ambiguous),
-    }
 }

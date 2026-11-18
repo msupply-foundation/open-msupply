@@ -104,6 +104,7 @@ impl SheetImport for LocationTypeSheet {
             id.as_deref(),
             code.as_deref(),
             |saved| &saved.name,
+            std::convert::identity,
         )? {
             Ok(existing) => existing,
             Err(e) => {
