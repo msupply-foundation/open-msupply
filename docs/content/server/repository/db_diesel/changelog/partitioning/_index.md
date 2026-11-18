@@ -12,7 +12,7 @@ source = "code"
 
 `changelog` is the largest table on a central server and grows without bound. On Postgres it is range-partitioned by `cursor` so each partition's indexes stay small enough to remain in cache and the insert rate stays flat as the table grows (see the [sync v7 design](@/docs/sync/v7/_index.md#performance-considerations) for the benchmark). SQLite is not partitioned; everything on this page is Postgres-only.
 
-Requires Postgres 12 or higher. The server checks `server_version_num` when the connection pool is built and refuses to start below 12. This covers the server, every CLI action and the test harness, since they all build the pool the same way.
+Requires Postgres 12 or higher for partitioning; the server as a whole needs 13 (patient search uses `normalize()`). The server checks `server_version_num` when the connection pool is built and refuses to start below 13. This covers the server, every CLI action and the test harness, since they all build the pool the same way.
 
 ## Terms
 

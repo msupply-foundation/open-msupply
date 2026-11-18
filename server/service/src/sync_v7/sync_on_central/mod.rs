@@ -497,7 +497,10 @@ pub async fn patient_search(
             // pages don't overlap),
             // and no count — the remote asks for one more than it shows to
             // know whether there are more.
-            Some(limit) => PatientRepository::new(&ctx.connection).query(
+            // Central has every site's patients, so a broad search can match
+            // millions, and sorting them is the slow part: the pages only
+            // cover the first SEARCH_MATCH_CAP found (PatientRepository::query_capped).
+            Some(limit) => PatientRepository::new(&ctx.connection).query_capped(
                 Pagination {
                     limit,
                     offset: offset.unwrap_or(0),
@@ -508,14 +511,21 @@ pub async fn patient_search(
                     desc: None,
                 }),
                 None,
+                PatientRepository::SEARCH_MATCH_CAP,
             )?,
-            // A remote from before the page was added: every match, as before.
-            None => {
-                service_provider
-                    .patient_service
-                    .get_patients(&ctx, None, Some(filter), None, None)?
-                    .rows
-            }
+            // A remote from before the page was added, which shows every match
+            // it gets: at most SEARCH_MATCH_CAP of them, unsorted and
+            // uncounted, as a broad search would otherwise read and send
+            // millions.
+            None => PatientRepository::new(&ctx.connection).query(
+                Pagination {
+                    limit: PatientRepository::SEARCH_MATCH_CAP,
+                    offset: 0,
+                },
+                Some(filter),
+                None,
+                None,
+            )?,
         };
 
         Ok(patients_v4(&ctx.connection, rows)?)
