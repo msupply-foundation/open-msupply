@@ -60,6 +60,13 @@ export const TABLES: {
     searchKey: 'label.code-or-name-contains',
     hasStatus: true,
   },
+  {
+    value: 'MASTER_LIST',
+    labelKey: 'label.master-lists',
+    sheet: 'master_list',
+    searchKey: 'label.code-or-name-contains',
+    hasStatus: true,
+  },
 ];
 
 /** `undefined` for a table this screen doesn't know yet. */
