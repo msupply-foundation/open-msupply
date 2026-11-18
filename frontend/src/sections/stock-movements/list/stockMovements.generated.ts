@@ -53,6 +53,7 @@ export type StockMovementsVariables = {
     username?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
   } | null;
   sort?: Array<{

@@ -369,7 +369,9 @@ export type CentralPatientSearchQuery = {
       }
     | {
         __typename: 'CentralPatientSearchError';
-        error: { __typename: 'ConnectionError'; description: string };
+        error:
+          | { __typename: 'CentralServerNoAnswer' }
+          | { __typename: 'ConnectionError'; description: string };
       };
 };
 

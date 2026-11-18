@@ -233,6 +233,7 @@ export type OutboundLinesVariables = {
     itemCodeOrName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     type?: {
     equalTo?: "STOCK_IN" | "STOCK_OUT" | "UNALLOCATED_STOCK" | "SERVICE" | null;
@@ -303,6 +304,7 @@ export type OutboundLinesVariables = {
     batch?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     expiryDate?: {
     equalTo?: string | null;
@@ -312,6 +314,7 @@ export type OutboundLinesVariables = {
     locationCode?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     manufactureDate?: {
     equalTo?: string | null;
