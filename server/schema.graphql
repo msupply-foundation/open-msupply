@@ -10075,6 +10075,7 @@ input StocktakeLineFilterInput {
 	donorId: EqualFilterStringInput
 	campaignId: EqualFilterStringInput
 	batch: StringFilterInput
+	expiryDate: DateFilterInput
 	manufactureDate: DateFilterInput
 	campaignName: StringFilterInput
 }
