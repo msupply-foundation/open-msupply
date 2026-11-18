@@ -291,7 +291,8 @@ const PrescriptionsList: Component = () => {
       sortKey: 'invoiceNumber',
       header: () => t('label.number'),
       ...getNumberCell(),
-      ...width(5.5),
+      // Wide enough for the header and its sort arrow on one line.
+      ...width(6.5),
     },
     {
       // The prescription date — backdated when set, else created
@@ -310,7 +311,7 @@ const PrescriptionsList: Component = () => {
             c: { accessor: prescriptionDateOf, id: 'prescriptionTime' },
             header: () => t('label.time'),
             ...getTimeCell<PrescriptionRow>(),
-            ...width(4.5),
+            ...width(5),
           },
           {
             // One line, cut short; a clipped cell shows the whole list on
