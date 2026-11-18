@@ -6,7 +6,7 @@ use super::{
     lookup::{active_first, find_record},
     sheet::Value,
 };
-use crate::currency::{UpsertCurrencyError, upsert_currency_leaving_home};
+use crate::currency::{UpsertCurrencyError, home_currencies, upsert_currency_leaving_home};
 use repository::{CurrencyRow, CurrencyRowRepository, RepositoryError, StorageConnection};
 use util::uuid::uuid;
 
@@ -79,16 +79,6 @@ impl ImportTable for CurrencyTable {
             home_given: Vec::new(),
         }))
     }
-}
-
-/// Active or not, as the home currency is looked up. Stock and shipments are valued in it, and fail
-/// without one.
-fn home_currencies(connection: &StorageConnection) -> Result<Vec<CurrencyRow>, RepositoryError> {
-    Ok(CurrencyRowRepository::new(connection)
-        .find_all()?
-        .into_iter()
-        .filter(|currency| currency.is_home_currency)
-        .collect())
 }
 
 /// The home currency is checked after the sheet's last row, so rows moving it can come in any

@@ -62,6 +62,17 @@ impl From<RepositoryError> for UpsertCurrencyError {
     }
 }
 
+/// Active or not, as the services that value stock in it look it up.
+pub fn home_currencies(
+    connection: &StorageConnection,
+) -> Result<Vec<CurrencyRow>, RepositoryError> {
+    Ok(CurrencyRepository::new(connection)
+        .query_by_filter(CurrencyFilter::new().is_home_currency(true))?
+        .into_iter()
+        .map(|currency| currency.currency_row)
+        .collect())
+}
+
 /// Adds or updates one currency. Joins the caller's transaction when there is one, so an import's
 /// earlier rows count.
 pub fn upsert_currency(
@@ -111,14 +122,12 @@ fn validate(
     if currency.rate <= 0.0 && saved.is_none_or(|saved| saved.rate != currency.rate) {
         return Err(UpsertCurrencyError::RateNotPositive);
     }
-    // Inactive ones count too: the home currency is found whether it's active or not.
     if check_home
         && currency.is_home_currency
         && saved.is_none_or(|saved| !saved.is_home_currency)
-        && let Some(home) = repo
-            .find_all()?
+        && let Some(home) = home_currencies(connection)?
             .into_iter()
-            .find(|other| other.is_home_currency && other.id != currency.id)
+            .find(|other| other.id != currency.id)
     {
         return Err(UpsertCurrencyError::HomeCurrencyTaken { home });
     }
