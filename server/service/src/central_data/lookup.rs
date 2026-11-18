@@ -11,13 +11,16 @@ pub trait KeyedTable {
     fn id(record: &Self::Record) -> &str;
     fn key(record: &Self::Record) -> &str;
     fn find_by_id(&self, id: &str) -> Result<Option<Self::Record>, RepositoryError>;
-    /// Spaces around either key don't count. Letter case does, unless the table says otherwise.
+    /// Spaces around either key don't count. Letter case does, unless `ANY_CASE`.
     fn find_by_key(&self, key: &str) -> Result<Vec<Self::Record>, RepositoryError>;
+    /// Whether keys match in any letter case, as unit names and usernames do.
+    const ANY_CASE: bool = false;
 }
 
-/// Looked up by name.
+/// Looked up by name, in any letter case.
 impl KeyedTable for UnitRowRepository<'_> {
     type Record = UnitRow;
+    const ANY_CASE: bool = true;
     fn id(unit: &UnitRow) -> &str {
         &unit.id
     }
@@ -28,7 +31,7 @@ impl KeyedTable for UnitRowRepository<'_> {
         self.find_one_by_id(id)
     }
     fn find_by_key(&self, name: &str) -> Result<Vec<UnitRow>, RepositoryError> {
-        self.find_by_trimmed_name(name)
+        self.find_by_trimmed_name_any_case(name)
     }
 }
 
@@ -71,6 +74,7 @@ impl KeyedTable for ItemRowRepository<'_> {
 /// so a row can restore one.
 impl KeyedTable for UserAccountRowRepository<'_> {
     type Record = UserAccountRow;
+    const ANY_CASE: bool = true;
     fn id(user: &UserAccountRow) -> &str {
         &user.id
     }
@@ -87,10 +91,12 @@ impl KeyedTable for UserAccountRowRepository<'_> {
 
 /// A small table read once, for a sheet that refers to it but can't change it, so its rows don't
 /// each query it. Found as its repository finds them: spaces around a key don't count, letter
-/// case does, and a key's records come in id order.
+/// case does unless `ANY_CASE`, and a key's records come in id order. Case is folded as Postgres
+/// `lower` folds it; SQLite's folds only A–Z, so there a key differing only in another letter's
+/// case is found here but not by the repository.
 pub struct InMemory<R> {
     by_id: HashMap<String, R>,
-    /// Trimmed key → ids.
+    /// Folded key → ids.
     by_key: HashMap<String, Vec<String>>,
 }
 
@@ -98,11 +104,20 @@ impl<R: Clone> InMemory<R>
 where
     Self: KeyedTable<Record = R>,
 {
+    fn fold(key: &str) -> String {
+        let key = trim_spaces(key);
+        if Self::ANY_CASE {
+            key.to_lowercase()
+        } else {
+            key.to_string()
+        }
+    }
+
     pub fn new(records: Vec<R>) -> Self {
         let mut by_key: HashMap<String, Vec<String>> = HashMap::new();
         for record in &records {
             by_key
-                .entry(trim_spaces(Self::key(record)).to_string())
+                .entry(Self::fold(Self::key(record)))
                 .or_default()
                 .push(Self::id(record).to_string());
         }
@@ -120,7 +135,7 @@ where
 
     fn with_key(&self, key: &str) -> Vec<R> {
         self.by_key
-            .get(trim_spaces(key))
+            .get(&Self::fold(key))
             .into_iter()
             .flatten()
             .filter_map(|id| self.by_id.get(id).cloned())
@@ -130,6 +145,7 @@ where
 
 impl KeyedTable for InMemory<UnitRow> {
     type Record = UnitRow;
+    const ANY_CASE: bool = true;
     fn id(unit: &UnitRow) -> &str {
         UnitRowRepository::id(unit)
     }
@@ -337,13 +353,22 @@ mod tests {
                 .map(|unit| unit.id)
                 .collect()
         };
-        // Only spaces are trimmed, as SQL trims; letter case counts; ids come in order.
-        assert_eq!(ids("Tab "), ["a", "b"]);
-        assert_eq!(ids("Tab\t"), ["c"]);
-        assert_eq!(ids("tab"), ["d"]);
+        // Only spaces are trimmed, as SQL trims; a unit name's letter case doesn't count; ids
+        // come in order.
+        assert_eq!(ids("Tab "), ["a", "b", "d"]);
+        assert_eq!(ids("TAB\t"), ["c"]);
         assert!(ids("Vial").is_empty());
         assert_eq!(units.find_by_id("c").unwrap(), Some(unit("c", "Tab\t")));
         assert_eq!(units.find_by_id("e").unwrap(), None);
+
+        // A code's letter case does.
+        let location_types = InMemory::new(vec![LocationTypeRow {
+            id: "cold".to_string(),
+            code: "COLD".to_string(),
+            ..Default::default()
+        }]);
+        assert_eq!(location_types.find_by_key(" COLD").unwrap().len(), 1);
+        assert!(location_types.find_by_key("cold").unwrap().is_empty());
     }
 
     fn ids(ids: &[&str]) -> Vec<String> {

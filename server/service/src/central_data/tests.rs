@@ -866,10 +866,10 @@ async fn later_rows_see_a_rename_made_earlier_in_the_file() {
     assert_ne!(added[0].id, existing.id);
 }
 
-// covers: OMS-REG-CDIO-01.40
+// covers: OMS-REG-CDIO-01.40, .105
 
 #[actix_rt::test]
-async fn a_name_in_another_letter_case_adds_a_unit() {
+async fn a_name_in_another_letter_case_finds_its_unit_and_keeps_the_saved_name() {
     let (_, connection, connection_manager, _) = setup_all(
         "central_data_lookup_letter_case",
         MockDataInserts::none().units(),
@@ -879,6 +879,7 @@ async fn a_name_in_another_letter_case_adds_a_unit() {
     let ctx = service_provider.basic_context().unwrap();
     let dir = TempDir::new().unwrap();
     let existing = mock_unit(&connection);
+    assert_ne!(existing.name, existing.name.to_uppercase());
 
     let path = write_file(
         dir.path(),
@@ -886,15 +887,26 @@ async fn a_name_in_another_letter_case_adds_a_unit() {
             vec!["name", "index", "is_active"],
             vec![vec![
                 existing.name.to_uppercase().into(),
-                existing.index.into(),
+                (existing.index + 1).into(),
                 true.into(),
             ]],
         ),
     );
 
-    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions())
+        .unwrap();
     assert_eq!(summary.errors, vec![]);
-    assert_eq!(summary.tables, unit_changes(1, 0, 0));
+    assert_eq!(summary.tables, unit_changes(0, 1, 0));
+    assert_eq!(
+        UnitRowRepository::new(&connection)
+            .find_one_by_id(&existing.id)
+            .unwrap(),
+        Some(UnitRow {
+            index: existing.index + 1,
+            ..existing
+        })
+    );
 }
 
 #[actix_rt::test]
@@ -1962,6 +1974,27 @@ async fn a_saved_code_with_a_tab_around_it_is_found() {
     assert_eq!(
         ItemRowRepository::new(&connection).find_all().unwrap(),
         before
+    );
+}
+
+// covers: OMS-REG-CDIO-01.105
+
+#[actix_rt::test]
+async fn an_item_finds_its_unit_by_name_in_any_letter_case() {
+    let (connection, service_provider, dir) = item_setup("central_data_item_unit_case").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let path = write_file(
+        dir.path(),
+        item_sheet(vec![new_item("AMOX", "VIAL", "", "")]),
+    );
+
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(
+        find_item(&connection, "AMOX").unit_id.as_deref(),
+        Some("vial")
     );
 }
 

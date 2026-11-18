@@ -41,16 +41,18 @@ fn validate(connection: &StorageConnection, unit: &UnitRow) -> Result<(), Upsert
     }
 
     // Only a save that brings in the clash is refused, so existing duplicates stay editable.
+    // Names match in any letter case, as lookups do.
     let repo = UnitRowRepository::new(connection);
+    let folded = |name: &str| trim_spaces(name).to_lowercase();
     let brings_in_clash = unit.is_active
-        && repo.find_one_by_id(&unit.id)?.is_none_or(|saved| {
-            !saved.is_active || trim_spaces(&saved.name) != trim_spaces(&unit.name)
-        });
+        && repo
+            .find_one_by_id(&unit.id)?
+            .is_none_or(|saved| !saved.is_active || folded(&saved.name) != folded(&unit.name));
     if !brings_in_clash {
         return Ok(());
     }
     match repo
-        .find_by_trimmed_name(&unit.name)?
+        .find_by_trimmed_name_any_case(&unit.name)?
         .into_iter()
         .find(|other| other.is_active && other.id != unit.id)
     {
@@ -78,7 +80,7 @@ mod tests {
 
     fn ids_named(connection: &StorageConnection, name: &str) -> Vec<String> {
         UnitRowRepository::new(connection)
-            .find_by_trimmed_name(name)
+            .find_by_trimmed_name_any_case(name)
             .unwrap()
             .into_iter()
             .map(|unit| unit.id)
@@ -138,17 +140,21 @@ mod tests {
             upsert_unit(&connection, &unit("old", "Tab", true)),
             duplicate()
         );
-        // Surrounding spaces don't.
+        // Surrounding spaces and letter case don't, as in lookups.
         assert_eq!(
             upsert_unit(&connection, &unit("new", " Tab ", true)),
             duplicate()
         );
-        // Letter case counts, as it does in lookups.
-        upsert_unit(&connection, &unit("new", "TAB", true)).unwrap();
+        assert_eq!(
+            upsert_unit(&connection, &unit("new", "TAB", true)),
+            duplicate()
+        );
+        // A unit can change its own name's letter case.
+        upsert_unit(&connection, &unit("tab", "TAB", true)).unwrap();
     }
 
     #[actix_rt::test]
-    async fn a_name_is_found_whatever_spaces_surround_it() {
+    async fn a_name_is_found_whatever_spaces_or_letter_case() {
         let (_, connection, _, _) =
             setup_all("upsert_unit_padded_lookup", MockDataInserts::none()).await;
         UnitRowRepository::new(&connection)
@@ -156,8 +162,8 @@ mod tests {
             .unwrap();
         assert_eq!(ids_named(&connection, "Tab"), vec!["a"]);
         assert_eq!(ids_named(&connection, " Tab"), vec!["a"]);
-        // Letter case counts.
-        assert!(ids_named(&connection, "tab").is_empty());
+        // So is letter case.
+        assert_eq!(ids_named(&connection, "tAB"), vec!["a"]);
     }
 
     #[actix_rt::test]

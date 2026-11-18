@@ -82,16 +82,21 @@ impl SheetImport for UnitSheet {
         let repo = UnitRowRepository::new(connection);
         let existing = match (&id, &name) {
             (Some(id), _) => repo.find_one_by_id(id)?,
-            (None, Some(name)) => {
-                pick_by_name(repo.find_by_trimmed_name(name)?).unwrap_or_else(|e| {
+            (None, Some(name)) => pick_by_name(repo.find_by_trimmed_name_any_case(name)?)
+                .unwrap_or_else(|e| {
                     errors.push(row.error(NAME, e.message(name)));
                     None
-                })
-            }
+                }),
             (None, None) => None,
         };
 
-        let name = keep_or_saved(name, existing.as_ref().map(|unit| unit.name.as_str()));
+        let saved_name = existing.as_ref().map(|unit| unit.name.as_str());
+        // Found by name, the row's name is the saved one in some letter case: it's kept. With an
+        // id, a different name, case included, renames the unit.
+        let name = match (&id, saved_name) {
+            (None, Some(saved)) => Some(saved.to_string()),
+            _ => keep_or_saved(name, saved_name),
+        };
         let index = index.or(existing.as_ref().map(|unit| unit.index));
         let is_active = is_active.or(existing.as_ref().map(|unit| unit.is_active));
         row.require_for_new(
