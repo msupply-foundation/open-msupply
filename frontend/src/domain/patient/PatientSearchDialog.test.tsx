@@ -562,10 +562,10 @@ describe('OMS-REG-DIS-01.58 — other facilities out of reach', () => {
     type('lastName', 'Smyth');
     await pause();
     expect(centralAsks()).toBe(1);
-    expect(texts()).toContain('messages.other-facilities-skipped-slow');
+    expect(texts()).toContain('messages.other-stores-skipped-slow');
   });
 
-  it('skips asking again within a minute, saying so with a Search other facilities button (.70)', async () => {
+  it('skips asking again within a minute, saying so with a Search other stores button (.70)', async () => {
     findPatients.mockResolvedValue(here([]));
     findOtherFacilityPatients.mockResolvedValue({ kind: 'unreachable' });
     mount();
@@ -578,8 +578,8 @@ describe('OMS-REG-DIS-01.58 — other facilities out of reach', () => {
     await pause();
     expect(centralAsks()).toBe(1);
     expect(centralWarning()).toBe(true);
-    expect(texts()).toContain('messages.other-facilities-skipped');
-    const ask = buttonLabelled('button.search-other-facilities');
+    expect(texts()).toContain('messages.other-stores-skipped');
+    const ask = buttonLabelled('button.search-other-stores');
     expect(ask).toBeDefined();
 
     // The button still asks.
@@ -637,7 +637,51 @@ describe('OMS-REG-DIS-01.58 — other facilities out of reach', () => {
       skipCentral: true,
     });
     expect(centralRows()).toEqual(['s1']);
-    expect(texts()).toContain('messages.other-facilities-skipped');
+    expect(texts()).toContain('messages.other-stores-skipped');
+  });
+
+  it("shows none of the last search's rows when this site has none for the new one", async () => {
+    findPatients.mockResolvedValue(here([]));
+    findOtherFacilityPatients.mockResolvedValueOnce({
+      kind: 'unreachable',
+      site: { rows: [row('s1')], more: false },
+    });
+    mount();
+    type('lastName', 'Smith');
+    await pause();
+    expect(centralRows()).toEqual(['s1']);
+
+    findOtherFacilityPatients.mockResolvedValueOnce({
+      kind: 'unreachable',
+      site: { rows: [], more: false },
+    });
+    await vi.advanceTimersByTimeAsync(30_000);
+    type('lastName', 'Nobody');
+    await pause();
+    expect(texts()).toContain('messages.other-stores-skipped');
+    expect(centralRows() ?? []).toEqual([]);
+  });
+
+  it("pages this site's patients by themselves in the minute's pause", async () => {
+    findPatients.mockResolvedValue(here([]));
+    findOtherFacilityPatients.mockResolvedValue({
+      kind: 'unreachable',
+      site: { rows: [row('s1')], more: true },
+    });
+    mount();
+    type('lastName', 'Smith');
+    await pause();
+    await vi.advanceTimersByTimeAsync(30_000);
+    type('lastName', 'Smyth');
+    await pause();
+    const pagination = centralTable()?.props.pagination as
+      { onOffsetChange: (offset: number) => void } | undefined;
+    pagination?.onOffsetChange(50);
+    await settle();
+    expect(findOtherFacilityPatients.mock.calls.at(-1)?.[2]).toMatchObject({
+      offset: 50,
+      skipCentral: true,
+    });
   });
 
   it('asks by itself again once the minute is up (.70)', async () => {

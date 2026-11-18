@@ -241,12 +241,18 @@ pub async fn link_patient_to_store(
     store_id: &str,
     name_id: &str,
 ) -> Result<NameStoreJoin, CentralPatientRequestError> {
-    // On the central server a patient of another store is already here: add
-    // them to the store directly, as central does when a remote asks for one
-    if CentralServerConfig::is_central_server()
-        && check_patient_exists(&context.connection, name_id)?.is_some()
-    {
-        let id = activate_patient_name_store_join(&context.connection, store_id, name_id, None)?;
+    // A patient of another store already on this server (any patient on the
+    // central server, or one of this site's own on a remote) has their records
+    // here: add them to the store directly, as central does when a remote asks
+    // for one. The join syncs on like any other, and central needn't be
+    // reachable.
+    if check_patient_exists(&context.connection, name_id)?.is_some() {
+        let id = context
+            .connection
+            .transaction_sync(|connection| {
+                activate_patient_name_store_join(connection, store_id, name_id, None)
+            })
+            .map_err(|error| error.to_inner_error())?;
         return Ok(NameStoreJoin {
             id,
             name_id: name_id.to_string(),
@@ -504,6 +510,25 @@ mod test {
     // them to this store there and then, without asking legacy mSupply
     #[actix_rt::test]
     async fn central_links_a_patient_it_holds_to_the_store_locally() {
+        links_a_patient_already_here_locally(
+            "central_links_a_patient_it_holds_to_the_store_locally",
+            true,
+        )
+        .await;
+    }
+
+    // OMS-REG-DIS-01.85: on a remote site, choosing this site's own patient
+    // at another store needs no central server
+    #[actix_rt::test]
+    async fn remote_links_its_own_patient_to_the_store_locally() {
+        links_a_patient_already_here_locally(
+            "remote_links_its_own_patient_to_the_store_locally",
+            false,
+        )
+        .await;
+    }
+
+    async fn links_a_patient_already_here_locally(db_name: &str, is_central: bool) {
         use repository::{
             EqualFilter, NameRow, NameRowRepository, NameRowType, NameStoreJoinFilter,
             NameStoreJoinRepository, NameStoreJoinRow, PatientRepository,
@@ -514,11 +539,8 @@ mod test {
         use super::link_patient_to_store;
         use crate::{service_provider::ServiceProvider, sync::test_util_set_is_central_server};
 
-        let (_, connection, connection_manager, _) = setup_all(
-            "central_links_a_patient_it_holds_to_the_store_locally",
-            MockDataInserts::none().names().stores(),
-        )
-        .await;
+        let (_, connection, connection_manager, _) =
+            setup_all(db_name, MockDataInserts::none().names().stores()).await;
         for id in ["new_here", "hidden_here"] {
             NameRowRepository::new(&connection)
                 .upsert_one(&NameRow {
@@ -540,8 +562,8 @@ mod test {
             })
             .unwrap();
 
-        test_util_set_is_central_server(true);
-        // No sync settings, so asking legacy mSupply would fail
+        test_util_set_is_central_server(is_central);
+        // No sync settings, so asking another server would fail
         let service_provider = ServiceProvider::new(connection_manager);
         let ctx = service_provider.basic_context().unwrap();
 

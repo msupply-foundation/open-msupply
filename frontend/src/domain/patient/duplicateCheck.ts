@@ -156,7 +156,9 @@ export const createDuplicateCheck = (options: {
     // Anything but an answer means other facilities weren't checked, so it
     // never reads as "no existing patients".
     if (central.kind === 'ok') show(central.rows, 'done', central.more);
-    else if (central.kind === 'failed') show([], 'failed');
+    // Failed outright: what this site had already found still counts
+    else if (central.kind === 'failed')
+      show(siteFirst?.rows ?? [], 'failed', siteFirst?.more ?? false);
     // Central's are missing, but this site's own at other stores still count
     else show(central.site?.rows ?? [], 'failed', central.site?.more ?? false);
   };

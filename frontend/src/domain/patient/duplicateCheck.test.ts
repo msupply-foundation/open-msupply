@@ -268,6 +268,24 @@ describe('OMS-REG-DIS-01.72 / .63 — this store answers first, other facilities
     ]);
   });
 
+  it("keeps this site's patients at other stores when the central request fails outright", async () => {
+    findPatients.mockResolvedValue(here([]));
+    findOtherFacilityPatients.mockImplementation(
+      async (
+        _store: string,
+        _terms: unknown,
+        options: OtherFacilityOptions
+      ) => {
+        options.onSite?.({ rows: [row('s1')], more: false });
+        return { kind: 'failed' };
+      }
+    );
+    const { check } = mount({ firstName: 'Jo', lastName: 'Smith' });
+    await check.run();
+    expect(done(check)?.central).toBe('failed');
+    expect(done(check)?.matches.map(m => m.id)).toEqual(['s1']);
+  });
+
   // The failure itself is reported globally; the footer mustn't then claim
   // there are no existing patients.
   it('marks other facilities failed when the central request fails outright', async () => {

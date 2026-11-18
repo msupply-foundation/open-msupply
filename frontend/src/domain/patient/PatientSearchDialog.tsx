@@ -205,8 +205,9 @@ export const PatientSearchDialog = (
     else if (down)
       setCentral({
         kind: 'unreachable',
-        // This site's own patients at other stores, if there are any
-        previous: outcome.site?.rows.length
+        // This site's own patients at other stores, for this search; the
+        // rows last shown only when this site couldn't say either
+        previous: outcome.site
           ? { ...outcome.site, offset }
           : pageOf(central()),
         skipped: skipCentral,
@@ -387,10 +388,10 @@ export const PatientSearchDialog = (
     if (c.kind !== 'unreachable') return '';
     if (c.slow)
       return c.skipped
-        ? t('messages.other-facilities-skipped-slow')
+        ? t('messages.other-stores-skipped-slow')
         : t('messages.central-slow');
     return c.skipped
-      ? t('messages.other-facilities-skipped')
+      ? t('messages.other-stores-skipped')
       : t('messages.failed-to-reach-central');
   };
   const skippedCentral = () => {
@@ -433,7 +434,8 @@ export const PatientSearchDialog = (
           onOffsetChange: (offset: number) => {
             toTopOf(centralSection);
             const s = searched();
-            if (s) void searchOtherFacilities(s, offset);
+            // In the minute's pause, the pages are this site's alone
+            if (s) void searchOtherFacilities(s, offset, skippedCentral());
           },
         }
       : undefined;
@@ -642,7 +644,7 @@ export const PatientSearchDialog = (
                       if (s) void searchOtherFacilities(s);
                     }}
                   >
-                    {t('button.search-other-facilities')}
+                    {t('button.search-other-stores')}
                   </Button>
                 ) : undefined
               }
@@ -658,7 +660,7 @@ export const PatientSearchDialog = (
             ref={centralSection}
             data-testid="other-facilities-results"
           >
-            <Text variant="subtitle">{t('heading.at-other-facilities')}</Text>
+            <Text variant="subtitle">{t('heading.at-other-stores')}</Text>
             <Show when={central().kind === 'unreachable'}>
               <Alert severity="warning" testId="central-search-error">
                 <HStack gap="md" align="center" wrap>
@@ -674,7 +676,7 @@ export const PatientSearchDialog = (
                     }}
                   >
                     {skippedCentral()
-                      ? t('button.search-other-facilities')
+                      ? t('button.search-other-stores')
                       : t('button.retry')}
                   </Button>
                 </HStack>
@@ -699,7 +701,7 @@ export const PatientSearchDialog = (
               emptyMessage={
                 central().kind === 'unreachable'
                   ? t('messages.nothing-here')
-                  : t('messages.no-matches-at-other-facilities')
+                  : t('messages.no-matches-at-other-stores')
               }
             />
           </Stack>

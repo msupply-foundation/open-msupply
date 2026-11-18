@@ -263,8 +263,9 @@ describe('OMS-REG-DIS-01.57 — other facilities are searched for the same terms
       dateOfBirth: '1984-03-14',
       dateOfBirthFrom: null,
       dateOfBirthTo: null,
-      first: FIND_LIMIT + 1,
-      offset: 50,
+      // From the row before the page, to place site patients between pages
+      first: FIND_LIMIT + 2,
+      offset: 49,
     });
   });
 
@@ -367,11 +368,12 @@ describe("OMS-REG-DIS-01.85 — on a remote site, this site's patients at other 
     await findOtherFacilityPatients('store', terms({ lastName: 'S' }), {
       offset: 50,
     });
+    // Read at once (few on a remote site), each page taking its share
     expect(calls()[0]).toEqual({
       storeId: 'store',
       filter: { lastName: { startsWith: 'S' }, isVisible: false },
-      first: FIND_LIMIT + 1,
-      offset: 50,
+      first: 1000,
+      offset: 0,
     });
     expect(searchCentralPatients).toHaveBeenCalledOnce();
   });
@@ -397,35 +399,100 @@ describe("OMS-REG-DIS-01.85 — on a remote site, this site's patients at other 
     ]);
   });
 
-  it("leaves one that sorts after central's page to a later page", async () => {
-    graphqlFetch.mockResolvedValue(page([siteRow('s1', 'Zed')]));
-    searchCentralPatients.mockResolvedValue(
-      centralPage(
-        Array.from({ length: FIND_LIMIT }, (_, i): [string, string] => [
-          `c${i}`,
-          `A${String(i).padStart(3, '0')}`,
-        ]),
-        true
-      )
+  // A page of central rows A000.. from `from`, with one more when `more`
+  const centralFrom = (from: number, count: number, more: boolean) =>
+    centralPage(
+      Array.from({ length: count }, (_, i): [string, string] => [
+        `c${from + i}`,
+        `A${String(from + i).padStart(3, '0')}`,
+      ]),
+      more
     );
-    const result = await findOtherFacilityPatients(
+
+  it("leaves one that sorts after central's page to the page it falls on", async () => {
+    graphqlFetch.mockResolvedValue(page([siteRow('s1', 'A060x')]));
+    searchCentralPatients.mockResolvedValueOnce(
+      centralFrom(0, FIND_LIMIT, true)
+    );
+    const first = await findOtherFacilityPatients(
       'store',
       terms({ lastName: 'S' })
     );
-    expect(result.kind === 'ok' && result.rows.map(r => r.id)).not.toContain(
+    expect(first.kind === 'ok' && first.rows.map(r => r.id)).not.toContain(
       's1'
     );
+
+    // Page 2: central from the row before it (A049), A050..A099 and more
+    searchCentralPatients.mockResolvedValueOnce(
+      centralFrom(FIND_LIMIT - 1, FIND_LIMIT + 1, true)
+    );
+    const second = await findOtherFacilityPatients(
+      'store',
+      terms({ lastName: 'S' }),
+      { offset: FIND_LIMIT }
+    );
+    const ids = second.kind === 'ok' ? second.rows.map(r => r.id) : [];
+    expect(ids).toContain('s1');
+    expect(ids.indexOf('s1')).toBe(ids.indexOf('c60') + 1);
+    expect(ids).not.toContain(`c${FIND_LIMIT - 1}`);
   });
 
-  it("pages after the first are central's alone", async () => {
-    graphqlFetch.mockResolvedValue(page([siteRow('s1', 'Brown')]));
-    searchCentralPatients.mockResolvedValue(centralPage([['c9', 'Cole']]));
+  it('puts one falling between two pages on the later page, once', async () => {
+    // Between page 1's last (A049) and page 2's first (A050)
+    graphqlFetch.mockResolvedValue(page([siteRow('s1', 'A049x')]));
+    searchCentralPatients.mockResolvedValueOnce(
+      centralFrom(0, FIND_LIMIT, true)
+    );
+    const first = await findOtherFacilityPatients(
+      'store',
+      terms({ lastName: 'S' })
+    );
+    expect(first.kind === 'ok' && first.rows.map(r => r.id)).not.toContain(
+      's1'
+    );
+    searchCentralPatients.mockResolvedValueOnce(
+      centralFrom(FIND_LIMIT - 1, 3, false)
+    );
+    const second = await findOtherFacilityPatients(
+      'store',
+      terms({ lastName: 'S' }),
+      { offset: FIND_LIMIT }
+    );
+    expect(second.kind === 'ok' && second.rows.map(r => r.id)).toEqual([
+      's1',
+      'c50',
+      'c51',
+    ]);
+  });
+
+  it("leaves one before the page's first row to the earlier page", async () => {
+    graphqlFetch.mockResolvedValue(page([siteRow('s1', 'Aaron')]));
+    searchCentralPatients.mockResolvedValue(
+      centralPage([
+        ['c49', 'Adams'],
+        ['c50', 'Cole'],
+      ])
+    );
     const result = await findOtherFacilityPatients(
       'store',
       terms({ lastName: 'S' }),
       { offset: 50 }
     );
-    expect(result.kind === 'ok' && result.rows.map(r => r.id)).toEqual(['c9']);
+    expect(result.kind === 'ok' && result.rows.map(r => r.id)).toEqual(['c50']);
+  });
+
+  it('pages them by themselves when central is out of reach', async () => {
+    graphqlFetch.mockResolvedValue(page(rows(FIND_LIMIT + 2, 's').map(r => r)));
+    searchCentralPatients.mockResolvedValue({ kind: 'unreachable' });
+    const result = await findOtherFacilityPatients(
+      'store',
+      terms({ lastName: 'S' }),
+      { offset: FIND_LIMIT }
+    );
+    expect(result).toEqual({
+      kind: 'unreachable',
+      site: { rows: rows(FIND_LIMIT + 2, 's').slice(FIND_LIMIT), more: false },
+    });
   });
 
   it('hands them over as soon as they are found, before central answers', async () => {
