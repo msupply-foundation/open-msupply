@@ -187,6 +187,14 @@ pub(crate) trait SheetImport {
         row: &Row,
     ) -> Result<RowOutcome, RowFailure>;
 
+    /// Run after the sheet's last row, for a rule about the whole table rather than one row.
+    fn finish_sheet(
+        &mut self,
+        _connection: &StorageConnection,
+    ) -> Result<Vec<RowError>, RepositoryError> {
+        Ok(Vec::new())
+    }
+
     /// Users whose open sessions must end once the import is applied.
     fn sessions_to_end(&mut self) -> Vec<EndSessions> {
         Vec::new()
@@ -737,6 +745,7 @@ fn import_sheets<'a>(
                 });
             }
         }
+        summary.add_errors(rows.finish_sheet(connection)?);
         summary.sessions_to_end.extend(rows.sessions_to_end());
         changes.error_count = heading_errors + (summary.error_count - row_errors_before);
         summary.tables.push(changes);

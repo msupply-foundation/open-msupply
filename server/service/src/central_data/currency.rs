@@ -1,13 +1,16 @@
 use super::{
     CentralDataTable, Change, ExportFilter, FieldChange, ImportTable, RecordCount, RowFailure,
     RowOutcome, SheetImport, SheetStart,
-    cells::{Row, collect, keep_or_saved},
+    cells::{Row, RowError, collect, keep_or_saved},
     field_changes,
     lookup::{LookupError, find_record},
     sheet::Value,
 };
 use crate::currency::{UpsertCurrencyError, upsert_currency};
-use repository::{CurrencyRow, CurrencyRowRepository, RepositoryError, StorageConnection};
+use repository::{
+    CurrencyFilter, CurrencyRepository, CurrencyRow, CurrencyRowRepository, RepositoryError,
+    StorageConnection,
+};
 use util::uuid::uuid;
 
 const ID: &str = "id";
@@ -70,14 +73,27 @@ impl ImportTable for CurrencyTable {
 
     fn start_sheet(
         &self,
-        _connection: &StorageConnection,
+        connection: &StorageConnection,
         _start: SheetStart,
     ) -> Result<Box<dyn SheetImport>, RepositoryError> {
-        Ok(Box::new(CurrencySheet))
+        Ok(Box::new(CurrencySheet {
+            had_home: count_home(connection)? > 0,
+            home_removed: None,
+        }))
     }
 }
 
-struct CurrencySheet;
+/// Stock and shipments are valued in the home currency, and fail without one.
+fn count_home(connection: &StorageConnection) -> Result<i64, RepositoryError> {
+    CurrencyRepository::new(connection).count(Some(CurrencyFilter::new().is_home_currency(true)))
+}
+
+struct CurrencySheet {
+    had_home: bool,
+    /// The error for the last row that stops a currency being the home currency, should the
+    /// sheet leave none.
+    home_removed: Option<RowError>,
+}
 
 impl SheetImport for CurrencySheet {
     fn import_row(
@@ -147,6 +163,18 @@ impl SheetImport for CurrencySheet {
         if change != Change::Unchanged {
             upsert_currency(connection, &currency)
                 .map_err(|error| upsert_failure(row, &currency, error))?;
+            if existing
+                .as_ref()
+                .is_some_and(|saved| saved.is_home_currency && !currency.is_home_currency)
+            {
+                self.home_removed = Some(row.error(
+                    IS_HOME_CURRENCY,
+                    format!(
+                        "{} is the home currency, and no row makes another currency the home currency. Set another currency's is_home_currency to TRUE on a later row",
+                        currency.code
+                    ),
+                ));
+            }
         }
         Ok(RowOutcome {
             fields: existing
@@ -156,6 +184,17 @@ impl SheetImport for CurrencySheet {
             record_id: currency.id,
             change,
         })
+    }
+
+    /// A row can't make a second home currency, so only none is checked here.
+    fn finish_sheet(
+        &mut self,
+        connection: &StorageConnection,
+    ) -> Result<Vec<RowError>, RepositoryError> {
+        if self.had_home && count_home(connection)? == 0 {
+            return Ok(self.home_removed.take().into_iter().collect());
+        }
+        Ok(Vec::new())
     }
 }
 

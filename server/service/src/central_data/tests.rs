@@ -2193,6 +2193,78 @@ async fn only_one_currency_can_be_the_home_currency() {
     assert!(find_currency(&connection, "nzd").unwrap().is_home_currency);
 }
 
+// covers: OMS-REG-CDIO-01.116
+
+#[actix_rt::test]
+async fn an_import_cannot_leave_no_home_currency() {
+    let (connection, service_provider, dir) = currency_setup("central_data_currency_no_home").await;
+    let ctx = service_provider.basic_context().unwrap();
+
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![
+            currency_row(["", "USD", "", "FALSE", "", ""]),
+            currency_row(["", "NZD", "1.7", "", "", ""]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions())
+        .unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(
+            2,
+            Some("is_home_currency"),
+            "USD is the home currency, and no row makes another currency the home currency. Set another currency's is_home_currency to TRUE on a later row"
+        )]
+    );
+    assert_eq!(summary.tables[0].error_count, 1);
+    assert_eq!(find_currency(&connection, "usd"), Some(usd()));
+    assert_eq!(find_currency(&connection, "nzd").unwrap().rate, 1.6);
+
+    // Given to another on a later row, it moves.
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![
+            currency_row(["", "USD", "", "FALSE", "", ""]),
+            currency_row(["", "NZD", "1", "TRUE", "", ""]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert!(find_currency(&connection, "nzd").unwrap().is_home_currency);
+}
+
+// covers: OMS-REG-CDIO-01.116
+
+#[actix_rt::test]
+async fn a_server_with_no_home_currency_can_import_currencies_without_one() {
+    let (_, connection, connection_manager, _) =
+        setup_all("central_data_currency_none_home", MockDataInserts::none()).await;
+    let ctx = ServiceProvider::new(connection_manager)
+        .basic_context()
+        .unwrap();
+    let dir = TempDir::new().unwrap();
+
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![currency_row(["", "NZD", "1.6", "FALSE", "", "TRUE"])]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(
+        CurrencyRowRepository::new(&connection)
+            .find_all()
+            .unwrap()
+            .len(),
+        1
+    );
+}
+
 // covers: OMS-REG-CDIO-01.113
 
 #[actix_rt::test]
