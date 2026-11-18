@@ -2052,7 +2052,6 @@
   "message.continue-to-make-inbound-shipment": "Clique em Próximo para continuar a fazer uma Entrada sem vincular a um pedido interno.",
   "message.copy-success": "Copiado para o bloco de notas com sucesso",
   "message.create-blank-stocktake": "Isto irá criar um inventário em branco",
-  "message.database-not-local": "A base de dados está sendo executada em um servidor, por isso não é possível fazer o descarregamento aqui",
   "message.database-not-sqlite": "O descarregamento da base de dados só é possível para bases de dados SQLite",
   "message.failed-to-create-requisition": "Falha ao criar a requisição!",
   "message.keyboard-shortcuts": "Pressione 'Command' (Mac) ou 'Control' (Windows) + 'k' para ver a lista de atalhos de teclado que estão disponíveis em cada página. Pode-se utilizar as ações diretamente das janelas de pop up.",

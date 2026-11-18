@@ -2644,7 +2644,6 @@
   "message.copy-failed": "Copy failed",
   "message.copy-success": "Copied to clipboard successfully",
   "message.create-blank-stocktake": "This will create a blank stocktake.",
-  "message.database-not-local": "Database is running on a server, so can't be downloaded here",
   "message.destination-not-built": "This screen isn't available yet.",
   "message.download-failed": "Download failed",
   "message.export-failed": "Export failed",

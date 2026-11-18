@@ -1344,7 +1344,6 @@
   "message.confirm-delete-encounter": "هل أنت متأكد؟",
   "message.contact-support": "يرجى الاتصال ب support@msupply.foundation حول تكوين التقارير",
   "message.copy-success": "تم النسخ إلى الحافظة بنجاح",
-  "message.database-not-local": "قاعدة البيانات تعمل على خادم، لذا لا يمكن تنزيلها هنا",
   "message.database-not-sqlite": "تنزيل قواعد البيانات متاح فقط لقواعد بيانات SQLite",
   "message.failed-to-create-requisition": "فشل في إنشاء طلب الشراء!",
   "message.no-supplier": "تعديل المخزون",

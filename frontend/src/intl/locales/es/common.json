@@ -1294,7 +1294,6 @@
   "message.contact-support": "Por favor, contacta a support@msupply.foundation para configurar reportes",
   "message.continue-to-make-inbound-shipment": "Haz clic en Siguiente para continuar haciendo una Entrada sin vincular a una Orden Interna.",
   "message.copy-success": "Copiado al portapapeles exitosamente",
-  "message.database-not-local": "La base de datos se está ejecutando en un servidor, por lo que no se puede descargar aquí",
   "message.database-not-sqlite": "La descarga de la base de datos solo está disponible para bases de datos SQLite",
   "message.failed-to-create-requisition": "¡No se pudo crear la requisición!",
   "message.no-supplier": "Ajuste de Inventario",

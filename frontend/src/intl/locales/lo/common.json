@@ -2541,7 +2541,6 @@
   "message.copy-failed": "ສຳເນົາບໍ່ສຳເລັດ",
   "message.copy-success": "ສຳເນົາໃສ່ຄລິບບອດສຳເລັດແລ້ວ",
   "message.create-blank-stocktake": "ນີ້ຈະສ້າງການກວດນັບສະຕ໋ອກທີ່ຫວ່າງເປົ່າ.",
-  "message.database-not-local": "ຖານຂໍ້ມູນເຮັດວຽກຢູ່ເຊີບເວີ, ດັ່ງນັ້ນບໍ່ສາມາດດາວໂຫຼດຢູ່ນີ້ໄດ້",
   "message.destination-not-built": "ໜ້ານີ້ຍັງບໍ່ພ້ອມໃຫ້ໃຊ້ເທື່ອ.",
   "message.download-failed": "ດາວໂຫຼດບໍ່ສຳເລັດ",
   "message.export-failed": "ສົ່ງອອກບໍ່ສຳເລັດ",

@@ -2609,7 +2609,6 @@
   "message.copy-failed": "کاپی ناموفق بود",
   "message.copy-success": "با موفقیت در کلیپ‌بورد کپی شد",
   "message.create-blank-stocktake": "این یک شمارش فزیکی خالی ایجاد می‌کند",
-  "message.database-not-local": "پایگاه داده روی سرور اجرا می‌شود، بنابراین اینجا نمی‌توان آن را دانلود کرد",
   "message.database-not-sqlite": "دانلود پایگاه داده فقط برای پایگاه‌های داده SQLite در دسترس است",
   "message.destination-not-built": "این صفحه هنوز در دسترس نیست.",
   "message.download-failed": "دانلود ناموفق بود",

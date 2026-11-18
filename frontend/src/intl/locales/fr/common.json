@@ -2667,7 +2667,6 @@
   "message.copy-failed": "Échec de la copie",
   "message.copy-success": "Copié dans le presse-papiers avec succès",
   "message.create-blank-stocktake": "Vous êtes sur le point de créer un inventaire vide.",
-  "message.database-not-local": "La base de données se trouve sur un serveur et ne peut donc pas être téléchargée ici",
   "message.database-not-sqlite": "Le téléchargement des bases de données n'est disponible que pour les bases de données SQLite",
   "message.destination-not-built": "Cet écran n'est pas encore disponible.",
   "message.download-failed": "Echec du téléchargement",

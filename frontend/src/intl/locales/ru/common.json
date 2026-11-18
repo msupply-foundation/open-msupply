@@ -1688,7 +1688,6 @@
   "message.continue-to-make-inbound-shipment": "Нажмите 'Далее', чтобы продолжить создание входящей поставки без привязки внутреннего заказа.",
   "message.copy-success": "Скопировано успешно",
   "message.create-blank-stocktake": "Это создаст пустую инвентаризацию",
-  "message.database-not-local": "База данных запущена на сервере, поэтому её нельзя загрузить здесь",
   "message.database-not-sqlite": "Загрузка базы данных доступна только для баз данных SQLite",
   "message.failed-to-create-requisition": "Не удалось создать запрос на закупку!",
   "message.keyboard-shortcuts": "Нажмите 'Command' (Mac) или 'Control' (Windows) + 'K', чтобы просмотреть список горячих клавиш на любой странице. Вы также можете выполнять действия непосредственно из всплывающего окна.",
