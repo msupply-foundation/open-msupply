@@ -1020,10 +1020,11 @@ async fn a_name_two_active_units_share_asks_for_the_id() {
         dir.path(),
         unit_sheet(
             headers.clone(),
+            // A blank index isn't reported as missing: without its unit, the row stops there.
             vec![vec![
                 Value::Empty,
                 "Bottle".to_string().into(),
-                9.into(),
+                Value::Empty,
                 true.into(),
             ]],
         ),
@@ -3723,9 +3724,21 @@ async fn a_master_list_is_renamed_by_its_id_but_no_name_or_code_is_taken() {
     assert_eq!(
         row_errors(&summary),
         vec![
-            (3, Some("name"), "master list hiv has this name"),
-            (4, Some("name"), "master list eml has this name"),
-            (5, Some("name"), "master list hiv has this name"),
+            (
+                3,
+                Some("name"),
+                "Master list hiv is already named HIV program. Give this master list another name, or make one of them inactive"
+            ),
+            (
+                4,
+                Some("name"),
+                "Master list eml is already named Essential medicines. Give this master list another name, or make one of them inactive"
+            ),
+            (
+                5,
+                Some("name"),
+                "Master list hiv is already named HIV program. Give this master list another name, or make one of them inactive"
+            ),
             (6, Some("code"), "master list hiv has this code"),
         ]
     );
@@ -3798,7 +3811,11 @@ async fn an_inactive_master_list_does_not_hold_on_to_its_name() {
     let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
     assert_eq!(
         row_errors(&summary),
-        vec![(4, Some("name"), "master list eml has this name")]
+        vec![(
+            4,
+            Some("name"),
+            "Master list eml is already named Essential medicines. Give this master list another name, or make one of them inactive"
+        )]
     );
 
     let path = write_file(

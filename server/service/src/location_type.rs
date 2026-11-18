@@ -1,4 +1,7 @@
-use crate::{ListError, ListResult, get_pagination_or_default, i64_to_u32, other_with_key};
+use crate::{
+    ListError, ListResult, get_pagination_or_default, i64_to_u32,
+    record_key::{KeyCase, other_with_key},
+};
 use repository::{
     LocationType, LocationTypeFilter, LocationTypeRepository, LocationTypeRow,
     LocationTypeRowRepository, LocationTypeSort, LocationTypeUser, PaginationOption,
@@ -104,13 +107,9 @@ fn validate(
         saved.as_ref().map(|saved| saved.code.as_str()),
         &row.id,
         &row.code,
-        |code| {
-            Ok(repo
-                .find_by_trimmed_code(code)?
-                .into_iter()
-                .map(|other| other.id)
-                .collect())
-        },
+        KeyCase::Exact,
+        |code| repo.find_by_trimmed_code(code),
+        |other| &other.id,
     )? {
         Some(other_id) => Err(UpsertLocationTypeError::DuplicateCode { other_id }),
         None => Ok(()),

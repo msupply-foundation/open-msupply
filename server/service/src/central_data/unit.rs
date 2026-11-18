@@ -3,10 +3,10 @@ use super::{
     RowOutcome, SheetImport, SheetStart,
     cells::{Row, collect, keep_or_saved},
     field_changes,
-    lookup::LookupError,
+    lookup::pick_active_first,
     sheet::Value,
 };
-use crate::unit::{UpsertUnitError, active_first, upsert_unit};
+use crate::unit::{UpsertUnitError, upsert_unit};
 use repository::{RepositoryError, StorageConnection, UnitRow, UnitRowRepository};
 use util::uuid::uuid;
 
@@ -82,11 +82,18 @@ impl SheetImport for UnitSheet {
         let repo = UnitRowRepository::new(connection);
         let existing = match (&id, &name) {
             (Some(id), _) => repo.find_one_by_id(id)?,
-            (None, Some(name)) => pick_by_name(repo.find_by_trimmed_name_any_case(name)?)
-                .unwrap_or_else(|e| {
-                    errors.push(row.error(NAME, e.message(name)));
-                    None
-                }),
+            (None, Some(name)) => {
+                match pick_active_first(repo.find_by_trimmed_name_any_case(name)?, |unit| {
+                    unit.is_active
+                }) {
+                    Ok(found) => found,
+                    // Without its record, the row's other checks would treat it as a new unit.
+                    Err(e) => {
+                        errors.push(row.error(NAME, e.message(name)));
+                        return Err(RowFailure::Invalid(errors));
+                    }
+                }
+            }
             (None, None) => None,
         };
 
@@ -174,13 +181,4 @@ fn cells(unit: &UnitRow) -> Vec<Value> {
 
 fn changed_fields(old: &UnitRow, new: &UnitRow) -> Vec<FieldChange> {
     field_changes(COLUMNS, cells(old), cells(new))
-}
-
-fn pick_by_name(units: Vec<UnitRow>) -> Result<Option<UnitRow>, LookupError> {
-    let mut candidates = active_first(units);
-    match candidates.len() {
-        0 => Ok(None),
-        1 => Ok(candidates.pop()),
-        _ => Err(LookupError::Ambiguous),
-    }
 }

@@ -1,4 +1,4 @@
-use crate::other_with_key;
+use crate::record_key::{KeyCase, other_with_key};
 use repository::{
     ItemRow, ItemRowRepository, LocationTypeRowRepository, RepositoryError, StorageConnection,
     UnitRowRepository,
@@ -68,13 +68,9 @@ fn save(
         saved.map(|saved| saved.code.as_str()),
         &row.id,
         &row.code,
-        |code| {
-            Ok(repo
-                .find_by_trimmed_code_without_legacy_record(code)?
-                .into_iter()
-                .map(|other| other.id)
-                .collect())
-        },
+        KeyCase::Exact,
+        |code| repo.find_by_trimmed_code_without_legacy_record(code),
+        |other| &other.id,
     )? {
         return Err(UpsertItemError::DuplicateCode { other_id });
     }

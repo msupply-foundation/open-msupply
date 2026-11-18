@@ -1,4 +1,4 @@
-use crate::{active_first_by, other_with_key};
+use crate::record_key::{KeyCase, other_with_key};
 use repository::{MasterListRow, MasterListRowRepository, RepositoryError, StorageConnection};
 use util::constants::MISSING_PROGRAM;
 
@@ -22,10 +22,6 @@ impl From<RepositoryError> for UpsertMasterListError {
     fn from(error: RepositoryError) -> Self {
         UpsertMasterListError::DatabaseError(error)
     }
-}
-
-pub fn active_first(master_lists: Vec<MasterListRow>) -> Vec<MasterListRow> {
-    active_first_by(master_lists, |master_list| master_list.is_active)
 }
 
 /// Joins the caller's transaction, so an import's earlier rows count.
@@ -63,14 +59,15 @@ fn validate(
                 .map(|saved| saved.name.as_str()),
             &row.id,
             &row.name,
+            KeyCase::Exact,
             |name| {
                 Ok(repo
                     .find_by_trimmed_name(name)?
                     .into_iter()
                     .filter(|other| other.is_active)
-                    .map(|other| other.id)
                     .collect())
             },
+            |other| &other.id,
         )?
     {
         return Err(UpsertMasterListError::DuplicateName { other_id });
@@ -82,13 +79,9 @@ fn validate(
         saved.as_ref().map(|saved| saved.code.as_str()),
         &row.id,
         &row.code,
-        |code| {
-            Ok(repo
-                .find_by_trimmed_code(code)?
-                .into_iter()
-                .map(|other| other.id)
-                .collect())
-        },
+        KeyCase::Exact,
+        |code| repo.find_by_trimmed_code(code),
+        |other| &other.id,
     )? {
         Some(other_id) => Err(UpsertMasterListError::DuplicateCode { other_id }),
         None => Ok(()),

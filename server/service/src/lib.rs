@@ -85,6 +85,7 @@ pub mod programs;
 pub mod purchase_order;
 pub mod purchase_order_line;
 pub mod reason_option;
+pub(crate) mod record_key;
 pub mod repack;
 pub mod report;
 pub mod requisition;
@@ -309,30 +310,6 @@ pub fn usize_to_u64(num: usize) -> u64 {
 pub struct InputWithResult<I, R> {
     pub input: I,
     pub result: R,
-}
-
-/// The active records among those a name matches, or the inactive ones when none is active, so an
-/// old inactive namesake doesn't make the name ambiguous.
-pub(crate) fn active_first_by<R>(records: Vec<R>, is_active: impl Fn(&R) -> bool) -> Vec<R> {
-    let (active, inactive): (Vec<_>, Vec<_>) = records.into_iter().partition(|r| is_active(r));
-    if active.is_empty() { inactive } else { active }
-}
-
-/// The id of another record with `key`, such as a code, spaces around either key not counting.
-/// Only a save that brings in the clash is checked, so existing duplicates stay editable.
-pub(crate) fn other_with_key(
-    saved_key: Option<&str>,
-    id: &str,
-    key: &str,
-    find_by_trimmed_key: impl FnOnce(&str) -> Result<Vec<String>, RepositoryError>,
-) -> Result<Option<String>, RepositoryError> {
-    if saved_key.is_some_and(|saved| repository::trim_spaces(saved) == repository::trim_spaces(key))
-    {
-        return Ok(None);
-    }
-    Ok(find_by_trimmed_key(key)?
-        .into_iter()
-        .find(|other| other != id))
 }
 
 #[derive(Debug, Clone, PartialEq)]

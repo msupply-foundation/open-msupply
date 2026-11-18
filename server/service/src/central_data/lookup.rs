@@ -71,8 +71,7 @@ impl KeyedTable for ItemRowRepository<'_> {
     }
 }
 
-/// Looked up by name, as legacy master lists often have no code. Narrow a name's matches with
-/// `master_list::upsert::active_first`.
+/// Looked up by name, as legacy master lists often have no code, active ones first.
 impl KeyedTable for MasterListRowRepository<'_> {
     type Record = MasterListRow;
     fn id(master_list: &MasterListRow) -> &str {
@@ -192,6 +191,19 @@ impl KeyedTable for InMemory<LocationTypeRow> {
     }
     fn find_by_key(&self, code: &str) -> Result<Vec<LocationTypeRow>, RepositoryError> {
         Ok(self.with_key(code))
+    }
+}
+
+/// The one record a name finds among `records`, looking at inactive ones only when none is active,
+/// so an old inactive namesake doesn't make the name ambiguous.
+pub fn pick_active_first<R>(
+    records: Vec<R>,
+    is_active: impl Fn(&R) -> bool,
+) -> Result<Option<R>, LookupError> {
+    let mut candidates = crate::record_key::active_first_by(records, is_active);
+    match candidates.len() {
+        0 | 1 => Ok(candidates.pop()),
+        _ => Err(LookupError::Ambiguous),
     }
 }
 

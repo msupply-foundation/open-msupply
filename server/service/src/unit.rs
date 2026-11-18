@@ -1,4 +1,5 @@
-use repository::{RepositoryError, StorageConnection, UnitRow, UnitRowRepository, trim_spaces};
+use crate::record_key::{KeyCase, other_with_key};
+use repository::{RepositoryError, StorageConnection, UnitRow, UnitRowRepository};
 
 #[derive(Debug, PartialEq)]
 pub enum UpsertUnitError {
@@ -17,7 +18,7 @@ impl From<RepositoryError> for UpsertUnitError {
 }
 
 pub fn active_first(units: Vec<UnitRow>) -> Vec<UnitRow> {
-    crate::active_first_by(units, |unit| unit.is_active)
+    crate::record_key::active_first_by(units, |unit| unit.is_active)
 }
 
 /// Adds or updates one unit. Joins the caller's transaction when there is one, so an import's
@@ -37,27 +38,31 @@ fn validate(connection: &StorageConnection, unit: &UnitRow) -> Result<(), Upsert
         return Err(UpsertUnitError::NameRequired);
     }
 
-    // Only a save that brings in the clash is refused, so existing duplicates stay editable.
-    // Names match in any letter case, as lookups do.
+    // Only active units clash, so an inactive one doesn't hold on to its name.
     let repo = UnitRowRepository::new(connection);
-    let folded = |name: &str| trim_spaces(name).to_lowercase();
-    let brings_in_clash = unit.is_active
-        && repo
-            .find_one_by_id(&unit.id)?
-            .is_none_or(|saved| !saved.is_active || folded(&saved.name) != folded(&unit.name));
-    if !brings_in_clash {
-        return Ok(());
-    }
-    match repo
-        .find_by_trimmed_name_any_case(&unit.name)?
-        .into_iter()
-        .find(|other| other.is_active && other.id != unit.id)
+    let saved = repo.find_one_by_id(&unit.id)?;
+    if unit.is_active
+        && let Some(other_id) = other_with_key(
+            saved
+                .as_ref()
+                .filter(|saved| saved.is_active)
+                .map(|saved| saved.name.as_str()),
+            &unit.id,
+            &unit.name,
+            KeyCase::Any,
+            |name| {
+                Ok(repo
+                    .find_by_trimmed_name_any_case(name)?
+                    .into_iter()
+                    .filter(|other| other.is_active)
+                    .collect())
+            },
+            |other| &other.id,
+        )?
     {
-        Some(other) => Err(UpsertUnitError::DuplicateName {
-            other_id: other.id.clone(),
-        }),
-        None => Ok(()),
+        return Err(UpsertUnitError::DuplicateName { other_id });
     }
+    Ok(())
 }
 
 #[cfg(test)]

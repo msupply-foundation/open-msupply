@@ -3,10 +3,10 @@ use super::{
     SheetImport, SheetStart,
     cells::{Row, RowError, collect, keep_or_saved},
     field_changes,
-    lookup::LookupError,
+    lookup::pick_active_first,
     sheet::Value,
 };
-use crate::master_list::upsert::{UpsertMasterListError, active_first, upsert_master_list};
+use crate::master_list::upsert::{UpsertMasterListError, upsert_master_list};
 use repository::{MasterListRow, MasterListRowRepository, RepositoryError, StorageConnection};
 use util::{constants::MISSING_PROGRAM, uuid::uuid};
 
@@ -27,10 +27,9 @@ const COLUMNS: &[&str] = &[
     DISCOUNT_PERCENTAGE,
 ];
 
-/// Matched by `id`, else `name` among active lists first; with an id, a different name renames
-/// the list. On an update a
-/// blank cell keeps the value, except in the optional `code`, `description` and
-/// `discount_percentage`, where it clears it.
+/// Matched by `id`, else `name` among active lists first; with an id, a different name renames the
+/// list. On an update a blank cell keeps the value, except in the optional `code`, `description`
+/// and `discount_percentage`, where it clears it.
 pub(super) struct MasterListTable;
 
 impl ImportTable for MasterListTable {
@@ -97,12 +96,16 @@ impl SheetImport for MasterListSheet {
         let existing = match (&id, &name) {
             (Some(id), _) => repo.find_one_by_id(id)?,
             (None, Some(name)) => {
-                let mut candidates = active_first(repo.find_by_trimmed_name(name)?);
-                if candidates.len() > 1 {
-                    errors.push(row.error(NAME, LookupError::Ambiguous.message(name)));
-                    return Err(RowFailure::Invalid(errors));
+                match pick_active_first(repo.find_by_trimmed_name(name)?, |master_list| {
+                    master_list.is_active
+                }) {
+                    Ok(found) => found,
+                    // Without it, the row's other checks would treat it as a new master list.
+                    Err(e) => {
+                        errors.push(row.error(NAME, e.message(name)));
+                        return Err(RowFailure::Invalid(errors));
+                    }
                 }
-                candidates.pop()
             }
             (None, None) => None,
         };
@@ -160,7 +163,7 @@ impl SheetImport for MasterListSheet {
         let change = Change::between(saved, &master_list, |master_list| master_list.is_active);
         if change != Change::Unchanged {
             upsert_master_list(connection, &master_list)
-                .map_err(|error| upsert_failure(row, error))?;
+                .map_err(|error| upsert_failure(row, &master_list, error))?;
         }
         Ok(RowOutcome {
             fields: existing
@@ -182,11 +185,21 @@ fn protected_error(row: &Row, name: &str) -> RowError {
     )
 }
 
-fn upsert_failure(row: &Row, error: UpsertMasterListError) -> RowFailure {
+fn upsert_failure(
+    row: &Row,
+    master_list: &MasterListRow,
+    error: UpsertMasterListError,
+) -> RowFailure {
     match error {
         UpsertMasterListError::NameRequired => row.error(NAME, "name is required").into(),
         UpsertMasterListError::DuplicateName { other_id } => row
-            .error(NAME, format!("master list {other_id} has this name"))
+            .error(
+                NAME,
+                format!(
+                    "Master list {other_id} is already named {}. Give this master list another name, or make one of them inactive",
+                    master_list.name
+                ),
+            )
             .into(),
         UpsertMasterListError::DuplicateCode { other_id } => row
             .error(CODE, format!("master list {other_id} has this code"))
