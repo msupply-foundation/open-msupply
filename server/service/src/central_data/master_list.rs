@@ -111,11 +111,8 @@ impl SheetImport for MasterListSheet {
         };
         let saved = existing.as_ref();
         // Here, not only in the save, as an unchanged row isn't saved.
-        if saved.map(|saved| saved.id.as_str()).or(id.as_deref()) == Some(MISSING_PROGRAM) {
-            errors.push(protected_error(
-                row,
-                saved.map_or(MISSING_PROGRAM, |saved| &saved.name),
-            ));
+        if let Some(saved) = saved.filter(|saved| saved.id == MISSING_PROGRAM) {
+            errors.push(protected_error(row, &saved.name));
             return Err(RowFailure::Invalid(errors));
         }
 
