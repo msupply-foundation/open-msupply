@@ -511,6 +511,16 @@ export const startsWithUnnamed = (prefs: UnnamedPreferences): boolean =>
   prefs.useUnnamedPatient && prefs.startWithUnnamedPatient;
 
 /**
+ * Whether the unnamed patient picked for this visit still counts as chosen
+ * (rules › the unnamed patient): not once the store stops using it, as sync
+ * can turn the setting off while a visit is open.
+ */
+export const unnamedStillChosen = (
+  picked: boolean,
+  prefs: UnnamedPreferences
+): boolean => picked && prefs.useUnnamedPatient;
+
+/**
  * Whether the unnamed patient is chosen once a visit is dispensed (rules ›
  * the unnamed patient): it stays chosen after a visit to it, so a run of
  * walk-ins needs no press each time; after a registered patient, the next

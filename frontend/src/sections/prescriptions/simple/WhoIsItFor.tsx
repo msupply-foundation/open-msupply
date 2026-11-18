@@ -35,6 +35,7 @@ export const WhoIsItFor = (props: {
   onChange: () => void;
 }) => {
   let change: HTMLButtonElement | undefined;
+  let unnamedButton: HTMLButtonElement | undefined;
   return (
     <HeaderField
       label={<StepHeading n={1} label={t('label.who-is-it-for')} />}
@@ -53,6 +54,7 @@ export const WhoIsItFor = (props: {
                 everyone else. */}
             <Show when={props.useUnnamed}>
               <Button
+                ref={unnamedButton}
                 variant="secondary"
                 icon={<UserIcon />}
                 disabled={props.disabled}
@@ -103,7 +105,11 @@ export const WhoIsItFor = (props: {
             ref={change}
             variant="ghost"
             disabled={props.disabled}
-            onClick={() => props.onChange()}
+            onClick={() => {
+              props.onChange();
+              // Change has gone: focus the button that took its place.
+              unnamedButton?.focus();
+            }}
             data-testid="unnamed-patient-change"
           >
             {t('label.change')}

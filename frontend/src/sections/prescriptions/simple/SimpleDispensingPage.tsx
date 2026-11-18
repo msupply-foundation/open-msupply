@@ -64,6 +64,7 @@ import {
   startsWithUnnamed,
   unitsListed,
   unnamedAfterDispense,
+  unnamedStillChosen,
   unreadIds,
   visitWasSaved,
   type CardItem,
@@ -208,9 +209,14 @@ const SimpleDispensingPage: Component = () => {
   // Or the store's unnamed patient (rules › the unnamed patient), which a
   // new visit starts with where the store says so. The preferences are in
   // before this screen opens, since it waits for the dispensing screen.
-  const [unnamed, setUnnamed] = createSignal(
+  const [unnamedPicked, setUnnamed] = createSignal(
     untrack(() => startsWithUnnamed(prescriptionPreferences()))
   );
+  // Chosen only while the store still uses it: if sync turns the setting off
+  // mid-visit, nobody is chosen and the list stays, so the visit can't be
+  // dispensed to it (rules › the unnamed patient).
+  const unnamed = () =>
+    unnamedStillChosen(unnamedPicked(), prescriptionPreferences());
   const chosen = () => unnamed() || patient() !== null;
   const chooseUnnamed = (on: boolean) => {
     setNotice(undefined);

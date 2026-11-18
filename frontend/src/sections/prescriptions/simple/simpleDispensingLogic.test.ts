@@ -23,6 +23,7 @@ import {
   stockState,
   unitsIn,
   unnamedAfterDispense,
+  unnamedStillChosen,
   unreadIds,
   visitWasSaved,
   type CardItem,
@@ -1375,6 +1376,14 @@ describe('who a visit starts with', () => {
   it('after a registered patient, starts as a new visit does (OMS-REG-DIS-12.207)', () => {
     expect(unnamedAfterDispense(registered, prefs(true, true))).toBe(true);
     expect(unnamedAfterDispense(registered, prefs(true, false))).toBe(false);
+  });
+
+  it('stops counting the unnamed patient as chosen once the store stops using it (OMS-REG-DIS-12.214)', () => {
+    expect(unnamedStillChosen(true, prefs(true, false))).toBe(true);
+    // Sync turned "Use the unnamed patient" off while it was chosen
+    expect(unnamedStillChosen(true, prefs(false, false))).toBe(false);
+    expect(unnamedStillChosen(true, prefs(false, true))).toBe(false);
+    expect(unnamedStillChosen(false, prefs(true, true))).toBe(false);
   });
 
   it('never chooses the unnamed patient once the store stops using it', () => {
