@@ -141,12 +141,11 @@ export type RecentPrescriptionPatientsResult = {
 } & {
   nodes: Array<{
   id: string;
-  isForUnnamedPatient: boolean;
   patient: PatientFindRowFragment | null;
 }>;
 });
 };
 
 export const RecentPrescriptionPatients = {
-  query: "query recentPrescriptionPatients($storeId: String!, $first: Int!) {\n  invoices(\n    storeId: $storeId\n    sort: [{key: createdDatetime, desc: true}]\n    page: {first: $first}\n    type: [PRESCRIPTION]\n  ) {\n    __typename\n    ... on InvoiceConnector {\n      nodes {\n        id\n        isForUnnamedPatient\n        patient {\n          ...PatientFindRow\n        }\n      }\n    }\n  }\n}\n\nfragment PatientFindRow on PatientNode {\n  id\n  code\n  code2\n  name\n  firstName\n  lastName\n  gender\n  dateOfBirth\n  isDeceased\n  address1\n  phone\n}",
+  query: "query recentPrescriptionPatients($storeId: String!, $first: Int!) {\n  invoices(\n    storeId: $storeId\n    sort: [{key: createdDatetime, desc: true}]\n    page: {first: $first}\n    type: [PRESCRIPTION]\n    filter: {isForUnnamedPatient: false}\n  ) {\n    __typename\n    ... on InvoiceConnector {\n      nodes {\n        id\n        patient {\n          ...PatientFindRow\n        }\n      }\n    }\n  }\n}\n\nfragment PatientFindRow on PatientNode {\n  id\n  code\n  code2\n  name\n  firstName\n  lastName\n  gender\n  dateOfBirth\n  isDeceased\n  address1\n  phone\n}",
 } as TypedDocument<RecentPrescriptionPatientsResult, RecentPrescriptionPatientsVariables>;

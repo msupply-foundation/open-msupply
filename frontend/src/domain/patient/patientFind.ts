@@ -156,10 +156,6 @@ export const recentPatients = async (
   const seen = new Set<string>();
   const rows: PatientFindRow[] = [];
   for (const invoice of invoices.nodes) {
-    // Not the store's unnamed patient: no search offers it, or staff would
-    // pick it for a real person (spec/prescriptions rules › the unnamed
-    // patient).
-    if (invoice.isForUnnamedPatient) continue;
     const patient = invoice.patient;
     if (!patient || seen.has(patient.id)) continue;
     seen.add(patient.id);

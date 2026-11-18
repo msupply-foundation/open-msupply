@@ -291,19 +291,12 @@ describe('OMS-REG-DIS-01.57 — other facilities are searched for the same terms
 });
 
 describe('recentPatients — the patients of the latest prescriptions', () => {
-  const invoices = (
-    patients: (PatientFindRow | null)[],
-    unnamed: PatientFindRow[] = []
-  ) => ({
+  const invoices = (patients: (PatientFindRow | null)[]) => ({
     kind: 'success',
     data: {
       invoices: {
         __typename: 'InvoiceConnector',
-        nodes: patients.map((patient, i) => ({
-          id: `inv${i}`,
-          isForUnnamedPatient: patient !== null && unnamed.includes(patient),
-          patient,
-        })),
+        nodes: patients.map((patient, i) => ({ id: `inv${i}`, patient })),
       },
     },
   });
@@ -319,20 +312,6 @@ describe('recentPatients — the patients of the latest prescriptions', () => {
       storeId: 'store',
       first: 8,
     });
-  });
-
-  // OMS-REG-DIS-12.208: the unnamed patient isn't found by any search.
-  it("leaves out the store's unnamed patient, however recent", async () => {
-    const [walkIn, a, b] = [
-      row('unnamed', 'Unnamed patient'),
-      row('a', 'A'),
-      row('b', 'B'),
-    ];
-    graphqlFetch.mockResolvedValue(invoices([walkIn, a, walkIn, b], [walkIn]));
-    expect((await recentPatients('store', 5)).map(r => r.id)).toEqual([
-      'a',
-      'b',
-    ]);
   });
 
   it('is empty when the request fails', async () => {

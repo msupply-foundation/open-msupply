@@ -5691,6 +5691,11 @@ export type InvoiceFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   invoiceNumber?: InputMaybe<EqualFilterBigNumberInput>;
   invoiceNumberOrStatus?: InputMaybe<StringFilterInput>;
+  /**
+   * Whether the other party is a store's unnamed patient: false leaves
+   * its dispensing records out, as the patient search's recent patients do
+   */
+  isForUnnamedPatient?: InputMaybe<Scalars['Boolean']['input']>;
   isProgramInvoice?: InputMaybe<Scalars['Boolean']['input']>;
   linkedInvoiceId?: InputMaybe<EqualFilterStringInput>;
   linkedOrderNumber?: InputMaybe<EqualFilterBigNumberInput>;

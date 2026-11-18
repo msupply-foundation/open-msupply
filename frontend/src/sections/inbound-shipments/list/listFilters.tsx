@@ -284,6 +284,7 @@ const FILTERS: Filter<InboundListFilter>[] =
     dynamicFilter: null,
     linkedInvoiceId: null,
     isProgramInvoice: null,
+    isForUnnamedPatient: null,
     purchaseOrderId: null,
     purchaseOrderNumber: null,
     prescriptionRequestId: null,

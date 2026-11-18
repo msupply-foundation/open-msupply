@@ -18,7 +18,9 @@ use crate::{
 
 use strum::IntoEnumIterator;
 
-use crate::{DatetimeFilter, EqualFilter, Pagination, Sort, StringFilter};
+use crate::{
+    DatetimeFilter, EqualFilter, Pagination, Sort, StringFilter, UNNAMED_PATIENT_ID_PREFIX,
+};
 
 use diesel::{dsl::IntoBoxed, prelude::*};
 
@@ -58,6 +60,9 @@ pub struct InvoiceFilter {
     pub stock_line_id: Option<String>,
     pub is_program_invoice: Option<bool>,
     pub is_cancellation: Option<bool>,
+    /// Whether the other party is a store's unnamed patient
+    /// (spec/prescriptions rules › the unnamed patient)
+    pub is_for_unnamed_patient: Option<bool>,
     pub purchase_order_id: Option<EqualFilter<String>>,
     pub prescription_request_id: Option<EqualFilter<String>>,
     pub purchase_order_number: Option<EqualFilter<i64>>,
@@ -266,6 +271,7 @@ fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
             stock_line_id,
             is_program_invoice,
             is_cancellation,
+            is_for_unnamed_patient,
             purchase_order_id,
             prescription_request_id,
             purchase_order_number,
@@ -386,6 +392,15 @@ fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
 
         if let Some(value) = is_cancellation {
             query = query.filter(invoice::is_cancellation.eq(value));
+        }
+
+        if let Some(value) = is_for_unnamed_patient {
+            let pattern = format!("{}%", UNNAMED_PATIENT_ID_PREFIX.replace('_', "\\_"));
+            query = if value {
+                query.filter(name::id.like(pattern).escape('\\'))
+            } else {
+                query.filter(name::id.not_like(pattern).escape('\\'))
+            };
         }
 
         apply_equal_filter!(query, program_id, invoice::program_id);
@@ -586,6 +601,11 @@ impl InvoiceFilter {
         self
     }
 
+    pub fn is_for_unnamed_patient(mut self, filter: bool) -> Self {
+        self.is_for_unnamed_patient = Some(filter);
+        self
+    }
+
     pub fn purchase_order_id(mut self, filter: EqualFilter<String>) -> Self {
         self.purchase_order_id = Some(filter);
         self
@@ -636,6 +656,71 @@ mod tests {
     use super::{InvoiceRepository, InvoiceSort, InvoiceSortField};
     use crate::Pagination;
     use crate::{mock::MockDataInserts, test_db};
+
+    // spec/prescriptions rules › the unnamed patient: the patient search's
+    // recent patients leave its dispensing records out
+    #[actix_rt::test]
+    async fn invoices_filter_by_whether_they_are_for_an_unnamed_patient() {
+        use crate::{
+            EqualFilter, InvoiceFilter, InvoiceRow, InvoiceRowRepository, InvoiceType, NameRow,
+            NameRowRepository, NameRowType, mock::mock_store_a, unnamed_patient_id,
+        };
+
+        let (_, connection, _, _) = test_db::setup_all(
+            "invoices_filter_by_unnamed_patient",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+        let names = NameRowRepository::new(&connection);
+        for (id, name) in [
+            (unnamed_patient_id(&mock_store_a().id), "Unnamed patient"),
+            // An id that only starts like one: the underscores are literal
+            ("unnamedXpatient_lookalike".to_string(), "Lookalike"),
+            ("registered".to_string(), "Registered"),
+        ] {
+            names
+                .upsert_one(&NameRow {
+                    id: id.clone(),
+                    name: name.to_string(),
+                    r#type: NameRowType::Patient,
+                    ..Default::default()
+                })
+                .unwrap();
+            InvoiceRowRepository::new(&connection)
+                .upsert_one(&InvoiceRow {
+                    id: format!("for_{id}"),
+                    name_id: id,
+                    store_id: mock_store_a().id,
+                    r#type: InvoiceType::Prescription,
+                    ..Default::default()
+                })
+                .unwrap();
+        }
+
+        let ids = |is_for_unnamed: bool| {
+            let mut ids: Vec<String> = InvoiceRepository::new(&connection)
+                .query_by_filter(
+                    InvoiceFilter::new()
+                        .store_id(EqualFilter::equal_to(mock_store_a().id))
+                        .r#type(InvoiceType::Prescription.equal_to())
+                        .is_for_unnamed_patient(is_for_unnamed),
+                )
+                .unwrap()
+                .into_iter()
+                .map(|invoice| invoice.invoice_row.id)
+                .collect();
+            ids.sort();
+            ids
+        };
+        assert_eq!(
+            ids(false),
+            ["for_registered", "for_unnamedXpatient_lookalike"]
+        );
+        assert_eq!(
+            ids(true),
+            [format!("for_{}", unnamed_patient_id(&mock_store_a().id))]
+        );
+    }
 
     #[actix_rt::test]
     async fn test_invoice_query_sort() {

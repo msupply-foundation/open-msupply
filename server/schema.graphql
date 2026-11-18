@@ -5050,6 +5050,11 @@ input InvoiceFilterInput {
 	requisitionId: EqualFilterStringInput
 	linkedInvoiceId: EqualFilterStringInput
 	isProgramInvoice: Boolean
+	"""
+	Whether the other party is a store's unnamed patient: false leaves
+	its dispensing records out, as the patient search's recent patients do
+	"""
+	isForUnnamedPatient: Boolean
 	purchaseOrderId: EqualFilterStringInput
 	prescriptionRequestId: EqualFilterStringInput
 	purchaseOrderNumber: EqualFilterBigNumberInput
