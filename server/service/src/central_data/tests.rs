@@ -3244,6 +3244,10 @@ async fn a_row_cannot_change_or_take_a_protected_user() {
             Some("ben".to_string()),
         )
         .unwrap();
+    // A protected user whose row is missing still can't be made.
+    UserAccountRowRepository::new(&connection)
+        .delete_by_id(PLUGIN_USER_ID)
+        .unwrap();
     let before = UserAccountRowRepository::new(&connection)
         .find_all()
         .unwrap();
@@ -3261,6 +3265,7 @@ async fn a_row_cannot_change_or_take_a_protected_user() {
             user_row("", "OMSUPPLY_SYSTEM", &[(2, "pw"), (4, "ENGLISH")]),
             user_row("", "ben", &[(2, "pw")]),
             user_row("", "ben", &[(10, "DELETE")]),
+            user_row(SYSTEM_USER_ID, "", &[(8, "Pharmacist")]),
         ]),
     );
     let summary = CentralDataService
@@ -3277,6 +3282,7 @@ async fn a_row_cannot_change_or_take_a_protected_user() {
             (4, Some("username"), protected("omsupply_system").as_str()),
             (5, Some("username"), protected("ben").as_str()),
             (6, Some("username"), protected("ben").as_str()),
+            (7, Some("id"), protected("omsupply_system").as_str()),
         ]
     );
     assert_eq!(

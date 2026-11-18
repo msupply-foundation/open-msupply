@@ -231,10 +231,14 @@ impl SheetImport for UserSheet {
             }
         };
         let saved = existing.as_ref();
-        if let Some(saved) = saved
-            && self.protected.contains(&saved.id)
+        // By its id even when its row is missing, so import can't make it.
+        if let Some(found) = saved.map(|saved| saved.id.as_str()).or(id.as_deref())
+            && self.protected.iter().any(|protected| protected == found)
         {
-            errors.push(protected_error(row, saved));
+            errors.push(protected_error(
+                row,
+                saved.map_or(found, |saved| &saved.username),
+            ));
             return Err(RowFailure::Invalid(errors));
         }
         if delete {
@@ -370,7 +374,7 @@ impl UserSheet {
                 )
                 .into(),
             // Unreachable here: `import_row` refuses a protected user first.
-            DeleteUserError::Protected => protected_error(row, &saved).into(),
+            DeleteUserError::Protected => protected_error(row, &saved.username).into(),
             DeleteUserError::DatabaseError(error) => RowFailure::Database(error),
         })?;
         self.sessions_to_end.push(EndSessions {
@@ -441,15 +445,12 @@ fn upsert_failure(row: &Row, error: UpsertUserError) -> RowFailure {
     }
 }
 
-/// On the column the row found the user by.
-fn protected_error(row: &Row, saved: &UserAccountRow) -> RowError {
+/// On the column the row found the user by. `name` is their saved username, else the row's id.
+fn protected_error(row: &Row, name: &str) -> RowError {
     let column = if row.text(ID).is_some() { ID } else { USERNAME };
     row.error(
         column,
-        format!(
-            "{} is protected, as the server needs it, so import can't change it",
-            saved.username
-        ),
+        format!("{name} is protected, as the server needs it, so import can't change it"),
     )
 }
 

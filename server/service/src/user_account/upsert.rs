@@ -96,7 +96,8 @@ pub fn save_user(
         .transaction_sync(|connection| -> Result<(), UpsertUserError> {
             let repo = UserAccountRowRepository::new(connection);
             let saved = repo.find_one_by_id(&row.id)?;
-            if saved.is_some() && protected_user_ids(connection)?.contains(&row.id) {
+            // Even one whose row is missing, so a save can't make it.
+            if protected_user_ids(connection)?.contains(&row.id) {
                 return Err(UpsertUserError::Protected);
             }
             // Only a save that brings it in, as a user can't be logged in to lock themselves out.
@@ -276,6 +277,14 @@ mod tests {
                 Some("admin".to_string()),
             )
             .unwrap();
+
+        // With its row missing, it still can't be made.
+        repo.delete_by_id(PLUGIN_USER_ID).unwrap();
+        assert_eq!(
+            upsert(&connection, &user(PLUGIN_USER_ID, "plugin")),
+            Err(UpsertUserError::Protected)
+        );
+        assert_eq!(repo.find_one_by_id(PLUGIN_USER_ID).unwrap(), None);
 
         for id in [SYSTEM_USER_ID, "admin"] {
             let edited = UserAccountRow {
