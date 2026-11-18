@@ -10,8 +10,8 @@ use super::{
 use crate::user_account::{
     UserAccountService,
     upsert::{
-        DeleteUserError, UpsertUserError, delete_user, ends_sessions, protected_user_ids,
-        upsert_user,
+        DeleteUserError, UpsertUserError, UsernameError, delete_user, ends_sessions,
+        protected_user_ids, upsert_user,
     },
 };
 use repository::{
@@ -406,7 +406,9 @@ impl UserSheet {
 
 fn upsert_failure(row: &Row, error: UpsertUserError) -> RowFailure {
     match error {
-        UpsertUserError::UsernameRequired => row.error(USERNAME, "username is required").into(),
+        UpsertUserError::Username(UsernameError::Required) => {
+            row.error(USERNAME, "username is required").into()
+        }
         UpsertUserError::LocksOutSelf => row
             .error(
                 IS_ACTIVE,
@@ -415,7 +417,7 @@ fn upsert_failure(row: &Row, error: UpsertUserError) -> RowFailure {
             .into(),
         UpsertUserError::DatabaseError(error) => RowFailure::Database(error),
         // Cells lose their spaces but keep a tab or line break.
-        UpsertUserError::UsernamePadded => row
+        UpsertUserError::Username(UsernameError::Padded) => row
             .error(
                 USERNAME,
                 "username can't start or end with a tab or line break",
@@ -423,15 +425,13 @@ fn upsert_failure(row: &Row, error: UpsertUserError) -> RowFailure {
             .into(),
         // Unreachable here: `find_record` turns a saved username into a match or a conflict, and
         // `import_row` refuses a protected user first.
-        error @ (UpsertUserError::DuplicateUsername { .. } | UpsertUserError::Protected) => {
-            RowError {
-                sheet: row.sheet.to_string(),
-                row: Some(row.number),
-                column: None,
-                message: format!("This user can't be saved: {error:?}"),
-            }
-            .into()
+        error @ (UpsertUserError::Username(_) | UpsertUserError::Protected) => RowError {
+            sheet: row.sheet.to_string(),
+            row: Some(row.number),
+            column: None,
+            message: format!("This user can't be saved: {error:?}"),
         }
+        .into(),
     }
 }
 

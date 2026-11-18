@@ -7,13 +7,7 @@ use util::constants::{PLUGIN_USER_ID, SYSTEM_USER_ID};
 
 #[derive(Debug, PartialEq)]
 pub enum UpsertUserError {
-    UsernameRequired,
-    /// Login matches a username exactly but for letter case, so a padded one couldn't log in.
-    UsernamePadded,
-    /// Another user has the username in some letter case, which would make login ambiguous.
-    DuplicateUsername {
-        other_id: String,
-    },
+    Username(UsernameError),
     /// See `protected_user_ids`.
     Protected,
     /// The user saving made themselves inactive or deleted, so they couldn't log in again.
@@ -32,8 +26,12 @@ impl From<RepositoryError> for UpsertUserError {
 #[derive(Debug, PartialEq)]
 pub enum UsernameError {
     Required,
+    /// Login matches a username exactly but for letter case, so a padded one couldn't log in.
     Padded,
-    Duplicate { other_id: String },
+    /// Another user has the username in some letter case, which would make login ambiguous.
+    Duplicate {
+        other_id: String,
+    },
     DatabaseError(RepositoryError),
 }
 
@@ -46,12 +44,8 @@ impl From<RepositoryError> for UsernameError {
 impl From<UsernameError> for UpsertUserError {
     fn from(error: UsernameError) -> Self {
         match error {
-            UsernameError::Required => UpsertUserError::UsernameRequired,
-            UsernameError::Padded => UpsertUserError::UsernamePadded,
-            UsernameError::Duplicate { other_id } => {
-                UpsertUserError::DuplicateUsername { other_id }
-            }
             UsernameError::DatabaseError(error) => UpsertUserError::DatabaseError(error),
+            error => UpsertUserError::Username(error),
         }
     }
 }
@@ -214,20 +208,20 @@ mod tests {
             setup_all("upsert_user_duplicate_username", MockDataInserts::none()).await;
         assert_eq!(
             upsert(&connection, &user("a", " ")),
-            Err(UpsertUserError::UsernameRequired)
+            Err(UpsertUserError::Username(UsernameError::Required))
         );
         assert_eq!(
             upsert(&connection, &user("a", "Anna ")),
-            Err(UpsertUserError::UsernamePadded)
+            Err(UpsertUserError::Username(UsernameError::Padded))
         );
         upsert(&connection, &user("a", "Anna")).unwrap();
 
         for username in ["Anna", "anna", "ANNA"] {
             assert_eq!(
                 upsert(&connection, &user("b", username)),
-                Err(UpsertUserError::DuplicateUsername {
+                Err(UpsertUserError::Username(UsernameError::Duplicate {
                     other_id: "a".to_string()
-                }),
+                })),
                 "{username}"
             );
         }
