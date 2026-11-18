@@ -76,7 +76,11 @@ import {
   readFormsDeclaration,
 } from '../vite/formPlugins.ts';
 import { checkFormVersions } from '../vite/formVersionChecks.ts';
-import { envPluginDirs, inRepoPluginDirs } from './pluginDirs.mjs';
+import {
+  envPluginDirs,
+  inRepoPluginDirs,
+  skippedPluginDirs,
+} from './pluginDirs.mjs';
 import {
   buildReactPart,
   checkReactParts,
@@ -214,19 +218,11 @@ const discoverBackendPlugins = () => {
       );
     }
     /*
-     * And one version. A plugin is released, listed and installed as one
-     * bundle, so it has one version line (the bundle portal keys on it - see
-     * .github/scripts/publish-bundles.mjs); two halves numbered apart would
-     * leave "which civ_plugins is this?" with two answers.
+     * The versions may differ. Each row carries its own, and the server gates
+     * and replaces each row by it alone; a backend bumped for a server change
+     * need not drag its frontend along. The bundle is listed under its
+     * highest (.github/scripts/publish-bundles.mjs).
      */
-    if (frontend && frontend.version !== manifest.version) {
-      throw new Error(
-        `${dir}: the two halves declare different versions — ` +
-          `${frontend.version} (package.json) vs ${manifest.version} ` +
-          '(backend/package.json). Two halves of one plugin share one version; ' +
-          'bump them together.'
-      );
-    }
     found.push(manifest);
   }
   return found;
@@ -369,6 +365,9 @@ const verifyRoundTrip = (rows, dirOf = row => join(OUT_DIR, row.code)) => {
 };
 
 const plugins = discoverPlugins();
+for (const { dir, marker, why } of skippedPluginDirs()) {
+  console.log(`[build-plugins] ${dir}: ${why} (${marker}), not built`);
+}
 const backendPlugins = discoverBackendPlugins();
 
 /*
@@ -377,10 +376,12 @@ const backendPlugins = discoverBackendPlugins();
  * rules that hold for a plugin's two halves hold across all of its parts.
  *   - ONE CODE: it is what groups rows into a bundle, and a React frontend's
  *     code is also its webpack module-federation name.
- *   - ONE VERSION: a bundle is released and listed under one (see
- *     .github/scripts/publish-bundles.mjs). It never goes down: discovery
- *     serves the highest installed version per code and runtime, so a lower
- *     one would lose to the row it was meant to replace.
+ *   - VERSIONS MAY DIFFER: each row is gated and replaced by its own,
+ *     and the bundle is listed under its highest (see
+ *     .github/scripts/publish-bundles.mjs).
+ *     A part's version never goes down: discovery serves the highest
+ *     installed version per code and runtime, so a lower one would lose to
+ *     the row it was meant to replace.
  *   - ONE BACKEND: a backend half is BoaJS and runtime-agnostic, so one row
  *     answers both UIs. Once a country has `<dir>/backend/`, its React
  *     backend has to go (private/plugins/README.md) — two would be two

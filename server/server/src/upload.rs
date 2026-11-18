@@ -14,7 +14,9 @@ use service::{
     static_files::{StaticFileCategory, StaticFileService},
 };
 
-use crate::authentication::validate_cookie_auth;
+use std::slice;
+
+use crate::{authentication::validate_cookie_auth, static_files::refuse_files_that_run_script};
 
 pub fn get_default_directory(settings: &Settings) -> TempFileConfig {
     TempFileConfig::default().directory(&settings.server.base_dir)
@@ -43,6 +45,13 @@ async fn upload(
     if validate_cookie_auth(request.clone(), &auth_data).is_err() {
         return HttpResponse::InternalServerError().body("You need to be logged in");
     };
+
+    // `/files` serves what's uploaded here inline on the app's own origin, so a file a
+    // browser would run script from must not get in (#1640). Plugin and report bundles,
+    // the only things uploaded here, are JSON.
+    if let Err(error) = refuse_files_that_run_script(slice::from_ref(&file)) {
+        return error.error_response();
+    }
 
     let file_service = StaticFileService::new(&settings.server.base_dir).unwrap();
 

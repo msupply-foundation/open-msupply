@@ -7,6 +7,7 @@ import {
   type CentralPatientSearchResult,
   type CentralPatientSearchVariables,
   LinkPatientToStore,
+  PatientOptionById,
 } from './patient.generated';
 
 // One local search result (spec/patients S4 picker / S2 duplicate check): the
@@ -53,21 +54,18 @@ export const searchLocalPatients = async (
 };
 
 /**
- * Resolve one patient for the picker's label when reopened with only a stored
- * id (next of kin restore). Undefined when it doesn't resolve (picker shows
- * empty). Uses the identifier search since there is no single-id search input.
+ * One patient as a picker option, by its id — e.g. a patient just created,
+ * which the create flow hands back with its id and name only. Undefined when
+ * it doesn't resolve. Reads `patients` by id: `patientSearch`'s identifier
+ * matches code, national health number, name and enrolment id, never the id.
  */
 export const fetchPatientOptionById = async (
   storeId: string,
   id: string
 ): Promise<PatientOption | undefined> => {
-  const result = await graphqlFetch(PatientSearch, {
-    storeId,
-    input: { identifier: id },
-  });
+  const result = await graphqlFetch(PatientOptionById, { storeId, id });
   if (result.kind !== 'success') return undefined;
-  return result.data.patientSearch.nodes.find(node => node.patient.id === id)
-    ?.patient;
+  return result.data.patients.nodes.find(patient => patient.id === id);
 };
 
 /**

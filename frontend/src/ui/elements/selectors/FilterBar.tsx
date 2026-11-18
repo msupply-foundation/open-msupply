@@ -773,6 +773,16 @@ const NoOptions = () => (
 );
 
 /**
+ * A filter trigger's accessible name: the filter's label, then the text the
+ * trigger shows. The label alone would hide the shown value from a screen
+ * reader and from voice control ("click Not expired"), which WCAG 2.5.3
+ * Label in Name asks to be part of the name (axe
+ * `label-content-name-mismatch`).
+ */
+const triggerName = (label: string, shown: string | undefined) =>
+  shown ? `${label}, ${shown}` : label;
+
+/**
  * A single-select dropdown. Generic over its option-value union `V`, so
  * `onChange` hands back exactly one of the option values (recovered by
  * matching the emitted string against the typed options — no cast, and an
@@ -804,7 +814,7 @@ export const FilterSelect = <V extends string>(props: FilterSelectProps<V>) => {
         class={styles.enumTrigger}
         data-testid={props.testId}
         ref={(el: HTMLButtonElement) => chipFocus?.ref(el)}
-        aria-label={props.label}
+        aria-label={triggerName(props.label, current()?.label)}
       >
         <span>{current()?.label ?? ''}</span>
         <ChevronDownIcon class={styles.triggerChevron} />
@@ -938,7 +948,7 @@ export const FilterMultiSelect = <V extends string>(props: {
         class={styles.enumTrigger}
         data-testid={props.testId}
         ref={(el: HTMLButtonElement) => chipFocus?.ref(el)}
-        aria-label={props.label}
+        aria-label={triggerName(props.label, summary())}
       >
         <span>{summary()}</span>
         <ChevronDownIcon class={styles.triggerChevron} />

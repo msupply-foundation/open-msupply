@@ -116,6 +116,28 @@ fn process_change_log(
                 .map_err(Error::GetDeleteOperationError)?,
         };
 
+    // Legacy mSupply cancels a finalised invoice by saving a copy of it with is_cancellation set.
+    // A cancellation is never half of a transfer: mSupply leaves the other store's half alone, and
+    // so do we. Otherwise a cancelled customer invoice becomes a second inbound shipment, and a
+    // cancelled supplier invoice is taken as the receipt of its outbound shipment.
+    if let Operation::Upsert {
+        invoice,
+        linked_invoice,
+        ..
+    } = &operation
+    {
+        let linked_is_cancellation = linked_invoice
+            .as_ref()
+            .is_some_and(|linked| linked.invoice_row.is_cancellation);
+        if invoice.invoice_row.is_cancellation || linked_is_cancellation {
+            log::debug!(
+                "Invoice transfer - skipped: invoice {} is or is linked to a cancellation",
+                invoice.invoice_row.id
+            );
+            return Ok(());
+        }
+    }
+
     let record = InvoiceTransferProcessorRecord {
         operation,
         other_party_store_id,
@@ -231,10 +253,14 @@ fn get_upsert_operation(
                 .map_err(|e| DatabaseError(id.to_string(), e))?
                 .ok_or_else(|| LinkedInvoiceNotFound(id.to_string()))?,
         ),
+        // A legacy mSupply cancellation keeps the link of the invoice it cancels, so an outbound
+        // shipment can have both a supplier invoice and its cancellation pointing at it. Only the
+        // supplier invoice is the other half of the transfer.
         None => repo
-            .query_one(InvoiceFilter::new_match_linked_invoice_id(
-                &invoice.invoice_row.id,
-            ))
+            .query_one(
+                InvoiceFilter::new_match_linked_invoice_id(&invoice.invoice_row.id)
+                    .is_cancellation(false),
+            )
             .map_err(|e| DatabaseError(invoice.invoice_row.id.clone(), e))?,
     };
 
@@ -271,7 +297,8 @@ fn get_delete_operation(
 ) -> Result<Operation, RepositoryError> {
     let linked_invoice = InvoiceRepository::new(connection).query_one(
         InvoiceFilter::new()
-            .linked_invoice_id(EqualFilter::equal_to(changelog_row.record_id.to_string())),
+            .linked_invoice_id(EqualFilter::equal_to(changelog_row.record_id.to_string()))
+            .is_cancellation(false),
     )?;
 
     Ok(Operation::Delete { linked_invoice })

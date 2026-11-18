@@ -10,9 +10,11 @@ import type {
   UpsertStorePreferencesVariables,
 } from './storeEditor.generated';
 import {
+  asDispensingScreen,
   groupCatalogue,
   PREFERENCE_GROUPS,
   type CatalogueGroup,
+  type DispensingScreen,
   type PreferenceGroupDef,
   type PreferenceGroupLabelKey,
 } from '@/domain/preferences';
@@ -304,6 +306,25 @@ export const overrideSelection = (choice: string): boolean | null =>
 export const overrideGlobalValue = (preference: StorePreference): boolean =>
   asBool(preference.storeOverride?.globalValue);
 
+/*
+ * The dispensing screen's three choices (rules › The store editor ›
+ * Preferences): follow the global value, or pin this store to Standard or
+ * Simple. Its two values are words, not on/off, so it has its own mapping.
+ */
+export type DispensingScreenChoice = 'global' | DispensingScreen;
+
+export const dispensingScreenChoice = (
+  selection: unknown
+): DispensingScreenChoice =>
+  selection == null ? 'global' : asDispensingScreen(selection);
+
+/** The select's raw string back as what the store records: a pinned screen,
+ *  or null to follow global. Total, so it needs no cast. */
+export const dispensingScreenSelection = (
+  choice: string
+): DispensingScreen | null =>
+  choice === 'SIMPLE' || choice === 'STANDARD' ? choice : null;
+
 // Defensive readers from the untyped value — a wrong-typed value reads as the
 // kind's zero, which is also what the server fabricates for "unset".
 export const asBool = (value: unknown): boolean => value === true;
@@ -418,10 +439,14 @@ const GROUP_OF: Partial<
 > = {
   authorisePurchaseOrder: PREFERENCE_GROUPS.procurement,
   externalInboundShipmentLinesMustBeAuthorised: PREFERENCE_GROUPS.procurement,
+  dispensingScreen: PREFERENCE_GROUPS.dispensing,
+  useUnnamedPatient: PREFERENCE_GROUPS.dispensing,
+  startWithUnnamedPatient: PREFERENCE_GROUPS.dispensing,
+  askForPatientType: PREFERENCE_GROUPS.dispensing,
 };
 
-/** The served catalogue split into the ungrouped rows and the Procurement
- *  group, both in served order (SET-05.61). */
+/** The served catalogue split into the ungrouped rows and the Procurement and
+ *  Dispensing groups, all in served order (SET-05.61, SET-05.78). */
 export const groupStorePreferences = (preferences: StorePreference[]) =>
   groupCatalogue(preferences, GROUP_OF);
 
@@ -452,6 +477,31 @@ type PreferenceKeyOf<V> = {
     ? K
     : never;
 }[keyof UpsertPreferencesInput];
+
+/** Every store-scoped key of the generated input: a store's own value
+ *  (`{ storeId, value }`), and a store's override of a global value, whose
+ *  `value` is optional (null clears it), so PreferenceKeyOf never matches it. */
+type StoreScopedKey = {
+  [K in keyof UpsertPreferencesInput]-?: NonNullable<
+    UpsertPreferencesInput[K]
+  > extends Array<{ storeId: string; value?: unknown }>
+    ? K
+    : never;
+}[keyof UpsertPreferencesInput];
+
+/** The preference a `…StoreOverride` field overrides, by its served key. */
+type OverriddenKey<K> = K extends `${infer Key}StoreOverride` ? Key : never;
+
+/** The on/off preferences a store may override, by their served keys. */
+type BoolOverriddenKey = {
+  [K in StoreScopedKey]-?: NonNullable<
+    UpsertPreferencesInput[K]
+  > extends Array<{
+    value?: boolean | null;
+  }>
+    ? OverriddenKey<K>
+    : never;
+}[StoreScopedKey];
 
 /*
  * The uniform preferences, one key list per coercion — each key written once,
@@ -496,13 +546,20 @@ const NUMBER_PREFERENCE_KEYS = [
  */
 export type EveryStorePreferenceHandled<
   Unhandled extends never = Exclude<
-    PreferenceKeyOf<unknown>,
+    StoreScopedKey,
     | (typeof BOOL_PREFERENCE_KEYS)[number]
     | (typeof NUMBER_PREFERENCE_KEYS)[number]
     | 'storeCustomColour'
     | 'warnWhenMissingRecentStocktake'
     | 'invoiceStatusOptions'
     | 'authorisePurchaseOrderStoreOverride'
+    | 'dispensingScreenStoreOverride'
+    | 'useUnnamedPatientStoreOverride'
+    | 'startWithUnnamedPatientStoreOverride'
+    | 'askForPatientTypeStoreOverride'
+    // Not in the server's preference list, so the panel never renders it:
+    // its own editor opens from the Simple dispensing screen (#2188).
+    | 'commonMedicines'
   >,
 > = Unhandled;
 
@@ -533,18 +590,33 @@ export const buildPreferencesInput = (
     input.invoiceStatusOptions = [
       { storeId, value: asStatusList(draft.invoiceStatusOptions) },
     ];
-  // The one global preference a store may override (rules § The store editor
-  // › Preferences): served under its own key, written through the
-  // override field so the global value is left alone. A null value CLEARS the
-  // store's row, handing the store back to the global value.
+  // The global preferences a store may override (rules § The store editor
+  // › Preferences): served under their own keys, written through the
+  // override fields so the global values are left alone. A null value CLEARS
+  // the store's row, handing the store back to the global value.
+  const boolOverride = (key: BoolOverriddenKey) => [
+    { storeId, value: draft[key] === null ? null : asBool(draft[key]) },
+  ];
   if ('authorisePurchaseOrder' in draft)
-    input.authorisePurchaseOrderStoreOverride = [
+    input.authorisePurchaseOrderStoreOverride = boolOverride(
+      'authorisePurchaseOrder'
+    );
+  if ('useUnnamedPatient' in draft)
+    input.useUnnamedPatientStoreOverride = boolOverride('useUnnamedPatient');
+  if ('startWithUnnamedPatient' in draft)
+    input.startWithUnnamedPatientStoreOverride = boolOverride(
+      'startWithUnnamedPatient'
+    );
+  if ('askForPatientType' in draft)
+    input.askForPatientTypeStoreOverride = boolOverride('askForPatientType');
+  if ('dispensingScreen' in draft)
+    input.dispensingScreenStoreOverride = [
       {
         storeId,
         value:
-          draft.authorisePurchaseOrder === null
+          draft.dispensingScreen === null
             ? null
-            : asBool(draft.authorisePurchaseOrder),
+            : asDispensingScreen(draft.dispensingScreen),
       },
     ];
 

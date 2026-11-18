@@ -140,8 +140,19 @@
     background var(--motion-fast) ease;
 }
 
-.items[data-appearance='card'] .item:hover:not([data-disabled]) {
-  border-color: var(--gray-light);
+/* Hover only where the pointer can hover: a touch screen keeps the last
+   control tapped in :hover, so it would stay highlighted. On touch the look
+   shows only while pressed (:active), as on Button. */
+@media (hover: hover) {
+  .items[data-appearance='card'] .item:hover:not([data-disabled]) {
+    border-color: var(--gray-light);
+  }
+}
+
+@media (hover: none) {
+  .items[data-appearance='card'] .item:active:not([data-disabled]) {
+    border-color: var(--gray-light);
+  }
 }
 
 /* Selected. :has() on the native radio — no JS mirror of the checked state, so
@@ -258,8 +269,16 @@
   white-space: nowrap;
 }
 
-.segment:hover:not([data-disabled]) {
-  background: var(--bg-input);
+@media (hover: hover) {
+  .segment:hover:not([data-disabled]) {
+    background: var(--bg-input);
+  }
+}
+
+@media (hover: none) {
+  .segment:active:not([data-disabled]) {
+    background: var(--bg-input);
+  }
 }
 
 /* :has() on the native radio — no JS mirror of the checked state, so the

@@ -149,6 +149,33 @@ export type SaveGlobalTableConfigsVariables = {
     storeId: string;
     value: boolean;
   }> | null;
+    commonMedicines?: Array<{
+    storeId: string;
+    value: Array<{
+    itemId: string;
+    amounts: Array<number>;
+  }>;
+  }> | null;
+    dispensingScreen?: "STANDARD" | "SIMPLE" | null;
+    dispensingScreenStoreOverride?: Array<{
+    storeId: string;
+    value?: "STANDARD" | "SIMPLE" | null;
+  }> | null;
+    useUnnamedPatient?: boolean | null;
+    useUnnamedPatientStoreOverride?: Array<{
+    storeId: string;
+    value?: boolean | null;
+  }> | null;
+    startWithUnnamedPatient?: boolean | null;
+    startWithUnnamedPatientStoreOverride?: Array<{
+    storeId: string;
+    value?: boolean | null;
+  }> | null;
+    askForPatientType?: boolean | null;
+    askForPatientTypeStoreOverride?: Array<{
+    storeId: string;
+    value?: boolean | null;
+  }> | null;
   };
 };
 

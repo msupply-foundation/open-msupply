@@ -49,6 +49,25 @@ mod test {
         assert_eq!(input.offset, None);
     }
 
+    // A remote from before `code_or_code_2` was added sends no key for it at
+    // all, rather than `null`. Central is upgraded first, so this is common.
+    #[test]
+    fn reads_a_filter_without_code_or_code_2() {
+        let body = serde_json::json!({
+            "code": { "equal_to": "AB1" },
+            "last_name": { "like": "Tra" },
+        });
+        let input: Input = serde_json::from_value(body).unwrap();
+        assert_eq!(input.filter.code_or_code_2, None);
+        assert_eq!(
+            input.filter,
+            PatientFilter::new()
+                .code(StringFilter::equal_to("AB1"))
+                .last_name(StringFilter::like("Tra"))
+        );
+        assert_eq!(input.limit, None);
+    }
+
     // The page sits beside the filter's fields, not nested under a key.
     #[test]
     fn sends_the_page_beside_the_filter() {

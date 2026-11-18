@@ -723,14 +723,14 @@ Integration should ensure that transactional integrity is maintained, for this i
 * For postgres, the whole transaction is discarded if there is an error, therefore an inner transaction should be created, however this becomes very very slow if there are lots of errors, but we don’t envision this.  
 * For sqlite, we don’t need an inner transaction, but a transaction is needed because it’s much faster than starting one on every record upsert. In fact inner transactions are very slow.
 
-What a failing write leaves behind differs in mechanism but not in outcome. A write here is one row saved or deleted along with its changelog row, and one sync record can make several (a name merge repoints every name link, then deletes the merged name).
+What a failing write leaves behind differs by database. A write here is one row saved or deleted along with its changelog row, and one sync record can make several (a name merge repoints every name link, then deletes the merged name).
 
-* On postgres the inner transaction is a savepoint around each write, not around the record. When a write fails, only that write is rolled back.
-* On sqlite there is no savepoint. SQLite undoes only the statement that failed and the transaction carries on, so the error does not need catching. The speed claim above comes from `bench_error_performance`, which is commented out and has no recorded numbers.
+* On postgres the inner transaction is a savepoint around the whole record (`validate_translate_integrate_one`), so when any of its writes fails, all of that record's writes are rolled back. The record is applied all or nothing.
+* On sqlite there is no savepoint. SQLite undoes only the statement that failed and the transaction carries on, so the error does not need catching, but the record's writes before the failing one stay saved and commit with the rest. The speed claim above comes from `bench_error_performance`, which is commented out and has no recorded numbers. open-msupply#3932 measured a savepoint per record on sqlite at about 3 times slower with 5% of records failing.
 
-On both, the record is marked errored and integration moves on, but its writes before the failing one stay saved and commit with the rest. The buffer row is not retried, so a record that fails part way stays half applied. #847 tracks making each record's writes all or nothing.
+On both, the record is marked errored and integration moves on, and the buffer row is not retried. On sqlite a record that fails part way stays half applied. v5/v6 integration differs: there the postgres savepoint is around each write, not the record, so it leaves half-applied records on both databases. #847 tracks making each record's writes all or nothing.
 
-During initialisation, only initialisation graphql endpoints are available, so it’s safe to reduce transactions (no transactions at all for postgres).
+During a site's first sync, only initialisation graphql endpoints are available, so there is no outer transaction. Instead every 500 buffer rows commit in their own transaction (`INTEGRATION_COMMIT_SIZE`, the same as v5/v6 integration without the outer transaction), with the per-record savepoint still in place on postgres. That avoids one huge transaction on postgres and a commit for every write on sqlite, and a restart keeps the chunks already committed. Every other integration keeps the outer transaction, on both backends. That includes auxiliary syncs (patient and store lookups, with a `reference_id`): they use the initialisation pull rules, but the site is live.
 
 ##### Transaction performance {#transaction-performance}
 
@@ -798,7 +798,7 @@ This is generalised into the **`sync_request`** mechanism: an *auxiliary* (a.k.a
   * Otherwise all active rows are grouped together and assigned a **new uuid `reference_id`**, which is persisted on the rows *before* the run so a crash mid-run is recoverable.
   * Per-direction filters across the group are **OR**’d together.
 * The group runs with **dynamic temporary cursors** derived from the group `reference_id`: `pull_<reference_id>` and `push_<reference_id>`. These live in `key_value_store`, start at 0, advance as batches are pulled, and are **deleted when the group finishes successfully** so the KV blob doesn’t grow unbounded.
-* Auxiliary requests always run with `is_initialising = true` (the central pull filter and the integration transaction wrapping behave like initialisation, since we’re backfilling full history for the filtered subset).
+* Auxiliary requests always run with `is_initialising = true`, so the central pull filter behaves like initialisation, since we’re backfilling full history for the filtered subset. Integration does not: the site is live, so it keeps the outer transaction (see [Transaction](#transaction)).
 * On success every member row is stamped with `finished_datetime` and drops out of the active set. On failure the rows keep their `reference_id`, so the next tick re-picks them as the in-flight group and retries from where the cursor left off.
 
 **Keeping auxiliary records isolated from the main sync — important**
@@ -903,7 +903,7 @@ Remote patient lookup is two separate operations against the central server, bot
 
 When a patient is not found locally, the remote calls the central server's v7 sync **`patient_search`** endpoint. The body is the patient filter, with optional `limit` and `offset` flattened beside its fields. With `limit`, central returns that many candidates in name order from `offset`, without counting them; the remote asks for one more than it shows, to know whether there is a next page. A remote from before the page was added sends the bare filter and gets every match, unsorted. Central runs the search against its full name table and returns matching patient candidates. Because this goes over the v7 sync API it uses sync-site authentication (the remote authenticates as a site), and the central search is not limited to stores active on the requesting site.
 
-Someone is waiting on the answer, so the request gives up quickly rather than retrying as sync does: two attempts with a 3-second connect timeout each, and 15 seconds overall, after which it fails as a connection error (`SyncApiV7::request_interactive`). The link below keeps sync's own timings.
+Someone is waiting on the answer, so the request is given up after 30 seconds overall (`SyncApiV7::request_interactive`). It connects as sync does (three attempts, with connect timeouts of 2, 5 and 10 seconds), but without the limit sync would wait 5 minutes per attempt on a central that accepts the connection and doesn't answer. The link below keeps sync's own timings.
 
 Code: `patient_search_central_v7` in `service/src/programs/patient/search_central.rs` → `SyncApiV7::patient_search`. (On a v6 remote the legacy v4/COGS path is used instead — see [What happens in v5?](#what-happens-in-v5?).)
 

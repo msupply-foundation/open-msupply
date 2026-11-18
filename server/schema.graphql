@@ -1549,6 +1549,25 @@ type CodeRequired implements UpsertSiteErrorInterface {
 	description: String!
 }
 
+input CommonMedicineInput {
+	itemId: String!
+	amounts: [Float!]!
+}
+
+type CommonMedicineNode {
+	itemId: String!
+	"""
+	The one-press amounts, in the item's own unit. Empty when the card asks
+	for the amount instead.
+	"""
+	amounts: [Float!]!
+}
+
+input CommonMedicinesInput {
+	storeId: String!
+	value: [CommonMedicineInput!]!
+}
+
 union ConfigureNamePropertiesResponse = Success
 
 input ConfigureNamePropertyInput {
@@ -2676,6 +2695,29 @@ type DiagnosisNode {
 	id: String!
 	code: String!
 	description: String!
+}
+
+"""
+Which screen dispensing opens on (the `dispensingScreen` preference).
+"""
+enum DispensingScreenNode {
+	"""
+	The dispensing list
+	"""
+	STANDARD
+	"""
+	The Simple dispensing screen
+	"""
+	SIMPLE
+}
+
+"""
+One store's edit of the dispensing screen. A null `value` CLEARS the
+store's own value, returning the store to the global value.
+"""
+input DispensingScreenStoreOverrideInput {
+	storeId: String!
+	value: DispensingScreenNode
 }
 
 type DisplaySettingNode {
@@ -5466,6 +5508,11 @@ input ItemFilterInput {
 	"""
 	notInRecord: ItemNotInRecordFilterInput
 	"""
+	Items with no counted line in a finalised stocktake of this store since the given
+	datetime, including items never counted in this store
+	"""
+	notCountedSince: DateTime
+	"""
 	Dynamic filter condition AST, currently supporting property conditions
 	on keys visible for the "item" table scope, e.g.
 	`{"And": [{"CustomField": {"key": "k", "filter": {"Text": {"Like": "abc"}}}}]}`
@@ -5574,6 +5621,13 @@ type ItemNode {
 	those links (`ancillaryFor`), so an item no link orders has none.
 	"""
 	supplyWastageRate: Float!
+	"""
+	The item's price per unit on the default price list, null when it is on none.
+	The same price `itemPrice` gives as `defaultPricePerUnit`, and what the server
+	charges a patient for each unit of a stock-out line. Not store-specific: the
+	default price list is the same in every store.
+	"""
+	defaultPricePerUnit: Float
 	itemDirections: [ItemDirectionNode!]!
 	warnings: [WarningNode!]!
 	categories: [ItemCategoryNode!]!
@@ -7127,6 +7181,11 @@ enum PreferenceKey {
 	showIndicativePriceInRequisitions
 	doNotPrintPlaceholderLineLabels
 	promptForBatchAndExpiryOnInboundShipments
+	commonMedicines
+	dispensingScreen
+	useUnnamedPatient
+	startWithUnnamedPatient
+	askForPatientType
 }
 
 type PreferenceMutations {
@@ -7161,6 +7220,8 @@ enum PreferenceValueNodeType {
 	STRING
 	COLOUR
 	IMAGE
+	COMMON_MEDICINES
+	DISPENSING_SCREEN
 }
 
 type PreferencesNode {
@@ -7214,6 +7275,29 @@ type PreferencesNode {
 	invoiceStatusOptions: [InvoiceNodeStatus!]!
 	doNotPrintPlaceholderLineLabels: Boolean!
 	promptForBatchAndExpiryOnInboundShipments: Boolean!
+	"""
+	The medicines shown as cards on the Simple dispensing screen, in order.
+	"""
+	commonMedicines: [CommonMedicineNode!]!
+	"""
+	Which screen dispensing opens on: the store's own value where it has
+	one, else the global value.
+	"""
+	dispensingScreen: DispensingScreenNode!
+	"""
+	Whether the store can dispense to its unnamed patient.
+	"""
+	useUnnamedPatient: Boolean!
+	"""
+	Whether each new visit on the Simple screen starts with the unnamed
+	patient chosen.
+	"""
+	startWithUnnamedPatient: Boolean!
+	"""
+	Whether the Simple screen asks if the patient is an outpatient or an
+	inpatient.
+	"""
+	askForPatientType: Boolean!
 }
 
 input PrescriptionLineInput {
@@ -12196,6 +12280,15 @@ input UpsertPreferencesInput {
 	showIndicativePriceInRequisitions: [BoolStorePrefInput!]
 	doNotPrintPlaceholderLineLabels: [BoolStorePrefInput!]
 	promptForBatchAndExpiryOnInboundShipments: [BoolStorePrefInput!]
+	commonMedicines: [CommonMedicinesInput!]
+	dispensingScreen: DispensingScreenNode
+	dispensingScreenStoreOverride: [DispensingScreenStoreOverrideInput!]
+	useUnnamedPatient: Boolean
+	useUnnamedPatientStoreOverride: [BoolStoreOverrideInput!]
+	startWithUnnamedPatient: Boolean
+	startWithUnnamedPatientStoreOverride: [BoolStoreOverrideInput!]
+	askForPatientType: Boolean
+	askForPatientTypeStoreOverride: [BoolStoreOverrideInput!]
 }
 
 input UpsertPrescriptionRequestLineInput {

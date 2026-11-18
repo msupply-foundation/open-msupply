@@ -5,6 +5,7 @@ import { hasPermission } from '../../store/storeContext';
 import { t, localeDateFormat } from '../../intl';
 import { Dialog } from '../../ui/elements/feedback/Dialog';
 import { Alert } from '../../ui/elements/feedback/Alert';
+import { InfoTooltip } from '../../ui/elements/feedback/InfoTooltip';
 import { EmptyState } from '../../ui/elements/feedback/EmptyState';
 import { Spinner } from '../../ui/elements/feedback/Spinner';
 import { Button } from '../../ui/elements/buttons/Button';
@@ -427,17 +428,36 @@ export const PatientSearchDialog = (
   const firstField = createFocusTarget();
   const columns = patientFindColumns<PatientFindRow>();
 
+  // Without patient-mutate permission New patient (and the empty results'
+  // Create a new one) is disabled, and an InfoTooltip beside it gives the
+  // reason: the server refuses the save at the end of the form
+  // (OMS-REG-DIS-03.84; spec/patients § cross-cutting). The tooltip opens on
+  // tap and focus as well as hover, so the reason is readable on touch
+  // (ui-standards/controls § blocked affordances). The check reads the store
+  // the user is logged into, not `props.storeId`: every caller passes the
+  // current store, so the two agree.
+  const canCreate = () => hasPermission('PATIENT_MUTATE');
+
   const createButton = () => (
     <Show when={props.onCreatePatient}>
-      <Button
-        variant="secondary"
-        icon={<PlusCircleIcon />}
-        disabled={busy()}
-        data-testid="create-patient-button"
-        onClick={createPatient}
-      >
-        {t('button.new-patient')}
-      </Button>
+      <HStack gap="sm">
+        <Button
+          variant="secondary"
+          icon={<PlusCircleIcon />}
+          disabled={busy() || !canCreate()}
+          data-testid="create-patient-button"
+          onClick={createPatient}
+        >
+          {t('button.new-patient')}
+        </Button>
+        <Show when={!canCreate()}>
+          <InfoTooltip
+            text={t('messages.create-patient-not-allowed')}
+            label={t('messages.create-patient-not-allowed')}
+            triggerTestId="create-patient-disabled-reason"
+          />
+        </Show>
+      </HStack>
     </Show>
   );
 
@@ -601,7 +621,7 @@ export const PatientSearchDialog = (
                 <Show when={props.onCreatePatient}>
                   <Button
                     variant="ghost"
-                    disabled={busy()}
+                    disabled={busy() || !canCreate()}
                     data-testid="nothing-here-create-button"
                     onClick={createPatient}
                   >

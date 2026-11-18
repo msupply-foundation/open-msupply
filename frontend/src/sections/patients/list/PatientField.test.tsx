@@ -39,7 +39,10 @@ vi.mock('../../../ui/elements/buttons/IconButton', () => ({
     return 'pencil';
   },
 }));
-vi.mock('../../../ui/icons', () => ({ EditIcon: () => 'edit-icon' }));
+vi.mock('../../../ui/icons', () => ({
+  EditIcon: () => 'edit-icon',
+  CloseIcon: () => 'close-icon',
+}));
 vi.mock('../../../intl', () => ({ t: (key: string) => key }));
 
 import { PatientField, type PatientFieldProps } from './PatientField';
@@ -63,6 +66,7 @@ const mount = (
     patient?: Patient;
     chooseOnOpen?: boolean;
     onEditPatient?: PatientFieldProps['onEditPatient'];
+    onClear?: PatientFieldProps['onClear'];
     disabled?: boolean;
   } = {}
 ) => {
@@ -78,6 +82,7 @@ const mount = (
         chooseOnOpen={chooseOnOpen()}
         disabled={options.disabled}
         onEditPatient={options.onEditPatient}
+        onClear={options.onClear}
         onChange={onChange}
       />
     );
@@ -204,6 +209,25 @@ describe('OMS-REG-DIS-01.80 — the pencil edits the patient', () => {
     expect(shown.endAction?.()).toBeFalsy();
     dispose?.();
     mount({ patient: ANN });
+    expect(shown.endAction?.()).toBeFalsy();
+  });
+});
+
+describe('the clear button, for a field that is not a record’s patient', () => {
+  it('empties the field in the pencil’s place', () => {
+    const onClear = vi.fn();
+    mount({ patient: ANN, onClear, onEditPatient: vi.fn() });
+    expect(shown.endAction?.()).toBe('pencil');
+    expect(shown.pencil?.label).toBe('common.clear');
+    shown.pencil?.onClick();
+    expect(onClear).toHaveBeenCalled();
+  });
+
+  it('is absent with no patient, and while the field is disabled', () => {
+    mount({ onClear: vi.fn() });
+    expect(shown.endAction?.()).toBeFalsy();
+    dispose?.();
+    mount({ patient: ANN, onClear: vi.fn(), disabled: true });
     expect(shown.endAction?.()).toBeFalsy();
   });
 });

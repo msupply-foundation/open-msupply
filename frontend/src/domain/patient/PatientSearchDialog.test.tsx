@@ -9,10 +9,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 /*
  * The patient search (spec/patients S2 step ①; cases OMS-REG-DIS-01 `.55`–
- * `.58`, `.61`, `.69`, `.70`, `.73`, `.74`). The dialog's own logic
- * runs for real — the debounce (on fake timers), the token checks, when other
- * facilities are asked and
- * what New patient hands on. The library components are stand-ins that keep
+ * `.58`, `.61`, `.69`, `.70`, `.73`, `.74`, and OMS-REG-DIS-03 `.84`). The
+ * dialog's own logic runs for real — the debounce (on fake timers), the
+ * token checks, when other facilities are asked and what New patient hands
+ * on. The library components are stand-ins that keep
  * the props they were given, so the test reads the fields, tables, buttons
  * and warnings as rendered and acts through their callbacks. The searches
  * are mocked, each answering when the test says so.
@@ -55,6 +55,7 @@ const rendered = {
   tables: new Set<Recorded>(),
   stacks: new Set<Props>(),
   alerts: new Set<Props>(),
+  tooltips: new Set<Props>(),
 };
 
 // Resolve a JSX prop as the real component would insert it, once, reactively.
@@ -84,6 +85,12 @@ vi.mock('../../ui/elements/feedback/Alert', () => ({
   Alert: (p: Props) => {
     keep(rendered.alerts, p);
     return resolve(p, ['children']).children;
+  },
+}));
+vi.mock('../../ui/elements/feedback/InfoTooltip', () => ({
+  InfoTooltip: (p: Props) => {
+    keep(rendered.tooltips, p);
+    return 'tooltip';
   },
 }));
 vi.mock('../../ui/elements/buttons/Button', () => ({
@@ -160,9 +167,16 @@ vi.mock('../../api/serverInfo', () => ({ isCentralServer: () => central }));
 
 // Whether the user can read dispensing records (recent patients need it).
 let canReadDispensing = true;
+// Whether they can create patients: a signal, as the real permission (read
+// from the store context) is.
+const [canMutatePatients, setCanMutatePatients] = createSignal(true);
 vi.mock('../../store/storeContext', () => ({
   hasPermission: (permission: string) =>
-    permission === 'PRESCRIPTION_QUERY' ? canReadDispensing : true,
+    permission === 'PRESCRIPTION_QUERY'
+      ? canReadDispensing
+      : permission === 'PATIENT_MUTATE'
+        ? canMutatePatients()
+        : true,
 }));
 
 const linkPatientToStore = vi.fn();
@@ -208,6 +222,7 @@ afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
   central = false;
+  setCanMutatePatients(true);
   nodes.clear();
   findPatients.mockReset();
   findCentralPatients.mockReset();
@@ -690,6 +705,61 @@ describe('OMS-REG-DIS-01.61 — New patient starts the form from the search', ()
   it('is not offered when the caller gives no create action', () => {
     mount({}, { canCreate: false });
     expect(button('create-patient-button')).toBeUndefined();
+  });
+});
+
+describe('OMS-REG-DIS-03.84 — New patient without patient-mutate permission', () => {
+  const reason = () =>
+    [...rendered.tooltips].find(
+      p => p.triggerTestId === 'create-patient-disabled-reason'
+    );
+  // Search for someone who isn't here, so the empty results offer Create a
+  // new one.
+  const searchNoMatch = async () => {
+    findPatients.mockResolvedValue(here([]));
+    findCentralPatients.mockResolvedValue(ok([]));
+    type('lastName', 'Nobody');
+    await pause();
+    localTable()?.resolved.empty();
+  };
+
+  it('is enabled, with no reason, for a user who may create patients', async () => {
+    mount();
+    await searchNoMatch();
+    expect(button('create-patient-button')?.disabled).toBeFalsy();
+    expect(button('nothing-here-create-button')?.disabled).toBeFalsy();
+    expect(reason()).toBeUndefined();
+  });
+
+  it('stays visible but disabled, with the reason beside it, for a user who may not', async () => {
+    setCanMutatePatients(false);
+    mount();
+    await searchNoMatch();
+    expect(button('create-patient-button')?.disabled).toBe(true);
+    expect(button('nothing-here-create-button')?.disabled).toBe(true);
+    expect(reason()?.text).toBe('messages.create-patient-not-allowed');
+  });
+
+  it('follows the permission when it changes on an open search', () => {
+    mount();
+    expect(button('create-patient-button')?.disabled).toBeFalsy();
+    setCanMutatePatients(false);
+    expect(button('create-patient-button')?.disabled).toBe(true);
+    expect(reason()?.text).toBe('messages.create-patient-not-allowed');
+    setCanMutatePatients(true);
+    expect(button('create-patient-button')?.disabled).toBeFalsy();
+    expect(reason()).toBeUndefined();
+  });
+
+  it('still lets a patient be chosen', async () => {
+    setCanMutatePatients(false);
+    findPatients.mockResolvedValue(here([row('a')]));
+    const { onChoose } = mount();
+    type('lastName', 'Smith');
+    await pause();
+    (localTable()?.props.onRowClick as (r: PatientFindRow) => void)(row('a'));
+    await settle();
+    expect(onChoose).toHaveBeenCalledWith(row('a'));
   });
 });
 

@@ -1,11 +1,4 @@
-import {
-  createSignal,
-  For,
-  Match,
-  Show,
-  Switch,
-  type JSX,
-} from 'solid-js';
+import { createSignal, For, Match, Show, Switch, type JSX } from 'solid-js';
 import { t, type LocaleKey } from '../../../intl';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
@@ -28,7 +21,12 @@ import { EmptyState } from '../../../ui/elements/feedback/EmptyState';
 import { Text } from '../../../ui/elements/typography/Text';
 import { Stack } from '../../../ui/layout/Stack/Stack';
 import { CloseIcon } from '../../../ui/icons';
-import { createCatalogueView } from '@/domain/preferences';
+import {
+  asDispensingScreen,
+  createCatalogueView,
+  dispensingScreenLabelKey,
+  DISPENSING_SCREENS,
+} from '@/domain/preferences';
 import {
   asBool,
   asColour,
@@ -38,6 +36,8 @@ import {
   IMMUTABLE_INVOICE_STATUSES,
   INBOUND_STATUS_OPTIONS,
   groupStorePreferences,
+  dispensingScreenChoice,
+  dispensingScreenSelection,
   isOverridable,
   OUTBOUND_STATUS_OPTIONS,
   overrideChoice,
@@ -57,8 +57,8 @@ import styles from './StorePreferencesPanel.module.css';
  * S5 › the Preferences panel (spec/settings/ui-surface.md § S5): a text filter,
  * then one labelled row per ungrouped store preference in the SERVED order —
  * the server's catalogue order is the display order (contract § The store
- * editor) — then the Procurement group: the purchase-order preferences
- * together in one accordion, closed on arrival (SET-05.61). Each row is label
+ * editor) — then the Procurement and Dispensing groups, each an accordion
+ * closed on arrival (SET-05.61, SET-05.78). Each row is label
  * inline-start, control inline-end, on the hairline row rhythm (the module
  * CSS); the two composites — the recent-stocktake group and the
  * invoice-status choice — take a full-width block each. Every control is
@@ -277,6 +277,46 @@ export const StorePreferencesPanel = (props: {
     );
   };
 
+  /*
+   * The dispensing screen's override (SET-05.79): the same three-way choice,
+   * but the store pins a screen, Standard or Simple, rather than on or off.
+   */
+  const DispensingScreenRow = (rowProps: { preference: StorePreference }) => {
+    const preference = () => rowProps.preference;
+    return (
+      <Row label={label(preference())}>
+        <RadioGroup
+          label={label(preference())}
+          hideLabel
+          appearance="segmented"
+          value={dispensingScreenChoice(value(preference()))}
+          disabled={props.disabled}
+          options={[
+            {
+              value: 'global',
+              label: t('label.preference-global-value', {
+                value: t(
+                  dispensingScreenLabelKey(
+                    asDispensingScreen(preference().storeOverride?.globalValue)
+                  )
+                ),
+              }),
+              testId: `store-preference-${preference().key}-global`,
+            },
+            ...DISPENSING_SCREENS.map(screen => ({
+              value: screen,
+              label: t(dispensingScreenLabelKey(screen)),
+              testId: `store-preference-${preference().key}-${screen.toLowerCase()}`,
+            })),
+          ]}
+          onChange={next =>
+            props.onStage(preference(), dispensingScreenSelection(next))
+          }
+        />
+      </Row>
+    );
+  };
+
   // One catalogue row, control by kind — shared by the ungrouped list and the
   // group members so both render identically (kdd/explicit-composition: each
   // kind is its own written-out branch).
@@ -286,6 +326,14 @@ export const StorePreferencesPanel = (props: {
       <Switch>
         {/* An overridable global preference comes FIRST, whatever its kind:
             two states can't express the three a store has (SET-05.59). */}
+        <Match
+          when={
+            isOverridable(preference()) &&
+            preference().valueType === 'DISPENSING_SCREEN'
+          }
+        >
+          <DispensingScreenRow preference={preference()} />
+        </Match>
         <Match when={isOverridable(preference())}>
           <OverrideRow preference={preference()} />
         </Match>
@@ -427,8 +475,8 @@ export const StorePreferencesPanel = (props: {
             {preference => <PreferenceRow preference={preference} />}
           </For>
         </div>
-        {/* The Procurement group — the purchase-order preferences together,
-            closed on arrival; members keep catalogue order (SET-05.61). Held
+        {/* The Procurement and Dispensing groups, closed on arrival; members
+            keep catalogue order (SET-05.61, SET-05.78). Held
             open while a filter is active; nothing renders when the filter
             leaves no group. */}
         <Show when={catalogue().groups.length > 0}>

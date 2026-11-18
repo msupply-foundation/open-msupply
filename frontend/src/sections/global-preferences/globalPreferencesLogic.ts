@@ -8,6 +8,7 @@ import type {
   UpsertGlobalPreferencesVariables,
 } from './globalPreferences.generated';
 import {
+  asDispensingScreen,
   groupCatalogue,
   PREFERENCE_GROUPS,
   type CatalogueGroup,
@@ -55,9 +56,13 @@ const GROUP_OF: Partial<
   expiredStockPreventIssue: PREFERENCE_GROUPS.expiredStock,
   expiredStockIssueThreshold: PREFERENCE_GROUPS.expiredStock,
   backdating: PREFERENCE_GROUPS.backdating,
+  dispensingScreen: PREFERENCE_GROUPS.dispensing,
+  useUnnamedPatient: PREFERENCE_GROUPS.dispensing,
+  startWithUnnamedPatient: PREFERENCE_GROUPS.dispensing,
+  askForPatientType: PREFERENCE_GROUPS.dispensing,
 };
 
-/** The served catalogue split into ungrouped rows and the four groups, both
+/** The served catalogue split into ungrouped rows and the five groups, both
  *  in served order (OMS-REG-GPREF-01.2). */
 export const groupPreferences = (preferences: GlobalPreference[]) =>
   groupCatalogue(preferences, GROUP_OF);
@@ -193,6 +198,9 @@ const BOOL_PREFERENCE_KEYS = [
   'isGaps',
   'displayPopulationBasedForecasting',
   'receivePaymentsFromPrescriptions',
+  'useUnnamedPatient',
+  'startWithUnnamedPatient',
+  'askForPatientType',
 ] as const satisfies readonly GlobalPreferenceKeyOf<boolean>[];
 const NUMBER_PREFERENCE_KEYS = [
   'preventTransfersMonthsBeforeInitialisation',
@@ -224,6 +232,7 @@ export type EveryGlobalPreferenceHandled<
     | 'genderOptions'
     | 'backdating'
     | 'globalLogo'
+    | 'dispensingScreen'
   >,
 > = Unhandled;
 
@@ -260,6 +269,9 @@ export const buildAutoSaveInput = (
   }
   if (key === 'backdating') {
     return { backdating: asBackdatingParts(value) };
+  }
+  if (key === 'dispensingScreen') {
+    return { dispensingScreen: asDispensingScreen(value) };
   }
   return undefined;
 };
