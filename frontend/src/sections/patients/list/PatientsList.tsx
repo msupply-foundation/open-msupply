@@ -43,7 +43,7 @@ import {
   buildCustomFieldDynamicFilter,
   type CustomFieldFilterState,
 } from '../../../domain/customFields';
-import { CreatePatientModal } from './CreatePatientModal';
+import { ChoosePatient } from './ChoosePatient';
 import { ExportPatientsAction } from './actions';
 
 // The patient list view (spec/patients S1). Site-wide (NOT store-scoped despite
@@ -84,6 +84,8 @@ const PatientsList: Component = () => {
     ...DEFAULT_STATE,
     first: initialPageSize(),
   });
+  // New patient opens the patient search first (spec/patients S2): the user
+  // checks the patient isn't already here, then goes on to the create form.
   const [createOpen, setCreateOpen] = createSignal(false);
 
   // Create/edit affordances are gated on patient-mutate permission
@@ -353,9 +355,10 @@ const PatientsList: Component = () => {
           },
         }}
       />
-      <CreatePatientModal
+      <ChoosePatient
         open={createOpen()}
         storeId={params.storeId}
+        title={t('button.new-patient')}
         onClose={() => setCreateOpen(false)}
       />
     </Page>

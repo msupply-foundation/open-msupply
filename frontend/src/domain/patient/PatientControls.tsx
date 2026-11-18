@@ -1,4 +1,11 @@
-import { createSignal, Show, type JSX } from 'solid-js';
+import {
+  createMemo,
+  createSignal,
+  on,
+  Show,
+  untrack,
+  type JSX,
+} from 'solid-js';
 import { t } from '../../intl';
 import { FormRow } from '../../ui/layout/Form/FormRow';
 import { TextField } from '../../ui/elements/inputs/TextField';
@@ -12,8 +19,10 @@ import { ConfirmDialog } from '../../ui/elements/feedback/ConfirmDialog';
 import { Button } from '../../ui/elements/buttons/Button';
 import { LabelledValue } from '../../ui/elements/typography/LabelledValue';
 import { currentStoreName } from '../../store/storeContext';
-import { PatientSearch } from './PatientSearch';
-import { minimalPatientOption, type PatientOption } from './patientResource';
+import { PickerField } from '../../ui/elements/selectors/PickerField';
+import { IconButton } from '../../ui/elements/buttons/IconButton';
+import { CloseIcon } from '../../ui/icons';
+import { PatientSearchDialog } from './PatientSearchDialog';
 import {
   genderLabel,
   genderOptions,
@@ -25,7 +34,7 @@ import { ageFromDob, ageMonthsAndDays, dobFromAge } from './age';
 import fieldAction from '../documentForm/FieldAction.module.css';
 
 /*
- * The patient form's controls (spec/patients S3 Details; S2 step ③), each over
+ * The patient form's controls (spec/patients S3 Details; S2 step ②), each over
  * a value and a change callback so that both of the host's patient forms
  * share one implementation: the plain-path form over its own field bag
  * (sections/patients/detail/PatientDetailsForm.tsx), and the document-path
@@ -33,6 +42,24 @@ import fieldAction from '../documentForm/FieldAction.module.css';
  * plugin forms compose too. The behaviour spec/patients defines for a field
  * lives here, so the two forms cannot drift apart on it.
  */
+
+/**
+ * Code 2 (the patient's `code2`) is left off the host's patient forms: it
+ * means nothing to most sites, and one that uses it adds it in its own
+ * form (#631). A patient who already has one still shows it, so a value
+ * from legacy mSupply stays visible and editable. Decided once per patient,
+ * from the value the form opened with, so clearing it doesn't hide the
+ * field mid-edit.
+ */
+export const createShowCode2 = (
+  patientId: () => string | undefined,
+  code2: () => string | null | undefined
+) => {
+  const shown = createMemo(
+    on(patientId, () => Boolean(untrack(code2)?.trim()))
+  );
+  return shown;
+};
 
 // Upper bound on a typed age, so a slip can't mint a nonsense birth year (the
 // date-of-birth field is bounded by today at the other end).
@@ -313,37 +340,58 @@ export interface NextOfKinControlProps {
   disabled?: boolean;
 }
 
-/*
- * A next of kin recorded by name alone, with no patient matched (as the old
- * client could store one), has no patient to select. It shows as an option
- * under this key, which no patient id can be, so the stored name still reads
- * in the field (OMS-REG-PLG-DJ-01.37). Picking that option again changes
- * nothing; clearing it, or picking a patient, replaces it.
+/**
+ * The next of kin (spec/patients S4): a picker box showing the name, which
+ * opens the patient search to choose one, as a record's patient field does,
+ * never a type-ahead — on a central with millions of patients only the
+ * search's indexed fields stay quick. A next of kin recorded by name alone,
+ * with no patient matched (as the old client could store one), still shows
+ * its name (OMS-REG-PLG-DJ-01.37). Unlike a record's patient, it can be
+ * cleared.
  */
-export const NAME_ONLY_NEXT_OF_KIN = 'next-of-kin:name-only';
+export const NextOfKinControl = (props: NextOfKinControlProps): JSX.Element => {
+  const [choosing, setChoosing] = createSignal(false);
+  const label = () => props.label ?? t('label.next-of-kin');
 
-/** The option the picker shows for a next of kin, if any. */
-export const nextOfKinOption = (
-  id: string | null,
-  name: string
-): PatientOption | undefined => {
-  if (id) return minimalPatientOption(id, name);
-  return name ? minimalPatientOption(NAME_ONLY_NEXT_OF_KIN, name) : undefined;
+  return (
+    <>
+      <PickerField
+        label={label()}
+        value={props.name || undefined}
+        placeholder={t('placeholder.search-patient')}
+        disabled={props.disabled}
+        testId="next-of-kin-field"
+        onOpen={() => setChoosing(true)}
+        endAction={
+          <Show when={!props.disabled && (props.id || props.name)}>
+            <IconButton
+              icon={<CloseIcon />}
+              label={t('common.clear')}
+              data-testid="next-of-kin-clear"
+              onClick={() => props.onChange(null, '')}
+            />
+          </Show>
+        }
+      />
+      {/* Mounted only while choosing: the form this sits in (often a dialog
+          itself) shouldn't carry a closed search, and its buttons, inside it. */}
+      <Show when={choosing()}>
+        <PatientSearchDialog
+          open
+          storeId={props.storeId}
+          title={label()}
+          changingFrom={props.name || undefined}
+          onClose={() => setChoosing(false)}
+          onChoose={patient => {
+            setChoosing(false);
+            if (patient.id !== props.id)
+              props.onChange(patient.id, patient.name);
+          }}
+        />
+      </Show>
+    </>
+  );
 };
-
-/** The next of kin, picked from the store's patients. */
-export const NextOfKinControl = (props: NextOfKinControlProps): JSX.Element => (
-  <PatientSearch
-    label={props.label ?? t('label.next-of-kin')}
-    storeId={props.storeId}
-    disabled={props.disabled}
-    selected={nextOfKinOption(props.id, props.name)}
-    onSelect={patient => {
-      if (patient?.id === NAME_ONLY_NEXT_OF_KIN) return;
-      props.onChange(patient?.id ?? null, patient?.name ?? '');
-    }}
-  />
-);
 
 export interface DeceasedControlsProps {
   isDeceased: boolean;

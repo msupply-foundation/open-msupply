@@ -167,6 +167,13 @@
   flex: 1;
 }
 
+/* Without its illustration (emptyGraphic={false}) the empty state is one line
+   of text, so it needs only a little room, not the full empty state's height. */
+.emptyBody[data-plain] > * {
+  min-block-size: 0;
+  padding-block: var(--space-6);
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;

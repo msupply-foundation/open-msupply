@@ -23,7 +23,7 @@ export interface PatientDocumentFormViewProps {
  * contributes for the store's patient document type, else the host's default
  * patient form, with the version notice, the values a migration kept and the
  * error summary; a spinner until the form library is in. The Details tab
- * shows a patient's document in it, and the create wizard's last step a new
+ * shows a patient's document in it, and the create form a new
  * one.
  */
 /*

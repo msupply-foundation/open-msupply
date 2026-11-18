@@ -21,6 +21,8 @@ export {
   CreatePatientModal,
   type CreatePatientModalProps,
 } from './list/CreatePatientModal';
+export { ChoosePatient, type ChoosePatientProps } from './list/ChoosePatient';
+export { PatientField, type PatientFieldProps } from './list/PatientField';
 
 // Dispensary-mode gate (spec/patients OMS-REG-DIS-01.49): the whole patient
 // surface is reachable only in dispensary mode. The Dispensary nav group is
