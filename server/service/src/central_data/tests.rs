@@ -13,13 +13,15 @@ use crate::{
 };
 use chrono::NaiveDate;
 use repository::{
-    CurrencyRow, CurrencyRowRepository, ItemRow, ItemRowRepository, ItemType, ItemVariantRow,
-    ItemVariantRowRepository, KeyType, KeyValueStoreRepository, LanguageType, LocationTypeRow,
-    LocationTypeRowRepository, RequisitionLineRow, RequisitionLineRowRepository, StorageConnection,
-    UnitRow, UnitRowRepository, UserAccountRow, UserAccountRowRepository, UserStoreJoinRow,
+    CurrencyRow, CurrencyRowRepository, InvoiceRow, InvoiceRowRepository, ItemRow,
+    ItemRowRepository, ItemType, ItemVariantRow, ItemVariantRowRepository, KeyType,
+    KeyValueStoreRepository, LanguageType, LocationTypeRow, LocationTypeRowRepository,
+    RequisitionLineRow, RequisitionLineRowRepository, StorageConnection, UnitRow,
+    UnitRowRepository, UserAccountRow, UserAccountRowRepository, UserStoreJoinRow,
     UserStoreJoinRowRepository, VENCategory,
     mock::{
-        MockDataInserts, mock_draft_request_requisition_line, mock_item_a_variant_1, mock_store_a,
+        MockDataInserts, mock_draft_request_requisition_line, mock_item_a_variant_1,
+        mock_outbound_shipment_a, mock_store_a,
     },
     test_db::setup_all,
 };
@@ -2432,6 +2434,61 @@ async fn a_server_with_no_home_currency_must_be_given_one() {
             .len(),
         2
     );
+}
+
+// covers: OMS-REG-CDIO-01.119
+
+#[actix_rt::test]
+async fn a_home_currency_an_invoice_uses_stays_the_home_currency() {
+    let (_, connection, connection_manager, _) = setup_all(
+        "central_data_currency_home_in_use",
+        MockDataInserts::none().names().stores(),
+    )
+    .await;
+    let repo = CurrencyRowRepository::new(&connection);
+    repo.upsert_one(&usd()).unwrap();
+    repo.upsert_one(&nzd()).unwrap();
+    InvoiceRowRepository::new(&connection)
+        .upsert_one(&InvoiceRow {
+            currency_id: Some("usd".to_string()),
+            ..mock_outbound_shipment_a()
+        })
+        .unwrap();
+    let ctx = ServiceProvider::new(connection_manager)
+        .basic_context()
+        .unwrap();
+    let dir = TempDir::new().unwrap();
+
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![
+            currency_row(["", "NZD", "1", "TRUE", "", ""]),
+            currency_row(["", "USD", "0.6", "FALSE", "", ""]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(
+        row_errors(&summary)[0],
+        (
+            3,
+            Some("is_home_currency"),
+            "USD is used by an invoice as the home currency, so it must stay the home currency"
+        )
+    );
+    assert_eq!(find_currency(&connection, "usd"), Some(usd()));
+    assert_eq!(find_currency(&connection, "nzd"), Some(nzd()));
+
+    // A sheet that leaves USD the home currency imports.
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![currency_row(["", "NZD", "1.7", "", "", ""])]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
 }
 
 // covers: OMS-REG-CDIO-01.113

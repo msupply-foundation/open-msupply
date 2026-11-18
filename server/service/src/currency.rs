@@ -1,6 +1,6 @@
 use repository::{
     Currency, CurrencyFilter, CurrencyRepository, CurrencyRow, CurrencyRowRepository, CurrencySort,
-    EqualFilter, RepositoryError, StorageConnection, trim_spaces,
+    CurrencyUser, EqualFilter, RepositoryError, StorageConnection, trim_spaces,
 };
 
 use crate::{ListError, ListResult, i64_to_u32, service_provider::ServiceContext};
@@ -54,6 +54,8 @@ pub enum UpsertCurrencyError {
     },
     /// It's the only home currency, and there must be one.
     HomeCurrencyRequired,
+    /// Records are valued in it as the home currency, so it must stay the home currency.
+    HomeCurrencyInUse(CurrencyUser),
     /// Another active currency has the code, which would make lookups by code ambiguous.
     DuplicateCode {
         other_id: String,
@@ -170,6 +172,12 @@ fn validate(
     {
         return Err(UpsertCurrencyError::HomeCurrencyTaken { home });
     }
+    if was_home
+        && !currency.is_home_currency
+        && let Some(user) = repo.used_by(&currency.id)?
+    {
+        return Err(UpsertCurrencyError::HomeCurrencyInUse(user));
+    }
     if check_home
         && was_home
         && !currency.is_home_currency
@@ -198,7 +206,11 @@ fn validate(
 mod tests {
     use super::*;
     use chrono::NaiveDate;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        PurchaseOrderRow, PurchaseOrderRowRepository,
+        mock::{MockDataInserts, mock_purchase_order_a},
+        test_db::setup_all,
+    };
 
     /// The importing user's date, pinned so a run across midnight can't change it.
     fn today() -> NaiveDate {
@@ -333,6 +345,40 @@ mod tests {
             today(),
         )
         .unwrap();
+    }
+
+    #[actix_rt::test]
+    async fn a_home_currency_records_are_valued_in_stays_the_home_currency() {
+        let (_, connection, _, _) = setup_all(
+            "upsert_currency_home_in_use",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+        let usd = currency("usd", "USD", true, true);
+        upsert_currency(&connection, &usd, today()).unwrap();
+        PurchaseOrderRowRepository::new(&connection)
+            .upsert_one(&PurchaseOrderRow {
+                currency_id: Some("usd".to_string()),
+                ..mock_purchase_order_a()
+            })
+            .unwrap();
+
+        // Even in a batch that gives another the home currency.
+        upsert_currency_leaving_home(&connection, &currency("nzd", "NZD", true, true), today())
+            .unwrap();
+        assert_eq!(
+            upsert_currency_leaving_home(
+                &connection,
+                &currency("usd", "USD", false, true),
+                today()
+            ),
+            Err(UpsertCurrencyError::HomeCurrencyInUse(
+                CurrencyUser::PurchaseOrder
+            ))
+        );
+        // Its other columns can still change.
+        upsert_currency_leaving_home(&connection, &currency("usd", "USD", true, true), today())
+            .unwrap();
     }
 
     #[actix_rt::test]

@@ -8,7 +8,9 @@ use super::{
 };
 use crate::currency::{UpsertCurrencyError, home_currencies, upsert_currency_leaving_home};
 use chrono::NaiveDate;
-use repository::{CurrencyRow, CurrencyRowRepository, RepositoryError, StorageConnection};
+use repository::{
+    CurrencyRow, CurrencyRowRepository, CurrencyUser, RepositoryError, StorageConnection,
+};
 use util::uuid::uuid;
 
 const ID: &str = "id";
@@ -274,6 +276,19 @@ fn upsert_failure(row: &Row, currency: &CurrencyRow, error: UpsertCurrencyError)
             .error(
                 IS_HOME_CURRENCY,
                 format!("{} is the home currency", home.code),
+            )
+            .into(),
+        UpsertCurrencyError::HomeCurrencyInUse(user) => row
+            .error(
+                IS_HOME_CURRENCY,
+                format!(
+                    "{} is used by {} as the home currency, so it must stay the home currency",
+                    currency.code,
+                    match user {
+                        CurrencyUser::Invoice => "an invoice",
+                        CurrencyUser::PurchaseOrder => "a purchase order",
+                    }
+                ),
             )
             .into(),
         UpsertCurrencyError::HomeCurrencyRequired => row
