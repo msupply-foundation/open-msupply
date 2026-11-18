@@ -250,7 +250,7 @@ describe('fillableBatches', () => {
     expect(batches.map(b => b.id)).toEqual(['usable']);
   });
 
-  it('OMS-REG-DIS-12.196, .197: under sort by VVM status then expiry, takes the better VVM status first', () => {
+  it('OMS-REG-DIS-12.196: under sort by VVM status then expiry, takes the better VVM status first', () => {
     const batches = fillableBatches(
       item('a', [
         batch('sooner-worse', {
