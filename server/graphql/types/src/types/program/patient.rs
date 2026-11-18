@@ -27,7 +27,7 @@ use super::program_enrolment::{
     ProgramEnrolmentConnector, ProgramEnrolmentFilterInput, ProgramEnrolmentResponse,
 };
 
-#[derive(InputObject, Clone)]
+#[derive(InputObject, Clone, Default)]
 pub struct PatientFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub name: Option<StringFilterInput>,
@@ -43,6 +43,8 @@ pub struct PatientFilterInput {
     pub country: Option<StringFilterInput>,
     pub email: Option<StringFilterInput>,
     pub identifier: Option<StringFilterInput>,
+    /// Matches the code or the secondary code (code 2)
+    pub code_or_code_2: Option<StringFilterInput>,
     pub date_of_death: Option<DateFilterInput>,
     pub program_enrolment_name: Option<StringFilterInput>,
     pub next_of_kin_name: Option<StringFilterInput>,
@@ -57,8 +59,12 @@ impl From<PatientFilterInput> for PatientFilter {
     fn from(f: PatientFilterInput) -> Self {
         // The patient list and pickers never show a store's unnamed patient
         // (spec/prescriptions rules › the unnamed patient); a lookup by id
-        // still finds it.
-        let exclude_unnamed = f.id.is_none();
+        // still finds it. Only an exact lookup counts: `notEqualTo` or
+        // `notEqualAll` on the id still lists everyone else.
+        let exclude_unnamed = !f
+            .id
+            .as_ref()
+            .is_some_and(|id| id.equal_to.is_some() || id.equal_any.is_some());
         PatientFilter {
             id: f.id.map(EqualFilter::from),
             name: f.name.map(StringFilter::from),
@@ -74,6 +80,7 @@ impl From<PatientFilterInput> for PatientFilter {
             country: f.country.map(StringFilter::from),
             email: f.email.map(StringFilter::from),
             identifier: f.identifier.map(StringFilter::from),
+            code_or_code_2: f.code_or_code_2.map(StringFilter::from),
             date_of_death: f.date_of_death.map(DateFilter::from),
             program_enrolment_name: f.program_enrolment_name.map(StringFilter::from),
             next_of_kin_name: f.next_of_kin_name.map(StringFilter::from),
@@ -83,6 +90,16 @@ impl From<PatientFilterInput> for PatientFilter {
             dynamic_filter: None,
             exclude_unnamed,
         }
+    }
+}
+
+/// The filter `patients` reads with. With no filter at all, a store's unnamed
+/// patient is still left out, as it is from any filter that doesn't look it
+/// up by id.
+pub fn patients_query_filter(input: Option<PatientFilterInput>) -> PatientFilter {
+    match input {
+        Some(input) => PatientFilter::from(input),
+        None => PatientFilter::new().exclude_unnamed(),
     }
 }
 
@@ -363,5 +380,62 @@ impl PatientNode {
             total_count: result.count,
             nodes,
         }))
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use graphql_core::generic_filters::EqualFilterStringInput;
+
+    use super::*;
+
+    fn id_filter(id: EqualFilterStringInput) -> Option<PatientFilterInput> {
+        Some(PatientFilterInput {
+            id: Some(id),
+            ..Default::default()
+        })
+    }
+
+    fn id_input() -> EqualFilterStringInput {
+        EqualFilterStringInput {
+            equal_to: None,
+            equal_any: None,
+            not_equal_to: None,
+            equal_any_or_null: None,
+            not_equal_all: None,
+        }
+    }
+
+    // OMS-REG-DIS-12.208: `patients` leaves every unnamed patient out unless
+    // its filter looks one up by id (contract › the unnamed patient)
+    #[test]
+    fn patients_leaves_out_the_unnamed_patient_unless_looked_up_by_id() {
+        // No filter at all, as the old screens' export sends
+        assert!(patients_query_filter(None).exclude_unnamed);
+        // A filter that names no id
+        assert!(patients_query_filter(Some(PatientFilterInput::default())).exclude_unnamed);
+        // Ids that exclude rather than look up still list everyone else
+        assert!(
+            patients_query_filter(id_filter(EqualFilterStringInput {
+                not_equal_to: Some("a".to_string()),
+                ..id_input()
+            }))
+            .exclude_unnamed
+        );
+        // A lookup by id finds it
+        assert!(
+            !patients_query_filter(id_filter(EqualFilterStringInput {
+                equal_to: Some("unnamed_patient_store_a".to_string()),
+                ..id_input()
+            }))
+            .exclude_unnamed
+        );
+        assert!(
+            !patients_query_filter(id_filter(EqualFilterStringInput {
+                equal_any: Some(vec!["unnamed_patient_store_a".to_string()]),
+                ..id_input()
+            }))
+            .exclude_unnamed
+        );
     }
 }

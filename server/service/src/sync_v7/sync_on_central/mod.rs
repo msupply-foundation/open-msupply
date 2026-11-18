@@ -5,9 +5,10 @@ use std::{
 
 use chrono::Utc;
 use repository::{
-    ChangelogCondition, ChangelogFilter, EqualFilter, KeyType, KeyValueStoreRepository, Pagination,
-    PatientFilter, RepositoryError, SiteFilter, SiteRepository, SiteRow, SiteRowRepository,
-    SourceSiteId, StorageConnection, SyncBufferRepository, SyncVersion, is_unnamed_patient_id,
+    ChangelogCondition, ChangelogFilter, EqualFilter, KeyType, KeyValueStoreRepository,
+    NameRowRepository, Pagination, PatientFilter, PatientRepository, PatientSort, PatientSortField,
+    RepositoryError, SiteFilter, SiteRepository, SiteRow, SiteRowRepository, SourceSiteId,
+    StorageConnection, SyncBufferRepository, SyncVersion, is_unnamed_patient_id,
     migrations::Version,
     syncv7::{SiteLockError, SyncError},
 };
@@ -485,26 +486,91 @@ pub async fn patient_search(
     tokio::task::spawn_blocking(move || {
         let (_, ctx) = validate_unpaused(&service_provider, &common)?;
 
+        let patient_search::Input {
+            filter,
+            limit,
+            offset,
+        } = input;
         // Whatever the remote sent, central's search never returns a store's
         // unnamed patient (spec/prescriptions rules › the unnamed patient):
         // an older remote doesn't know to ask.
         let filter = PatientFilter {
             exclude_unnamed: true,
-            ..input
+            ..filter
         };
-        let results =
-            service_provider
-                .patient_service
-                .get_patients(&ctx, None, Some(filter), None, None)?;
 
-        Ok(results
-            .rows
-            .into_iter()
-            .map(name_row_to_patient_v4)
-            .collect())
+        let rows = match limit {
+            // A page: name order, then date of birth (ties broken by id, so
+            // pages don't overlap),
+            // and no count — the remote asks for one more than it shows to
+            // know whether there are more.
+            // Central has every site's patients, so a broad search can match
+            // millions, and sorting them is the slow part: the pages only
+            // cover the first SEARCH_MATCH_CAP found (PatientRepository::query_capped).
+            Some(limit) => PatientRepository::new(&ctx.connection).query_capped(
+                Pagination {
+                    limit,
+                    offset: offset.unwrap_or(0),
+                },
+                Some(filter),
+                Some(PatientSort {
+                    key: PatientSortField::Name,
+                    desc: None,
+                }),
+                None,
+                PatientRepository::SEARCH_MATCH_CAP,
+            )?,
+            // A remote from before the page was added, which shows every match
+            // it gets: at most SEARCH_MATCH_CAP of them, unsorted and
+            // uncounted, as a broad search would otherwise read and send
+            // millions.
+            None => PatientRepository::new(&ctx.connection).query(
+                Pagination {
+                    limit: PatientRepository::SEARCH_MATCH_CAP,
+                    offset: 0,
+                },
+                Some(filter),
+                None,
+                None,
+            )?,
+        };
+
+        Ok(patients_v4(&ctx.connection, rows)?)
     })
     .await
     .map_err(join_error)?
+}
+
+/// The patients central's search returns. A next of kin linked to a name shows
+/// as that name, as on the patient node.
+fn patients_v4(
+    connection: &StorageConnection,
+    rows: Vec<repository::NameRow>,
+) -> Result<Vec<PatientV4>, RepositoryError> {
+    let ids: Vec<String> = rows
+        .iter()
+        .filter_map(|row| row.next_of_kin_id.clone())
+        .collect();
+    let next_of_kin_names: HashMap<String, String> = NameRowRepository::new(connection)
+        .find_many_by_id(&ids)?
+        .into_iter()
+        .map(|row| (row.id, row.name))
+        .collect();
+
+    Ok(rows
+        .into_iter()
+        .map(|row| {
+            let linked_name = row
+                .next_of_kin_id
+                .as_ref()
+                .and_then(|id| next_of_kin_names.get(id).cloned());
+            let mut patient = name_row_to_patient_v4(row);
+            if linked_name.is_some() {
+                patient.next_of_kin_name = linked_name;
+            }
+            patient
+        })
+        .collect())
 }
 
 fn name_row_to_patient_v4(name: repository::NameRow) -> PatientV4 {
@@ -520,6 +586,8 @@ fn name_row_to_patient_v4(name: repository::NameRow) -> PatientV4 {
         gender: name.gender,
         code_2: name.national_health_number,
         is_deceased: name.is_deceased,
+        address1: name.address1,
+        next_of_kin_name: name.next_of_kin_name,
     }
 }
 
@@ -1353,6 +1421,217 @@ mod tests {
         .unwrap();
 
         assert_eq!(batch.records.len(), 0);
+    }
+
+    #[actix_rt::test]
+    async fn patient_search_returns_address_and_next_of_kin() {
+        use repository::{NameRow, NameRowRepository, NameRowType, PatientFilter, StringFilter};
+
+        let (
+            ServiceTestContext {
+                service_provider,
+                connection,
+                ..
+            },
+            common,
+        ) = setup("sync_v7_patient_search_fields").await;
+
+        let repo = NameRowRepository::new(&connection);
+        repo.upsert_one(&NameRow {
+            id: "kin".to_string(),
+            name: "Koné, Awa".to_string(),
+            code: "KIN-1".to_string(),
+            r#type: NameRowType::Patient,
+            ..Default::default()
+        })
+        .unwrap();
+        repo.upsert_one(&NameRow {
+            id: "linked".to_string(),
+            name: "Traoré, Moussa".to_string(),
+            code: "SEARCH-1".to_string(),
+            phone: Some("555 0100".to_string()),
+            address1: Some("12 Rue du Marché".to_string()),
+            next_of_kin_id: Some("kin".to_string()),
+            next_of_kin_name: Some("stale text".to_string()),
+            r#type: NameRowType::Patient,
+            ..Default::default()
+        })
+        .unwrap();
+        repo.upsert_one(&NameRow {
+            id: "text_only".to_string(),
+            name: "Traoré, Fanta".to_string(),
+            code: "SEARCH-2".to_string(),
+            next_of_kin_name: Some("Ibrahim Traoré".to_string()),
+            r#type: NameRowType::Patient,
+            ..Default::default()
+        })
+        .unwrap();
+
+        let search = |limit: Option<u32>| patient_search::Input {
+            filter: PatientFilter::new().code(StringFilter::starts_with("search-")),
+            limit,
+            offset: None,
+        };
+
+        // A page (this version's remotes)
+        let patients = patient_search(service_provider.clone(), common.clone(), search(Some(10)))
+            .await
+            .unwrap();
+        let linked = patients.iter().find(|p| p.id == "linked").unwrap();
+        assert_eq!(linked.phone, "555 0100");
+        assert_eq!(linked.address1.as_deref(), Some("12 Rue du Marché"));
+        assert_eq!(linked.next_of_kin_name.as_deref(), Some("Koné, Awa"));
+        let text_only = patients.iter().find(|p| p.id == "text_only").unwrap();
+        assert_eq!(
+            text_only.next_of_kin_name.as_deref(),
+            Some("Ibrahim Traoré")
+        );
+
+        // No page (an older remote): every match, with the same lookup
+        let patients = patient_search(service_provider, common, search(None))
+            .await
+            .unwrap();
+        assert_eq!(patients.len(), 2);
+        let linked = patients.iter().find(|p| p.id == "linked").unwrap();
+        assert_eq!(linked.next_of_kin_name.as_deref(), Some("Koné, Awa"));
+    }
+
+    #[actix_rt::test]
+    async fn patient_search_pages_in_name_then_date_of_birth_order() {
+        use chrono::NaiveDate;
+        use repository::{NameRow, NameRowRepository, NameRowType, PatientFilter, StringFilter};
+
+        let (
+            ServiceTestContext {
+                service_provider,
+                connection,
+                ..
+            },
+            common,
+        ) = setup("sync_v7_patient_search_paging").await;
+
+        let repo = NameRowRepository::new(&connection);
+        let patient = |id: &str, name: &str, born: Option<(i32, u32, u32)>| NameRow {
+            id: id.to_string(),
+            name: name.to_string(),
+            code: format!("PAGE-{id}"),
+            date_of_birth: born.map(|(y, m, d)| NaiveDate::from_ymd_opt(y, m, d).unwrap()),
+            r#type: NameRowType::Patient,
+            ..Default::default()
+        };
+        for row in [
+            patient("d1990", "Diallo, Awa", Some((1990, 1, 1))),
+            patient("camara", "Camara, Ibou", None),
+            patient("d1980", "diallo, awa", Some((1980, 1, 1))),
+            patient("bah", "Bah, Sira", None),
+        ] {
+            repo.upsert_one(&row).unwrap();
+        }
+
+        let page = |offset: Option<u32>| patient_search::Input {
+            filter: PatientFilter::new().code(StringFilter::starts_with("page-")),
+            limit: Some(2),
+            offset,
+        };
+        let ids = |patients: Vec<PatientV4>| -> Vec<String> {
+            patients.into_iter().map(|p| p.id).collect()
+        };
+
+        let first = patient_search(service_provider.clone(), common.clone(), page(None))
+            .await
+            .unwrap();
+        assert_eq!(ids(first), ["bah", "camara"]);
+        // Namesakes, ignoring case, in date of birth order
+        let second = patient_search(service_provider, common, page(Some(2)))
+            .await
+            .unwrap();
+        assert_eq!(ids(second), ["d1980", "d1990"]);
+    }
+
+    // OMS-REG-DIS-12.208, .211: central's search leaves every store's unnamed
+    // patient out whatever filter the remote sends, and central refuses to
+    // link one, whatever the remote's version
+    #[actix_rt::test]
+    async fn central_never_finds_or_links_a_stores_unnamed_patient() {
+        use repository::{
+            EqualFilter, NameRow, NameRowRepository, NameRowType, NameStoreJoinFilter,
+            NameStoreJoinRepository, PatientFilter, StringFilter, unnamed_patient_id,
+        };
+
+        let (
+            ServiceTestContext {
+                service_provider,
+                connection,
+                ..
+            },
+            common,
+        ) = setup_with(
+            "sync_v7_unnamed_patient",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+
+        let unnamed = unnamed_patient_id(&mock_store_a().id);
+        let repo = NameRowRepository::new(&connection);
+        repo.upsert_one(&NameRow {
+            id: unnamed.clone(),
+            name: "Unnamed patient".to_string(),
+            code: "UNNAMED".to_string(),
+            r#type: NameRowType::Patient,
+            ..Default::default()
+        })
+        .unwrap();
+        repo.upsert_one(&NameRow {
+            id: "registered".to_string(),
+            name: "Unnamed, Ali".to_string(),
+            code: "UNNAMED-2".to_string(),
+            r#type: NameRowType::Patient,
+            ..Default::default()
+        })
+        .unwrap();
+
+        // The filter a site sends, which doesn't ask for it to be left out:
+        // a page (this version's sites) and every match (an older site)
+        for limit in [Some(10), None] {
+            let found = patient_search(
+                service_provider.clone(),
+                common.clone(),
+                patient_search::Input {
+                    filter: PatientFilter::new().code(StringFilter::starts_with("unnamed")),
+                    limit,
+                    offset: None,
+                },
+            )
+            .await
+            .unwrap();
+            let ids: Vec<String> = found.into_iter().map(|patient| patient.id).collect();
+            assert_eq!(ids, ["registered"], "limit {limit:?}");
+        }
+
+        // Linking it to another store is refused, and no link is made
+        let result = patient_data_for_site(
+            service_provider,
+            common,
+            patient_data_for_site::Input {
+                patient_id: unnamed.clone(),
+                store_id: mock_store_b().id,
+                name_store_join_id: "unnamed_join".to_string(),
+            },
+        )
+        .await;
+        match result {
+            Err(SyncError::Other(message)) => assert!(message.contains("unnamed patient")),
+            Err(error) => panic!("refused for the wrong reason: {error:?}"),
+            Ok(_) => panic!("the unnamed patient was linked"),
+        }
+        assert!(
+            NameStoreJoinRepository::new(&connection)
+                .query_by_filter(
+                    NameStoreJoinFilter::new().name_id(EqualFilter::equal_to(unnamed.clone()))
+                )
+                .unwrap()
+                .is_empty()
+        );
     }
 
     #[actix_rt::test]

@@ -110,7 +110,7 @@ describe('seedPatientDocument (a name row, as the first document)', () => {
   });
 });
 
-// The create wizard's last step on the document path (spec/patients › effects
+// The create form on the document path (spec/patients › effects
 // of creation): the first step's fields carried into the new document.
 describe('seedNewPatientDocument', () => {
   const fields = {

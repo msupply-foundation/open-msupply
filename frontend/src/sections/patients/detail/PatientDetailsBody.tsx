@@ -38,6 +38,7 @@ export const PatientDetailsBody: Component<PatientDetailsBodyProps> = props => {
           <PatientDetailsForm
             storeId={props.storeId}
             patientId={props.patientId}
+            seededId={props.details.editor.seededId()}
             draft={props.details.editor.edit}
             setField={props.details.editor.setField}
             disabled={!props.details.editor.canMutate()}

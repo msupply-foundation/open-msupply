@@ -47,4 +47,26 @@ describe('paginationState', () => {
       expect(paginationState(props(14, 40))).toBe('full');
     });
   });
+
+  // A list with no total (too costly to count) says only whether a next page
+  // exists, as `more`.
+  describe('with no total', () => {
+    const noTotal = (more: boolean, offset = 0): PaginationExtent => ({
+      offset,
+      pageSize: 50,
+      more,
+    });
+
+    it('renders nothing on the first page when there is no next', () => {
+      expect(paginationState(noTotal(false))).toBe('hidden');
+    });
+
+    it('appears when there is a next page', () => {
+      expect(paginationState(noTotal(true))).toBe('full');
+    });
+
+    it('stays on a later page, so the way back is there', () => {
+      expect(paginationState(noTotal(false, 50))).toBe('full');
+    });
+  });
 });

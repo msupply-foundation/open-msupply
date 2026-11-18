@@ -2078,7 +2078,6 @@
   "messages.template-download-text": "Не уверены, с чего начать? ",
   "messages.total-breaches": "Всего непризнанных: {{count}}",
   "messages.total-excursions": "Всего отклонений: {{count}}",
-  "messages.type-to-search": "Начните вводить текст для поиска",
   "messages.unassign-min-mos": "Это удалит порог перезаказа запасов. Теперь порог перезаказа по умолчанию будет равен целевому месячному запасу.",
   "messages.under-allocated": "Из-за размера упаковки этой партии количество единиц было обновлено с {{receivedQuantity}} до {{quantity}}",
   "messages.unknown-error": "Неизвестная ошибка",

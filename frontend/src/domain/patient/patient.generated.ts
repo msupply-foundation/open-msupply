@@ -78,6 +78,10 @@ export type CentralPatientSearchVariables = {
     firstName?: string | null;
     lastName?: string | null;
     dateOfBirth?: string | null;
+    dateOfBirthFrom?: string | null;
+    dateOfBirthTo?: string | null;
+    first?: number | null;
+    offset?: number | null;
   };
 };
 
@@ -95,19 +99,21 @@ export type CentralPatientSearchResult = {
   gender: "FEMALE" | "MALE" | "TRANSGENDER" | "TRANSGENDER_MALE" | "TRANSGENDER_MALE_HORMONE" | "TRANSGENDER_MALE_SURGICAL" | "TRANSGENDER_FEMALE" | "TRANSGENDER_FEMALE_HORMONE" | "TRANSGENDER_FEMALE_SURGICAL" | "UNKNOWN" | "NON_BINARY" | null;
   dateOfBirth: string | null;
   isDeceased: boolean;
+  address1: string | null;
+  phone: string | null;
 }>;
 }) | ({
   __typename: "CentralPatientSearchError";
 } & {
   error: {
-  __typename: "ConnectionError";
+  __typename: "CentralServerNoAnswer" | "ConnectionError";
   description: string;
 };
 });
 };
 
 export const CentralPatientSearch = {
-  query: "query centralPatientSearch($storeId: String!, $input: CentralPatientSearchInput!) {\n  centralPatientSearch(storeId: $storeId, input: $input) {\n    __typename\n    ... on CentralPatientSearchConnector {\n      totalCount\n      nodes {\n        id\n        code\n        code2\n        firstName\n        lastName\n        gender\n        dateOfBirth\n        isDeceased\n      }\n    }\n    ... on CentralPatientSearchError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}",
+  query: "query centralPatientSearch($storeId: String!, $input: CentralPatientSearchInput!) {\n  centralPatientSearch(storeId: $storeId, input: $input) {\n    __typename\n    ... on CentralPatientSearchConnector {\n      totalCount\n      nodes {\n        id\n        code\n        code2\n        firstName\n        lastName\n        gender\n        dateOfBirth\n        isDeceased\n        address1\n        phone\n      }\n    }\n    ... on CentralPatientSearchError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}",
 } as TypedDocument<CentralPatientSearchResult, CentralPatientSearchVariables>;
 
 export type LinkPatientToStoreVariables = {

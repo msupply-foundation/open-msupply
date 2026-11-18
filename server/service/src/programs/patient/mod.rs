@@ -51,6 +51,18 @@ pub trait PatientServiceTrait: Sync + Send {
         get_patients(ctx, pagination, filter, sort, allowed_ctx)
     }
 
+    fn get_patients_with_count_limit(
+        &self,
+        ctx: &ServiceContext,
+        pagination: Option<PaginationOption>,
+        filter: Option<PatientFilter>,
+        sort: Option<PatientSort>,
+        allowed_ctx: Option<&[String]>,
+        count_limit: Option<u32>,
+    ) -> Result<ListResult<Patient>, RepositoryError> {
+        get_patients_with_count_limit(ctx, pagination, filter, sort, allowed_ctx, count_limit)
+    }
+
     fn upsert_program_patient(
         &self,
         ctx: &ServiceContext,

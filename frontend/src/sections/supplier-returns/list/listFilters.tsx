@@ -126,6 +126,7 @@ export const createFilters = (
     colour: null,
     onHold: null,
     isProgramInvoice: null,
+    isForUnnamedPatient: null,
     // Datetime ranges — no styled date-range filter control yet (same deferral
     // as the reference vertical's stocktakeDate).
     createdDatetime: null,

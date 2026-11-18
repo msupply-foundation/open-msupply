@@ -2573,7 +2573,6 @@
   "messages.total-breaches": "Total não reconhecido: {{count}}",
   "messages.total-excursions": "Total de variações: {{count}}",
   "messages.translations-loaded": "Traduções carregadas — clique em 'Salvar' para aplicar",
-  "messages.type-to-search": "Comece a digitar para buscar",
   "messages.unassign-min-mos": "Isto removerá o ponto de reordenação de estoque. O ponto de reordenação será definido como o mesmo que os meses de estoque alvo.",
   "messages.under-allocated": "Devido ao tamanho do pacote deste lote, a quantidade unitária foi atualizada de {{receivedQuantity}} para {{quantity}}",
   "messages.unknown-error": "Erro desconhecido",

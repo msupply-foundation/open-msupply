@@ -147,6 +147,7 @@ export type CustomerReturnLinesVariables = {
     itemCodeOrName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     type?: {
     equalTo?: "STOCK_IN" | "STOCK_OUT" | "UNALLOCATED_STOCK" | "SERVICE" | null;
@@ -217,6 +218,7 @@ export type CustomerReturnLinesVariables = {
     batch?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     expiryDate?: {
     equalTo?: string | null;
@@ -226,6 +228,7 @@ export type CustomerReturnLinesVariables = {
     locationCode?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     manufactureDate?: {
     equalTo?: string | null;
