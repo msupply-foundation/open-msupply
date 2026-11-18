@@ -12136,6 +12136,7 @@ export type StocktakeLineFilterInput = {
   campaignId?: InputMaybe<EqualFilterStringInput>;
   campaignName?: InputMaybe<StringFilterInput>;
   donorId?: InputMaybe<EqualFilterStringInput>;
+  expiryDate?: InputMaybe<DateFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   itemCodeOrName?: InputMaybe<StringFilterInput>;
   itemId?: InputMaybe<EqualFilterStringInput>;
