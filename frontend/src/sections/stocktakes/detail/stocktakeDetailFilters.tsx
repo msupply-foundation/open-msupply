@@ -25,11 +25,11 @@ import type { StocktakeLineFilter } from './stocktakeLineFilter';
 // `expiryDate` (a date range over the line's expiry) and `campaignId` (the
 // line's Activity), all addable chips in the table toolbar's FilterBar — the
 // same filter-chip model as the list. The batch filter the OLD client-side
-// filter offered is a TODO below. The "show
-// error lines" filter IS built, but it doesn't belong here: it's a boolean
-// toggle over the view's transient error id-set, not a wire-filter key the
-// user types into, so it rides FilterBar's `extra` group in
-// StocktakeLineFilters.tsx (resolved to `id.equalAny` at query time).
+// filter offered is a TODO below. The "show error lines" filter IS built, but
+// it doesn't belong here: it's a boolean toggle over the view's transient
+// error id-set, not a wire-filter key the user types into, so it rides
+// FilterBar's `extra` group in StocktakeLineFilters.tsx (resolved to
+// `id.equalAny` at query time).
 // The location filter uses the plain, VOLUME-BLIND picker: it only narrows the
 // line list to a location, so capacity is irrelevant (spec/stocktakes/
 // ui-surface.md). The locations are fetched by the detail VIEW (one fetch,
