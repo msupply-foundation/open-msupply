@@ -85,7 +85,10 @@ fn map_result(
                 CentralPatientRequestError::InternalError(_) => {
                     StandardGraphqlError::InternalError(formatted_error)
                 }
-                CentralPatientRequestError::ConnectionError(_) => {
+                // Linking doesn't use the on-screen time limit, so no answer
+                // only comes from a search, but it reads the same here
+                CentralPatientRequestError::ConnectionError(_)
+                | CentralPatientRequestError::NoAnswer(_) => {
                     return Ok(LinkPatientToStoreResponse::Error(
                         LinkPatientPatientToStoreError {
                             error: LinkPatientToStoreErrorInterface::ConnectionError(

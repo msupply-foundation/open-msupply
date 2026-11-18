@@ -1,6 +1,4 @@
-export { PatientSearch, type PatientSearchProps } from './PatientSearch';
 export {
-  patientSearchPageFetcher,
   searchLocalPatients,
   searchCentralPatients,
   fetchPatientOptionById,
@@ -17,4 +15,9 @@ export {
   type Gender,
   type GenderOption,
 } from './gender';
+export {
+  PatientSearchDialog,
+  type NewPatientSeed,
+  type PatientSearchDialogProps,
+} from './PatientSearchDialog';
 export { dateOfBirthWithAge } from './age';

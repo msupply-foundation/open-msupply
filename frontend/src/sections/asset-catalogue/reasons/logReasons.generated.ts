@@ -21,6 +21,7 @@ export type AssetLogReasonsVariables = {
     reason?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
   } | null;
   sort?: Array<{

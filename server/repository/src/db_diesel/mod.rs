@@ -101,6 +101,7 @@ mod name_link_row;
 pub mod name_property;
 pub mod name_property_row;
 pub mod name_row;
+pub(crate) mod name_search;
 pub mod name_store_join;
 pub mod name_tag;
 pub mod name_tag_join;

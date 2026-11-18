@@ -296,7 +296,7 @@ export const HeaderShowcase = () => {
                 />
               </HeaderField>
               <HeaderButtons>
-                <Button variant="secondary">Standard view</Button>
+                <Button variant="secondary">Dispensing records</Button>
               </HeaderButtons>
             </Header>
             <PageBody />

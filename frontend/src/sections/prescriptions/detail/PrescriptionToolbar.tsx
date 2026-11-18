@@ -1,13 +1,9 @@
-import { createMemo, createSignal, Show, type Component } from 'solid-js';
+import { createSignal, Show, type Component } from 'solid-js';
 import { FormRowItem } from '@/ui/layout/Form/FormRowItem';
 import { t } from '../../../intl';
 import { DateField } from '../../../ui/elements/inputs/DateField';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
-import {
-  PatientSearch,
-  minimalPatientOption,
-  type PatientOption,
-} from '../../../domain/patient';
+import { PatientField } from '../../patients';
 import { ClinicianSelect } from '../../../domain/clinician';
 import { ProgramNameSelect } from '../../../domain/program';
 import { CustomFieldsToolbar } from '../../../domain/customFields';
@@ -106,14 +102,6 @@ export const PrescriptionToolbar: Component<
   // record's own editability gate, never relaxes it.
   const fromRequest = () => props.node.prescriptionRequestId != null;
 
-  // A MEMO, not a getter: it MINTS an option object, so a getter would hand a
-  // new identity to the picker on every read and invalidate everything
-  // downstream that keys off it — including the combobox's own selection sync.
-  const patientOption = createMemo((): PatientOption | undefined => {
-    const patient = props.node.patient;
-    return patient ? minimalPatientOption(patient.id, patient.name) : undefined;
-  });
-
   // The shown day: a pending pick while one awaits confirmation, else the
   // prescription date's LOCAL calendar day.
   const shownDay = () => {
@@ -140,28 +128,18 @@ export const PrescriptionToolbar: Component<
   return (
     <>
       <FormRowItem weight={1.9} minWidth="11rem">
-        <PatientSearch
-          label={t('label.patient')}
-          size="small"
+        {/* A prescription always has a patient: it is changed by choosing
+            another, never emptied (OMS-REG-DIS-03.33). The pencil edits the
+            patient whatever the prescription's own editability. */}
+        <PatientField
           storeId={props.storeId}
-          selected={patientOption()}
+          size="small"
+          testId="prescription-patient"
+          patient={props.node.patient ?? undefined}
           disabled={props.disabled || fromRequest()}
-          // No clear affordance: a prescription always HAS a patient, so the
-          // field is never nullable — it is changed by picking another, never
-          // emptied (ui-standards/controls § clearability follows optionality,
-          // D5; the current app's patient input is likewise not clearable).
-          clearable={false}
-          // The picker's edit-patient affordance (spec/patients S4 allow-edit),
-          // available whatever the prescription's own editability — it edits
-          // the patient, not the prescription (ui-surface S3 § header fields).
-          // Opens the S4 edit modal in place over this screen (#1038), owned by
-          // the detail view alongside its other modals.
           onEditPatient={props.onEditPatient}
-          // A prescription always has a patient: the picker never clears
-          // (null selections are ignored), it only swaps (OMS-REG-DIS-03.33).
-          onSelect={patient =>
-            patient && props.onSave({ patientId: patient.id })
-          }
+          saveLabel={t('button.save-and-dispense')}
+          onChange={patient => props.onSave({ patientId: patient.id })}
         />
       </FormRowItem>
       {/* Clinician and Program keep the row's own 10rem floor. */}

@@ -67,19 +67,23 @@ export type StockLinesVariables = {
     code?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     name?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     isAvailable?: boolean | null;
     itemCodeOrName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     search?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     itemId?: {
     equalTo?: string | null;
@@ -114,14 +118,17 @@ export type StockLinesVariables = {
     name?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     code?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     codeOrName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     onHold?: boolean | null;
     assignedToAsset?: boolean | null;
@@ -158,18 +165,22 @@ export type StockLinesVariables = {
     name?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     code?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     description?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     existsForName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     existsForNameId?: {
     equalTo?: string | null;
