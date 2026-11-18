@@ -106,7 +106,7 @@ impl SessionStore {
 
     /// Remove all sessions for a user (e.g. password change, admin force-logout).
     pub fn revoke_all_for_user(&mut self, user_id: &str) {
-        self.sessions.retain(|_, entry| entry.user_id != user_id);
+        self.revoke_all_for_user_except(user_id, None);
     }
 
     /// As `revoke_all_for_user`, but keeps the session `keep`, such as the request's own when a
