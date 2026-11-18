@@ -111528,6 +111528,31 @@
    "patient_id": null,
    "reference_id": null,
    "is_integrated": false
+  },
+  {
+   "cursor": 3369,
+   "record_id": "dispensing_screen_e2e_demo_store",
+   "received_datetime": "2026-11-17T00:00:00",
+   "integration_started_datetime": null,
+   "integration_datetime": null,
+   "integration_error": null,
+   "integration_result": null,
+   "table_name": "preference",
+   "action": "Upsert",
+   "data": {
+    "id": "dispensing_screen_e2e_demo_store",
+    "key": "dispensing_screen",
+    "value": "\"SIMPLE\"",
+    "store_id": "e2e_demo_store"
+   },
+   "sync_version": "V7",
+   "app_version": null,
+   "source_site_id": 6,
+   "store_id": "e2e_demo_store",
+   "transfer_store_id": null,
+   "patient_id": null,
+   "reference_id": null,
+   "is_integrated": false
   }
  ],
  "users": [],

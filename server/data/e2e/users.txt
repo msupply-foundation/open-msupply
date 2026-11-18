@@ -9,3 +9,4 @@ assetclerk:pass
 poclerk:pass
 poviewer:pass
 demo:pass
+vaxreader:pass
