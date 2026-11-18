@@ -18,6 +18,13 @@ pub struct Sheet {
     pub rows: Vec<SheetRow>,
 }
 
+impl Sheet {
+    /// Nothing in it but blanks, such as cells holding only spaces.
+    pub fn is_empty(&self) -> bool {
+        self.rows.is_empty() && self.headers.iter().all(String::is_empty)
+    }
+}
+
 pub struct SheetRow {
     /// As Excel shows it.
     pub number: u32,

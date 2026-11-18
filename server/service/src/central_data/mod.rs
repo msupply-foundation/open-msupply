@@ -614,6 +614,7 @@ fn sheet_for<'a>(
 ) -> Option<&'a sheet::Sheet> {
     sheets
         .iter()
+        .filter(|sheet| !sheet.is_empty())
         .find(|sheet| find_table(sheet).is_some_and(|found| found.table() == table.table()))
 }
 
@@ -627,7 +628,7 @@ fn import_sheets<'a>(
     let mut summary = ImportSummary::new(errors_listed);
 
     for sheet in sheets {
-        if find_table(sheet).is_none() && !sheet.headers.is_empty() {
+        if !sheet.is_empty() && find_table(sheet).is_none() {
             let names: Vec<_> = TABLES.iter().map(|t| t.table().sheet_name()).collect();
             summary.add_errors([RowError {
                 sheet: sheet.name.clone(),
@@ -797,7 +798,7 @@ fn errors_file_sheets(sheets: &[sheet::Sheet], errors: &[RowError]) -> Vec<sheet
     sheets
         .iter()
         .map(|sheet| {
-            let table = find_table(sheet).filter(|_| !sheet.headers.is_empty());
+            let table = find_table(sheet).filter(|_| !sheet.is_empty());
             let kept: Vec<usize> = (0..sheet.headers.len())
                 .filter(|&position| table.is_none() || sheet.headers[position] != ERROR_COLUMN)
                 .collect();

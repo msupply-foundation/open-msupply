@@ -564,6 +564,37 @@ async fn misspelt_columns_unknown_sheets_and_repeated_records_are_errors() {
     );
 }
 
+// covers: OMS-REG-CDIO-01.106
+
+#[actix_rt::test]
+async fn a_sheet_with_nothing_in_it_is_ignored() {
+    let (_, _, connection_manager, _) =
+        setup_all("central_data_empty_sheets", MockDataInserts::none()).await;
+    let service_provider = ServiceProvider::new(connection_manager);
+    let ctx = service_provider.basic_context().unwrap();
+    let dir = TempDir::new().unwrap();
+
+    let bytes = sheet::write(vec![
+        sheet_data(
+            "unit",
+            &["name", "index", "is_active"],
+            vec![vec!["Vial".to_string().into(), 7.into(), true.into()]],
+        ),
+        sheet_data("Sheet2", &[], vec![]),
+        // Only spaces, under any name, a table's too.
+        sheet_data("Sheet3", &["   "], vec![]),
+        sheet_data("location_type", &["", "  "], vec![]),
+    ])
+    .unwrap();
+    let path = write_file(dir.path(), bytes);
+
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables, unit_changes(1, 0, 0));
+}
+
 // covers: OMS-REG-CDIO-01.59, .60
 
 #[actix_rt::test]
