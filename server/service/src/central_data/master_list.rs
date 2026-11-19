@@ -3,7 +3,7 @@ use super::{
     SheetImport, SheetStart,
     cells::{Row, RowError, collect, keep_or_saved},
     field_changes,
-    lookup::pick_active_first,
+    lookup::{active_first, find_record},
     sheet::Value,
 };
 use crate::master_list::upsert::{UpsertMasterListError, upsert_master_list};
@@ -93,21 +93,23 @@ impl SheetImport for MasterListSheet {
         let name = row.text(NAME);
 
         let repo = MasterListRowRepository::new(connection);
-        let existing = match (&id, &name) {
-            (Some(id), _) => repo.find_one_by_id(id)?,
-            (None, Some(name)) => {
-                match pick_active_first(repo.find_by_trimmed_name(name)?, |master_list| {
-                    master_list.is_active
-                }) {
-                    Ok(found) => found,
-                    // Without it, the row's other checks would treat it as a new master list.
-                    Err(e) => {
-                        errors.push(row.error(NAME, e.message(name)));
-                        return Err(RowFailure::Invalid(errors));
-                    }
-                }
+        let existing = match find_record(
+            &repo,
+            row,
+            NAME,
+            id.as_deref(),
+            // With an id, the name isn't checked against it: a different name renames the list.
+            name.as_deref().filter(|_| id.is_none()),
+            |saved| &saved.name,
+            // An inactive list doesn't make an active one's name ambiguous.
+            |master_lists| active_first(master_lists, |master_list| master_list.is_active),
+        )? {
+            Ok(existing) => existing,
+            // Without it, the row's other checks would treat it as a new master list.
+            Err(e) => {
+                errors.push(e);
+                return Err(RowFailure::Invalid(errors));
             }
-            (None, None) => None,
         };
         let saved = existing.as_ref();
         // Here, not only in the save, as an unchanged row isn't saved.

@@ -4469,6 +4469,7 @@ dependencies = [
  "actix-rt",
  "actix-web",
  "async-graphql",
+ "chrono",
  "graphql_core",
  "repository",
  "serde_json",

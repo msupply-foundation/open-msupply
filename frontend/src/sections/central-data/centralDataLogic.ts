@@ -47,6 +47,13 @@ export const TABLES: {
     hasStatus: false,
   },
   {
+    value: 'CURRENCY',
+    labelKey: 'label.currencies',
+    sheet: 'currency',
+    searchKey: 'label.code-contains',
+    hasStatus: true,
+  },
+  {
     value: 'USER',
     labelKey: 'label.users',
     sheet: 'user',

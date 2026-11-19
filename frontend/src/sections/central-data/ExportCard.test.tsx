@@ -253,6 +253,23 @@ describe('ExportCard', () => {
     ]);
   });
 
+  it('gives currencies a code search and a Status filter (OMS-REG-CDIO-01.46)', async () => {
+    open();
+    expect(
+      shown.fields['central-data-export-currency-search']!.placeholder
+    ).toBe('label.code-contains');
+
+    shown.checkboxes['central-data-export-currency']!.onChange(true);
+    await settle();
+    shown.selects['central-data-export-currency-status']!.onValueChange(
+      'ACTIVE'
+    );
+    await settle();
+    expect(countRequests().at(-1)).toEqual({
+      tables: [{ table: 'CURRENCY', contains: null, isActive: true }],
+    });
+  });
+
   it('gives items a code-or-name search and a Status filter (OMS-REG-CDIO-01.46)', async () => {
     open();
     expect(shown.fields['central-data-export-item-search']!.placeholder).toBe(

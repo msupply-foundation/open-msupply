@@ -513,7 +513,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
                       >
                         <Spinner sizeRem={1} />
                         <Text variant="bodySmall">
-                          {t('messages.none-here-checking-other-facilities')}
+                          {t('messages.none-here-checking-other-stores')}
                         </Text>
                       </HStack>
                     </Show>
@@ -568,7 +568,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
                         variant="bodySmall"
                         data-testid="duplicate-check-central-pending"
                       >
-                        {t('messages.checking-other-facilities')}
+                        {t('messages.checking-other-stores')}
                       </Text>
                     </Show>
                   </HStack>
@@ -595,7 +595,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
             data-testid="duplicate-check-central-failed"
           >
             <Text variant="bodySmall">
-              {t('messages.other-facilities-not-checked')}
+              {t('messages.other-stores-not-checked')}
             </Text>
             <Button
               variant="ghost"
@@ -622,7 +622,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
         accessor: row =>
           row.where === 'here'
             ? t('label.this-store')
-            : t('label.other-facility'),
+            : t('label.other-store'),
         id: 'where',
       },
       header: () => t('label.where'),

@@ -99,6 +99,7 @@ export type PatientsVariables = {
     startsWith?: string | null;
   } | null;
     dynamicFilter?: unknown | null;
+    isVisible?: boolean | null;
   } | null;
   sort?: Array<{
     key: "name" | "code" | "code2" | "firstName" | "lastName" | "gender" | "dateOfBirth" | "phone" | "address1" | "address2" | "country" | "email" | "dateOfDeath" | "createdDatetime";

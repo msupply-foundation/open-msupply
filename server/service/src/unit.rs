@@ -17,10 +17,6 @@ impl From<RepositoryError> for UpsertUnitError {
     }
 }
 
-pub fn active_first(units: Vec<UnitRow>) -> Vec<UnitRow> {
-    crate::record_key::active_first_by(units, |unit| unit.is_active)
-}
-
 /// Adds or updates one unit. Joins the caller's transaction when there is one, so an import's
 /// earlier rows count.
 pub fn upsert_unit(connection: &StorageConnection, unit: &UnitRow) -> Result<(), UpsertUnitError> {

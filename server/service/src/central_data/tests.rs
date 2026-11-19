@@ -2,21 +2,26 @@ use super::{
     CentralDataService, CentralDataServiceTrait, CentralDataTable, Change, ExportCount,
     ExportError, ExportFilter, ExportTable, FieldChange, ImportError, MAX_IMPORT_ROWS,
     MAX_ROWS_LISTED, OpenSessions, RecordCount, RowChange, TableChanges,
+    cells::RowError,
     sheet::{self, SheetData, Value},
 };
 use crate::{
+    currency::home_currencies,
     service_provider::{ServiceContext, ServiceProvider},
     session_store::SessionStore,
     user_account::UserAccountService,
 };
+use chrono::NaiveDate;
 use repository::{
-    ItemRow, ItemRowRepository, ItemType, ItemVariantRow, ItemVariantRowRepository, KeyType,
+    CurrencyRow, CurrencyRowRepository, InvoiceRow, InvoiceRowRepository, ItemRow,
+    ItemRowRepository, ItemType, ItemVariantRow, ItemVariantRowRepository, KeyType,
     KeyValueStoreRepository, LanguageType, LocationTypeRow, LocationTypeRowRepository,
     MasterListRow, MasterListRowRepository, RequisitionLineRow, RequisitionLineRowRepository,
     StorageConnection, UnitRow, UnitRowRepository, UserAccountRow, UserAccountRowRepository,
     UserStoreJoinRow, UserStoreJoinRowRepository, VENCategory,
     mock::{
-        MockDataInserts, mock_draft_request_requisition_line, mock_item_a_variant_1, mock_store_a,
+        MockDataInserts, mock_draft_request_requisition_line, mock_item_a_variant_1,
+        mock_outbound_shipment_a, mock_store_a,
     },
     test_db::setup_all,
 };
@@ -58,6 +63,11 @@ fn no_sessions() -> OpenSessions {
         store: Default::default(),
         keep: None,
     }
+}
+
+/// The importing user's date, pinned so a run across midnight can't change it.
+fn today() -> NaiveDate {
+    NaiveDate::from_ymd_opt(2026, 11, 18).unwrap()
 }
 
 fn write_file(dir: &Path, bytes: Vec<u8>) -> PathBuf {
@@ -137,7 +147,7 @@ async fn export_then_import_makes_no_changes() {
     let path = write_file(dir.path(), bytes);
 
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.tables, unit_changes(0, 0, 3));
@@ -171,7 +181,7 @@ async fn a_file_that_is_not_a_workbook_is_refused_with_the_readers_reason() {
     refused(CentralDataService.preview_import(&ctx, &path).map(|_| ()));
     refused(
         CentralDataService
-            .import(&ctx, &path, &no_sessions())
+            .import(&ctx, &path, &no_sessions(), today())
             .map(|_| ()),
     );
     refused(
@@ -306,7 +316,12 @@ async fn an_errors_file_keeps_every_row_in_place_and_imports_once_fixed() {
     )])
     .unwrap();
     let summary = CentralDataService
-        .import(&ctx, &write_file(dir.path(), fixed), &no_sessions())
+        .import(
+            &ctx,
+            &write_file(dir.path(), fixed),
+            &no_sessions(),
+            today(),
+        )
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.tables, unit_changes(3, 0, 0));
@@ -449,7 +464,7 @@ async fn one_bad_row_means_nothing_is_applied() {
     let path = write_file(dir.path(), unit_sheet(headers.clone(), rows));
 
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     let errors: Vec<_> = summary
         .errors
@@ -498,7 +513,7 @@ async fn one_bad_row_means_nothing_is_applied() {
     assert_eq!(units_named(&connection, "Vial"), vec![]);
 
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.tables, unit_changes(1, 1, 0));
     assert_eq!(units_named(&connection, "Vial").len(), 1);
@@ -537,7 +552,7 @@ async fn misspelt_columns_unknown_sheets_and_repeated_records_are_errors() {
     let path = write_file(dir.path(), bytes);
 
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     let errors: Vec<_> = summary
         .errors
@@ -589,7 +604,7 @@ async fn a_sheet_with_nothing_in_it_is_ignored() {
     let path = write_file(dir.path(), bytes);
 
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.tables, unit_changes(1, 0, 0));
@@ -668,7 +683,7 @@ async fn an_import_checks_the_file_again_after_its_preview() {
     repo.upsert_one(&saved).unwrap();
 
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.tables, unit_changes(0, 1, 0));
     assert_eq!(repo.find_all().unwrap().len(), 1);
@@ -709,7 +724,7 @@ async fn on_an_update_a_blank_required_cell_keeps_and_a_blank_optional_cell_clea
     );
 
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(
@@ -754,7 +769,7 @@ async fn a_repeated_row_that_changes_nothing_is_not_an_error() {
     );
 
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.tables, unit_changes(0, 1, 3));
@@ -792,7 +807,7 @@ async fn a_name_finds_a_unit_an_earlier_row_adds() {
     );
 
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     let errors: Vec<_> = summary
         .errors
@@ -892,7 +907,7 @@ async fn later_rows_see_a_rename_made_earlier_in_the_file() {
     );
 
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.tables, unit_changes(1, 1, 1));
@@ -933,7 +948,7 @@ async fn a_name_in_another_letter_case_finds_its_unit_and_keeps_the_saved_name()
     );
 
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.tables, unit_changes(0, 1, 0));
@@ -977,7 +992,7 @@ async fn a_name_without_the_saved_names_spaces_finds_its_unit() {
     );
 
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.tables, unit_changes(0, 1, 0));
@@ -1030,7 +1045,7 @@ async fn a_name_two_active_units_share_asks_for_the_id() {
         ),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     let errors: Vec<_> = summary
         .errors
@@ -1061,7 +1076,7 @@ async fn a_name_two_active_units_share_asks_for_the_id() {
         ),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.tables, unit_changes(0, 1, 0));
@@ -1108,7 +1123,7 @@ async fn a_new_unit_can_take_an_inactive_units_name_but_not_an_active_ones() {
         unit_sheet(headers.clone(), vec![new_unit(&existing.name)]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     let errors: Vec<_> = summary
         .errors
@@ -1120,7 +1135,7 @@ async fn a_new_unit_can_take_an_inactive_units_name_but_not_an_active_ones() {
 
     let path = write_file(dir.path(), unit_sheet(headers, vec![new_unit("Bottle")]));
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.tables, unit_changes(1, 0, 0));
@@ -1177,7 +1192,7 @@ async fn unit_rows_find_active_units_first_require_new_columns_and_delete_by_dea
     let path = write_file(dir.path(), unit_sheet(headers.clone(), rows));
 
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     let errors: Vec<_> = summary
         .errors
@@ -1206,7 +1221,7 @@ async fn unit_rows_find_active_units_first_require_new_columns_and_delete_by_dea
 
     let path = write_file(dir.path(), unit_sheet(headers, good_rows()));
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(
@@ -1358,7 +1373,7 @@ async fn location_types_export_then_import_makes_no_changes() {
     let bytes = CentralDataService.export(&ctx, &[table]).unwrap();
     let path = write_file(dir.path(), bytes);
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
 
     assert_eq!(summary.errors, vec![]);
@@ -1425,7 +1440,7 @@ async fn a_code_finds_a_location_type_an_earlier_row_adds() {
         ]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(
         row_errors(&summary),
@@ -1466,7 +1481,7 @@ async fn location_type_rows_add_and_update_by_code_and_check_temperatures() {
         ]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(
         row_errors(&summary),
@@ -1500,7 +1515,7 @@ async fn location_type_rows_add_and_update_by_code_and_check_temperatures() {
         ]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(
@@ -1585,7 +1600,7 @@ async fn a_location_type_code_is_not_changed_by_import() {
         ])]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.tables[0].inserted, 1);
@@ -1653,7 +1668,7 @@ async fn a_delete_row_removes_an_unused_location_type_only() {
         ]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(
         row_errors(&summary),
@@ -1692,7 +1707,7 @@ async fn a_delete_row_removes_an_unused_location_type_only() {
         ]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(
@@ -1756,7 +1771,7 @@ async fn a_delete_row_keeps_a_location_type_on_a_requisition_line_or_item_varian
         ]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(
         summary
@@ -1780,6 +1795,749 @@ async fn a_delete_row_keeps_a_location_type_on_a_requisition_line_or_item_varian
     );
     assert!(repo.find_one_by_id("requested_type").unwrap().is_some());
     assert!(repo.find_one_by_id("variant_type").unwrap().is_some());
+}
+
+const CURRENCY_HEADERS: [&str; 6] = [
+    "id",
+    "code",
+    "rate",
+    "is_home_currency",
+    "date_updated",
+    "is_active",
+];
+
+fn currency_sheet(rows: Vec<Vec<Value>>) -> Vec<u8> {
+    sheet::write(vec![sheet_data("currency", &CURRENCY_HEADERS, rows)]).unwrap()
+}
+
+/// One row of `CURRENCY_HEADERS`; blank cells are `""`.
+fn currency_row(cells: [&str; 6]) -> Vec<Value> {
+    cells
+        .into_iter()
+        .map(|cell| match cell {
+            "" => Value::Empty,
+            cell => Value::Text(cell.to_string()),
+        })
+        .collect()
+}
+
+fn usd() -> CurrencyRow {
+    CurrencyRow {
+        id: "usd".to_string(),
+        code: "USD".to_string(),
+        rate: 1.0,
+        is_home_currency: true,
+        date_updated: NaiveDate::from_ymd_opt(2026, 1, 15),
+        is_active: true,
+    }
+}
+
+fn nzd() -> CurrencyRow {
+    CurrencyRow {
+        id: "nzd".to_string(),
+        code: "NZD".to_string(),
+        rate: 1.6,
+        is_home_currency: false,
+        date_updated: None,
+        is_active: true,
+    }
+}
+
+fn find_currency(connection: &StorageConnection, id: &str) -> Option<CurrencyRow> {
+    CurrencyRowRepository::new(connection)
+        .find_one_by_id(id)
+        .unwrap()
+}
+
+/// USD, the home currency; NZD; and an inactive NZD with the same code.
+async fn currency_setup(name: &str) -> (StorageConnection, ServiceProvider, TempDir) {
+    let (_, connection, connection_manager, _) = setup_all(name, MockDataInserts::none()).await;
+    let repo = CurrencyRowRepository::new(&connection);
+    for currency in [
+        usd(),
+        nzd(),
+        CurrencyRow {
+            id: "old_nzd".to_string(),
+            rate: 1.4,
+            is_active: false,
+            ..nzd()
+        },
+    ] {
+        repo.upsert_one(&currency).unwrap();
+    }
+    (
+        connection,
+        ServiceProvider::new(connection_manager),
+        TempDir::new().unwrap(),
+    )
+}
+
+// covers: OMS-REG-CDIO-01.10, .11, .65, .107
+
+#[actix_rt::test]
+async fn currencies_export_then_import_makes_no_changes() {
+    let (connection, service_provider, dir) =
+        currency_setup("central_data_currency_round_trip").await;
+    // A rate with many decimals and a padded code must survive too.
+    CurrencyRowRepository::new(&connection)
+        .upsert_one(&CurrencyRow {
+            id: "aud".to_string(),
+            code: "AUD ".to_string(),
+            rate: 0.123456789012345,
+            is_home_currency: false,
+            date_updated: NaiveDate::from_ymd_opt(2025, 12, 31),
+            is_active: true,
+        })
+        .unwrap();
+    let before = CurrencyRowRepository::new(&connection).find_all().unwrap();
+    let ctx = service_provider.basic_context().unwrap();
+
+    let table = ExportTable {
+        table: CentralDataTable::Currency,
+        filter: ExportFilter::default(),
+    };
+    let bytes = CentralDataService.export(&ctx, &[table]).unwrap();
+    let path = write_file(dir.path(), bytes);
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].unchanged, 4);
+    assert_eq!(summary.changes, vec![]);
+    assert_eq!(
+        CurrencyRowRepository::new(&connection).find_all().unwrap(),
+        before
+    );
+}
+
+// covers: OMS-REG-CDIO-01.46
+
+#[actix_rt::test]
+async fn a_currency_export_searches_codes_and_filters_by_status() {
+    let (_, service_provider, _) = currency_setup("central_data_currency_filter").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let count = |contains: &str, is_active: Option<bool>| {
+        CentralDataService
+            .export_counts(
+                &ctx,
+                &[ExportTable {
+                    table: CentralDataTable::Currency,
+                    filter: ExportFilter {
+                        contains: Some(contains.to_string()),
+                        is_active,
+                    },
+                }],
+            )
+            .unwrap()[0]
+            .count
+    };
+
+    assert_eq!(
+        count("nz", None),
+        RecordCount {
+            matching: 2,
+            total: 3
+        }
+    );
+    assert_eq!(count("nz", Some(false)).matching, 1);
+    assert_eq!(count("", Some(true)).matching, 2);
+}
+
+// covers: OMS-REG-CDIO-01.12, .63, .76, .108, .109
+
+#[actix_rt::test]
+async fn currency_rows_add_and_update_by_code_or_id() {
+    let (connection, service_provider, dir) = currency_setup("central_data_currency_upsert").await;
+    let ctx = service_provider.basic_context().unwrap();
+
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![
+            currency_row(["", "EUR", "0.9", "FALSE", "", "TRUE"]),
+            // date_updated is export-only, so even a value that isn't a date is ignored.
+            currency_row(["", "GBP", "", "", "18/11/2026", ""]),
+            currency_row(["", "JPY", "0", "FALSE", "", "TRUE"]),
+            currency_row(["", "XYZ", "abc", "FALSE", "", "TRUE"]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (3, Some("rate"), "rate is required for a new currency"),
+            (
+                3,
+                Some("is_home_currency"),
+                "is_home_currency is required for a new currency"
+            ),
+            (
+                3,
+                Some("is_active"),
+                "is_active is required for a new currency"
+            ),
+            (4, Some("rate"), "rate must be above 0"),
+            (5, Some("rate"), "\"abc\" must be a number"),
+        ]
+    );
+    assert_eq!(
+        CurrencyRowRepository::new(&connection)
+            .find_all()
+            .unwrap()
+            .len(),
+        3
+    );
+
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![
+            currency_row(["", "EUR", "0.9", "FALSE", "2020-01-01", "TRUE"]),
+            // Found by code, the active NZD; blank required cells keep their values.
+            currency_row(["", "NZD", "1.7", "", "2020-01-01", ""]),
+            // Found by id. A new date_updated alone changes nothing.
+            currency_row(["usd", "USD", "", "", "2020-01-01", ""]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(
+        (
+            summary.tables[0].inserted,
+            summary.tables[0].updated,
+            summary.tables[0].unchanged
+        ),
+        (1, 1, 1)
+    );
+    assert_eq!(
+        summary.changes[1].fields,
+        vec![FieldChange {
+            column: "rate",
+            from: "1.6".to_string(),
+            to: "1.7".to_string(),
+        }]
+    );
+    // The server sets date_updated on each currency that changes.
+    assert_eq!(
+        find_currency(&connection, "nzd"),
+        Some(CurrencyRow {
+            rate: 1.7,
+            date_updated: Some(today()),
+            ..nzd()
+        })
+    );
+    assert_eq!(find_currency(&connection, "usd"), Some(usd()));
+    assert_eq!(find_currency(&connection, "old_nzd").unwrap().rate, 1.4);
+    let eur = CurrencyRowRepository::new(&connection)
+        .find_by_trimmed_code("EUR")
+        .unwrap()
+        .pop()
+        .unwrap();
+    assert_eq!(
+        (
+            eur.rate,
+            eur.is_home_currency,
+            eur.date_updated,
+            eur.is_active
+        ),
+        (0.9, false, Some(today()), true)
+    );
+}
+
+// covers: OMS-REG-CDIO-01.117, .118
+
+#[actix_rt::test]
+async fn the_home_currency_has_a_rate_of_1_and_stays_active() {
+    let (connection, service_provider, dir) =
+        currency_setup("central_data_currency_home_rate_and_active").await;
+    let ctx = service_provider.basic_context().unwrap();
+
+    let path = write_file(
+        dir.path(),
+        // Made the home currency at its own rate.
+        currency_sheet(vec![currency_row(["", "NZD", "", "TRUE", "", ""])]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(2, Some("rate"), "The home currency's rate must be 1")]
+    );
+
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![
+            currency_row(["", "USD", "1.2", "", "", ""]),
+            currency_row(["", "NZD", "", "", "", ""]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(2, Some("rate"), "The home currency's rate must be 1")]
+    );
+
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![currency_row(["", "USD", "", "", "", "FALSE"])]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(
+            2,
+            Some("is_active"),
+            "USD is the home currency, so it can't be inactive. Set its is_home_currency to FALSE as well, and make another currency the home currency"
+        )]
+    );
+
+    // Given up as the home currency, it can be made inactive, in either row order.
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![
+            currency_row(["", "NZD", "1", "TRUE", "", ""]),
+            currency_row(["", "USD", "0.6", "FALSE", "", "FALSE"]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert!(!find_currency(&connection, "usd").unwrap().is_active);
+}
+
+// covers: OMS-REG-CDIO-01.24, .39, .110
+
+#[actix_rt::test]
+async fn a_code_two_active_currencies_share_asks_for_the_id() {
+    let (connection, service_provider, dir) =
+        currency_setup("central_data_currency_ambiguous_code").await;
+    let ctx = service_provider.basic_context().unwrap();
+    // Legacy data can hold duplicates the import would refuse.
+    CurrencyRowRepository::new(&connection)
+        .upsert_one(&CurrencyRow {
+            id: "nzd_copy".to_string(),
+            ..nzd()
+        })
+        .unwrap();
+
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![
+            currency_row(["", "NZD", "1.8", "", "", ""]),
+            currency_row(["nzd_copy", "NZD", "1.8", "", "", ""]),
+            // An inactive currency's id finds it, whatever shares its code.
+            currency_row(["old_nzd", "NZD", "1.5", "", "", ""]),
+            currency_row(["usd", "NZD", "", "", "", ""]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                2,
+                Some("code"),
+                "ambiguous reference, please provide id instead"
+            ),
+            (
+                5,
+                Some("code"),
+                "code and id conflict: USD has code USD and id usd, but this row has code NZD and id usd"
+            ),
+        ]
+    );
+    assert_eq!(summary.tables[0].updated, 2);
+}
+
+// covers: OMS-REG-CDIO-01.110, .115
+
+#[actix_rt::test]
+async fn an_inactive_currency_does_not_make_an_active_ones_code_ambiguous() {
+    let (connection, service_provider, dir) =
+        currency_setup("central_data_currency_active_first").await;
+    let ctx = service_provider.basic_context().unwrap();
+
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![currency_row(["", "NZD", "1.8", "", "", ""])]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(find_currency(&connection, "nzd").unwrap().rate, 1.8);
+    assert_eq!(find_currency(&connection, "old_nzd").unwrap().rate, 1.4);
+
+    // Making the active one inactive is a delete. With none active, the code finds the
+    // inactive ones, so both now share it.
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![
+            currency_row(["nzd", "NZD", "", "", "", "FALSE"]),
+            currency_row(["", "NZD", "1.9", "", "", ""]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(summary.tables[0].deleted, 1);
+    assert_eq!(
+        row_errors(&summary),
+        vec![(
+            3,
+            Some("code"),
+            "ambiguous reference, please provide id instead"
+        )]
+    );
+}
+
+// covers: OMS-REG-CDIO-01.111
+
+#[actix_rt::test]
+async fn a_currency_cannot_be_made_active_beside_an_active_one_with_its_code() {
+    let (connection, service_provider, dir) =
+        currency_setup("central_data_currency_reactivate").await;
+    let ctx = service_provider.basic_context().unwrap();
+
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![currency_row(["old_nzd", "NZD", "", "", "", "TRUE"])]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(
+            2,
+            Some("is_active"),
+            "Currency nzd is active with code NZD. Make one of them inactive"
+        )]
+    );
+
+    // Once the other is inactive, on an earlier row, it can be.
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![
+            currency_row(["nzd", "NZD", "", "", "", "FALSE"]),
+            currency_row(["old_nzd", "NZD", "", "", "", "TRUE"]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert!(find_currency(&connection, "old_nzd").unwrap().is_active);
+}
+
+// covers: OMS-REG-CDIO-01.112
+
+#[actix_rt::test]
+async fn only_one_currency_can_be_the_home_currency() {
+    let (connection, service_provider, dir) = currency_setup("central_data_currency_home").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let home_error = (
+        2,
+        Some("is_home_currency"),
+        "NZD would be the home currency, and so would USD, but there can be only one. Set is_home_currency to FALSE for all but one",
+    );
+
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![currency_row(["", "NZD", "1", "TRUE", "", ""])]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(row_errors(&summary), vec![home_error]);
+    assert!(!find_currency(&connection, "nzd").unwrap().is_home_currency);
+
+    // An inactive home currency is still the home currency.
+    CurrencyRowRepository::new(&connection)
+        .upsert_one(&CurrencyRow {
+            is_active: false,
+            ..usd()
+        })
+        .unwrap();
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(row_errors(&summary), vec![home_error]);
+
+    // Currencies that already share it must be put right in the same sheet, even by a row that
+    // doesn't touch them: no row is to blame, so the sheet gets the error.
+    CurrencyRowRepository::new(&connection)
+        .upsert_one(&CurrencyRow {
+            is_home_currency: true,
+            rate: 1.0,
+            ..nzd()
+        })
+        .unwrap();
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![currency_row(["", "EUR", "0.9", "FALSE", "", "TRUE"])]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        summary.errors,
+        vec![RowError {
+            sheet: "currency".to_string(),
+            row: None,
+            column: Some("is_home_currency".to_string()),
+            message: "NZD and USD are each the home currency, but there can be only one. Set is_home_currency to FALSE for all but one".to_string(),
+        }]
+    );
+
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![
+            currency_row(["", "EUR", "0.9", "FALSE", "", "TRUE"]),
+            currency_row(["usd", "USD", "", "FALSE", "", ""]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(home_currencies(&connection).unwrap().len(), 1);
+}
+
+// covers: OMS-REG-CDIO-01.112
+
+#[actix_rt::test]
+async fn the_home_currency_moves_whatever_the_row_order() {
+    let (connection, service_provider, dir) =
+        currency_setup("central_data_currency_move_home").await;
+    let ctx = service_provider.basic_context().unwrap();
+
+    // In code order, as an export writes them: the new home currency comes first.
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![
+            currency_row(["", "NZD", "1", "TRUE", "", ""]),
+            currency_row(["", "USD", "0.6", "FALSE", "", ""]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert!(find_currency(&connection, "nzd").unwrap().is_home_currency);
+    assert!(!find_currency(&connection, "usd").unwrap().is_home_currency);
+
+    // And back, with the old home currency first.
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![
+            currency_row(["", "NZD", "1.6", "FALSE", "", ""]),
+            currency_row(["", "USD", "1", "TRUE", "", ""]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert!(find_currency(&connection, "usd").unwrap().is_home_currency);
+}
+
+// covers: OMS-REG-CDIO-01.116
+
+#[actix_rt::test]
+async fn an_import_cannot_leave_no_home_currency() {
+    let (connection, service_provider, dir) = currency_setup("central_data_currency_no_home").await;
+    let ctx = service_provider.basic_context().unwrap();
+
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![
+            currency_row(["", "NZD", "1.7", "", "", ""]),
+            currency_row(["", "USD", "", "FALSE", "", ""]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    let no_other_home = (
+        3,
+        Some("is_home_currency"),
+        "USD is the home currency, and the sheet leaves no other home currency. Set another currency's is_home_currency to TRUE",
+    );
+    assert_eq!(row_errors(&summary), vec![no_other_home]);
+    assert_eq!(summary.tables[0].error_count, 1);
+    assert_eq!(find_currency(&connection, "usd"), Some(usd()));
+    assert_eq!(find_currency(&connection, "nzd").unwrap().rate, 1.6);
+
+    // A row that tries to make another currency the home currency, but fails on its own, leaves
+    // none, and the message says so without claiming no row tried.
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![
+            currency_row(["", "NZD", "1.7", "TRUE", "", ""]),
+            currency_row(["", "USD", "", "FALSE", "", ""]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (2, Some("rate"), "The home currency's rate must be 1"),
+            no_other_home,
+        ]
+    );
+}
+
+// covers: OMS-REG-CDIO-01.112, .116
+
+#[actix_rt::test]
+async fn a_server_with_no_home_currency_must_be_given_one() {
+    let (_, connection, connection_manager, _) =
+        setup_all("central_data_currency_none_home", MockDataInserts::none()).await;
+    let ctx = ServiceProvider::new(connection_manager)
+        .basic_context()
+        .unwrap();
+    let dir = TempDir::new().unwrap();
+
+    // No row is to blame, so the sheet gets the error.
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![currency_row(["", "NZD", "1.6", "FALSE", "", "TRUE"])]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(
+        summary.errors,
+        vec![RowError {
+            sheet: "currency".to_string(),
+            row: None,
+            column: Some("is_home_currency".to_string()),
+            message: "No currency is the home currency. Set is_home_currency to TRUE for one, at a rate of 1".to_string(),
+        }]
+    );
+    assert_eq!(summary.tables[0].error_count, 1);
+
+    // Nor with two.
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![
+            currency_row(["", "NZD", "1", "TRUE", "", "TRUE"]),
+            currency_row(["", "USD", "1", "TRUE", "", "TRUE"]),
+            currency_row(["", "EUR", "1", "TRUE", "", "TRUE"]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary)[0],
+        (
+            2,
+            Some("is_home_currency"),
+            "NZD would be the home currency, and so would EUR and USD, but there can be only one. Set is_home_currency to FALSE for all but one"
+        )
+    );
+    assert_eq!(summary.error_count, 3);
+
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![
+            currency_row(["", "NZD", "1.6", "FALSE", "", "TRUE"]),
+            currency_row(["", "USD", "1", "TRUE", "", "TRUE"]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(
+        CurrencyRowRepository::new(&connection)
+            .find_all()
+            .unwrap()
+            .len(),
+        2
+    );
+}
+
+// covers: OMS-REG-CDIO-01.119
+
+#[actix_rt::test]
+async fn a_home_currency_an_invoice_uses_stays_the_home_currency() {
+    let (_, connection, connection_manager, _) = setup_all(
+        "central_data_currency_home_in_use",
+        MockDataInserts::none().names().stores(),
+    )
+    .await;
+    let repo = CurrencyRowRepository::new(&connection);
+    repo.upsert_one(&usd()).unwrap();
+    repo.upsert_one(&nzd()).unwrap();
+    InvoiceRowRepository::new(&connection)
+        .upsert_one(&InvoiceRow {
+            currency_id: Some("usd".to_string()),
+            ..mock_outbound_shipment_a()
+        })
+        .unwrap();
+    let ctx = ServiceProvider::new(connection_manager)
+        .basic_context()
+        .unwrap();
+    let dir = TempDir::new().unwrap();
+
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![
+            currency_row(["", "NZD", "1", "TRUE", "", ""]),
+            currency_row(["", "USD", "0.6", "FALSE", "", ""]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(
+        row_errors(&summary)[0],
+        (
+            3,
+            Some("is_home_currency"),
+            "USD is used by an invoice as the home currency, so it must stay the home currency"
+        )
+    );
+    assert_eq!(find_currency(&connection, "usd"), Some(usd()));
+    assert_eq!(find_currency(&connection, "nzd"), Some(nzd()));
+
+    // A sheet that leaves USD the home currency imports.
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![currency_row(["", "NZD", "1.7", "", "", ""])]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+}
+
+// covers: OMS-REG-CDIO-01.113
+
+#[actix_rt::test]
+async fn a_saved_currency_with_a_rate_of_0_stays_editable() {
+    let (connection, service_provider, dir) =
+        currency_setup("central_data_currency_zero_rate").await;
+    let ctx = service_provider.basic_context().unwrap();
+    CurrencyRowRepository::new(&connection)
+        .upsert_one(&CurrencyRow { rate: 0.0, ..nzd() })
+        .unwrap();
+
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![currency_row(["nzd", "NZD", "0", "", "", "FALSE"])]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert!(!find_currency(&connection, "nzd").unwrap().is_active);
+
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![currency_row(["nzd", "NZD", "-1", "", "", ""])]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(2, Some("rate"), "rate must be above 0")]
+    );
 }
 
 const ITEM_HEADERS: [&str; 16] = [
@@ -1958,7 +2716,7 @@ async fn items_export_then_import_makes_no_changes() {
     let bytes = CentralDataService.export(&ctx, &[all_items()]).unwrap();
     let path = write_file(dir.path(), bytes);
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
 
     assert_eq!(summary.errors, vec![]);
@@ -1991,7 +2749,12 @@ async fn a_saved_code_with_a_tab_around_it_is_found() {
     // With the id column, id and code must find the same item.
     let bytes = CentralDataService.export(&ctx, &[all_items()]).unwrap();
     let summary = CentralDataService
-        .import(&ctx, &write_file(dir.path(), bytes), &no_sessions())
+        .import(
+            &ctx,
+            &write_file(dir.path(), bytes),
+            &no_sessions(),
+            today(),
+        )
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.tables[0].unchanged, 2);
@@ -2004,7 +2767,12 @@ async fn a_saved_code_with_a_tab_around_it_is_found() {
     )])
     .unwrap();
     let summary = CentralDataService
-        .import(&ctx, &write_file(dir.path(), bytes), &no_sessions())
+        .import(
+            &ctx,
+            &write_file(dir.path(), bytes),
+            &no_sessions(),
+            today(),
+        )
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(
@@ -2029,7 +2797,7 @@ async fn an_item_finds_its_unit_by_name_in_any_letter_case() {
     );
 
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(
@@ -2117,7 +2885,7 @@ async fn item_rows_add_and_update_by_code() {
         ]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(
         row_errors(&summary),
@@ -2148,7 +2916,7 @@ async fn item_rows_add_and_update_by_code() {
         item_sheet(vec![item_row(new_item), item_row(renamed)]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(
@@ -2252,7 +3020,7 @@ async fn item_references_are_found_by_code_or_id() {
         ]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     let references = |code: &str| {
@@ -2281,7 +3049,7 @@ async fn item_references_are_found_by_code_or_id() {
     .unwrap();
     let path = write_file(dir.path(), bytes);
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(
@@ -2365,7 +3133,7 @@ async fn setting_an_item_inactive_counts_as_a_delete() {
     let path = write_file(dir.path(), bytes);
 
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.tables[0].deleted, 1);
@@ -2439,7 +3207,7 @@ async fn a_shared_unit_name_location_type_code_or_item_code_asks_for_the_id() {
         ]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(
@@ -2492,7 +3260,7 @@ async fn an_item_refers_to_a_unit_and_location_type_added_by_earlier_sheets() {
     let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
     assert_eq!(summary.errors, vec![]);
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     let inserted: Vec<_> = summary
@@ -2569,7 +3337,7 @@ async fn blank_optional_item_cells_save_defaults() {
         item_sheet(vec![plain(), vaccine("10"), blank_para()]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     let defaults = |code: &str| {
@@ -2586,7 +3354,7 @@ async fn blank_optional_item_cells_save_defaults() {
         item_sheet(vec![item_row(item_named("", "VAX"))]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(defaults("VAX"), (VENCategory::NotAssigned, 10, 0.0));
@@ -2623,7 +3391,12 @@ async fn a_saved_item_with_a_pack_size_of_0_can_be_renamed_but_not_given_one() {
     };
 
     let summary = CentralDataService
-        .import(&ctx, &sheet("Paracetamol tablets", "0"), &no_sessions())
+        .import(
+            &ctx,
+            &sheet("Paracetamol tablets", "0"),
+            &no_sessions(),
+            today(),
+        )
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(
@@ -2804,7 +3577,7 @@ async fn users_export_without_passwords_then_import_makes_no_changes() {
     assert_eq!(cells, [("anna", ""), ("ben", "")]);
 
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.tables[0].unchanged, 2);
@@ -2884,7 +3657,7 @@ async fn user_rows_add_and_update_by_username_and_hash_passwords() {
         ]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     // Anna made inactive and Ben given a password; Cara is new, with no session yet.
@@ -2968,7 +3741,7 @@ async fn user_rows_add_and_update_by_username_and_hash_passwords() {
         vec![field("password", "******", "changed")]
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.tables[0].unchanged, 1);
     let path = write_file(
@@ -2976,7 +3749,7 @@ async fn user_rows_add_and_update_by_username_and_hash_passwords() {
         user_sheet(vec![user_row("", "cara", &[(2, "pw3")])]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(
         summary.changes[0].fields,
@@ -2999,7 +3772,7 @@ async fn users_sharing_a_password_get_their_own_hash() {
         user_sheet(vec![new("dan", "changeme"), new("eve", " changeme ")]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.tables[0].inserted, 2);
 
@@ -3042,7 +3815,9 @@ async fn sessions_after_new_passwords(name: &str, extra_rows: Vec<Vec<Value>>) -
         store: store.clone(),
         keep: Some(tokens[0].clone()),
     };
-    CentralDataService.import(&ctx, &path, &sessions).unwrap();
+    CentralDataService
+        .import(&ctx, &path, &sessions, today())
+        .unwrap();
     let mut store = store.write().unwrap();
     store.revoke_if_credentials_changed("anna", &anna_hash());
     tokens.map(|token| store.validate_and_slide(&token).is_some())
@@ -3089,7 +3864,7 @@ async fn a_username_finds_its_user_in_any_case_and_is_not_changed_or_taken() {
         ]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(
         row_errors(&summary),
@@ -3123,7 +3898,7 @@ async fn a_username_finds_its_user_in_any_case_and_is_not_changed_or_taken() {
         ]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     let changes: Vec<_> = summary
@@ -3160,7 +3935,7 @@ async fn a_deleted_user_keeps_their_store_access_but_cannot_log_in() {
 
     let path = write_file(dir.path(), user_sheet(vec![delete_anna()]));
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.tables[0].deleted, 1);
@@ -3197,7 +3972,7 @@ async fn a_deleted_user_keeps_their_store_access_but_cannot_log_in() {
     assert_eq!(exported[0].count.total, 1, "only ben");
     let path = write_file(dir.path(), user_sheet(vec![delete_anna()]));
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.tables[0].deleted, 0);
@@ -3234,7 +4009,7 @@ async fn a_row_without_delete_restores_a_deleted_user() {
         )]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.tables[0].updated, 1);
@@ -3302,7 +4077,7 @@ async fn a_row_cannot_change_or_take_a_protected_user() {
         ]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     let protected = |username: &str| {
         format!("{username} is protected, as the server needs it, so import can't change it")
@@ -3365,7 +4140,7 @@ async fn the_importing_user_cannot_delete_themselves_or_make_themselves_inactive
         user_sheet(vec![user_row("", "anna", &[(2, "new secret")])]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.tables[0].updated, 1);
@@ -3420,7 +4195,7 @@ async fn only_a_server_admin_can_import_or_export_users() {
     for summary in [
         CentralDataService.preview_import(&ctx, &path).unwrap(),
         CentralDataService
-            .import(&ctx, &path, &no_sessions())
+            .import(&ctx, &path, &no_sessions(), today())
             .unwrap(),
     ] {
         let errors: Vec<_> = summary

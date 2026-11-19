@@ -1745,6 +1745,7 @@ export type CentralDataMutationsExportArgs = {
 
 export type CentralDataMutationsImportArgs = {
   fileId: Scalars['String']['input'];
+  today?: InputMaybe<Scalars['NaiveDate']['input']>;
 };
 
 export type CentralDataQueries = {
@@ -1795,6 +1796,7 @@ export type CentralDataTableChangesNode = {
 };
 
 export enum CentralDataTableNode {
+  Currency = 'CURRENCY',
   Item = 'ITEM',
   LocationType = 'LOCATION_TYPE',
   MasterList = 'MASTER_LIST',
@@ -8542,6 +8544,13 @@ export type PatientFilterInput = {
   gender?: InputMaybe<EqualFilterGenderType>;
   id?: InputMaybe<EqualFilterStringInput>;
   identifier?: InputMaybe<StringFilterInput>;
+  /**
+   * Only patients visible in the queried store (it has a visible
+   * name_store_join for them), or with false only those that aren't.
+   * Unset, patients are returned whichever store they belong to. Read by
+   * the `patients` query only.
+   */
+  isVisible?: InputMaybe<Scalars['Boolean']['input']>;
   lastName?: InputMaybe<StringFilterInput>;
   name?: InputMaybe<StringFilterInput>;
   nextOfKinName?: InputMaybe<StringFilterInput>;

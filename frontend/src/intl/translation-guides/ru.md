@@ -87,8 +87,7 @@ Counts are Russian renderings among the strings whose English contains the term.
 ## Open questions
 
 - **download: _скачать_ vs _загрузить_.** _Скачать_ is the majority (6). _Загрузить_ is used for
-  a download in `message.database-not-local` and `messages.import-error-assets`, where it reads as
-  "upload", the word's majority meaning (15). Drafts use _скачать_ for download only.
+  a download in `messages.import-error-assets`, where it reads as "upload", the word's majority meaning (15). Drafts use _скачать_ for download only.
 - **row: _строка_ vs _ряд_.** `label.new-row` _Новый Ряд_ and `error.provide-reason` _…всех
   рядов…_ use _ряд_; the other 11 use _строка_.
 - **line: _строка_ vs _линия_.** 22 strings say _линия_ (`button.outstanding-lines` _Невыполненные

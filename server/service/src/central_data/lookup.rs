@@ -1,8 +1,8 @@
 use super::cells::{Row, RowError};
 use repository::{
-    ItemRow, ItemRowRepository, LocationTypeRow, LocationTypeRowRepository, MasterListRow,
-    MasterListRowRepository, RepositoryError, UnitRow, UnitRowRepository, UserAccountRow,
-    UserAccountRowRepository, trim_spaces,
+    CurrencyRow, CurrencyRowRepository, ItemRow, ItemRowRepository, LocationTypeRow,
+    LocationTypeRowRepository, MasterListRow, MasterListRowRepository, RepositoryError, UnitRow,
+    UnitRowRepository, UserAccountRow, UserAccountRowRepository, trim_spaces,
 };
 use std::collections::HashMap;
 
@@ -49,6 +49,23 @@ impl KeyedTable for LocationTypeRowRepository<'_> {
         self.find_one_by_id(id)
     }
     fn find_by_key(&self, code: &str) -> Result<Vec<LocationTypeRow>, RepositoryError> {
+        self.find_by_trimmed_code(code)
+    }
+}
+
+/// Looked up by code.
+impl KeyedTable for CurrencyRowRepository<'_> {
+    type Record = CurrencyRow;
+    fn id(currency: &CurrencyRow) -> &str {
+        &currency.id
+    }
+    fn key(currency: &CurrencyRow) -> &str {
+        &currency.code
+    }
+    fn find_by_id(&self, id: &str) -> Result<Option<CurrencyRow>, RepositoryError> {
+        self.find_one_by_id(id)
+    }
+    fn find_by_key(&self, code: &str) -> Result<Vec<CurrencyRow>, RepositoryError> {
         self.find_by_trimmed_code(code)
     }
 }
@@ -194,19 +211,6 @@ impl KeyedTable for InMemory<LocationTypeRow> {
     }
 }
 
-/// The one record a name finds among `records`, looking at inactive ones only when none is active,
-/// so an old inactive namesake doesn't make the name ambiguous.
-pub fn pick_active_first<R>(
-    records: Vec<R>,
-    is_active: impl Fn(&R) -> bool,
-) -> Result<Option<R>, LookupError> {
-    let mut candidates = crate::record_key::active_first_by(records, is_active);
-    match candidates.len() {
-        0 | 1 => Ok(candidates.pop()),
-        _ => Err(LookupError::Ambiguous),
-    }
-}
-
 #[derive(Debug, PartialEq)]
 pub enum LookupError {
     NotFound,
@@ -228,6 +232,22 @@ impl LookupError {
     }
 }
 
+/// The active records among those a key matches, or the inactive ones when none is active, so an
+/// old inactive record doesn't make the key ambiguous.
+pub fn active_first<R>(records: Vec<R>, is_active: impl Fn(&R) -> bool) -> Vec<R> {
+    let (active, inactive): (Vec<_>, Vec<_>) = records.into_iter().partition(|r| is_active(r));
+    if active.is_empty() { inactive } else { active }
+}
+
+/// The one record a key matches, if any.
+pub fn pick_one<R>(mut records: Vec<R>) -> Result<Option<R>, LookupError> {
+    match records.len() {
+        0 => Ok(None),
+        1 => Ok(records.pop()),
+        _ => Err(LookupError::Ambiguous),
+    }
+}
+
 /// For a row whose id and lookup key don't find the same saved record. `column` is the key's.
 pub fn record_conflict(
     column: &str,
@@ -243,7 +263,9 @@ pub fn record_conflict(
 }
 
 /// The saved record a row changes, by id, else by its lookup key in `column`. `Ok(None)` for a
-/// row that adds one. `name` names the saved record in a conflict.
+/// row that adds one. `name` names the saved record in a conflict. `narrow` picks among the
+/// records a key alone matches; with an id, every record the key matches counts, so a conflict
+/// with any of them is found.
 pub fn find_record<T: KeyedTable>(
     table: &T,
     row: &Row,
@@ -251,6 +273,7 @@ pub fn find_record<T: KeyedTable>(
     id: Option<&str>,
     key: Option<&str>,
     name: impl Fn(&T::Record) -> &str,
+    narrow: impl Fn(Vec<T::Record>) -> Vec<T::Record>,
 ) -> Result<Result<Option<T::Record>, RowError>, RepositoryError> {
     let conflict = |saved: &T::Record, id: &str, key: &str| {
         row.error(
@@ -279,8 +302,7 @@ pub fn find_record<T: KeyedTable>(
                 },
             },
         },
-        None if by_key.len() > 1 => Err(row.error(column, LookupError::Ambiguous.message(key))),
-        None => Ok(by_key.into_iter().next()),
+        None => pick_one(narrow(by_key)).map_err(|e| row.error(column, e.message(key))),
     })
 }
 
@@ -400,6 +422,24 @@ mod tests {
         }]);
         assert_eq!(location_types.find_by_key(" COLD").unwrap().len(), 1);
         assert!(location_types.find_by_key("cold").unwrap().is_empty());
+    }
+
+    #[test]
+    fn active_first_looks_at_inactive_records_only_when_none_is_active() {
+        let records = |flags: &[(&'static str, bool)]| flags.to_vec();
+        let is_active = |(_, active): &(&str, bool)| *active;
+        assert_eq!(
+            active_first(records(&[("a", false), ("b", true)]), is_active),
+            [("b", true)]
+        );
+        assert_eq!(
+            active_first(records(&[("a", false), ("b", false)]), is_active),
+            [("a", false), ("b", false)]
+        );
+
+        assert_eq!(pick_one(Vec::<u8>::new()), Ok(None));
+        assert_eq!(pick_one(vec![1]), Ok(Some(1)));
+        assert_eq!(pick_one(vec![1, 2]), Err(LookupError::Ambiguous));
     }
 
     fn ids(ids: &[&str]) -> Vec<String> {

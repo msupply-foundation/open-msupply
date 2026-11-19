@@ -46,11 +46,12 @@ import {
 import { ChoosePatient } from './ChoosePatient';
 import { ExportPatientsAction } from './actions';
 
-// The patient list view (spec/patients S1). Site-wide (NOT store-scoped despite
-// storeId — contract › visibility wire trap), server-paginated, default sort by
-// creation date descending. Composed from library components (Page / Header /
-// FilterBar / DataTable / Pagination), so the page owns no CSS. Row selection
-// is OFF — patients have no delete (spec/patients cross-cutting › no delete).
+// The patient list view (spec/patients S1). This store's patients (those
+// visible in it — rules › visibility and store scope), server-paginated,
+// default sort by creation date descending. Composed from library components
+// (Page / Header / FilterBar / DataTable / Pagination), so the page owns no
+// CSS. Row selection is OFF — patients have no delete (spec/patients
+// cross-cutting › no delete).
 
 type PatientRow = PatientsResult['patients']['nodes'][number];
 type SortKey = NonNullable<PatientsVariables['sort']>[number]['key'];
@@ -135,6 +136,7 @@ const PatientsList: Component = () => {
       ...stripEmpty(query().filter),
       // Custom-field filters become the dynamicFilter AST (undefined = no-op).
       dynamicFilter: buildCustomFieldDynamicFilter(query().cf, cfDefs()),
+      isVisible: true,
     },
     sort: query().sort,
     page: { first: query().first, offset: query().offset },

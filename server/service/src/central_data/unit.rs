@@ -3,7 +3,7 @@ use super::{
     RowOutcome, SheetImport, SheetStart,
     cells::{Row, collect, keep_or_saved},
     field_changes,
-    lookup::pick_active_first,
+    lookup::{active_first, find_record},
     sheet::Value,
 };
 use crate::unit::{UpsertUnitError, upsert_unit};
@@ -80,21 +80,22 @@ impl SheetImport for UnitSheet {
         let name = row.text(NAME);
 
         let repo = UnitRowRepository::new(connection);
-        let existing = match (&id, &name) {
-            (Some(id), _) => repo.find_one_by_id(id)?,
-            (None, Some(name)) => {
-                match pick_active_first(repo.find_by_trimmed_name_any_case(name)?, |unit| {
-                    unit.is_active
-                }) {
-                    Ok(found) => found,
-                    // Without its record, the row's other checks would treat it as a new unit.
-                    Err(e) => {
-                        errors.push(row.error(NAME, e.message(name)));
-                        return Err(RowFailure::Invalid(errors));
-                    }
-                }
+        let existing = match find_record(
+            &repo,
+            row,
+            NAME,
+            id.as_deref(),
+            // With an id, the name isn't checked against it: a different name renames the unit.
+            name.as_deref().filter(|_| id.is_none()),
+            |saved| &saved.name,
+            // An inactive unit doesn't make an active one's name ambiguous.
+            |units| active_first(units, |unit| unit.is_active),
+        )? {
+            Ok(existing) => existing,
+            Err(e) => {
+                errors.push(e);
+                return Err(RowFailure::Invalid(errors));
             }
-            (None, None) => None,
         };
 
         let saved_name = existing.as_ref().map(|unit| unit.name.as_str());
