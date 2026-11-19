@@ -1,8 +1,10 @@
 use repository::{
-    KeyType, KeyValueStoreRepository, NameRowRepository, NameRowType, PaginationOption,
-    RepositoryError, SiteRowRepository, StorageConnection, Store, StoreRow, StoreRowRepository,
+    KeyType, KeyValueStoreRepository, NameRowRepository, NameRowType, NameStoreJoinRepository,
+    NameStoreJoinRow, PaginationOption, RepositoryError, SiteRowRepository, StorageConnection,
+    Store, StoreRow, StoreRowRepository,
 };
 use repository::{StoreFilter, StoreRepository, StoreSort};
+use util::uuid::uuid;
 
 use crate::{
     ListError, ListResult, get_pagination_or_default, i64_to_u32,
@@ -63,7 +65,8 @@ impl From<RepositoryError> for UpsertStoreError {
     }
 }
 
-/// Joins the caller's transaction, so an import's earlier rows count. Leaves the logo as saved.
+/// Joins the caller's transaction, so an import's earlier rows count. Leaves the logo as saved. A
+/// new store sees its own name, as the store a standalone central server makes at setup does.
 pub fn upsert_store(
     connection: &StorageConnection,
     row: &StoreRow,
@@ -74,6 +77,16 @@ pub fn upsert_store(
             let saved = repo.find_one_by_id(&row.id)?;
             validate(connection, saved.as_ref(), row)?;
             repo.upsert_one(row)?;
+            if saved.is_none() {
+                NameStoreJoinRepository::new(connection).upsert_one(&NameStoreJoinRow {
+                    id: uuid(),
+                    store_id: row.id.clone(),
+                    name_id: row.name_id.clone(),
+                    name_is_customer: false,
+                    name_is_supplier: false,
+                    visible: true,
+                })?;
+            }
             Ok(())
         })
         .map_err(|error| error.to_inner_error())
@@ -165,7 +178,10 @@ fn is_own_site_store(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{NameRow, SiteRow, mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        EqualFilter, NameRow, NameStoreJoinFilter, SiteRow, mock::MockDataInserts,
+        test_db::setup_all,
+    };
 
     fn store(id: &str, code: &str, name_id: &str) -> StoreRow {
         StoreRow {
@@ -175,6 +191,61 @@ mod tests {
             name_id: name_id.to_string(),
             ..Default::default()
         }
+    }
+
+    #[actix_rt::test]
+    async fn a_new_store_sees_its_own_name_once() {
+        let (_, connection, _, _) =
+            setup_all("upsert_store_own_name", MockDataInserts::none()).await;
+        SiteRowRepository::new(&connection)
+            .upsert(&SiteRow {
+                id: 1,
+                ..Default::default()
+            })
+            .unwrap();
+        NameRowRepository::new(&connection)
+            .upsert_one(&NameRow {
+                id: "main_name".to_string(),
+                code: "MAIN".to_string(),
+                name: "Main".to_string(),
+                r#type: NameRowType::Store,
+                ..Default::default()
+            })
+            .unwrap();
+        let joins = || {
+            NameStoreJoinRepository::new(&connection)
+                .query_by_filter(NameStoreJoinFilter {
+                    store_id: Some(EqualFilter::equal_to("main".to_string())),
+                    ..Default::default()
+                })
+                .unwrap()
+                .into_iter()
+                .map(|join| {
+                    let join = join.name_store_join;
+                    (
+                        join.name_id,
+                        join.visible,
+                        join.name_is_customer,
+                        join.name_is_supplier,
+                    )
+                })
+                .collect::<Vec<_>>()
+        };
+
+        upsert_store(&connection, &store("main", "MS", "main_name")).unwrap();
+        let own = vec![("main_name".to_string(), true, false, false)];
+        assert_eq!(joins(), own);
+
+        // An update adds none.
+        upsert_store(
+            &connection,
+            &StoreRow {
+                is_disabled: true,
+                ..store("main", "MS", "main_name")
+            },
+        )
+        .unwrap();
+        assert_eq!(joins(), own);
     }
 
     #[actix_rt::test]

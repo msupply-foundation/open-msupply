@@ -13,14 +13,14 @@ use crate::{
 };
 use chrono::NaiveDate;
 use repository::{
-    CurrencyRow, CurrencyRowRepository, InvoiceRow, InvoiceRowRepository, ItemRow,
+    CurrencyRow, CurrencyRowRepository, EqualFilter, InvoiceRow, InvoiceRowRepository, ItemRow,
     ItemRowRepository, ItemType, ItemVariantRow, ItemVariantRowRepository, KeyType,
     KeyValueStoreRepository, LanguageType, LocationTypeRow, LocationTypeRowRepository,
     MasterListRow, MasterListRowRepository, NameRow, NameRowRepository, NameRowType,
-    RequisitionLineRow, RequisitionLineRowRepository, SiteRow, SiteRowRepository,
-    StorageConnection, StoreMode, StoreRow, StoreRowRepository, UnitRow, UnitRowRepository,
-    UserAccountRow, UserAccountRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
-    VENCategory,
+    NameStoreJoinFilter, NameStoreJoinRepository, RequisitionLineRow, RequisitionLineRowRepository,
+    SiteRow, SiteRowRepository, StorageConnection, StoreMode, StoreRow, StoreRowRepository,
+    UnitRow, UnitRowRepository, UserAccountRow, UserAccountRowRepository, UserStoreJoinRow,
+    UserStoreJoinRowRepository, VENCategory,
     mock::{
         MockDataInserts, mock_draft_request_requisition_line, mock_item_a_variant_1,
         mock_outbound_shipment_a, mock_store_a,
@@ -5803,6 +5803,17 @@ async fn store_rows_add_and_update_by_code() {
         (ward.name_id.as_str(), ward.site_id, ward.created_date),
         ("ward_name", 1, Some(today()))
     );
+    // It sees its own name, as the store made at setup does.
+    let own_name: Vec<_> = NameStoreJoinRepository::new(&connection)
+        .query_by_filter(NameStoreJoinFilter {
+            store_id: Some(EqualFilter::equal_to(ward.id.clone())),
+            ..Default::default()
+        })
+        .unwrap()
+        .into_iter()
+        .map(|join| (join.name_store_join.name_id, join.name_store_join.visible))
+        .collect();
+    assert_eq!(own_name, [("ward_name".to_string(), true)]);
     let main = find_store(&connection, "store_main").unwrap();
     assert_eq!(main.store_mode, StoreMode::Dispensary);
     // No column: the logo is left as it is.
