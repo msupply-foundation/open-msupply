@@ -83,7 +83,7 @@ export type CustomerReturnDetailResult = {
 };
 
 export const CustomerReturnDetail = {
-  query: "query customerReturnDetail($storeId: String!, $id: String!) {\n  invoice(storeId: $storeId, id: $id) {\n    __typename\n    ... on InvoiceNode {\n      ...CustomerReturnInfo\n    }\n    ... on NodeError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}\n\nfragment CustomerReturnInfo on InvoiceNode {\n  id\n  invoiceNumber\n  status\n  onHold\n  colour\n  comment\n  theirReference\n  createdDatetime\n  pickedDatetime\n  shippedDatetime\n  deliveredDatetime\n  receivedDatetime\n  verifiedDatetime\n  otherPartyId\n  otherPartyName\n  transportReference\n  user {\n    username\n    email\n  }\n  linkedShipment {\n    id\n  }\n  originalShipment {\n    id\n    invoiceNumber\n    createdDatetime\n    user {\n      username\n    }\n  }\n  customFields\n}",
+  query: "query customerReturnDetail($storeId: String!, $id: String!) {\n  invoice(storeId: $storeId, id: $id, type: CUSTOMER_RETURN) {\n    __typename\n    ... on InvoiceNode {\n      ...CustomerReturnInfo\n    }\n    ... on NodeError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}\n\nfragment CustomerReturnInfo on InvoiceNode {\n  id\n  invoiceNumber\n  status\n  onHold\n  colour\n  comment\n  theirReference\n  createdDatetime\n  pickedDatetime\n  shippedDatetime\n  deliveredDatetime\n  receivedDatetime\n  verifiedDatetime\n  otherPartyId\n  otherPartyName\n  transportReference\n  user {\n    username\n    email\n  }\n  linkedShipment {\n    id\n  }\n  originalShipment {\n    id\n    invoiceNumber\n    createdDatetime\n    user {\n      username\n    }\n  }\n  customFields\n}",
 } as TypedDocument<CustomerReturnDetailResult, CustomerReturnDetailVariables>;
 
 export type CustomerReturnForCopyVariables = {
@@ -103,7 +103,7 @@ export type CustomerReturnForCopyResult = {
 };
 
 export const CustomerReturnForCopy = {
-  query: "query customerReturnForCopy($storeId: String!, $id: String!) {\n  invoice(storeId: $storeId, id: $id) {\n    __typename\n    ... on InvoiceNode {\n      ...CustomerReturnInfo\n      lines {\n        totalCount\n        nodes {\n          ...CustomerReturnLine\n        }\n      }\n    }\n  }\n}\n\nfragment CustomerReturnInfo on InvoiceNode {\n  id\n  invoiceNumber\n  status\n  onHold\n  colour\n  comment\n  theirReference\n  createdDatetime\n  pickedDatetime\n  shippedDatetime\n  deliveredDatetime\n  receivedDatetime\n  verifiedDatetime\n  otherPartyId\n  otherPartyName\n  transportReference\n  user {\n    username\n    email\n  }\n  linkedShipment {\n    id\n  }\n  originalShipment {\n    id\n    invoiceNumber\n    createdDatetime\n    user {\n      username\n    }\n  }\n  customFields\n}\n\nfragment CustomerReturnLine on InvoiceLineNode {\n  id\n  itemName\n  itemCode\n  item {\n    id\n    code\n    unitName\n  }\n  batch\n  expiryDate\n  packSize\n  numberOfPacks\n  sellPricePerPack\n  note\n  itemVariantId\n  volumePerPack\n  reasonOption {\n    id\n    type\n    reason\n  }\n  stockLine {\n    id\n  }\n}",
+  query: "query customerReturnForCopy($storeId: String!, $id: String!) {\n  invoice(storeId: $storeId, id: $id, type: CUSTOMER_RETURN) {\n    __typename\n    ... on InvoiceNode {\n      ...CustomerReturnInfo\n      lines {\n        totalCount\n        nodes {\n          ...CustomerReturnLine\n        }\n      }\n    }\n  }\n}\n\nfragment CustomerReturnInfo on InvoiceNode {\n  id\n  invoiceNumber\n  status\n  onHold\n  colour\n  comment\n  theirReference\n  createdDatetime\n  pickedDatetime\n  shippedDatetime\n  deliveredDatetime\n  receivedDatetime\n  verifiedDatetime\n  otherPartyId\n  otherPartyName\n  transportReference\n  user {\n    username\n    email\n  }\n  linkedShipment {\n    id\n  }\n  originalShipment {\n    id\n    invoiceNumber\n    createdDatetime\n    user {\n      username\n    }\n  }\n  customFields\n}\n\nfragment CustomerReturnLine on InvoiceLineNode {\n  id\n  itemName\n  itemCode\n  item {\n    id\n    code\n    unitName\n  }\n  batch\n  expiryDate\n  packSize\n  numberOfPacks\n  sellPricePerPack\n  note\n  itemVariantId\n  volumePerPack\n  reasonOption {\n    id\n    type\n    reason\n  }\n  stockLine {\n    id\n  }\n}",
 } as TypedDocument<CustomerReturnForCopyResult, CustomerReturnForCopyVariables>;
 
 export type CustomerReturnLinesVariables = {
@@ -147,6 +147,7 @@ export type CustomerReturnLinesVariables = {
     itemCodeOrName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     type?: {
     equalTo?: "STOCK_IN" | "STOCK_OUT" | "UNALLOCATED_STOCK" | "SERVICE" | null;
@@ -214,9 +215,29 @@ export type CustomerReturnLinesVariables = {
     notEqualAll?: Array<string> | null;
   } | null;
     isProgramInvoice?: boolean | null;
+    batch?: {
+    equalTo?: string | null;
+    like?: string | null;
+    startsWith?: string | null;
+  } | null;
+    expiryDate?: {
+    equalTo?: string | null;
+    beforeOrEqualTo?: string | null;
+    afterOrEqualTo?: string | null;
+  } | null;
+    locationCode?: {
+    equalTo?: string | null;
+    like?: string | null;
+    startsWith?: string | null;
+  } | null;
+    manufactureDate?: {
+    equalTo?: string | null;
+    beforeOrEqualTo?: string | null;
+    afterOrEqualTo?: string | null;
+  } | null;
   } | null;
   sort?: Array<{
-    key: "itemCode" | "itemName" | "batch" | "expiryDate" | "packSize" | "locationName" | "requestedQuantity";
+    key: "itemCode" | "itemName" | "batch" | "expiryDate" | "packSize" | "locationName" | "manufactureDate" | "requestedQuantity";
     desc?: boolean | null;
   }> | null;
   page?: {

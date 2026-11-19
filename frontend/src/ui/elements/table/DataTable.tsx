@@ -17,11 +17,16 @@ import {
   createSolidTable,
   functionalUpdate,
   getCoreRowModel,
+  getGroupedRowModel,
+  type Cell,
   type Column as TanColumn,
   type ColumnOrderState,
   type ColumnPinningState,
   type ColumnSizingState,
+  type ExpandedState,
+  type GroupingState,
   type HeaderContext,
+  type Row as TanRow,
   type RowSelectionState,
   type SortingState,
   type Updater,
@@ -36,6 +41,12 @@ import {
   type ToolbarInputs,
 } from './toolbarState';
 import { autoFitWidth } from './autoFitWidth';
+import {
+  displayedRows,
+  groupPositions,
+  NO_GROUP_RUNS,
+  type GroupPosition,
+} from './rowGroups';
 import {
   resolveColumnVisibility,
   toColumnDef,
@@ -61,11 +72,14 @@ import { useSurfaceActive } from '../../utils/surfaceActive';
 import { useFullScreen } from '../../layout/AppShell/shellContext';
 import {
   CardViewIcon,
+  ChevronsDownIcon,
   CloseIcon,
   Columns3CogIcon,
+  GroupItemsIcon,
   MaximiseIcon,
   MinimiseIcon,
   SettingsIcon,
+  UngroupItemsIcon,
 } from '../../icons';
 import { Popover } from '../feedback/Popover';
 import { BareCheckbox } from '../inputs/BareCheckbox';
@@ -78,6 +92,7 @@ import { ColumnSettings, listedColumnIds } from './ColumnSettings';
 import { TableSettings } from './TableSettings';
 import { Pagination, type PaginationProps } from './Pagination';
 import { paginationState } from './paginationState';
+import { scrollTableToTop } from './scrollTableToTop';
 import { isRtl, t, tPlural } from '../../../intl';
 import styles from './DataTable.module.css';
 
@@ -173,6 +188,21 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    * Omitted, every row is clickable whenever `onRowClick` is set.
    */
   rowClickable?: (row: T) => boolean;
+  /**
+   * The address a clickable row opens — set it on every table whose rows
+   * navigate, so a row can be opened in a new tab like any link: right-click →
+   * "Open link in new tab" / "Copy link address", Cmd/Ctrl-click,
+   * middle-click (#271). Router-space, the same path `onRowClick` hands
+   * `navigate()`; the mount is added for the link (RowLink).
+   *
+   * A link, not a second way to open the row: a plain click still runs
+   * `onRowClick`, so its guards and side effects are untouched, and a
+   * modified click never does — the browser opens the link elsewhere, or, on
+   * a control the link can't reach, nothing happens. Rows that
+   * open a modal have no address and leave this unset; a row it answers
+   * undefined for, or that isn't clickable, gets no link.
+   */
+  rowHref?: (row: T) => string | undefined;
   /**
    * Arrow-key row navigation: `ArrowDown`/`ArrowUp` move a row highlight
    * (clamped at the ends, scrolled into view), `Enter` opens the highlighted
@@ -275,6 +305,13 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    * Shown in both table and card views when there are no rows.
    */
   empty?: JSX.Element;
+  /**
+   * Show the empty state's illustration and "Nothing here" heading. Default
+   * true. Pass false for a table that sits among other content — a dialog's
+   * search results — where the full empty state would dwarf it; the message
+   * (and `empty`) still show, under the column headers.
+   */
+  emptyGraphic?: boolean;
   /**
    * Show the full-screen toggle in the control bar. Default true. Pass false
    * where full
@@ -400,10 +437,9 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
 
   /**
    * Lay out at CONTENT height instead of owning a scroll box: the table grows
-   * to fit its rows and whatever scroller the host provides scrolls it — so
-   * content the host puts BELOW the table (a modal's advisory messages) scrolls
-   * with the rows instead of being pinned under a table that scrolls
-   * internally.
+   * to fit its rows and whatever scroller the host provides scrolls it — one
+   * scroller for the rows and anything the host puts beside them in it,
+   * instead of a box inside a box.
    *
    * Card view only, and deliberately: a row-view table scrolls HORIZONTALLY in
    * that same box (20 columns is normal here), and CSS cannot give one axis
@@ -411,6 +447,44 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    * scroll. So in row view the table keeps its box, whatever this says.
    */
   fitContent?: boolean;
+
+  /**
+   * This table is its dialog's MAIN line table — a line editor's batch grid,
+   * a picker's list. Stamps `data-dialog-table` on the root, which the Dialog
+   * reads in its full-screen state (a workbench dialog on a tablet) to run
+   * the table to the sheet's edges with no frame and no radius, and to its
+   * hairlines on the side(s) where the table ends the body
+   * (Dialog.module.css › data-fullscreen, #246). A card or sheet framed by
+   * the scrim ignores it. Leave it off a secondary table that shares the
+   * dialog with a form (a repack history, a duplicates list): that one keeps
+   * its frame. A table that is the body's only child gets the same treatment
+   * without it; saying so still records the intent.
+   *
+   * If the table sits inside the editor's OWN scroll box, spread
+   * `DIALOG_SCROLL` (from Dialog) on that box too, or the table's first and
+   * last columns are clipped instead of reaching the sheet's edge. All three
+   * hooks and the chain rule: `DialogProps.size`.
+   */
+  dialogTable?: boolean;
+
+  /**
+   * Row grouping (ui-standards § tables › row groups): offers a toolbar toggle
+   * that gathers the rows sharing `columnId`'s value under one group row —
+   * expandable to its rows, its line count beside the value, and a figure in
+   * every column that names an `aggregationFn` (a column without one stays
+   * blank on the group row). A group of one row shows as that row.
+   *
+   * Table view only, and only on a table whose rows all arrive together: a
+   * group is built from the rows on screen, so on a paged table it would
+   * total one page. The toggle persists as `groupRows` config (needs
+   * `setConfig`); expansion is the table's own, and starts collapsed.
+   * `label` names the toggle ("Group by item").
+   *
+   * Grouping leaves the column ORDER alone (groupedColumnMode: false) — the
+   * group row's label leads the first visible column wherever `columnId` sits,
+   * so there is no reason to shuffle a user's columns when they toggle it.
+   */
+  rowGroup?: { columnId: string; label: () => string };
 
   // --- Pagination (optional), STATE owned by the page. --- When set, the
   // table's footer bar shows the Pagination control (its default face — the
@@ -420,6 +494,14 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
   // not page rows itself (manual, server-driven; see kdd/table-state). Omit for
   // a non-paginated table.
   pagination?: PaginationProps;
+  /**
+   * The page shown, for a host that pages this table but renders the pager
+   * itself — a detail view's line table, whose pager sits in the status
+   * footer (ui-standards § tables → pagination). The table only reads it to
+   * scroll back to the first row when the page changes; it draws no pager
+   * and no row count. Ignored when `pagination` is set.
+   */
+  page?: Pick<PaginationProps, 'offset' | 'pageSize'>;
 };
 
 export function DataTable<T, K extends string, G extends string = never>(
@@ -536,6 +618,18 @@ export function DataTable<T, K extends string, G extends string = never>(
   const isCompact = useIsCompact();
   const viewMode = (): ViewMode =>
     isCompact() ? 'card' : (props.config?.viewMode ?? 'table');
+
+  // --- Row grouping (rowGroup) --- On only in table view, and only when the
+  // page offers it AND the persisted toggle says so. Cards never group: a card
+  // is one record. Expansion is ephemeral table state, like row focus.
+  const grouped = () =>
+    props.rowGroup !== undefined &&
+    viewMode() === 'table' &&
+    props.config?.groupRows === true;
+  const grouping = createMemo<GroupingState>(() =>
+    grouped() ? [props.rowGroup!.columnId] : []
+  );
+  const [expanded, setExpanded] = createSignal<ExpandedState>({});
 
   // --- Sort control (card view). With no clickable column headers, sorting
   // moves to a toolbar popover. Its options are the sortable columns (those
@@ -686,15 +780,28 @@ export function DataTable<T, K extends string, G extends string = never>(
       get columnVisibility() {
         return resolvedColumnVisibility();
       },
+      get grouping() {
+        return grouping();
+      },
+      get expanded() {
+        return expanded();
+      },
     },
     manualSorting: true,
     enableSortingRemoval: false,
     enableColumnResizing: true,
     columnResizeMode: 'onChange',
+    // A group row is never selected itself — ticking it selects its rows
+    // (TableRow), so only real row ids ever reach the page's selectedIds.
     get enableRowSelection() {
-      return props.enableSelection ?? false;
+      return props.enableSelection
+        ? (row: TanRow<T>) => !row.getIsGrouped()
+        : false;
     },
     onSortingChange,
+    onExpandedChange: u => setExpanded(functionalUpdate(u, expanded())),
+    // Expansion survives a refetch (a saved line must not fold its group).
+    autoResetExpanded: false,
     onRowSelectionChange,
     onColumnOrderChange: u =>
       props.setConfig?.('columnOrder', functionalUpdate(u, columnOrder())),
@@ -719,7 +826,33 @@ export function DataTable<T, K extends string, G extends string = never>(
       ),
     getRowId: row => props.rowKey(row),
     getCoreRowModel: getCoreRowModel(),
+    getGroupedRowModel: getGroupedRowModel(),
+    // Keep the user's column order when grouping is on. TanStack's default
+    // ('reorder') moves the grouped column to the front while grouped, so a
+    // user who had reordered their columns would see one jump on every toggle.
+    // The group row's label leads the first visible column regardless (see
+    // TableRow's labelColumnId / rowGroup's groupLabelColumnId), so nothing is
+    // gained by the shuffle.
+    groupedColumnMode: false,
   });
+
+  // The rows table view draws, in order. Ungrouped that is TanStack's row
+  // model as-is; grouped, see displayedRows (a group of one row is drawn as
+  // that row). Not TanStack's expanded row model, which would also unfold a
+  // single-row group under "expand all".
+  const displayRows = createMemo((): TanRow<T>[] =>
+    displayedRows(table.getRowModel().rows)
+  );
+  // The groups the expander can open — the ones with more than one row.
+  const expandableGroups = () =>
+    table
+      .getRowModel()
+      .rows.filter(row => row.getIsGrouped() && row.subRows.length > 1);
+  const allGroupsExpanded = () => {
+    const groups = expandableGroups();
+    return groups.length > 0 && groups.every(row => row.getIsExpanded());
+  };
+  const toggleAllGroups = () => setExpanded(allGroupsExpanded() ? {} : true);
 
   // Commit a live resize once the drag ends: when isResizingColumn clears and
   // we hold a transient px sizing, convert it to rem, persist via setConfig,
@@ -746,13 +879,36 @@ export function DataTable<T, K extends string, G extends string = never>(
   let tableEl: HTMLTableElement | undefined;
   const rowNavigation = () =>
     props.rowNavigation ?? props.onRowClick !== undefined;
-  const rowKeys = createMemo(() => table.getRowModel().rows.map(row => row.id));
+  const rowKeys = createMemo(() => displayRows().map(row => row.id));
+
+  // Grouped rows (meta.groupRows; ui-standards § tables › grouped rows): each
+  // grouped column's runs of equal values over the rows AS RENDERED — sorted,
+  // paged — keyed by row and column. Recomputed when the rows change; read
+  // only by grouped columns' cells. A table with no grouped column reads no
+  // rows here and always answers the same empty map, so nothing downstream
+  // re-runs.
+  const groupedColumns = createMemo(() =>
+    table.getAllLeafColumns().filter(column => column.columnDef.meta?.groupRows)
+  );
+  const groupRuns = createMemo((): ReadonlyMap<string, GroupPosition> => {
+    const columns = groupedColumns();
+    if (columns.length === 0) return NO_GROUP_RUNS;
+    const rows = table.getRowModel().rows;
+    const runs = new Map<string, GroupPosition>();
+    for (const column of columns)
+      groupPositions(rows.map(row => row.getValue(column.id))).forEach(
+        (position, i) => runs.set(`${rows[i].id}\u0000${column.id}`, position)
+      );
+    return runs;
+  });
+  const groupPosition = (cell: Cell<T, unknown>): GroupPosition | undefined =>
+    groupRuns().get(`${cell.row.id}\u0000${cell.column.id}`);
   const rowFocus = createRowFocus({
     onOpenRow: key => {
-      const row = table
-        .getRowModel()
-        .rows.find(candidate => candidate.id === key);
-      if (row && (props.rowClickable?.(row.original) ?? true))
+      const row = displayRows().find(candidate => candidate.id === key);
+      // Enter on a group row does what a click does: folds or unfolds it.
+      if (row?.getIsGrouped()) row.toggleExpanded();
+      else if (row && (props.rowClickable?.(row.original) ?? true))
         props.onRowClick?.(row.original);
     },
   });
@@ -827,7 +983,11 @@ export function DataTable<T, K extends string, G extends string = never>(
   // we mirror the same rem here via remToPx (reads the live root font-size, so
   // it tracks the compact-band 85% root too). leadingWidth is its total.
   const leadingColPx = () => remToPx(3); // keep 3 in sync with --table-leading-col
-  const leadingWidth = () => (props.enableSelection ? leadingColPx() : 0);
+  // The leading fixed columns: the group expander (while grouped), then the
+  // selection column.
+  const leadingCount = () =>
+    (grouped() ? 1 : 0) + (props.enableSelection ? 1 : 0);
+  const leadingWidth = () => leadingCount() * leadingColPx();
 
   // The sticky style for a data column's cell (header or body), or undefined
   // when unpinned. Only position + edge offset — z-index (the header-over-body
@@ -854,6 +1014,28 @@ export function DataTable<T, K extends string, G extends string = never>(
   // rather than its control (scrollCellIntoView).
   const [frozenWidths, setFrozenWidths] = createSignal({ left: 0, right: 0 });
   let scrollBox: HTMLDivElement | undefined;
+  let rootEl: HTMLDivElement | undefined;
+
+  // Changing page (or rows per page) goes back to the first row: the pager
+  // sits at the table's foot, so without this the new page opens scrolled to
+  // its bottom. Keyed on the page shown, not on the pager's clicks, so it
+  // also follows a pager the host renders elsewhere (`page`), the browser's
+  // back/forward, and a filter that resets the offset. The memo holds a
+  // string so a page that did not move (a refetch with a new total, the page
+  // jump given the current page) changes nothing.
+  const shownPage = createMemo(() => {
+    const page = props.pagination ?? props.page;
+    return page ? `${page.offset}:${page.pageSize}` : undefined;
+  });
+  // Not `defer`: a deferred `on` does not record the value it skipped, so
+  // its first real change would arrive with no `before` and be dropped. The
+  // first run (mount) has none either, which is what skips it.
+  createEffect(
+    on(shownPage, (now, before) => {
+      if (now !== undefined && before !== undefined)
+        scrollTableToTop(rootEl, scrollBox);
+    })
+  );
 
   // Walk the header row from each end, accumulating RENDERED widths for as long
   // as the cells are pinned to that side (a frozen block is always a prefix or
@@ -1178,6 +1360,7 @@ export function DataTable<T, K extends string, G extends string = never>(
     void state.columnVisibility;
     void state.columnOrder;
     void state.columnSizing;
+    void grouped();
     void viewMode();
     void viewDensity();
     void isRtl();
@@ -1262,7 +1445,8 @@ export function DataTable<T, K extends string, G extends string = never>(
   // instead (see .root[data-no-toolbar] in the CSS).
   const toolbarInputs = (): ToolbarInputs => ({
     hasFilters: !!filters(),
-    hasPagination: !!props.pagination,
+    // The toolbar carries the row count, which a pager with no total hasn't got.
+    hasPagination: props.pagination?.total !== undefined,
     controlsLifted: !!props.controlsMount,
     hasControls: hasControls(),
   });
@@ -1346,6 +1530,26 @@ export function DataTable<T, K extends string, G extends string = never>(
             </For>
           </div>
         </Popover>
+      </Show>
+      {/* Group toggle (rowGroup) — table view only, since cards never group.
+            The icon shows the action on offer (ui-standards › conventions:
+            toggle icons show the next action): group while flat, ungroup
+            while grouped. Writes `undefined` to turn off, so off is the
+            default layer and "Reset table to default" covers it. */}
+      <Show when={props.rowGroup && props.setConfig && viewMode() === 'table'}>
+        <button
+          type="button"
+          class={`${styles.controlButton} ${grouped() ? styles.controlButtonActive : ''}`}
+          data-testid="table-group-toggle"
+          aria-pressed={grouped()}
+          aria-label={props.rowGroup!.label()}
+          title={props.rowGroup!.label()}
+          onClick={() =>
+            props.setConfig?.('groupRows', grouped() ? undefined : true)
+          }
+        >
+          {grouped() ? <UngroupItemsIcon /> : <GroupItemsIcon />}
+        </button>
       </Show>
       {/* View toggle — a single Card-view control matching the other icon
             controls (no border): grey when in table view, blue when card view
@@ -1461,6 +1665,7 @@ export function DataTable<T, K extends string, G extends string = never>(
     // full-bleed the table from its own CSS module (Page.module.css) — a
     // descendant selector can't name this .root class across CSS Modules.
     <div
+      ref={rootEl}
       class={`${styles.root} ${overlay() ? styles.fullScreen : ''}`}
       data-datatable
       style={
@@ -1478,6 +1683,9 @@ export function DataTable<T, K extends string, G extends string = never>(
       data-fit-content={
         props.fitContent && viewMode() === 'card' ? '' : undefined
       }
+      // The dialog's main line table (see `dialogTable`) — read by the
+      // Dialog's full-screen rules, nothing here.
+      data-dialog-table={props.dialogTable ? '' : undefined}
     >
       {/* The table toolbar (ui-standards § tables): one bar above the scroll
           area — the page-composed filter bar inline-start, the control cluster
@@ -1499,12 +1707,10 @@ export function DataTable<T, K extends string, G extends string = never>(
               data does, and it sits beside the filters that change the number.
               Read from `pagination.total`, so any paginated table shows it
               without the host passing anything extra. */}
-          <Show when={props.pagination}>
-            {pagination => (
-              <span class={styles.toolbarCount} data-testid="table-row-count">
-                {tPlural('pagination.rows-total', pagination().total)}
-              </span>
-            )}
+          <Show when={props.pagination?.total !== undefined}>
+            <span class={styles.toolbarCount} data-testid="table-row-count">
+              {tPlural('pagination.rows-total', props.pagination?.total ?? 0)}
+            </span>
           </Show>
           <Show when={!props.controlsMount}>{controls()}</Show>
         </div>
@@ -1605,6 +1811,45 @@ export function DataTable<T, K extends string, G extends string = never>(
                   <For each={table.getHeaderGroups()}>
                     {headerGroup => (
                       <tr>
+                        {/* The expander column's header: expand or collapse
+                          every group with more than one row. */}
+                        <Show when={grouped()}>
+                          <th
+                            class={`${styles.th} ${styles.selectCell} ${styles.expanderCell}`}
+                            data-pinned="left"
+                            data-frozen-edge={
+                              leadingIsFrozenEdge() && !props.enableSelection
+                                ? 'left'
+                                : undefined
+                            }
+                            style={leadingPinnedStyle(0)}
+                          >
+                            <Show when={expandableGroups().length > 0}>
+                              <button
+                                type="button"
+                                class={styles.groupExpander}
+                                data-testid="table-expand-all-groups"
+                                aria-expanded={allGroupsExpanded()}
+                                aria-label={
+                                  allGroupsExpanded()
+                                    ? t('table.collapse-all-groups')
+                                    : t('table.expand-all-groups')
+                                }
+                                title={
+                                  allGroupsExpanded()
+                                    ? t('table.collapse-all-groups')
+                                    : t('table.expand-all-groups')
+                                }
+                                data-expanded={
+                                  allGroupsExpanded() ? '' : undefined
+                                }
+                                onClick={toggleAllGroups}
+                              >
+                                <ChevronsDownIcon />
+                              </button>
+                            </Show>
+                          </th>
+                        </Show>
                         <Show when={props.enableSelection}>
                           <th
                             class={`${styles.th} ${styles.selectCell}`}
@@ -1612,7 +1857,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                             data-frozen-edge={
                               leadingIsFrozenEdge() ? 'left' : undefined
                             }
-                            style={leadingPinnedStyle(0)}
+                            style={leadingPinnedStyle(grouped() ? 1 : 0)}
                           >
                             {/* Partial selection (some rows on this page, not
                               all) shows the indeterminate dash (ui-standards
@@ -1635,13 +1880,15 @@ export function DataTable<T, K extends string, G extends string = never>(
                                   table.getIsAllRowsSelected() ||
                                   table.getIsSomeRowsSelected();
                                 table.toggleAllRowsSelected(!anySelected);
-                                // The native click already flipped the DOM box
-                                // to checked; toggling OFF from indeterminate
-                                // leaves the controlled `checked` value
-                                // false→false, so Solid's binding never re-runs
-                                // to undo it. Sync the box to the state we just
-                                // set.
-                                e.currentTarget.checked = !anySelected;
+                                // The native click already flipped the DOM box;
+                                // when the controlled `checked` value doesn't
+                                // change (OFF from indeterminate, or a page
+                                // whose onSelectionChange narrows select-all
+                                // to nothing), Solid's binding never re-runs
+                                // to undo it. Put the box back to what the
+                                // selection now holds, not what was asked for.
+                                e.currentTarget.checked =
+                                  table.getIsAllRowsSelected();
                               }}
                             />
                           </th>
@@ -1682,6 +1929,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                         selectionDisabled={props.selectionDisabled ?? false}
                         onRowClick={props.onRowClick}
                         rowClickable={props.rowClickable}
+                        rowHref={props.rowHref}
                         rowTone={row =>
                           (props.cardTone ?? props.rowTone)?.(row)
                         }
@@ -1699,7 +1947,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                       />
                     </Match>
                     <Match when={viewMode() === 'table'}>
-                      <For each={table.getRowModel().rows}>
+                      <For each={displayRows()}>
                         {row => (
                           <TableRow
                             row={row}
@@ -1719,9 +1967,11 @@ export function DataTable<T, K extends string, G extends string = never>(
                                 : undefined
                             }
                             enableSelection={props.enableSelection ?? false}
+                            expander={grouped()}
                             selectionDisabled={props.selectionDisabled ?? false}
                             onRowClick={props.onRowClick}
                             rowClickable={props.rowClickable}
+                            rowHref={props.rowHref}
                             rowState={props.rowState}
                             rowTone={props.rowTone}
                             rowTint={props.rowTint}
@@ -1730,6 +1980,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                             leadingPinnedStyle={leadingPinnedStyle}
                             frozenEdge={frozenEdge}
                             leadingIsFrozenEdge={leadingIsFrozenEdge()}
+                            groupPosition={groupPosition}
                             cellVisible={cell =>
                               showInTableView(cell.column.columnDef)
                             }
@@ -1757,6 +2008,12 @@ export function DataTable<T, K extends string, G extends string = never>(
                   <For each={table.getFooterGroups()}>
                     {footerGroup => (
                       <tr>
+                        <Show when={grouped()}>
+                          <td
+                            class={`${styles.tf} ${styles.selectCell}`}
+                            aria-hidden="true"
+                          />
+                        </Show>
                         <Show when={props.enableSelection}>
                           <td
                             class={`${styles.tf} ${styles.selectCell}`}
@@ -1771,6 +2028,11 @@ export function DataTable<T, K extends string, G extends string = never>(
                               <td
                                 class={styles.tf}
                                 data-align={header.column.columnDef.meta?.align}
+                                data-divider-end={
+                                  header.column.columnDef.meta?.dividerEnd
+                                    ? ''
+                                    : undefined
+                                }
                                 data-testid={`footer-${header.column.id}`}
                               >
                                 {renderTemplate(
@@ -1794,12 +2056,16 @@ export function DataTable<T, K extends string, G extends string = never>(
                 Loading with no rows shows the spinner; a settled empty list shows
                 the "nothing here" empty state. */}
           <Show when={table.getRowModel().rows.length === 0}>
-            <div class={styles.emptyBody}>
+            <div
+              class={styles.emptyBody}
+              data-plain={props.emptyGraphic === false ? '' : undefined}
+            >
               <Show
                 when={props.loading}
                 fallback={
                   <EmptyState
                     data-testid="nothing-here"
+                    graphic={props.emptyGraphic !== false}
                     message={props.emptyMessage ?? t('table.no-results')}
                   >
                     {props.empty}

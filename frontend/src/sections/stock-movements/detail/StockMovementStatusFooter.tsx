@@ -4,9 +4,13 @@ import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
 import { ContentFooterMessage } from '@/ui/layout/ContentFooter/ContentFooterMessage';
 import { createFlash } from '@/ui/utils/createFlash';
-import { t } from '@/intl';
 import { StatusChangeAction } from './actions/StatusChangeAction';
-import { currentStep, isFinalised, statusSteps } from './stockMovementStatus';
+import {
+  currentStep,
+  isFinalised,
+  statusLabel,
+  statusSteps,
+} from './stockMovementStatus';
 import type { StockMovementInfoFragment } from './stockMovementDetail.generated';
 
 // The document-level footer (spec/stock-movements/ui-surface.md S2 § status
@@ -17,8 +21,9 @@ import type { StockMovementInfoFragment } from './stockMovementDetail.generated'
 // (the view owns that swap). No Close (D103): leaving the document is the
 // breadcrumb's job, in the app bar, where every other screen puts it.
 // A status change that lands is reported in the bar's message slot, as a
-// flash of the save confirmation (spec/ui-standards/controls.md § action
-// feedback) — the split button is gone once finalised.
+// flash of the status it reached, in the crumb's own word (issue #1127;
+// spec/ui-standards/controls.md § action feedback) — the split button is gone
+// once finalised.
 
 export interface StockMovementStatusFooterProps {
   storeId: string;
@@ -34,7 +39,7 @@ export const StockMovementStatusFooter: Component<
 
   const onApplied = (node: StockMovementInfoFragment) => {
     props.onAdvanced(node);
-    saved.show(t('messages.saved'));
+    saved.show(statusLabel(node.status));
   };
 
   return (

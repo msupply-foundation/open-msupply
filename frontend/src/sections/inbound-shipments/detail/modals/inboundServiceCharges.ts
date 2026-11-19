@@ -10,23 +10,37 @@ import type {
   ServiceChargeSaveResult,
   ServiceChargeSeed,
 } from '../../../../domain/invoice';
-import { InboundServiceLines } from '../inboundShipmentDetail.generated';
+import {
+  InboundServiceLines,
+  type InboundServiceLinesResult,
+} from '../inboundShipmentDetail.generated';
 import { runInboundBatch } from '../inboundShipmentUpdate';
 
-export const fetchInboundServiceCharges = async (
+export type InboundServiceLine = Extract<
+  InboundServiceLinesResult['invoiceLines'],
+  { __typename: 'InvoiceLineConnector' }
+>['nodes'][number];
+
+// The shipment's SERVICE lines; undefined when the read failed.
+export const fetchInboundServiceLines = async (
   storeId: string,
   invoiceId: string
-): Promise<ServiceChargeSeed[] | undefined> => {
+): Promise<InboundServiceLine[] | undefined> => {
   const result = await graphqlFetch(InboundServiceLines, {
     storeId,
     filter: { invoiceId: { equalTo: invoiceId }, type: { equalTo: 'SERVICE' } },
   });
-  if (
-    result.kind !== 'success' ||
-    result.data.invoiceLines.__typename !== 'InvoiceLineConnector'
-  )
-    return undefined;
-  return result.data.invoiceLines.nodes.map(line => ({
+  return result.kind === 'success' &&
+    result.data.invoiceLines.__typename === 'InvoiceLineConnector'
+    ? result.data.invoiceLines.nodes
+    : undefined;
+};
+
+export const fetchInboundServiceCharges = async (
+  storeId: string,
+  invoiceId: string
+): Promise<ServiceChargeSeed[] | undefined> =>
+  (await fetchInboundServiceLines(storeId, invoiceId))?.map(line => ({
     id: line.id,
     itemId: line.itemId,
     name: line.itemName,
@@ -34,7 +48,6 @@ export const fetchInboundServiceCharges = async (
     taxPercentage: line.taxPercentage ?? null,
     note: line.note ?? null,
   }));
-};
 
 export const saveInboundServiceCharges = async (
   storeId: string,

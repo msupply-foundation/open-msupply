@@ -8,9 +8,9 @@ import {
 } from '../ui/elements/table/DataTable';
 import { getCellDefinition } from '../ui/elements/table/tableHelpers';
 import {
-  dateToIsoDate,
-  localDayToUtc,
-} from '../ui/elements/inputs/dateTimeConvert';
+  dateToCalendarDate,
+  calendarDateToInstant,
+} from '../intl/calendarDate';
 import {
   resolveTableConfig,
   type Band,
@@ -63,6 +63,7 @@ import {
 // scaffolding is DCE'd from prod; the app never imports back the other way.
 import type { InboundLineFragment } from '../sections/inbound-shipments/detail/inboundShipmentDetail.generated';
 import { packDifference } from '../sections/inbound-shipments/detail/inboundShipmentLine';
+import { createLocalPagination } from '../ui/elements/table/createLocalPagination';
 
 // The Detail-view-table demo: the SAME assembly as the details tab of the real
 // InboundShipmentDetailView — a tabbed Page whose body is the shared DataTable
@@ -149,7 +150,7 @@ const SUPPLIERS = [
 // A stored instant for the given local calendar day, via the shared
 // conversion — so the mock rows display the intended day in any timezone.
 const isoDay = (month: number, day: number, year: number): string =>
-  localDayToUtc(dateToIsoDate(new Date(year, month - 1, day)));
+  calendarDateToInstant(dateToCalendarDate(new Date(year, month - 1, day)));
 
 // Expiry dates are generated RELATIVE to today so the near-expiry error tone
 // (getExpiryDateCell: ≤3 months out, past included) always has live examples
@@ -189,6 +190,7 @@ const DATA: Line[] = Array.from({ length: 52 }, (_, i): Line => {
   return {
     id: `line-${i + 1}`,
     type: 'STOCK_IN',
+    barcode: null,
     itemId: `item-${i}`,
     itemName: item.name,
     itemCode: item.code,
@@ -240,6 +242,8 @@ const DATA: Line[] = Array.from({ length: 52 }, (_, i): Line => {
       isVaccine: false,
       doses: 1,
       defaultPackSize: packSize,
+      itemStoreProperties: null,
+      volumePerPack: 0,
     },
     donor: null,
     manufacturer: man ? { id: `man-${i}`, name: man } : null,
@@ -316,8 +320,6 @@ export const DetailTableShowcase = () => {
     key: 'itemName',
     desc: false,
   });
-  const [offset, setOffset] = createSignal(0);
-  const [pageSize, setPageSize] = createSignal(20);
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
 
   // The line the Line Edit modal is open on (a row click), or null when closed.
@@ -396,11 +398,15 @@ export const DetailTableShowcase = () => {
       return desc ? -cmp : cmp;
     });
   });
-  const rows = () => sorted().slice(offset(), offset() + pageSize());
+  // Changeable page size, with nowhere to keep the choice.
+  const page = createLocalPagination(sorted, {
+    pageSize: 20,
+    onPageSizeChange: () => {},
+  });
 
   const onSort = (key: SortKey, desc: boolean) => {
     setSort({ key, desc });
-    setOffset(0);
+    page.reset();
   };
 
   const columns = (): Column<Line, SortKey, GroupKey>[] => [
@@ -533,10 +539,18 @@ export const DetailTableShowcase = () => {
     },
     {
       c: {
-        accessor: line => line.campaign?.name ?? line.program?.name ?? '',
-        id: 'campaignProgram',
+        accessor: line => line.program?.name ?? '',
+        id: 'program',
       },
-      header: () => t('label.campaign'),
+      header: () => t('label.program'),
+      cardGroup: 'more',
+    },
+    {
+      c: {
+        accessor: line => line.campaign?.name ?? '',
+        id: 'activity',
+      },
+      header: () => t('label.activity'),
       cardGroup: 'more',
     },
     {
@@ -683,7 +697,6 @@ export const DetailTableShowcase = () => {
               <DateField
                 label={t('label.received')}
                 size="small"
-                format="dd MMM yyyy"
                 value="2026-05-19"
                 disabled
               />
@@ -739,7 +752,7 @@ export const DetailTableShowcase = () => {
           <DataTable
             columns={columns()}
             cardGroups={CARD_GROUPS}
-            rows={rows()}
+            rows={page.rows()}
             rowKey={line => line.id}
             sort={sort()}
             onSort={onSort}
@@ -788,16 +801,7 @@ export const DetailTableShowcase = () => {
             config={tableConfig()}
             setConfig={setConfig}
             configIsDefault={isConfigDefault()}
-            pagination={{
-              offset: offset(),
-              pageSize: pageSize(),
-              total: DATA.length,
-              onOffsetChange: setOffset,
-              onPageSizeChange: size => {
-                setPageSize(size);
-                setOffset(0);
-              },
-            }}
+            pagination={page.pagination()}
           />
           <LineEditModal
             open={editorOpen()}

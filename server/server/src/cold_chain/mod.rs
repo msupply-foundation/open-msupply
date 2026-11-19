@@ -9,6 +9,8 @@ use service::{
     user_account::UserAccountService,
 };
 
+use crate::middleware::initialised_only;
+
 mod login;
 mod sensor;
 mod temperature_breach;
@@ -22,15 +24,18 @@ const URL_PATH: &str = "/coldchain/v1";
 const COOKIE_NAME: &str = "coldchain";
 
 pub fn config_cold_chain(cfg: &mut web::ServiceConfig) {
-    cfg.route(&format!("{URL_PATH}/login"), web::post().to(post_login));
-    cfg.route(&format!("{URL_PATH}/sensor"), web::put().to(put_sensors));
-    cfg.route(
-        &format!("{URL_PATH}/temperature-log"),
-        web::put().to(put_logs),
-    );
-    cfg.route(
-        &format!("{URL_PATH}/temperature-breach"),
-        web::put().to(put_breaches),
+    cfg.service(
+        web::scope(URL_PATH)
+            // Not live until the site's first sync has integrated: it commits in batches (#845),
+            // so the data is partial until then, and anything written before it finishes is never
+            // pushed (initialisation moves the push cursor past it).
+            .wrap(initialised_only(
+                "Site is still initialising, try again later.",
+            ))
+            .route("/login", web::post().to(post_login))
+            .route("/sensor", web::put().to(put_sensors))
+            .route("/temperature-log", web::put().to(put_logs))
+            .route("/temperature-breach", web::put().to(put_breaches)),
     );
 }
 
@@ -89,4 +94,67 @@ pub fn validate_access(
         &access_request,
     )?;
     Ok((validated_user.user_id, store_id))
+}
+
+#[cfg(test)]
+mod tests {
+    use actix_web::{App, http::StatusCode, test, web::Data};
+    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use service::{
+        auth_data::AuthData, service_provider::ServiceProvider, sync::test_util_set_is_initialised,
+    };
+    use std::sync::{Arc, RwLock};
+
+    use super::config_cold_chain;
+
+    // The site's first sync integrates in batches (#845), so the cold chain API isn't live until
+    // it has finished: no login, and no writes that initialisation would never push.
+    #[actix_web::test]
+    async fn cold_chain_api_waits_for_initialisation() {
+        let (_, _, connection_manager, _) = setup_all(
+            "cold_chain_api_waits_for_initialisation",
+            MockDataInserts::none(),
+        )
+        .await;
+        let app = test::init_service(
+            App::new()
+                .app_data(Data::new(ServiceProvider::new(connection_manager)))
+                .app_data(Data::new(AuthData {
+                    session_store: Arc::new(RwLock::new(Default::default())),
+                    cookie_suffix: "8000".to_string(),
+                    no_ssl: true,
+                    debug_no_access_control: false,
+                }))
+                .configure(config_cold_chain),
+        )
+        .await;
+        let login = || {
+            test::TestRequest::post()
+                .uri("/coldchain/v1/login")
+                .set_json(serde_json::json!({ "username": "user", "password": "pass" }))
+                .to_request()
+        };
+        let put_sensors = || {
+            test::TestRequest::put()
+                .uri("/coldchain/v1/sensor")
+                .set_json(serde_json::json!([]))
+                .to_request()
+        };
+
+        // No sync log yet, so not initialised.
+        test_util_set_is_initialised(false);
+        for request in [login(), put_sensors()] {
+            assert_eq!(
+                test::call_service(&app, request).await.status(),
+                StatusCode::SERVICE_UNAVAILABLE
+            );
+        }
+
+        // Live once initialised: without a session the route itself refuses.
+        test_util_set_is_initialised(true);
+        assert_eq!(
+            test::call_service(&app, put_sensors()).await.status(),
+            StatusCode::UNAUTHORIZED
+        );
+    }
 }

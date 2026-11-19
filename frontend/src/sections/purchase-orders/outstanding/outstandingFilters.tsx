@@ -27,7 +27,7 @@ export type OutstandingLineFilter = NonNullable<
 const FILTERS: Filter<OutstandingLineFilter>[] =
   constructFilters<OutstandingLineFilter>({
     // ─ user-facing, in display order ────────────────────────────────────────
-    // Supplier name — a partial, case-insensitive match (OMS-FUN-PO-14.3).
+    // Supplier name — a partial, case-insensitive match (OMS-FUN-PO-14.16).
     // The list's one DEFAULT filter: its key is seeded present-but-empty in
     // the list's DEFAULT_STATE, so the chip is on the bar from arrival.
     supplierName: {
@@ -80,7 +80,7 @@ const FILTERS: Filter<OutstandingLineFilter>[] =
       ),
     },
     // The line's own expected delivery date — a NaiveDate, so type="date"
-    // passes the plain ISO date through, and the future is NOT disabled: an
+    // passes the calendar date through, and the future is NOT disabled: an
     // expected delivery date is normally ahead of today. A line with no date
     // is outside every range, so applying this filter HIDES undated lines
     // (OMS-FUN-PO-14.12) — the server's own behaviour, not something the
@@ -105,7 +105,7 @@ const FILTERS: Filter<OutstandingLineFilter>[] =
     // filters (contract § listing outstanding lines): a sent line, still owed.
     // Never a user filter — the two are what makes this screen this screen.
     status: null,
-    receivedLessThanAdjusted: null,
+    receivedLessThanRequested: null,
     // Identity / scope — forced by the query. The store scope is the server's
     // own and has no filter field at all.
     id: null,

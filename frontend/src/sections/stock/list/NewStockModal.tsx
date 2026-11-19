@@ -1,4 +1,8 @@
-import { canConfirmNewStock, packSizeValid } from './newStockEntry';
+import {
+  canConfirmNewStock,
+  followingSellPrice,
+  packSizeValid,
+} from './newStockEntry';
 import { generateUUID } from '../../../uuid';
 import { createResource, createSignal, Show, type JSX } from 'solid-js';
 import { createStore } from 'solid-js/store';
@@ -27,17 +31,18 @@ import { LocationVolumeSelect } from '../../../domain/location';
 import { NameSearch } from '../../../domain/name';
 import { VvmStatusSelect } from '../../../domain/vvmStatus';
 import { ReasonSelect, reasonsOfKind } from '../../../domain/reasonOptions';
-import { CampaignOrProgramSelect } from '../../../domain/campaign';
+import { ActivitySelect, ProgramSelect } from '@/domain/campaign';
 import {
   barcodeFieldFill,
   createScanControl,
+  proposeBarcode,
   ScanFieldButton,
   ScanNotice,
-  scanUnusableReason,
+  scanFieldHelper,
 } from '../../../domain/barcode';
 import { stockPreferences } from '../../../store/storeContext';
 import { runInsertStockLine } from '../stockApi';
-import { localTodayIso } from '../../../ui/elements/inputs/dateTimeConvert';
+import { todayCalendarDate } from '../../../intl/calendarDate';
 import { fetchStockLocations, locationsForItem } from '../stockLocations';
 import {
   NewStockItem,
@@ -61,11 +66,21 @@ type ItemNode = Extract<
 type ItemVariant = ItemNode['variants'][number];
 type Reason = { id: string; type: string; reason: string };
 
+// What the item's default sell price is read from.
+const sellPriceDefaults = (node: ItemNode) => ({
+  defaultPackSize: node.defaultPackSize,
+  defaultSellPricePerPack: node.itemStoreProperties?.defaultSellPricePerPack,
+});
+
 interface Draft {
   numberOfPacks?: number;
   packSize?: number;
   costPricePerPack?: number;
   sellPricePerPack?: number;
+  // Whether the user has typed the sell price: until they do, it follows the
+  // pack size at the store's default (spec/stock rules › Default sell price
+  // for new stock).
+  sellTyped: boolean;
   batch: string;
   barcode: string;
   expiryDate: string | null;
@@ -79,13 +94,14 @@ interface Draft {
   donorId: string | null;
   donorName: string | null;
   reasonOption: Reason | null;
-  // Campaign and program are one mutually-exclusive field (the campaign-or-
-  // program lookup) — never both set at once.
+  // Campaign and program are two INDEPENDENT fields (separate pickers) — a
+  // new line may carry either, both, or neither.
   campaignId: string | null;
   programId: string | null;
 }
 
 const EMPTY_DRAFT: Draft = {
+  sellTyped: false,
   batch: '',
   barcode: '',
   expiryDate: null,
@@ -136,7 +152,8 @@ const NewStockContent = (props: {
   // The Barcode field's scan affordance — the same as the stock line
   // detail's (barcode-scanning rules § Setting a code on a stock line:
   // "Creating a new stock line with a code does the same"). The field only
-  // exists once an item is chosen, so until then a scan has nowhere to go.
+  // exists once an item is chosen, so until then a scan has nowhere to go
+  // and a hardware scanner is not listening (.134).
   const scanner = createScanControl({
     owner: 'new-stock',
     mode: 'field',
@@ -145,7 +162,7 @@ const NewStockContent = (props: {
   });
 
   const prefs = () => stockPreferences();
-  const today = localTodayIso();
+  const today = todayCalendarDate();
 
   // The chosen item's defaults + variants (spec S3: seed pack size + sell
   // price; offer variants). Keyed on the item id; undefined until an item is
@@ -166,15 +183,22 @@ const NewStockContent = (props: {
       // is still the chosen item (guards a slow fetch for a previous item
       // resolving after the user has already switched: Solid discards the stale
       // RETURN, but the in-fetcher side-effect would otherwise still run) and
-      // only when the user hasn't already typed a value.
+      // only when the user hasn't already typed a value. The sell price is the
+      // default at the pack size the form holds (followingSellPrice).
       if (node && item()?.id === itemId) {
-        setDraft(d => ({
-          ...d,
-          packSize: d.packSize ?? node.defaultPackSize,
-          sellPricePerPack:
-            d.sellPricePerPack ??
-            node.itemStoreProperties?.defaultSellPricePerPack,
-        }));
+        setDraft(d => {
+          const packSize = d.packSize ?? node.defaultPackSize;
+          return {
+            ...d,
+            packSize,
+            sellPricePerPack: followingSellPrice({
+              sellPricePerPack: d.sellPricePerPack,
+              sellTyped: d.sellTyped,
+              item: sellPriceDefaults(node),
+              packSize,
+            }),
+          };
+        });
       }
       return node;
     }
@@ -203,6 +227,22 @@ const NewStockContent = (props: {
     );
 
   const variants = (): ItemVariant[] => detail()?.variants ?? [];
+
+  // A pack-size change moves a sell price the user hasn't typed to the
+  // default at the new pack size (followingSellPrice).
+  const changePackSize = (packSize: number | undefined) => {
+    const node = detail();
+    setDraft(d => ({
+      ...d,
+      packSize,
+      sellPricePerPack: followingSellPrice({
+        sellPricePerPack: d.sellPricePerPack,
+        sellTyped: d.sellTyped,
+        item: node && sellPriceDefaults(node),
+        packSize,
+      }),
+    }));
+  };
 
   // Choosing a variant fills the variant id, manufacturer, and volume per pack
   // (from its packaging).
@@ -241,7 +281,10 @@ const NewStockContent = (props: {
       hasReason: !!draft.reasonOption,
     });
 
-  const onOk = async () => {
+  // OK records the barcode on the new line and learns it for the item; it
+  // never changes what the barcode is mapped to for other items
+  // (barcode-scanning rules § Setting a barcode on a stock line).
+  const commit = async () => {
     const it = chosenItem();
     if (!it || !canConfirm()) return;
     setSaving(true);
@@ -275,6 +318,13 @@ const NewStockContent = (props: {
       setError(outcome.message);
       return;
     }
+    // The line is saved whatever this does; it's learned next time if not now.
+    if (draft.barcode)
+      void proposeBarcode(props.storeId, {
+        barcode: draft.barcode,
+        itemId: it.id,
+        packSize: draft.packSize,
+      });
     props.onCreated(outcome.data.id);
   };
 
@@ -284,12 +334,13 @@ const NewStockContent = (props: {
       onClose={props.onClose}
       dismissable={!saving()}
       // A form dialog, not a workbench (#771): fixed at the width the
-      // two-column form needs, growing downward as the sections reveal once an
-      // item is chosen. The body reserves enough height to OWN the item
+      // two-column form needs, growing downward as the sections reveal once
+      // an item is chosen. The body reserves enough height to OWN the item
       // search's open suggestions list (the create/search-modal convention —
       // CustomerSearchModal et al), which otherwise dangles past the card:
-      // header + field + the listbox's 18rem cap + padding (#1029 — the old 24
-      // left the bottom ~2rem of a full listbox hanging past the dialog).
+      // header + field + the listbox's 18rem cap + padding (#1029 — the old
+      // 24 left the bottom ~2rem of a full listbox hanging past the
+      // dialog).
       widthRem={56}
       minBodyHeightRem={27}
       testId="new-stock-modal"
@@ -322,7 +373,7 @@ const NewStockContent = (props: {
             confirms="plain"
             disabled={!canConfirm()}
             data-testid="dialog-button-ok"
-            onClick={() => void onOk()}
+            onClick={() => void commit()}
           >
             {t('button.ok')}
           </Button>
@@ -364,14 +415,14 @@ const NewStockContent = (props: {
 
           <Show when={chosenItem()}>
             {/* The sectioned edit form (spec/ui-standards detail-views): S2's
-              sections adapted to this field set (spec/stock S3 Layout). */}
+            sections adapted to this field set (spec/stock S3 Layout). */}
             <FormColumns>
               <FormColumn>
                 <FormSection title={t('heading.stock-levels')}>
                   <FormRow>
                     {/* NumberField's default min is 0 (no negatives), so the pack
-                      count can't go negative from the input
-                          (spec OMS-REG-SMV-02.34). */}
+                    count can't go negative from the input
+                        (spec OMS-REG-SMV-02.34). */}
                     <NumberField
                       label={t('label.pack-qty')}
                       data-testid="field-pack-quantity"
@@ -392,7 +443,7 @@ const NewStockContent = (props: {
                           ? t('error.pack-size-min')
                           : undefined
                       }
-                      onChange={v => setDraft('packSize', v)}
+                      onChange={changePackSize}
                     />
                   </FormRow>
                 </FormSection>
@@ -409,9 +460,9 @@ const NewStockContent = (props: {
                     data-testid="field-barcode"
                     value={draft.barcode}
                     onInput={e => setDraft('barcode', e.currentTarget.value)}
-                    helperText={scanUnusableReason(scanner)}
+                    helperText={scanFieldHelper(scanner)}
                     endAction={
-                      scanner.available() ? (
+                      scanner.needsPress() ? (
                         <ScanFieldButton control={scanner} />
                       ) : undefined
                     }
@@ -433,8 +484,8 @@ const NewStockContent = (props: {
                     />
                   </FormRow>
                   {/* VVM status editable when the gate is on
-                      (spec OMS-REG-INV-06.11: the field
-                    shows when manageVvmStatusForStock OR sortByVvmStatusThenExpiry). */}
+                    (spec OMS-REG-INV-06.11: the field
+                  shows when manageVvmStatusForStock OR sortByVvmStatusThenExpiry). */}
                   <Show
                     when={
                       prefs().manageVvmStatusForStock ||
@@ -474,14 +525,16 @@ const NewStockContent = (props: {
                       label={t('label.sell-price')}
                       data-testid="field-sell-price"
                       value={draft.sellPricePerPack}
-                      onChange={v => setDraft('sellPricePerPack', v)}
+                      onChange={v =>
+                        setDraft({ sellPricePerPack: v, sellTyped: true })
+                      }
                     />
                   </FormRow>
                   {/* Required iff active positive reasons are configured (spec
-                    OMS-REG-SMV-02.36) — the same condition that gates OK,
-                    marked on the
-                    field so a disabled OK is explained rather than mysterious
-                    (#601). */}
+                  OMS-REG-SMV-02.36) — the same condition that gates OK,
+                  marked on the
+                  field so a disabled OK is explained rather than mysterious
+                  (#601). */}
                   <ReasonSelect
                     kind="positive"
                     label={t('label.reason')}
@@ -567,7 +620,7 @@ const NewStockContent = (props: {
                   />
                   <FormRow>
                     {/* Donor field gated by allowTrackingOfStockByDonor
-                        (spec OMS-REG-SMV-02.40). */}
+                      (spec OMS-REG-SMV-02.40). */}
                     <Show when={prefs().allowTrackingOfStockByDonor}>
                       <NameSearch
                         label={t('label.donor')}
@@ -589,18 +642,19 @@ const NewStockContent = (props: {
                         }}
                       />
                     </Show>
-                    <CampaignOrProgramSelect
-                      label={t('label.campaign')}
-                      inputTestId="field-campaign-or-program"
+                    <ProgramSelect
+                      inputTestId="field-program"
                       storeId={props.storeId}
-                      itemId={chosenItem()?.id ?? ''}
-                      campaignId={draft.campaignId ?? undefined}
+                      itemIds={[chosenItem()?.id].filter(
+                        id => id !== undefined
+                      )}
                       programId={draft.programId ?? undefined}
-                      placeholder={t('label.none')}
-                      onChange={v => {
-                        setDraft('campaignId', v?.campaign?.id ?? null);
-                        setDraft('programId', v?.program?.id ?? null);
-                      }}
+                      onChange={p => setDraft('programId', p?.id ?? null)}
+                    />
+                    <ActivitySelect
+                      inputTestId="field-activity"
+                      campaignId={draft.campaignId ?? undefined}
+                      onChange={c => setDraft('campaignId', c?.id ?? null)}
                     />
                   </FormRow>
                 </FormSection>

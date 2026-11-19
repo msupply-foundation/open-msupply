@@ -1,3 +1,4 @@
+import { categoryName, typeName } from '@/domain/asset';
 import { createResource, createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { graphqlFetch } from '@/api/graphql';
@@ -48,7 +49,12 @@ type CatalogueItem =
 
 /** `<code> <type> <manufacturer> <model>` — the option's own composition. */
 const catalogueItemLabel = (item: CatalogueItem): string =>
-  [item.code, item.assetType?.name, item.manufacturer, item.model]
+  [
+    item.code,
+    item.assetType && typeName(item.assetType),
+    item.manufacturer,
+    item.model,
+  ]
     .filter(Boolean)
     .join(' ');
 
@@ -236,7 +242,7 @@ export const CreateAssetModal: Component<CreateAssetModalProps> = props => {
           value={form().categoryId}
           options={categories().map(category => ({
             value: category.id,
-            label: category.name,
+            label: categoryName(category),
           }))}
           onValueChange={categoryId =>
             setForm(withCategory(form(), categoryId))
@@ -257,7 +263,7 @@ export const CreateAssetModal: Component<CreateAssetModalProps> = props => {
               value={form().typeId}
               options={types().map(type => ({
                 value: type.id,
-                label: type.name,
+                label: typeName(type),
               }))}
               onValueChange={typeId => setForm({ ...form(), typeId })}
             />

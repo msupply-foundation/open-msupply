@@ -60,12 +60,15 @@ const isConnectionError = (
   centralSearchData: CentralPatientSearchResponse | undefined
 ): boolean => {
   if (centralSearchData?.__typename === 'CentralPatientSearchError') {
-    switch (centralSearchData.error.__typename) {
-      case 'ConnectionError': {
+    const typename = centralSearchData.error.__typename;
+    switch (typename) {
+      // A central that's slow to answer reads the same as one out of reach
+      case 'ConnectionError':
+      case 'CentralServerNoAnswer': {
         return true;
       }
       default:
-        noOtherVariants(centralSearchData.error.__typename);
+        noOtherVariants(typename);
     }
   }
   return false;

@@ -2,7 +2,6 @@ use anyhow::anyhow;
 use chrono::Utc;
 use clap::{ArgAction, Parser};
 use colored::Colorize;
-use graphql::{Mutations, OperationalSchema, Queries, Subscriptions};
 use log::info;
 
 use report_builder::{
@@ -39,7 +38,6 @@ use service::{
 };
 use std::{
     env::current_dir,
-    ffi::OsStr,
     fs,
     path::{Path, PathBuf},
     process::Command,
@@ -58,9 +56,9 @@ use cli::LoadTest;
 use cli::{
     GenerateAndInstallPluginBundle, GeneratePluginBundle, InstallPluginBundle,
     ListInstalledPlugins, RefreshDatesRepository, ReportError, SyncThroughputCsv, TestCredentials,
-    TestData, UninstallPlugin, all_tests, generate_and_install_plugin_bundle,
-    generate_plugin_bundle, generate_plugin_typescript_types, generate_report_data,
-    generate_reports_recursive, install_plugin_bundle, list_installed_plugins, uninstall_plugin,
+    TestData, UninstallPlugin, all_tests, build_report, generate_and_install_plugin_bundle,
+    generate_plugin_bundle, generate_plugin_typescript_types, install_plugin_bundle,
+    list_installed_plugins, uninstall_plugin,
 };
 
 const DATA_EXPORT_FOLDER: &str = "data";
@@ -193,12 +191,6 @@ enum Action {
     /// User can specify max number of backup to keep, see example configuration file
     Backup,
     Restore(RestoreArguments),
-    BuildReports {
-        /// Optional reports path. If supplied, this dir should be the same structure as per standard reports.
-        /// Will generate a json of all reports within this directory
-        #[clap(short, long, num_args=0..)]
-        path: Option<Vec<PathBuf>>,
-    },
     /// Will generate a plugin bundle
     GeneratePluginBundle(GeneratePluginBundle),
     /// Will insert generated plugin bundle
@@ -280,6 +272,15 @@ enum Action {
         #[clap(long, short, default_value = "false")]
         skip_prettify: bool,
     },
+    /// Support override: turn maintenance mode off even though OMS central's own sync buffer still
+    /// has records to integrate, e.g. when those records are known to be unwanted. Clears the
+    /// sync, sync API and processor pauses with it, and records the override in the system log.
+    /// Run it with the server stopped, like the other commands that change the database.
+    ExitMaintenanceMode {
+        /// Who is running the override, recorded in the system log.
+        #[clap(long)]
+        by: String,
+    },
     /// Re-run sync buffer integration against the sync_buffer already in the database.
     /// Resets the buffer's integration state, then re-runs translate + integrate.
     /// Useful for re-processing already-pulled records after fixing a translator, or for
@@ -288,8 +289,10 @@ enum Action {
         /// Source site id whose records to integrate (V5/V6 buffer rows for this site).
         #[clap(short, long, default_value = "1")]
         source_site_id: i32,
-        /// Wrap integration in a transaction (outer batch + per-record sub-transactions).
-        /// Off by default for speed; turn on to integrate the whole batch atomically.
+        /// Wrap integration in a transaction (outer batch, plus a nested transaction per write on
+        /// Postgres).
+        /// Off by default for speed; turn on to integrate the whole batch atomically. Without it
+        /// a database that has synced must be in maintenance mode.
         #[clap(short, long)]
         use_transaction: bool,
         /// Run pending database migrations before reintegrating.
@@ -467,15 +470,9 @@ async fn main() -> anyhow::Result<()> {
     match args.action {
         Action::ExportGraphqlSchema { path } => {
             info!("Exporting graphql schema");
-            let schema = OperationalSchema::build(
-                Queries::new(),
-                Mutations::new(),
-                Subscriptions::default(),
-            )
-            .finish();
             fs::write(
                 path.unwrap_or(PathBuf::from("schema.graphql")),
-                schema.sdl(),
+                graphql::operational_schema_sdl(),
             )?;
             info!("Schema exported in schema.graphql");
         }
@@ -506,6 +503,15 @@ async fn main() -> anyhow::Result<()> {
             .expect("Failed to run DB migrations");
 
             info!("Finished applying database migrations");
+        }
+        Action::ExitMaintenanceMode { by } => {
+            let connection_manager = get_storage_connection_manager(&settings.database);
+            let connection = connection_manager.connection()?;
+            let pending =
+                service::sync::maintenance_mode::force_exit_maintenance_mode(&connection, &by)?;
+            info!(
+                "Maintenance mode turned off by support override ({by}), {pending} record(s) were still pending in OMS central's own sync buffer"
+            );
         }
         Action::ReintegrateBuffer {
             source_site_id,
@@ -747,59 +753,6 @@ async fn main() -> anyhow::Result<()> {
             info!("Refresh data result: {result:#?}");
         }
         Action::SignPlugin { path, key, cert } => sign_plugin(&path, &key, &cert)?,
-        Action::BuildReports { path } => {
-            let dir_list = match path.clone() {
-                Some(path) => path,
-                None => vec![
-                    PathBuf::new().join("../standard_reports"),
-                    PathBuf::new().join("../standard_forms"),
-                ],
-            };
-
-            for base_dir in dir_list {
-                let mut reports_data = ReportsData { reports: vec![] };
-                let ignore_paths = vec![OsStr::new("node_modules")];
-                let manifest_name = OsStr::new("report-manifest.json");
-
-                generate_reports_recursive(
-                    &mut reports_data,
-                    &ignore_paths,
-                    manifest_name,
-                    &base_dir,
-                )?;
-
-                let output_name = if path.is_some() {
-                    "reports.json"
-                } else {
-                    // Name the output after the base_dir
-                    // standard_reports.json and standard_forms.json
-                    &format!("{}.json", base_dir.file_stem().unwrap().to_str().unwrap())
-                };
-
-                let output_path = base_dir.join("generated").join(output_name);
-
-                fs::create_dir_all(output_path.parent().ok_or(anyhow::Error::msg(format!(
-                    "Invalid output path: {output_path:?}"
-                )))?)?;
-
-                fs::write(&output_path, serde_json::to_string_pretty(&reports_data)?).map_err(
-                    |_| {
-                        anyhow::Error::msg(format!(
-                            "Failed to write to {output_path:?}. Does output dir exist?"
-                        ))
-                    },
-                )?;
-
-                if path.is_some() {
-                    info!("All reports built in custom path {:?}", base_dir.display());
-                } else {
-                    info!(
-                        "All standard reports built in path {:?}",
-                        base_dir.display()
-                    )
-                };
-            }
-        }
         Action::UpsertReports { path, overwrite } => {
             let standard_reports_dir = Path::new("../standard_reports")
                 .join("generated")
@@ -921,7 +874,7 @@ async fn main() -> anyhow::Result<()> {
             config,
             format,
         } => {
-            let report_data: ReportData = generate_report_data(&path)?;
+            let report_data: ReportData = build_report(&path)?;
 
             let report_json =
                 serde_json::to_value(report_data.template).expect("fail to convert report to json");

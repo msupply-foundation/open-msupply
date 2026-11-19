@@ -34,8 +34,9 @@ import {
 import { StoreGpsBlock } from './StoreGpsBlock';
 import { StorePropertyField } from './StorePropertyField';
 import { StorePreferencesPanel } from './StorePreferencesPanel';
+import { ConsumptionEstimatesPanel } from './ConsumptionEstimatesPanel';
 import {
-  buildPreferencesInput,
+  buildPreferencesVariables,
   canEditAnything,
   canEditPreferences,
   coordinate,
@@ -46,6 +47,7 @@ import {
   propertyFields,
   serialiseProperties,
   setProperty,
+  stagePreference,
   type PreferenceDraft,
   type PropertyDraft,
 } from './storeEditorLogic';
@@ -70,7 +72,7 @@ import {
  * the draft intact, and Save is disabled while the session can edit nothing
  * (D79).
  *
- * The Preferences tab lists the store's 23 operational preferences —
+ * The Preferences tab lists the store's operational preferences —
  * editable only on a central server with the central-data permission
  * (rules § The store editor › Preferences, OMS-REG-SET-05.33–.39). Its edits
  * stage per-preference (the write is per-preference, unlike the wholesale
@@ -158,7 +160,7 @@ export const StoreEditorModal = (props: {
   );
   const definitions = () => gated(definitionsData) ?? [];
 
-  // The store's 23 preference descriptions — served in display order, with a
+  // The store's preference descriptions — served in display order, with a
   // fabricated default standing in for any unset preference (contract § The
   // store editor). Same interaction-opened read as the two above, so the same
   // non-suspending gate.
@@ -200,6 +202,20 @@ export const StoreEditorModal = (props: {
       setPrefDraft({});
     }
   });
+
+  // So does moving to another store with the editor still open (the
+  // register's save-and-move-on): staged preferences belong to the store they
+  // were made on, and a later Save would otherwise write them to this one.
+  createEffect(
+    on(
+      () => props.facilityStoreId,
+      () => {
+        setSaveFailed(false);
+        setPrefDraft({});
+      },
+      { defer: true }
+    )
+  );
 
   const session = () => ({
     canMutate: hasPermission('NAME_PROPERTIES_MUTATE'),
@@ -254,15 +270,19 @@ export const StoreEditorModal = (props: {
       );
     }
     // The per-preference write — staged preferences only, each entry naming
-    // the edited store (contract § The store editor, wire traps). Skipped
-    // entirely when nothing is staged.
-    const preferencesInput = canEditPrefs()
-      ? buildPreferencesInput(prefDraft(), props.facilityStoreId)
+    // the edited store, authorised against the signed-in one (contract § The
+    // store editor, wire traps). Skipped entirely when nothing is staged.
+    const preferencesVariables = canEditPrefs()
+      ? buildPreferencesVariables(
+          prefDraft(),
+          props.storeId,
+          props.facilityStoreId
+        )
       : undefined;
-    if (!failed && preferencesInput) {
+    if (!failed && preferencesVariables) {
       const result = await graphqlFetch(
         UpsertStorePreferences,
-        { storeId: props.facilityStoreId, input: preferencesInput },
+        preferencesVariables,
         { background: true, returnGraphqlErrors: true }
       );
       failed = !(
@@ -283,7 +303,7 @@ export const StoreEditorModal = (props: {
       // register the subject is some other store on the server: nothing live
       // changed, and refetching names a DIFFERENT store to the global context,
       // which is how a register save would silently re-point the whole app.
-      if (preferencesInput && props.facilityStoreId === props.storeId)
+      if (preferencesVariables && props.facilityStoreId === props.storeId)
         void refetchStoreContext(props.storeId);
       onDone();
     }
@@ -380,6 +400,14 @@ export const StoreEditorModal = (props: {
             tabs={[
               { value: 'properties', label: t('label.properties') },
               { value: 'preferences', label: t('label.preferences') },
+              ...(props.facilityStoreId
+                ? [
+                    {
+                      value: 'consumption-estimates',
+                      label: t('label.consumption-estimates'),
+                    },
+                  ]
+                : []),
             ]}
           />
           <TabPanel value="properties">
@@ -418,11 +446,33 @@ export const StoreEditorModal = (props: {
               draft={prefDraft()}
               disabled={!prefsEditable()}
               loading={preferencesData.loading}
-              onStage={(key, value) =>
-                setPrefDraft(current => ({ ...current, [key]: value }))
+              onStage={(preference, value) =>
+                setPrefDraft(current =>
+                  stagePreference(current, preference, value)
+                )
               }
             />
           </TabPanel>
+          {/* Saved by its own action after a review, not by the editor's
+              Save (rules § The store editor › Consumption estimates). */}
+          <Show when={props.facilityStoreId}>
+            {forStoreId => (
+              <TabPanel value="consumption-estimates">
+                {/* Keyed: a new panel for each store, so an upload under
+                    review for one store can't be saved to the next when the
+                    register moves on with the editor still open. */}
+                <Show when={forStoreId()} keyed>
+                  {id => (
+                    <ConsumptionEstimatesPanel
+                      storeId={props.storeId}
+                      forStoreId={id}
+                      editable={prefsEditable()}
+                    />
+                  )}
+                </Show>
+              </TabPanel>
+            )}
+          </Show>
         </Tabs>
 
         <Show when={saveFailed()}>

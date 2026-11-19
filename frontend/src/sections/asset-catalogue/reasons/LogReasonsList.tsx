@@ -1,6 +1,7 @@
+import { reasonName } from '@/domain/asset';
 import { createMemo, createResource, createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
-import { useNavigate, useParams } from '@solidjs/router';
+import { useParams } from '@solidjs/router';
 import { graphqlFetch } from '@/api/graphql';
 import { gated } from '@/api/gated';
 import { t, tPlural } from '@/intl';
@@ -85,7 +86,6 @@ const FILTERS = constructFilters<ReasonFilter>({
 
 const LogReasonsList: Component = () => {
   const params = useParams<{ storeId: string }>();
-  const navigate = useNavigate();
   const { query, setQuery } = useUrlQueryState<ReasonsState>(DEFAULT_STATE);
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   const [createOpen, setCreateOpen] = createSignal(false);
@@ -145,7 +145,7 @@ const LogReasonsList: Component = () => {
       meta: { headerPosition: 'badge' },
     },
     {
-      c: { key: 'reason' },
+      c: { accessor: reasonName, id: 'reason' },
       header: () => t('label.reason'),
       ...getCellDefinition('reason', { headerPosition: 'primary' }),
     },
@@ -170,7 +170,7 @@ const LogReasonsList: Component = () => {
             crumbs={[
               {
                 label: t('assets'),
-                onClick: () => navigate(`/${params.storeId}/catalogue/assets`),
+                to: `/${params.storeId}/catalogue/assets`,
               },
               { label: t('log-reasons') },
             ]}
@@ -198,7 +198,7 @@ const LogReasonsList: Component = () => {
               selected={selectedRows}
               guard={() => guardWrite(REASON_WRITE)}
               deleteOne={deleteOne}
-              nameOf={row => row.reason}
+              nameOf={reasonName}
               confirmMessage={records =>
                 tPlural('messages.confirm-delete-reasons', records.length)
               }

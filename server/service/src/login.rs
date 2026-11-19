@@ -21,7 +21,7 @@ use crate::{
     },
     auth_data::AuthData,
     service_provider::{ServiceContext, ServiceProvider},
-    sync::CentralServerConfig,
+    sync::{CentralServerConfig, maintenance_mode::is_locked_out},
     user_account::{StorePermissions, UserAccountService, VerifyPasswordError},
 };
 
@@ -67,6 +67,8 @@ pub enum LoginFailure {
     AccountBlocked(u64),
     /// User account does not have login rights to any stores on this site
     NoSiteAccess,
+    /// The server is in maintenance mode and the user is not a server admin (#840)
+    MaintenanceMode,
 }
 
 #[derive(Debug)]
@@ -235,6 +237,13 @@ impl LoginService {
             Ok(None) => return Err(LoginError::LoginFailure(LoginFailure::NoSiteAccess)),
             Err(err) => return Err(err.into()),
         };
+
+        // Maintenance mode lets only server admins in. The caller re-checks this after creating
+        // the session, which closes the window where the mode is turned on between this check
+        // and the session existing (see `maintenance_mode::set_maintenance_mode`).
+        if is_locked_out(&service_ctx.connection, &user_account.id)? {
+            return Err(LoginError::LoginFailure(LoginFailure::MaintenanceMode));
+        }
 
         service_ctx.user_id.clone_from(&user_account.id);
 
@@ -508,11 +517,15 @@ impl LoginService {
         // every hash, so re-hashing per login would make the user row always
         // look changed and defeat upsert_user's delta detection (#12612).
         // Central has already accepted `password` at this point.
-        let hashed_password = UserAccountRowRepository::new(&service_ctx.connection)
+        let existing = UserAccountRowRepository::new(&service_ctx.connection)
             .find_one_by_id(&user_info.user.id)
-            .map_err(UpdateUserError::DatabaseError)?
-            .filter(|existing| bcrypt::verify(password, &existing.hashed_password).unwrap_or(false))
-            .map(|existing| existing.hashed_password);
+            .map_err(UpdateUserError::DatabaseError)?;
+        let hashed_password = existing
+            .as_ref()
+            .filter(|existing| {
+                UserAccountService::password_matches(password, &existing.hashed_password)
+            })
+            .map(|existing| existing.hashed_password.clone());
         let hashed_password = match hashed_password {
             Some(existing_hash) => existing_hash,
             None => UserAccountService::hash_password(password)
@@ -542,6 +555,8 @@ impl LoginService {
             job_title: user_info.user.job_title,
             last_successful_sync: Some(Utc::now().naive_utc()),
             is_active: user_info.user.active,
+            // Central doesn't know about it, so a user deleted here stays deleted.
+            deleted_datetime: existing.and_then(|existing| existing.deleted_datetime),
         };
         let stores_permissions: Vec<StorePermissions> = user_info
             .user_stores
@@ -600,8 +615,9 @@ mod test {
 
     use httpmock::{Method::POST, MockServer};
     use repository::{
-        EqualFilter, KeyType, KeyValueStoreRepository, SyncVersion, UserAccountRowRepository,
-        UserFilter, UserPermissionFilter, UserPermissionRepository, UserRepository,
+        EqualFilter, KeyType, KeyValueStoreRepository, SyncVersion, UserAccountRow,
+        UserAccountRowRepository, UserFilter, UserPermissionFilter, UserPermissionRepository,
+        UserRepository,
         mock::{
             MockDataInserts, mock_store_a, mock_user_account_a, mock_user_empty_hashed_password,
             mock_user_store_join_a_store_a,
@@ -799,6 +815,54 @@ mod test {
         }
     }
 
+    /// Maintenance mode (#840) lets only server admins log in, and says why to everyone else
+    /// rather than reporting bad credentials.
+    #[actix_rt::test]
+    async fn maintenance_mode_only_lets_server_admins_log_in() {
+        let fixture =
+            SessionFixture::new_v7("maintenance_mode_only_lets_server_admins_log_in").await;
+        let login = || {
+            LoginService::login(
+                &fixture.service_provider,
+                &fixture.auth_data,
+                LoginInput {
+                    username: fixture.username.clone(),
+                    password: "password".to_string(),
+                    central_server_url: fixture.central_server_url.clone(),
+                },
+                0,
+            )
+        };
+
+        KeyValueStoreRepository::new(&fixture.context.connection)
+            .set_bool(KeyType::SettingsMaintenanceModeIsOn, Some(true))
+            .unwrap();
+        assert_matches!(
+            login().await,
+            Err(LoginError::LoginFailure(LoginFailure::MaintenanceMode))
+        );
+
+        repository::UserPermissionRowRepository::new(&fixture.context.connection)
+            .upsert_one(&repository::UserPermissionRow {
+                id: "user_a_server_admin".to_string(),
+                user_id: fixture.user_id.clone(),
+                store_id: Some(mock_store_a().id),
+                permission: repository::PermissionType::ServerAdmin,
+                context_id: None,
+            })
+            .unwrap();
+        assert!(login().await.is_ok());
+
+        // Off again: everyone can log in.
+        KeyValueStoreRepository::new(&fixture.context.connection)
+            .set_bool(KeyType::SettingsMaintenanceModeIsOn, Some(false))
+            .unwrap();
+        repository::UserPermissionRowRepository::new(&fixture.context.connection)
+            .delete("user_a_server_admin")
+            .unwrap();
+        assert!(login().await.is_ok());
+    }
+
     /// Security audit DS-4: a session issued against the old credentials must not
     /// survive the password changing. Before this, `revoke_all_for_user` had no
     /// production caller and only a server restart evicted a stolen token.
@@ -866,6 +930,61 @@ mod test {
         fixture.login().await;
 
         assert!(fixture.session_is_live(&existing_session));
+    }
+
+    /// Login writes the whole user as central sends it, so a field central has emptied is
+    /// cleared here too, not left as it was.
+    #[actix_rt::test]
+    async fn login_clears_an_email_central_no_longer_has() {
+        let fixture = SessionFixture::new("login_clears_an_emptied_email").await;
+        fixture.login().await;
+
+        let repo = UserAccountRowRepository::new(&fixture.context.connection);
+        let mut user = repo.find_one_by_id(&fixture.user_id).unwrap().unwrap();
+        user.email = Some("old@example.org".to_string());
+        repo.upsert_one(&user).unwrap();
+
+        // Central's user has an empty e_mail.
+        fixture.login().await;
+
+        let user = repo.find_one_by_id(&fixture.user_id).unwrap().unwrap();
+        assert_eq!(user.email, None);
+    }
+
+    // covers: OMS-REG-CDIO-01.98
+
+    /// Central knows nothing of a delete made here, so it accepting the password changes nothing.
+    #[actix_rt::test]
+    async fn login_keeps_a_deleted_user_deleted() {
+        let fixture = SessionFixture::new("login_keeps_a_deleted_user_deleted").await;
+        fixture.login().await;
+
+        let repo = UserAccountRowRepository::new(&fixture.context.connection);
+        let deleted = UserAccountRow {
+            deleted_datetime: chrono::NaiveDate::from_ymd_opt(2026, 1, 2)
+                .unwrap()
+                .and_hms_opt(3, 4, 5),
+            ..repo.find_one_by_id(&fixture.user_id).unwrap().unwrap()
+        };
+        repo.upsert_one(&deleted).unwrap();
+
+        let result = LoginService::login(
+            &fixture.service_provider,
+            &fixture.auth_data,
+            LoginInput {
+                username: fixture.username.clone(),
+                password: "password".to_string(),
+                central_server_url: fixture.central_server_url.clone(),
+            },
+            0,
+        )
+        .await;
+        assert_matches!(
+            result,
+            Err(LoginError::LoginFailure(LoginFailure::InvalidCredentials))
+        );
+        let user = repo.find_one_by_id(&fixture.user_id).unwrap().unwrap();
+        assert_eq!(user.deleted_datetime, deleted.deleted_datetime);
     }
 
     /// The v7 transport is the one the stored-hash comparison cannot see a reset

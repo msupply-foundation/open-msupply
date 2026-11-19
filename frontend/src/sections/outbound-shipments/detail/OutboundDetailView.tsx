@@ -9,6 +9,7 @@ import {
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated, notFound } from '../../../api/gated';
 import { t, tPlural } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
@@ -30,7 +31,7 @@ import {
   AbsentValue,
   getCellDefinition,
   getFlagCell,
-  getNumberCell,
+  getVolumeCell,
   isNearOrPastExpiry,
 } from '../../../ui/elements/table/tableHelpers';
 import {
@@ -38,15 +39,13 @@ import {
   type PaginationProps,
 } from '../../../ui/elements/table/Pagination';
 import { remToPx } from '../../../ui/utils/rem';
-import {
-  useIsNavOverlay,
-  useIsShortViewport,
-} from '../../../ui/utils/createMediaQuery';
+import { useFoldTotalsIntoBar } from '../../../ui/utils/createMediaQuery';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
 import { createAddAction } from '../../../ui/utils/keyActions';
 import { ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
+import { NotFoundNotice } from '../../../ui/elements/feedback/NotFoundNotice';
 import { RowStatusBadges, uncapped } from './RowStatusBadges';
 import {
   AlertCircleIcon,
@@ -71,6 +70,7 @@ import { CustomFieldsEditTab } from '../../../domain/customFields';
 import {
   OutboundDetail,
   OutboundLines,
+  OutboundRequestedActivities,
   UpdateOutboundShipmentName,
   type OutboundLineFragment,
   type OutboundLinesVariables,
@@ -93,23 +93,18 @@ import {
   type LineEditItem,
 } from './edit-modal/OutboundLineEditModal';
 import {
-  issueScanTarget,
-  resolveIssueScan,
-  type IssueScan,
-  type IssueScanReceiver,
-} from './edit-modal/issueScan';
-import {
-  createScanControl,
+  createIssueScanHost,
   ScanButton,
-  shownScanNotice,
+  ScanStatus,
+  type IssueScan,
 } from '@/domain/barcode';
 import { Toolbar } from '@/ui/layout/Header/Toolbar';
 import { Alert } from '@/ui/elements/feedback/Alert';
-import { ServiceChargesModal } from '../../../domain/invoice';
 import {
-  fetchOutboundServiceCharges,
-  saveOutboundServiceCharges,
-} from './service-charges/outboundServiceCharges';
+  ServiceItems,
+  type ServiceChargesEditor,
+} from '../../../domain/invoice';
+import { OutboundServiceChargesPanel } from './service-charges/OutboundServiceChargesPanel';
 // The from-shipment customer-return flow (spec/customer-returns S4, owned by
 // the returns vertical — OMS-REG-DIST-04.21 hands over to it). Lazy so the
 // returns graph it pulls in stays out of this section's eager chunk, loading
@@ -127,8 +122,8 @@ import {
 } from './actions';
 
 // The outbound-shipment detail view (spec/outbound-shipments S3): app-bar
-// header (customer + customer reference + line search/filters), Details/Log
-// tabs, the flat read-only SERVER-paginated line table (row click opens the
+// header (customer + customer reference + line search/filters), Details /
+// Service charges / Custom fields / Log tabs, the flat read-only SERVER-paginated line table (row click opens the
 // line editor S4 on that row's item AND batch —
 // OMS-REG-DIST-03.27/OMS-REG-DIST-03.31), the side panel (S3 § side panel), and
 // the persistent status footer (hold / crumbs / status split button —
@@ -142,7 +137,7 @@ import {
 // a LINE-level change refetches the lines page AND the entity (the footer
 // totals are its server-side pricing aggregates — D45; placeholders and trims
 // move server-side too — kdd/state-management: refresh by direct call). Service
-// lines are their own small read (the S5 editor + side-panel rows).
+// lines are never in the line table — the Service charges tab reads its own.
 
 type Line = OutboundLineFragment;
 
@@ -287,18 +282,31 @@ const OutboundDetailView: Component = () => {
   // - { item, lineId }: opened from a ROW click — update mode.
   // - {}: opened from "Add item" — add mode (item search focused).
   // - { scan }: opened by a scan — add mode, on the scanned item where the
-  //   code resolved (spec/barcode-scanning rules § Learning a code while
-  //   issuing).
+  //   code resolved (spec/barcode-scanning rules § Issuing by scanning).
   type EditState =
     { item?: LineEditItem; lineId?: string; scan?: IssueScan } | undefined;
   const [editState, setEditState] = createSignal<EditState>();
-  // Every open goes through here: a stale learn-failure notice from an
-  // earlier scan describes a save the user has moved on from.
-  const openEditor = (state: NonNullable<EditState>) => {
-    setScanNotice(undefined);
-    setEditState(state);
+  const openEditor = (state: NonNullable<EditState>) => setEditState(state);
+  const [activeTab, setActiveTab] = createSignal('details');
+  const [serviceEditor, setServiceEditor] =
+    createSignal<ServiceChargesEditor>();
+  // Whether the store has a service item — read once the Service charges tab
+  // is first opened, never suspending (it arrives under the open screen).
+  const serviceTabOpened = createMemo(
+    prev => prev || activeTab() === 'service-charges',
+    false
+  );
+  const [serviceItems] = createResource(
+    () => (serviceTabOpened() ? params.storeId : undefined),
+    async storeId => {
+      const result = await graphqlFetch(ServiceItems, { storeId });
+      return result.kind === 'success' ? result.data.items.nodes : undefined;
+    }
+  );
+  const serviceConfigured = () => {
+    const items = gated(serviceItems);
+    return items ? items.length > 0 : undefined;
   };
-  const [serviceOpen, setServiceOpen] = createSignal(false);
   // Customer-change rejection — shown on the lookup itself (controls › action
   // feedback: inline, keyed to its cause).
   const [customerError, setCustomerError] = createSignal<string>();
@@ -313,13 +321,15 @@ const OutboundDetailView: Component = () => {
     async variables => {
       // A not-found NodeError is NOT routed to the global error modal (which
       // would offer a useless reload of the same bad id, and shadow the local
-      // notice); it falls through to `undefined` here and the view shows the
-      // OMS-REG-DIST-01.20 "not found" blocking notice → back to list.
+      // notice); it resolves `null` here and the view shows the
+      // OMS-REG-DIST-01.20 "not found" blocking notice → back to list. A failed
+      // read resolves `undefined` and keeps the spinner, under the global error
+      // modal.
       const result = await graphqlFetch(OutboundDetail, variables);
       if (result.kind !== 'success') return undefined;
       return result.data.invoice.__typename === 'InvoiceNode'
         ? result.data.invoice
-        : undefined;
+        : null;
     }
   );
 
@@ -329,7 +339,7 @@ const OutboundDetailView: Component = () => {
   // allocate report) mid-interaction. `.latest` suspends only until the FIRST
   // load resolves, so the initial spinner is unchanged
   // (kdd/solid-reactivity-pitfalls § no remounts, rule 1).
-  const node = (): OutboundNode | undefined => data.latest;
+  const node = (): OutboundNode | undefined => data.latest ?? undefined;
 
   // The lines PAGE — a separate, server-filtered/sorted/paged query
   // (OMS-REG-DIST-03.28). Keyed on the SERIALISED variables (a stable string)
@@ -387,19 +397,14 @@ const OutboundDetailView: Component = () => {
 
   // Where the totals live is a "which element renders" decision, so it is the
   // one responsive mechanism that touches JS (src/ui/CLAUDE.md #7): a band of
-  // its own above the bar on a wide screen, and ON the bar below the
-  // navOverlay line — tablet portrait and down, where the shipment's lines are
-  // worth more than a row of chrome and the bar has the room. Rendered by a
-  // function, not a stored element: the two footer faces each need their own
-  // instance, and one element can't be in two places.
-  const narrowViewport = useIsNavOverlay();
-  // …and the same trade on a SHORT one. The rule was written for tablet
-  // portrait, but a landscape tablet is the case that needs it most: wide
-  // enough that the width query never fires, short enough that a third stacked
-  // bar under the table costs a row of the thing the user came to work on.
-  // Measured at 1434×742, chrome took 52% of the screen.
-  const shortViewport = useIsShortViewport();
-  const foldTotalsIntoBar = () => narrowViewport() || shortViewport();
+  // its own above the bar on a wide screen, and ON the bar once the viewport
+  // is narrow or short — the latter being the case that needs it most, since a
+  // landscape tablet is wide enough that the width query never fires and short
+  // enough that a third stacked bar costs a row of the thing the user came to
+  // work on (measured at 1434×742, chrome took 52% of the screen).
+  const foldTotalsIntoBar = useFoldTotalsIntoBar();
+  // Rendered by a function, not a stored element: the two footer faces each
+  // need their own instance, and one element can't be in two places.
   const inlineTotals = () => (
     <Show when={foldTotalsIntoBar()}>
       <OutboundTotalsStrip
@@ -435,26 +440,6 @@ const OutboundDetailView: Component = () => {
     setOffset: offset => setQuery({ ...query(), offset }),
   });
 
-  // Service lines — a small dedicated read (spec S5; the side panel's service
-  // rows). Never in the paginated table; refetched alongside the lines page
-  // (a bulk delete can remove service lines too).
-  const [serviceData, { refetch: refetchServiceLines }] = createResource(
-    () => ({ storeId: params.storeId, invoiceId: params.invoiceId }),
-    async variables => {
-      const result = await graphqlFetch(OutboundLines, {
-        storeId: variables.storeId,
-        filter: {
-          invoiceId: { equalTo: variables.invoiceId },
-          type: { equalTo: 'SERVICE' },
-        },
-        page: { first: 100 },
-      });
-      if (result.kind !== 'success') return undefined;
-      return result.data.invoiceLines.nodes;
-    }
-  );
-  const serviceLines = (): Line[] => serviceData.latest ?? [];
-
   // The store's locations (code/name only) for the Location filter chip.
   // Volume-blind — the chip narrows a line list, capacity is irrelevant.
   const [locationsData] = createResource(
@@ -474,7 +459,7 @@ const OutboundDetailView: Component = () => {
       // entity's server-side pricing aggregates (D45), so every line-level
       // change moves them — a lines-only refetch would leave the footer one
       // edit behind. `.latest` reads keep the refresh remount-free.
-      await Promise.all([refetchLines(), refetchServiceLines(), refetchInfo()]);
+      await Promise.all([refetchLines(), refetchInfo()]);
     } finally {
       setSilentRefetching(false);
     }
@@ -485,6 +470,37 @@ const OutboundDetailView: Component = () => {
     const current = node();
     return current ? isEditable(current.status) : false;
   };
+
+  // The Activity the originating requisition asked each item be supplied FOR
+  // (issue 595), by item id. Its OWN read, keyed on the requisition: a shipment
+  // raised without one never fetches, and the lines are pulled once per
+  // requisition rather than riding the entity read and every mutation payload
+  // that shares the OutboundInfo fragment. Read non-suspending — it first
+  // resolves while this screen is already open (kdd/solid-reactivity-pitfalls).
+  const [requestedActivityData] = createResource(
+    () => node()?.requisition?.id,
+    async requisitionId => {
+      const result = await graphqlFetch(OutboundRequestedActivities, {
+        storeId: params.storeId,
+        requisitionId,
+      });
+      return result.kind === 'success'
+        ? result.data.requisition.lines.nodes
+        : undefined;
+    }
+  );
+  const requestedActivityByItem = createMemo(
+    () =>
+      new Map(
+        (gated(requestedActivityData) ?? []).flatMap(line =>
+          line.campaign ? [[line.itemId, line.campaign] as const] : []
+        )
+      )
+  );
+  // An item the requisition doesn't carry, or one asked for with no particular
+  // activity, resolves to nothing and the editor warns about nothing.
+  const requestedActivity = (itemId: string) =>
+    requestedActivityByItem().get(itemId);
 
   // Status pre-flight (OMS-REG-DIST-04.15/OMS-REG-DIST-04.16) — whole-shipment
   // answers the current page can't give (rules.md § server-paginated line
@@ -679,57 +695,30 @@ const OutboundDetailView: Component = () => {
     },
   });
 
-  // Issuing by scanning (spec/barcode-scanning rules § Learning a code while
-  // issuing; ui-surface S3 page actions "Add from scanner"): a scan opens the
+  // Issuing by scanning (spec/barcode-scanning rules § Issuing by scanning;
+  // ui-surface S3 page actions "Add from scanner"): a scan opens the
   // line editor on the item its code means, or empty with a warning when it
-  // means nothing yet. The scanner arms on arrival and stays armed while the
-  // shipment is editable. Gated on `.state` for the same reason as Alt+N
-  // above — the control's `disabled` feeds Ctrl+S's palette entry.
+  // means nothing yet. With a hardware scanner the screen listens from
+  // arrival while the shipment is editable; a camera scans per press. Gated
+  // on `.state` so a refetch never reads as "not editable" and stops the
+  // scanner mid-visit.
   const scanDisabled = () => {
     if (data.state !== 'ready' && data.state !== 'refreshing') return true;
     const current = data.latest;
     return !current || !isEditable(current.status);
   };
-  // The line saved but its code was not learned (.48) — reported here, since
-  // the editor may already have closed. Cleared by the next scan, or the
-  // next time the editor opens.
-  const [scanNotice, setScanNotice] = createSignal<string>();
-  let resolvingScan = false;
-  // The open editor, while it waits for an item. Not a signal: read only at
-  // the moment a scan lands, never tracked.
-  let scanReceiver: IssueScanReceiver | undefined;
-  const scanTarget = () =>
-    issueScanTarget({
-      resolving: resolvingScan,
-      editorOpen: editState() != null,
-      editorWaiting: scanReceiver !== undefined,
-    });
-  const scan = createScanControl({
+  // The shared issuing host (domain/barcode createIssueScanHost): one scan
+  // at a time, scans into an editor still waiting for an item, and the
+  // notices beside the action. Not `disabled` while the editor is open —
+  // that would stop the scanner behind every edit.
+  const issueScan = createIssueScanHost({
     owner: 'outbound-shipment',
+    storeId: () => params.storeId,
     disabled: scanDisabled,
-    onScan: read => {
-      // One scan at a time, and none into an editor that already has an
-      // item (issueScanTarget). Dropped, not queued — and not `disabled`,
-      // which would disarm the scanner behind every edit.
-      if (scanTarget() === 'drop') return;
-      resolvingScan = true;
-      setScanNotice(undefined);
-      void resolveIssueScan(params.storeId, read)
-        .then(result => {
-          resolvingScan = false;
-          if (!result) return;
-          const target = scanTarget();
-          if (target === 'editor') scanReceiver?.(result);
-          else if (target === 'open' && !scanDisabled())
-            openEditor({ scan: result });
-        })
-        .finally(() => (resolvingScan = false));
-    },
+    editorOpen: () => editState() != null,
+    openEditor: result => openEditor({ scan: result }),
   });
-  const scanNoticeShown = shownScanNotice(scan, () => {
-    const text = scanNotice();
-    return text === undefined ? undefined : { severity: 'warning', text };
-  });
+  const scan = issueScan.control;
 
   // "OK & next" (update mode) asks the parent for the next item to edit. We
   // own this (not the modal) because the list is server-paginated: the next
@@ -778,8 +767,7 @@ const OutboundDetailView: Component = () => {
   const crumbs = (current: OutboundNode) => [
     {
       label: t('outbound-shipments'),
-      onClick: () =>
-        navigate(`/${params.storeId}/distribution/outbound-shipment`),
+      to: `/${params.storeId}/distribution/outbound-shipment`,
     },
     { label: String(current.invoiceNumber) },
   ];
@@ -1038,7 +1026,17 @@ const OutboundDetailView: Component = () => {
           ]
         : []),
       {
-        c: { key: 'sellPricePerPack' },
+        // Price of ONE unit — pack sell price ÷ pack size; blank on a
+        // placeholder (spec § line table col 15). The id stays
+        // `sellPricePerPack` so the cell test id and saved column settings
+        // carry over.
+        c: {
+          accessor: line =>
+            line.type === 'UNALLOCATED_STOCK'
+              ? null
+              : line.sellPricePerPack / line.packSize,
+          id: 'sellPricePerPack',
+        },
         header: () => t('label.unit-sell-price'),
         ...getCellDefinition('sellPricePerPack'),
       },
@@ -1064,10 +1062,10 @@ const OutboundDetailView: Component = () => {
           id: 'volume',
         },
         header: () => t('label.volume'),
-        // Same display rounding as the column's cells (ui-standards § tables'
-        // 2-dp number cell) — a 5-dp footer under 2-dp cells reads as a
-        // mismatch.
-        ...getNumberCell(),
+        // A volume's own places (ui-standards § display rounding), the same
+        // as the totals strip beneath — a footer at one precision under cells
+        // at another reads as a mismatch.
+        ...getVolumeCell(),
         // No CELL_DEF key; the "Volume (m³)" header is the binding constraint.
         size: remToPx(6),
       },
@@ -1081,32 +1079,20 @@ const OutboundDetailView: Component = () => {
       <Show
         when={node()}
         fallback={
-          <Show when={!data.loading}>
-            <Dialog
-              open
-              dismissable={false}
+          <Show when={notFound(data)} fallback={<Spinner center />}>
+            <NotFoundNotice
+              testId="shipment-not-found-notice"
+              title={t('error.shipment-not-found')}
+              description={t('messages.click-to-return-to-shipments')}
               onClose={() =>
                 navigate(`/${params.storeId}/distribution/outbound-shipment`)
-              }
-              icon={<InfoIcon />}
-              title={t('heading.not-found')}
-              description={t('error.shipment-not-found')}
-              actions={
-                <OkButton
-                  data-testid="dialog-button-ok"
-                  onClick={() =>
-                    navigate(
-                      `/${params.storeId}/distribution/outbound-shipment`
-                    )
-                  }
-                />
               }
             />
           </Show>
         }
       >
         {current => (
-          <Tabs defaultValue="details">
+          <Tabs value={activeTab()} onValueChange={setActiveTab}>
             <Page
               fillBody
               sidePanelOpen={sidePanelOpen()}
@@ -1115,7 +1101,6 @@ const OutboundDetailView: Component = () => {
               sidePanelContent={
                 <OutboundSidePanel
                   node={current()}
-                  serviceLines={serviceLines()}
                   storeId={params.storeId}
                   disabled={!editable()}
                   foreignCurrencyAllowed={
@@ -1130,7 +1115,6 @@ const OutboundDetailView: Component = () => {
                     // page must follow, like any other line-level change.
                     if ('backdatedDatetime' in patch) await refetchAfterSave();
                   }}
-                  onEditServiceCharges={() => setServiceOpen(true)}
                 />
               }
               header={
@@ -1145,6 +1129,20 @@ const OutboundDetailView: Component = () => {
                       on the breadcrumb's line, and the screen keeps that row's
                       height for table rows. */}
                   <HeaderButtons>
+                    <Show
+                      when={activeTab() === 'service-charges' && editable()}
+                    >
+                      <Button
+                        data-testid="add-service-charge-button"
+                        icon={<PlusCircleIcon />}
+                        collapsible="narrow"
+                        title={t('label.add-charge')}
+                        disabled={serviceConfigured() !== true}
+                        onClick={() => setServiceEditor('add')}
+                      >
+                        {t('label.add-charge')}
+                      </Button>
+                    </Show>
                     <Show when={editable()}>
                       <Button
                         icon={<PlusCircleIcon />}
@@ -1164,11 +1162,10 @@ const OutboundDetailView: Component = () => {
                       visible={current().status === 'NEW'}
                       onCommitted={onLineOpsCommitted}
                     />
-                    {/* Add from scanner (S3 page-action matrix) — editability-
-                        gated like Add item: hidden from SHIPPED onward. */}
-                    <Show when={editable()}>
-                      <ScanButton control={scan} />
-                    </Show>
+                    {/* Add from scanner (S3 page-action matrix): a camera's
+                        Scan action, shown at every status and disabled once
+                        the shipment can't be edited, as on receiving. */}
+                    <ScanButton control={scan} />
                     {/* Export/Print — the reports vertical's record-screen
                         selector (reports S4), available at every status. A
                         self-contained action (static import), mirroring the
@@ -1192,7 +1189,7 @@ const OutboundDetailView: Component = () => {
                   </HeaderButtons>
                   {/* A scan's outcome, inline beside the action that took it
                       — never a toast (controls › action feedback). */}
-                  <Show when={scanNoticeShown()}>
+                  <Show when={issueScan.noticeShown()}>
                     {notice => (
                       <Toolbar>
                         <Alert
@@ -1207,7 +1204,7 @@ const OutboundDetailView: Component = () => {
                   {/* The header field cluster — never a hand-rolled <Toolbar>
                       + FieldRow (ui/docs/PAGES.md § header field cluster). The
                       line filters live in the DataTable's own toolbar below. */}
-                  <HeaderToolbar>
+                  <HeaderToolbar alert={<ScanStatus control={scan} />}>
                     <OutboundDetailToolbar
                       storeId={params.storeId}
                       node={current()}
@@ -1216,6 +1213,9 @@ const OutboundDetailView: Component = () => {
                       customerError={customerError()}
                       onChangeCustomer={customerId =>
                         void changeCustomer(customerId)
+                      }
+                      onChangeCampaign={campaignId =>
+                        void saveField({ campaignId: { value: campaignId } })
                       }
                       onSaveCustomFields={patch =>
                         void saveField({ customFields: patch })
@@ -1227,6 +1227,10 @@ const OutboundDetailView: Component = () => {
                       {
                         value: 'details',
                         label: t('label.details'),
+                      },
+                      {
+                        value: 'service-charges',
+                        label: t('label.service-charges'),
                       },
                       {
                         value: 'custom-fields',
@@ -1336,6 +1340,9 @@ const OutboundDetailView: Component = () => {
                   columns={columns()}
                   rows={rows()}
                   rowKey={line => line.id}
+                  // The pager is in the status footer: `page` lets the
+                  // table go back to its first row when the page changes.
+                  page={linePagination()}
                   // Filters live WITH the table, in its own toolbar — never the
                   // page header (ui-standards § tables › toolbar, binding). The
                   // item search is the permanent default chip; Location is
@@ -1354,7 +1361,7 @@ const OutboundDetailView: Component = () => {
                   loading={tableLoading()}
                   sort={currentSort()}
                   onSort={onSort}
-                  onRowClick={editable() ? openRow : undefined}
+                  onRowClick={openRow}
                   rowTint={lineRowTint}
                   // Same predicate on both channels: the tint colours the
                   // row, the bar makes the unfinished lines legible down one
@@ -1391,6 +1398,19 @@ const OutboundDetailView: Component = () => {
                   }
                 />
               </TabPanel>
+              <TabPanel value="service-charges">
+                {/* The entity's pricing carries the side panel's service
+                    total, so a written charge re-reads it. */}
+                <OutboundServiceChargesPanel
+                  storeId={params.storeId}
+                  invoiceId={current().id}
+                  disabled={!editable()}
+                  serviceItems={gated(serviceItems)}
+                  editor={serviceEditor()}
+                  onEditorChange={setServiceEditor}
+                  onChanged={() => void refetchInfo()}
+                />
+              </TabPanel>
               <TabPanel value="custom-fields">
                 {/* Custom fields for the outbound_shipment scope — disabled once
                     the shipment is read-only (past PICKED). Prominent fields
@@ -1420,49 +1440,37 @@ const OutboundDetailView: Component = () => {
               <OutboundLineEditModal
                 open={editState() != null}
                 onClose={() => {
-                  scanReceiver = undefined;
+                  issueScan.editorClosed();
                   setEditState(undefined);
                 }}
                 storeId={params.storeId}
                 invoiceId={current().id}
                 isNew={current().status === 'NEW'}
+                campaignId={current().campaign?.id ?? null}
                 customerIsStore={current().otherParty.store != null}
                 // Gates the editor's supplier-comment field: only a shipment
                 // raised from a customer requisition has a requested quantity
                 // for a comment to explain (spec S4 § supplier comment).
                 fromCustomerRequisition={current().requisition != null}
+                // What the customer asked each item be supplied FOR (issue
+                // 595) — the editor warns, without blocking, when the stock
+                // issued is held for something else.
+                requestedActivity={requestedActivity}
                 editable={editable()}
                 currencyCode={current().currency?.code}
                 currencyRate={current().currencyRate}
                 initialItem={editState()?.item}
                 initialLineId={editState()?.lineId}
                 scan={editState()?.scan}
-                onScanNotice={setScanNotice}
-                onScanReceiver={receiver => (scanReceiver = receiver)}
+                onScanReceiver={issueScan.setReceiver}
+                onBatchLabelReceiver={issueScan.setBatchLabelReceiver}
+                scanDiscarded={issueScan.discarded()}
                 nextItem={nextItem}
                 onCommitted={onLineOpsCommitted}
               />
-              {/* The shared service-charges editor (spec S5) with outbound's
-                  wire twins; a committed batch refetches like any other
-                  line-level change (the totals are entity aggregates). */}
-              <ServiceChargesModal
-                open={serviceOpen()}
-                onClose={() => setServiceOpen(false)}
-                storeId={params.storeId}
-                disabled={!editable()}
-                fetchCharges={() =>
-                  fetchOutboundServiceCharges(params.storeId, current().id)
-                }
-                save={async batch => {
-                  const result = await saveOutboundServiceCharges(
-                    params.storeId,
-                    current().id,
-                    batch
-                  );
-                  if (result.ok) onLineOpsCommitted();
-                  return result;
-                }}
-              />
+              {/* "Which item is this barcode?" for a barcode mapped to several
+                  items (barcode-scanning rules § Looking a barcode up). */}
+              <issueScan.Chooser />
               {/* Returns need a shipped shipment (OMS-REG-DIST-04.21) — an info-only
                   notice; the return flow is the returns vertical's. */}
               <Show when={returnNoticeOpen()}>

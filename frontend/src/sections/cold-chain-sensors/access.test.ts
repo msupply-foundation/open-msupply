@@ -19,11 +19,11 @@ vi.mock('../../store/storeContext', () => ({
   isDispensary: () => false,
   hasProgramModule: () => false,
   hasVaccineModule: () => state.vaccineModule,
-  hasProcurement: () => false,
   hasPermission: (permission: string) => state.permissions.has(permission),
 }));
 vi.mock('../../api/serverInfo', () => ({
   isCentralServer: () => false,
+  isCentralStandalone: () => false,
 }));
 
 const { navConfig } = await import('../../nav/navConfig');

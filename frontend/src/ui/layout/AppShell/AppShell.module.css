@@ -35,11 +35,15 @@
 /* --- Footer (the orange app status bar) -------------------------------- */
 .footer {
   display: flex;
-  flex-wrap: wrap; /* cells wrap onto new rows when narrow — no breakpoint */
+  /* ONE row at every width — a wrapped bar costs a row of content on exactly
+     the screens with the least. Squeezed, the cells truncate instead (store
+     name, sync age — see .footerCell below and SyncStatus), and on a phone
+     every cell but the store sheds its label to the icon (the media block at
+     the end). */
+  flex-wrap: nowrap;
   flex-shrink: 0;
   align-items: center;
   gap: var(--space-4);
-  row-gap: var(--space-1);
   min-block-size: 2.25rem;
   /* Named so a cell that runs edge to edge (the sync cell, SyncStatus.module.css)
      can cancel the padding exactly rather than restate it. */
@@ -85,6 +89,7 @@
   min-inline-size: var(--space-4);
 }
 
+
 .footerCell {
   display: inline-flex;
   align-items: center;
@@ -101,6 +106,13 @@
 
 button.footerCell {
   cursor: pointer;
+}
+
+/* The store cell gives way first when the bar runs out of room: its name
+   truncates (.footerCellText) rather than the bar wrapping. */
+.footer > .footerCell:first-child {
+  flex-shrink: 1;
+  min-inline-size: 0;
 }
 
 button.footerCell:hover {
@@ -131,4 +143,28 @@ button.footerCell:focus-visible {
   inline-size: 1px;
   block-size: 1.5rem;
   background: color-mix(in srgb, var(--footer-accent) 45%, transparent);
+}
+
+/* Compact (<600px, breakpoints.compact): every
+   cell but the store sheds its label to the icon, so the store name keeps the
+   room. The text stays in the DOM, visually hidden, as the cell's accessible
+   name; the user and sync cells do the same in their own stylesheets. */
+@media (max-width: 599px) {
+  .footer {
+    gap: var(--space-1);
+    padding-inline: var(--space-2);
+  }
+
+  .footerSpacer {
+    min-inline-size: 0;
+  }
+
+  .footerCell:not(:first-child) .footerCellText {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
 }

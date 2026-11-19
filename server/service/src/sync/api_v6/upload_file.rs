@@ -104,11 +104,10 @@ impl SyncApiV6 {
                 let body = post.text().await.unwrap_or_default();
                 return Err(error_with_url(
                     create_route,
-                    SyncApiErrorVariantV6::Other(anyhow::anyhow!(
-                        "tus POST failed with {}: {}",
-                        other,
-                        body
-                    )),
+                    tus_error(
+                        anyhow::anyhow!("tus POST failed with {}: {}", other, body),
+                        &body,
+                    ),
                 ));
             }
         }
@@ -129,11 +128,10 @@ impl SyncApiV6 {
             let body = head.text().await.unwrap_or_default();
             return Err(error_with_url(
                 head_route,
-                SyncApiErrorVariantV6::Other(anyhow::anyhow!(
-                    "tus HEAD failed with {}: {}",
-                    status,
-                    body
-                )),
+                tus_error(
+                    anyhow::anyhow!("tus HEAD failed with {}: {}", status, body),
+                    &body,
+                ),
             ));
         }
 
@@ -172,11 +170,10 @@ impl SyncApiV6 {
                 let body = patch.text().await.unwrap_or_default();
                 return Err(error_with_url(
                     patch_route,
-                    SyncApiErrorVariantV6::Other(anyhow::anyhow!(
-                        "tus PATCH failed with {}: {}",
-                        status,
-                        body
-                    )),
+                    tus_error(
+                        anyhow::anyhow!("tus PATCH failed with {}: {}", status, body),
+                        &body,
+                    ),
                 ));
             }
 
@@ -201,6 +198,16 @@ impl SyncApiV6 {
 
         log::info!("Finished tus upload for {file_id} ({total_bytes} bytes)");
         Ok(UploadOutcome::Done)
+    }
+}
+
+/// Central answers a paused sync API with the JSON of `SyncParsedErrorV6::SyncApiPaused`;
+/// surface that as the typed error so the file sync driver can back off without burning a retry.
+/// Any other failure body (tus errors are plain text) stays a generic error.
+fn tus_error(error: anyhow::Error, body: &str) -> SyncApiErrorVariantV6 {
+    match serde_json::from_str::<SyncParsedErrorV6>(body) {
+        Ok(parsed @ SyncParsedErrorV6::SyncApiPaused) => SyncApiErrorVariantV6::ParsedError(parsed),
+        _ => SyncApiErrorVariantV6::Other(error),
     }
 }
 

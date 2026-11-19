@@ -119,8 +119,9 @@ const RnrFormsList: Component = () => {
     void refetch();
   };
 
-  const openRow = (row: RnrFormRowFragment) =>
-    navigate(`/${params.storeId}/replenishment/r-and-r-forms/${row.id}`);
+  const rowHref = (row: RnrFormRowFragment) =>
+    `/${params.storeId}/replenishment/r-and-r-forms/${row.id}`;
+  const openRow = (row: RnrFormRowFragment) => navigate(rowHref(row));
 
   // OMS-REG-REPL-07.4: the New form button opens the creation modal.
   const openCreate = () => setCreateOpen(true);
@@ -149,11 +150,10 @@ const RnrFormsList: Component = () => {
       ...getCellDefinition('createdDatetime'),
     },
     {
-      // 'campaign' is the documented preset for "a campaign OR program name".
       c: { key: 'programName' },
       sortKey: 'program',
       header: () => t('label.program-name'),
-      ...getCellDefinition('campaign'),
+      ...getCellDefinition('program'),
     },
     {
       c: { key: 'supplierName' },
@@ -227,6 +227,7 @@ const RnrFormsList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
+        rowHref={rowHref}
         // OMS-REG-REPL-07.48: finalised rows read as inactive (still open).
         rowState={row => (isFinalised(row.status) ? 'disabled' : undefined)}
         emptyMessage={t('error.no-rnr-forms')}

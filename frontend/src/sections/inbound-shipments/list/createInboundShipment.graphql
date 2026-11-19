@@ -66,15 +66,17 @@ mutation duplicateInboundShipment($storeId: String!, $id: String!) {
 }
 
 # The store's Sent purchase orders — the from-a-purchase-order create option
-# (spec S2 → Link purchase order modal, OMS-REG-REPL-02.33). Filtered to SENT;
-# supplier + reference + comment shown as table columns so the user can pick the
-# right one.
+# (spec S2 → Link purchase order modal, OMS-REG-REPL-02.33/.37). Filtered to
+# SENT, narrowed further by the modal's supplier / number / sent-date filters;
+# supplier + sent date + reference + comment shown as table columns so the user
+# can pick the right one.
 fragment LinkPurchaseOrderRow on PurchaseOrderNode {
   id
   number
   reference
   comment
   status
+  sentDatetime
   supplier {
     id
     name

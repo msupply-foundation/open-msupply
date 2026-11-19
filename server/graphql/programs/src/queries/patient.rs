@@ -63,6 +63,7 @@ pub fn patients(
     page: Option<PaginationInput>,
     filter: Option<PatientFilterInput>,
     sort: Option<Vec<PatientSortInput>>,
+    count_limit: Option<u32>,
 ) -> Result<PatientResponse> {
     let user = validate_auth(
         ctx,
@@ -94,14 +95,17 @@ pub fn patients(
         })
         .transpose()?;
 
-    let patients = service_provider.patient_service.get_patients(
-        &context,
-        page.map(PaginationOption::from),
-        filter,
-        sort.and_then(|mut sort_list| sort_list.pop())
-            .map(|sort| sort.to_domain()),
-        Some(allowed_ctx),
-    )?;
+    let patients = service_provider
+        .patient_service
+        .get_patients_with_count_limit(
+            &context,
+            page.map(PaginationOption::from),
+            filter,
+            sort.and_then(|mut sort_list| sort_list.pop())
+                .map(|sort| sort.to_domain()),
+            Some(allowed_ctx),
+            count_limit,
+        )?;
     let nodes: Vec<PatientNode> = patients
         .rows
         .into_iter()

@@ -9,8 +9,14 @@ export interface PaginationProps {
   offset: number;
   /** Rows per page. */
   pageSize: number;
-  /** Total matching rows (across all pages). */
-  total: number;
+  /**
+   * Total matching rows (across all pages). Omit for a list whose total is too
+   * costly to count (a search over a big patient register): pass `more` instead,
+   * and the pager is Previous · this page · Next, with no last page to jump to.
+   */
+  total?: number;
+  /** With no `total`: there's a page after this one. */
+  more?: boolean;
   /** Requests a new offset — the parent owns the page state (URL params). */
   onOffsetChange: (offset: number) => void;
   /**
@@ -115,8 +121,13 @@ const PageJump = (props: { onJump: (page: number) => void; max: number }) => {
 };
 
 export const Pagination = (props: PaginationProps) => {
-  const pageCount = () => Math.max(1, Math.ceil(props.total / props.pageSize));
   const currentPage = () => Math.floor(props.offset / props.pageSize) + 1; // 1-based
+  // With no total, the pages known are those up to here, plus the next one
+  // when there is one: the window then runs from the first page to the next.
+  const pageCount = () =>
+    props.total === undefined
+      ? currentPage() + (props.more ? 1 : 0)
+      : Math.max(1, Math.ceil(props.total / props.pageSize));
   const hasPrev = () => currentPage() > 1;
   const hasNext = () => currentPage() < pageCount();
 
@@ -185,13 +196,31 @@ export const Pagination = (props: PaginationProps) => {
               leave two bare arrows with no sense of where you are.
               aria-hidden: the range beside it already announces the position. */}
           <span class={styles.position} aria-hidden="true">
-            {currentPage()} / {pageCount()}
+            <Show when={props.total !== undefined} fallback={currentPage()}>
+              {currentPage()} / {pageCount()}
+            </Show>
           </span>
           <For each={pageList()}>
             {entry => (
               <Show
                 when={entry !== 'gap'}
-                fallback={<PageJump onJump={goToPage} max={pageCount()} />}
+                fallback={
+                  // With no total there's no last page to jump towards, so
+                  // the gap is only an ellipsis.
+                  <Show
+                    when={props.total !== undefined}
+                    fallback={
+                      <span
+                        class={`${styles.pageEllipsis} ${styles.numberSlot}`}
+                        aria-hidden="true"
+                      >
+                        …
+                      </span>
+                    }
+                  >
+                    <PageJump onJump={goToPage} max={pageCount()} />
+                  </Show>
+                }
               >
                 <Show
                   when={entry !== currentPage()}

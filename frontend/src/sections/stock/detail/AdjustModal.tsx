@@ -2,7 +2,6 @@ import { createResource, createSignal, Show, type JSX } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
 import { gated } from '../../../api/gated';
 import { t } from '../../../intl';
-import { formatNumber } from '../../../intl/formatNumber';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Button } from '../../../ui/elements/buttons/Button';
@@ -22,14 +21,16 @@ import {
   backdatedDatetime as computeBackdatedDatetime,
 } from '../stockCalc';
 import {
-  localTodayIso,
-  localIsoDaysAgo,
-} from '../../../ui/elements/inputs/dateTimeConvert';
+  todayCalendarDate,
+  calendarDateDaysAgo,
+} from '../../../intl/calendarDate';
 import {
   HistoricalStockLines,
   type StockLineDetailFragment,
   type CreateInventoryAdjustmentVariables,
 } from './stockLine.generated';
+import { roundedText } from '../../../intl/numberDisplay';
+import { Num } from '../../../ui/elements/typography/Num';
 
 // The stock adjustment modal (spec/stock S4). Correct one line's quantity
 // by a direction + amount, with an optional reason and (when the backdating
@@ -74,7 +75,7 @@ const AdjustContent = (props: {
   const [reasonId, setReasonId] = createSignal<string | undefined>();
   // Local (wall-clock) today, not UTC — so a store whose date differs from UTC
   // never treats its own today as backdated (spec/stock S4).
-  const today = localTodayIso();
+  const today = todayCalendarDate();
   // The date field starts at today (spec/stock S4) — today means "not
   // backdated", so the default still submits with no backdatedDatetime.
   const [date, setDate] = createSignal<string | null>(today);
@@ -85,7 +86,7 @@ const AdjustContent = (props: {
   const backdating = () => prefs().backdating;
   const minDate = () => {
     const maxDays = backdating().maxDays;
-    return maxDays <= 0 ? undefined : localIsoDaysAgo(maxDays);
+    return maxDays <= 0 ? undefined : calendarDateDaysAgo(maxDays);
   };
 
   // A chosen date earlier than today means "backdated"; today (or unset) is
@@ -151,10 +152,10 @@ const AdjustContent = (props: {
   const showDoses = () => prefs().manageVaccinesInDoses && isVaccine();
   const packSize = () => props.line.packSize;
   const doseNote = (packs: number): string | undefined =>
-    showDoses() ? `${formatNumber(packs * packSize() * doses())}` : undefined;
+    showDoses() ? `${roundedText(packs * packSize() * doses())}` : undefined;
 
   const previewOf = (value: number) =>
-    hasAmount() ? formatNumber(value) : undefined;
+    hasAmount() ? roundedText(value) : undefined;
   const previewDoseNote = (value: number) =>
     hasAmount() ? doseNote(value) : undefined;
 
@@ -166,8 +167,9 @@ const AdjustContent = (props: {
   // (ui-standards › validation — don't pre-validate an action), which lands in
   // the banner beside the actions.
   const reasonRequired = () =>
-    reasonsOfKind(direction() === 'ADDITION' ? 'positive' : 'negative').length >
-    0;
+    reasonsOfKind(direction() === 'ADDITION' ? 'positive' : 'negative', {
+      isVaccine: isVaccine(),
+    }).length > 0;
 
   const onOk = async () => {
     if (!canConfirm()) return;
@@ -270,7 +272,7 @@ const AdjustContent = (props: {
             }}
           >
             {props.line.item.code} · {t('label.pack-size')}{' '}
-            {formatNumber(packSize())}
+            <Num value={packSize()} />
           </span>
         </div>
 
@@ -284,7 +286,7 @@ const AdjustContent = (props: {
           <StatComparisonTile
             label={t('label.available-packs')}
             testId="adjust-tile-available"
-            current={formatNumber(currentAvail())}
+            current={roundedText(currentAvail())}
             currentNote={doseNote(currentAvail())}
             adjusted={previewOf(adjustedAvail())}
             adjustedNote={previewDoseNote(adjustedAvail())}
@@ -292,7 +294,7 @@ const AdjustContent = (props: {
           <StatComparisonTile
             label={t('label.packs-on-hand')}
             testId="adjust-tile-total"
-            current={formatNumber(currentTotal())}
+            current={roundedText(currentTotal())}
             currentNote={doseNote(currentTotal())}
             adjusted={previewOf(adjustedTotal())}
             adjustedNote={previewDoseNote(adjustedTotal())}
@@ -338,6 +340,7 @@ const AdjustContent = (props: {
         <FieldRow label={t('label.reason')} required={reasonRequired()}>
           <ReasonSelect
             kind={direction() === 'ADDITION' ? 'positive' : 'negative'}
+            isVaccine={isVaccine()}
             label={t('label.reason')}
             inputTestId="adjust-reason"
             hideLabel

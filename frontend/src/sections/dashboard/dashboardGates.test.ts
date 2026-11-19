@@ -26,10 +26,11 @@ const prefs = (overrides: Partial<Preferences> = {}): Preferences => ({
   expiredStockPreventIssue: false,
   expiredStockIssueThreshold: 0,
   invoiceStatusOptions: [],
-  useProcurementFunctionality: false,
   authorisePurchaseOrder: false,
   externalInboundShipmentLinesMustBeAuthorised: false,
+  promptForBatchAndExpiryOnInboundShipments: false,
   storeCustomColour: '',
+  decimalPlacesForNumbers: 2,
   backdating: {
     inventoryAdjustmentsEnabled: false,
     shipmentsEnabled: false,
@@ -41,6 +42,11 @@ const prefs = (overrides: Partial<Preferences> = {}): Preferences => ({
   firstThresholdForExpiringItems: 0,
   secondThresholdForExpiringItems: 0,
   warnWhenMissingRecentStocktake: { enabled: false, maxAge: 0, minItems: 0 },
+  commonMedicines: [],
+  dispensingScreen: 'STANDARD',
+  useUnnamedPatient: false,
+  startWithUnnamedPatient: false,
+  askForPatientType: false,
   ...overrides,
 });
 
@@ -65,20 +71,6 @@ const store = (
 });
 
 describe('dashboard display gates', () => {
-  // OMS-REG-DB-01.36 — the external-inbound panel exists only while
-  // procurement is on.
-  it('OMS-REG-DB-01.36: external inbound panel follows the procurement capability', () => {
-    expect(computeDashboardGates(prefs(), store()).externalInboundPanel).toBe(
-      false
-    );
-    expect(
-      computeDashboardGates(
-        prefs({ useProcurementFunctionality: true }),
-        store()
-      ).externalInboundPanel
-    ).toBe(true);
-  });
-
   // OMS-REG-DB-01.39 — the emergency stat exists only while the program module
   // is on.
   it('OMS-REG-DB-01.39: emergency stat follows the program-module store preference', () => {

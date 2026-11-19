@@ -1,3 +1,9 @@
+import {
+  isDefaultSellPrice,
+  perUnitAtPackSize,
+} from '@/domain/item/defaultSellPrice';
+import type { InboundLineFragment } from './inboundShipmentDetail.generated';
+
 // Line arithmetic shared by every surface that reports it. One definition
 // because the sign convention is the whole point: the detail table's
 // Difference column and the line editor's Difference cell each used to carry
@@ -22,3 +28,164 @@ export const packDifference = (
   shippedNumberOfPacks == null
     ? undefined
     : numberOfPacks - shippedNumberOfPacks;
+
+/*
+ * What the "prompt for batch and expiry" store preference asks about before an
+ * inbound line save, and marks once the user goes back to fill it in (issue
+ * #992, OMS-REG-REPL-09.31–.39) — per batch, so the editor can say which batch
+ * and which field.
+ */
+
+/** No batch number — blank, or whitespace only, which traces nothing. */
+export const batchIsBlank = (b: { batch: string }): boolean => !b.batch.trim();
+
+/** No expiry date. */
+export const expiryIsBlank = (b: { expiryDate: string | null }): boolean =>
+  !b.expiryDate;
+
+/** Missing either one — enough on its own to prompt and to mark the batch. */
+export const lacksBatchOrExpiry = (b: {
+  batch: string;
+  expiryDate: string | null;
+}): boolean => batchIsBlank(b) || expiryIsBlank(b);
+
+/**
+ * What a set of batches is missing between them, so the words name only that:
+ * `batch` or `expiry` when no batch lacks the other one, `either` once both
+ * fields are blank somewhere; undefined when nothing is missing.
+ */
+export type MissingBatchField = 'batch' | 'expiry' | 'either';
+
+export const missingBatchField = (
+  bs: readonly { batch: string; expiryDate: string | null }[]
+): MissingBatchField | undefined => {
+  const batch = bs.some(batchIsBlank);
+  const expiry = bs.some(expiryIsBlank);
+  if (batch && expiry) return 'either';
+  if (batch) return 'batch';
+  if (expiry) return 'expiry';
+  return undefined;
+};
+
+/*
+ * What a new batch starts with (spec rules › new-batch defaults,
+ * OMS-REG-REPL-09.10/.40–.45): its pack size, and the cost AND sell price and
+ * the volume per pack for that pack size.
+ */
+export type NewBatchDefaults = {
+  defaultPackSize: number;
+  prefillPricePerPack: number;
+  volumePerPack: number;
+};
+
+/**
+ * An order line's price per pack — net of the supplier discount, in the
+ * order's currency — in local currency at the shipment's rate. `rate` is
+ * undefined on a home-currency shipment; a rate of 0 (which can arrive by
+ * sync) is read as 1, as the server's cost recalculation reads it.
+ */
+export const orderLinePrice = (
+  pricePerPackAfterSupplierDiscount: number,
+  rate: number | undefined
+): number => pricePerPackAfterSupplierDiscount * (rate || 1);
+
+/**
+ * The figures a batch's pack-size change starts from: the item's defaults for
+ * a new batch, or the source batch's figures as they were when it was
+ * duplicated. Fixed for the batch's life, so a figure is always scaled from
+ * here and never from its current value, and nothing compounds.
+ */
+export type PackSizeBase = {
+  packSize: number;
+  costPricePerPack: number;
+  sellPricePerPack: number;
+  volumePerPack: number;
+};
+
+/**
+ * What a batch's figures become at `packSize` (spec rules › new-batch
+ * defaults, OMS-REG-REPL-09.11/.42/.44/.45/.46). Volume per pack follows at
+ * the base's volume per unit on every shipment. The prices go by whether cost
+ * can be typed: kept on a PO-linked shipment, since an order line's price
+ * applies at any pack size; at the base's price per unit on a transfer, where
+ * a zero cost could never be corrected; and on a shipment with no source link,
+ * the cost cleared to zero away from the base's pack size for the receiver to
+ * enter, while the sell price follows at the base's sell price per unit
+ * (spec/stock rules › Default sell price for new stock) — back at the base's
+ * pack size it is the base's own again. A price left out is left as it is.
+ */
+export const figuresAtPackSize = (
+  base: PackSizeBase,
+  packSize: number,
+  shipment: { purchaseOrderLinked: boolean; costLocked: boolean }
+): Partial<PackSizeBase> & { volumePerPack: number } => {
+  const perUnit = (perPack: number) =>
+    perUnitAtPackSize(perPack, base.packSize, packSize);
+  const volumePerPack = perUnit(base.volumePerPack);
+  if (shipment.purchaseOrderLinked) return { volumePerPack };
+  if (shipment.costLocked)
+    return {
+      volumePerPack,
+      costPricePerPack: perUnit(base.costPricePerPack),
+      sellPricePerPack: perUnit(base.sellPricePerPack),
+    };
+  const sellPricePerPack = perUnit(base.sellPricePerPack);
+  if (packSize === base.packSize) return { volumePerPack, sellPricePerPack };
+  return { volumePerPack, costPricePerPack: 0, sellPricePerPack };
+};
+
+/**
+ * Whether a saved line's sell price counts as typed when the editor opens it,
+ * so a pack-size change leaves it alone. On a shipment with no source link, a
+ * sell price still at the default for the line's pack size is not — it
+ * follows a pack-size change as a new batch's does (spec/stock rules ›
+ * Default sell price for new stock); a line made from a master list or an
+ * internal order arrives at it. Any other saved sell price is, as is every
+ * saved one on a transfer or a PO-linked shipment.
+ */
+export const savedSellOverridden = (
+  line: Pick<InboundLineFragment, 'item' | 'packSize' | 'sellPricePerPack'>,
+  shipment: { purchaseOrderLinked: boolean; costLocked: boolean }
+): boolean =>
+  shipment.purchaseOrderLinked ||
+  shipment.costLocked ||
+  !line.item ||
+  !isDefaultSellPrice(
+    line.sellPricePerPack,
+    {
+      defaultPackSize: line.item.defaultPackSize,
+      defaultSellPricePerPack:
+        line.item.itemStoreProperties?.defaultSellPricePerPack,
+    },
+    line.packSize
+  );
+
+/**
+ * The defaults for another batch of an item already on the shipment, read off
+ * one of its existing lines: the order line it cites on a PO-linked shipment,
+ * else the item.
+ */
+export const newBatchDefaultsFromLine = (
+  line: Pick<InboundLineFragment, 'item' | 'purchaseOrderLine'>,
+  rate: number | undefined
+): NewBatchDefaults => {
+  const orderLine = line.purchaseOrderLine;
+  const itemPackSize = line.item?.defaultPackSize ?? 1;
+  const itemVolume = line.item?.volumePerPack ?? 0;
+  if (!orderLine)
+    return {
+      defaultPackSize: itemPackSize,
+      prefillPricePerPack:
+        line.item?.itemStoreProperties?.defaultSellPricePerPack ?? 0,
+      volumePerPack: itemVolume,
+    };
+  const packSize = orderLine.requestedPackSize || 1;
+  return {
+    defaultPackSize: packSize,
+    prefillPricePerPack: orderLinePrice(
+      orderLine.pricePerPackAfterSupplierDiscount,
+      rate
+    ),
+    volumePerPack: perUnitAtPackSize(itemVolume, itemPackSize, packSize),
+  };
+};

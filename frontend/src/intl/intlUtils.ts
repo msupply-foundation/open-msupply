@@ -52,13 +52,17 @@ export const getLocalisedFullName = (
 
 /**
  * Translate a server error key. The catalog won't hold every possible server
- * message, so fall back to a sentence-cased version of the camelCase key.
+ * message, so fall back to a sentence-cased version of the camelCase key. A
+ * server reason that is already a sentence (it holds whitespace) is shown as
+ * it came: splitting it at every capital would break the document types and
+ * schema ids it names (`DemoProgramEnrolment`, `…_v2_a1b2…`).
  */
 export const translateServerError = (serverKey: string): string => {
   const key = `server-error.${serverKey}` as LocaleKey;
-  const fallback = serverKey
+  const translated = t(key);
+  if (translated !== key) return translated;
+  if (/\s/.test(serverKey)) return serverKey;
+  return serverKey
     .replace(/([a-z])([A-Z])/g, '$1 $2')
     .replace(/^./, c => c.toUpperCase());
-  const translated = t(key);
-  return translated === key ? fallback : translated;
 };

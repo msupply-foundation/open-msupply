@@ -4,13 +4,13 @@
 extern crate machine_uid;
 
 use crate::{
-    central::config_central, certs::Certificates, cold_chain::config_cold_chain, cors::cors_policy,
-    custom_translations::config_custom_translations, middleware::central_server_only,
-    print::config_print, serve_frontend::config_serve_frontend, static_files::config_static_files,
+    central::config_central, certs::Certificates, cold_chain::config_cold_chain,
+    cors::warn_on_invalid_cors_origins, custom_translations::config_custom_translations,
+    middleware::central_server_only, middleware::wrap_main_server, print::config_print,
+    serve_frontend::config_serve_frontend, static_files::config_static_files,
     support::config_support, upload_fridge_tag::config_upload_fridge_tag,
 };
 
-use self::middleware::{compress as compress_middleware, logger as logger_middleware};
 use actix_cors::Cors;
 use chrono::{NaiveDateTime, Utc};
 use graphql_core::loader::{LoaderRegistry, get_loaders};
@@ -21,7 +21,7 @@ use graphql::{
 };
 use log::info;
 use repository::{
-    StorageConnection, get_storage_connection_manager,
+    StorageConnection, SyncLogV5V6RowRepository, get_storage_connection_manager,
     migrations::{MigrationConfig, migrate},
     system_log_row::SystemLogType,
 };
@@ -158,11 +158,6 @@ pub async fn start_server(
         .as_ref()
         .map(|s| s.batch_size.clone())
         .unwrap_or_default();
-    let disable_integration_transaction = settings
-        .sync
-        .as_ref()
-        .map(|s| s.disable_integration_transaction)
-        .unwrap_or(false);
     let relax_hardware_id_token_checks = settings
         .sync
         .as_ref()
@@ -183,7 +178,6 @@ pub async fn start_server(
         Some(settings.clone()),
         subscription_trigger,
         batch_size,
-        disable_integration_transaction,
         relax_hardware_id_token_checks,
     ));
     let loaders = get_loaders(&connection_manager, service_provider.clone()).await;
@@ -321,15 +315,13 @@ pub async fn start_server(
     let ledger_fix_task = ledger_fix_driver.run(service_provider.clone().into_inner());
     let file_sync_task = file_sync_driver.run(service_provider.clone().into_inner());
 
+    warn_on_invalid_cors_origins(&settings);
     let closure_settings = settings.clone();
     let closure_service_provider = service_provider.clone();
     let closure_schema = graphql_schema.clone();
+    let is_https = certificates.is_https();
     let mut http_server = HttpServer::new(move || {
-        App::new()
-            .app_data(Data::new(closure_settings.clone()))
-            .wrap(logger_middleware())
-            .wrap(cors_policy(&closure_settings))
-            .wrap(compress_middleware())
+        wrap_main_server(App::new(), &closure_settings, is_develop(), is_https)
             // needed for static files service
             .app_data(Data::new(closure_settings.clone()))
             // Configure JSON payload limit (default is 2MB, setting to 10MB)
@@ -394,6 +386,33 @@ pub async fn start_server(
 
     add_migration_results_to_system_log(&connection, messages).unwrap();
     info!("Run DB migrations...done");
+
+    // No sync is running yet, so a sync log that never finished or failed was cut off by the
+    // previous shutdown. Close it, or it reads as in flight until a new run replaces it, and a
+    // paused site (maintenance mode included) starts none.
+    match SyncLogV5V6RowRepository::new(&connection)
+        .close_interrupted("Sync was interrupted: the server stopped before it finished")
+    {
+        Ok(0) => {}
+        Ok(closed) => info!("Closed {closed} sync log(s) interrupted by the previous shutdown"),
+        Err(error) => log::error!("Failed to close interrupted sync logs: {error:?}"),
+    }
+
+    // A restart in maintenance mode keeps everything paused (the flags are persisted and read at
+    // use), but must not look like it finished OMS central's own integration (#840). After the
+    // migrations, which add the key the check reads.
+    match service_provider.basic_context() {
+        Ok(ctx) => {
+            if let Err(error) =
+                service::sync::maintenance_mode::log_incomplete_integration_on_startup(
+                    &ctx.connection,
+                )
+            {
+                log::error!("Failed to check maintenance mode on startup: {error:?}");
+            }
+        }
+        Err(error) => log::error!("Failed to check maintenance mode on startup: {error:?}"),
+    }
 
     if let Err(e) = CentralServerConfig::restore_central_standalone(&connection) {
         log::error!(
@@ -560,7 +579,7 @@ pub async fn start_server(
     ); // Upsert standard reports
 
     // Scheduled tasks
-    let schedule_plugin_task = schedule_plugin::spawn();
+    let schedule_plugin_task = schedule_plugin::spawn(service_provider.clone().into_inner());
     let changelog_partitions_task = changelog_partitions::spawn(
         service_provider.clone().into_inner(),
         changelog_partition_settings,

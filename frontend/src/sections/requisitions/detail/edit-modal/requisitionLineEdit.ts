@@ -1,9 +1,6 @@
 import { graphqlFetch } from '@/api/graphql';
 import { t } from '@/intl';
-import {
-  parseVaccineCourses,
-  type VaccineCourse,
-} from '@/domain/forecast';
+import type { ForecastLineFragment } from '@/domain/forecast';
 import {
   RequisitionItemStats,
   InsertRequisitionLine,
@@ -42,10 +39,9 @@ export type EditorLine = {
   approvedQuantity: number;
   remainingQuantityToSupply: number;
   alreadyIssued: number;
-  forecastTotalUnits: number | null;
-  /** The forecast's per-course breakdown (OMS-REG-DIST-05.35); empty on a
-   *  forecast-less line. */
-  vaccineCourses: VaccineCourse[];
+  /** The customer's forecast, copied by the transfer (OMS-REG-DIST-05.37);
+   *  null on an add-mode preview. */
+  forecast: ForecastLineFragment | null;
   /** The customer's volume snapshot on a storage-restricted transferred line
    *  (rules › volume guidance); null on a manual line. */
   availableVolumeAtLocationType: RequisitionDetailLineFragment['availableVolumeAtLocationType'];
@@ -76,8 +72,7 @@ export const unitsToMode = (
   units: number,
   mode: EntryMode,
   packSize: number
-): number =>
-  mode === 'packs' && packSize > 0 ? units / packSize : units;
+): number => (mode === 'packs' && packSize > 0 ? units / packSize : units);
 
 // A display value in the active mode → the stored units (× pack size).
 export const modeToUnits = (
@@ -123,8 +118,7 @@ export const buildAddPreview = async (
     approvedQuantity: 0,
     remainingQuantityToSupply: 0,
     alreadyIssued: 0,
-    forecastTotalUnits: null,
-    vaccineCourses: [],
+    forecast: null,
     availableVolumeAtLocationType: null,
     supplyQuantity: 0,
     requestedQuantity: 0,
@@ -160,8 +154,7 @@ export const editorLineFromLine = (
   approvedQuantity: line.approvedQuantity,
   remainingQuantityToSupply: line.remainingQuantityToSupply,
   alreadyIssued: line.alreadyIssued,
-  forecastTotalUnits: line.forecastTotalUnits,
-  vaccineCourses: parseVaccineCourses(line.vaccineCourses),
+  forecast: line,
   availableVolumeAtLocationType: line.availableVolumeAtLocationType,
   supplyQuantity: line.supplyQuantity,
   requestedQuantity: line.requestedQuantity,
@@ -242,10 +235,7 @@ const updateLine = async (
   if (result.kind !== 'success') return { kind: 'failed' };
   const response = result.data.updateResponseRequisitionLine;
   if (response.__typename === 'RequisitionLineNode') return { kind: 'saved' };
-  return mapUpdateError(
-    response.error.__typename,
-    response.error.description
-  );
+  return mapUpdateError(response.error.__typename, response.error.description);
 };
 
 // ADD: the draft's first save realises the create — insert (the server births

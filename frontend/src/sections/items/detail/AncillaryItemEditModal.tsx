@@ -10,6 +10,8 @@ import {
   SaveAndNextButton,
 } from '../../../ui/elements/buttons/StandardButtons';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
+import { Checkbox } from '../../../ui/elements/inputs/Checkbox';
+import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
 import { Text } from '../../../ui/elements/typography/Text';
 import { HStack } from '../../../ui/layout/Stack/HStack';
 import { Stack } from '../../../ui/layout/Stack/Stack';
@@ -77,6 +79,7 @@ export const AncillaryItemEditModal: Component<
           ancillaryItemId: props.editor.row.ancillaryItem?.id ?? null,
           itemQuantity: props.editor.row.itemQuantity,
           ancillaryQuantity: props.editor.row.ancillaryQuantity,
+          excludePrincipalWastage: props.editor.row.excludePrincipalWastage,
         }
       : EMPTY_FORM
   );
@@ -228,6 +231,7 @@ export const AncillaryItemEditModal: Component<
             decimalLimit={4}
             disabled={saving() !== null}
             value={form().itemQuantity}
+            emptyValue={0}
             onChange={itemQuantity =>
               setForm({ ...form(), itemQuantity: itemQuantity ?? 0 })
             }
@@ -241,6 +245,7 @@ export const AncillaryItemEditModal: Component<
             decimalLimit={4}
             disabled={saving() !== null}
             value={form().ancillaryQuantity}
+            emptyValue={0}
             onChange={ancillaryQuantity =>
               setForm({ ...form(), ancillaryQuantity: ancillaryQuantity ?? 0 })
             }
@@ -248,6 +253,22 @@ export const AncillaryItemEditModal: Component<
         </HStack>
         <Text variant="bodySmall">{t('description.ancillary-ratio')}</Text>
       </Stack>
+      {/* Principal wastage (ui-surface S5, rules § ancillary supplies ›
+          principal wastage): ticked, the ancillary is ordered against the
+          principal's quantity less its wastage rate — syringes aren't wasted
+          with an open vial. Unticked (the default) orders for every unit. */}
+      <Checkbox
+        label={t('label.exclude-principal-wastage')}
+        labelInfo={
+          <InfoTooltip text={t('description.exclude-principal-wastage')} />
+        }
+        testId="ancillary-exclude-principal-wastage"
+        checked={form().excludePrincipalWastage}
+        disabled={saving() !== null}
+        onChange={excludePrincipalWastage =>
+          setForm({ ...form(), excludePrincipalWastage })
+        }
+      />
     </Dialog>
   );
 };

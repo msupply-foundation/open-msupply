@@ -95,6 +95,7 @@ pub enum ActivityLogNodeType {
     VVMStatusLogUpdated,
     VolumePerPackChanged,
     StockLineEdit,
+    StockCampaignChange,
     // Purchase Orders
     PurchaseOrderCreated,
     PurchaseOrderRequestApproval,
@@ -110,6 +111,7 @@ pub enum ActivityLogNodeType {
     PurchaseOrderStatusChangedFromSentToConfirmed,
     PurchaseOrderLineStatusClosed,
     PurchaseOrderLineStatusChangedFromSentToNew,
+    PurchaseOrderCancelled,
     PrescriptionRequestCreated,
     PrescriptionRequestUpdated,
     PrescriptionRequestReadyToDispense,

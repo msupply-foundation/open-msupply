@@ -52,6 +52,10 @@ pub enum SubscriptionTrigger {
     SyncStatus(SyncLogRow),
     /// Changelogs were inserted (mutations created/modified data)
     PushQueueChanged,
+    /// An admin pause switch changed (this server's sync, or central's sync API), or maintenance
+    /// mode, which sets them; re-read the flags and re-emit so every open session updates without
+    /// waiting for a sync frame (a paused site produces none).
+    SyncPauseChanged,
 }
 
 // ── Resolved events (outbound from worker to subscribers) ──
@@ -64,6 +68,14 @@ pub enum ResolvedSubscription {
         /// shape so callers don't need to discriminate.
         last_successful: Option<SyncStatus>,
         push_queue_count: u64,
+        /// Admin pause flag (Admin > Sync settings), carried on every frame so the header can
+        /// show a paused state from the live channel alone.
+        is_sync_paused: bool,
+        /// Maintenance mode (central only, #840), carried alongside so the header can show it.
+        is_maintenance_mode: bool,
+        /// Central's sync API pause (Admin > Sync settings, central only), carried the same way
+        /// so the sync modal can say remotes are being refused.
+        is_sync_api_paused: bool,
     },
     InitialisationStatus(InitialisationStatus),
 }
@@ -76,6 +88,7 @@ pub enum ResolvedSubscription {
 pub struct SubscriptionTriggerHandle {
     sync_status_sender: Arc<watch::Sender<Option<SyncLogRow>>>,
     push_queue_sender: mpsc::Sender<()>,
+    pause_sender: mpsc::Sender<()>,
 }
 
 impl SubscriptionTriggerHandle {
@@ -93,6 +106,14 @@ impl SubscriptionTriggerHandle {
                     }
                 }
             }
+            SubscriptionTrigger::SyncPauseChanged => {
+                // Coalesces like PushQueueChanged: one pending re-read is enough.
+                if let Err(e) = self.pause_sender.try_send(()) {
+                    if matches!(e, mpsc::error::TrySendError::Closed(_)) {
+                        log::error!("Subscription pause channel closed: {e:#?}");
+                    }
+                }
+            }
         }
     }
 
@@ -100,9 +121,11 @@ impl SubscriptionTriggerHandle {
     pub fn new_void() -> Self {
         let (sync_status_sender, _) = watch::channel(None);
         let (push_queue_sender, _) = mpsc::channel(1);
+        let (pause_sender, _) = mpsc::channel(1);
         Self {
             sync_status_sender: Arc::new(sync_status_sender),
             push_queue_sender,
+            pause_sender,
         }
     }
 }
@@ -112,20 +135,24 @@ impl SubscriptionTriggerHandle {
 pub struct SubscriptionWorker {
     sync_status_receiver: watch::Receiver<Option<SyncLogRow>>,
     push_queue_receiver: mpsc::Receiver<()>,
+    pause_receiver: mpsc::Receiver<()>,
 }
 
 impl SubscriptionWorker {
     pub fn init() -> (SubscriptionTriggerHandle, SubscriptionWorker) {
         let (sync_status_sender, sync_status_receiver) = watch::channel(None);
         let (push_queue_sender, push_queue_receiver) = mpsc::channel(CHANNEL_BUFFER_SIZE);
+        let (pause_sender, pause_receiver) = mpsc::channel(1);
         (
             SubscriptionTriggerHandle {
                 sync_status_sender: Arc::new(sync_status_sender),
                 push_queue_sender,
+                pause_sender,
             },
             SubscriptionWorker {
                 sync_status_receiver,
                 push_queue_receiver,
+                pause_receiver,
             },
         )
     }
@@ -141,6 +168,7 @@ impl SubscriptionWorker {
             subscription_worker_loop(
                 self.sync_status_receiver,
                 self.push_queue_receiver,
+                self.pause_receiver,
                 tx,
                 service_provider,
             )
@@ -154,6 +182,7 @@ impl SubscriptionWorker {
 async fn subscription_worker_loop(
     mut sync_status_receiver: watch::Receiver<Option<SyncLogRow>>,
     mut push_queue_receiver: mpsc::Receiver<()>,
+    mut pause_receiver: mpsc::Receiver<()>,
     tx: broadcast::Sender<ResolvedSubscription>,
     service_provider: Arc<ServiceProvider>,
 ) {
@@ -175,6 +204,10 @@ async fn subscription_worker_loop(
         })
         .is_some();
     let mut push_queue_count = get_push_queue_count(&service_provider).unwrap_or(0);
+    // Cached rather than read per frame: progress frames arrive thousands of times per run.
+    let mut is_sync_paused = get_is_sync_paused(&service_provider);
+    let mut is_maintenance_mode = get_is_maintenance_mode(&service_provider);
+    let mut is_sync_api_paused = get_is_sync_api_paused(&service_provider);
     let mut last_push_query = Instant::now() - PUSH_QUEUE_DEBOUNCE;
     let mut push_queue_queued = false;
     let trigger_handle = service_provider.subscription_trigger.clone();
@@ -212,6 +245,9 @@ async fn subscription_worker_loop(
                     status,
                     last_successful: last_successful.clone(),
                     push_queue_count,
+                    is_sync_paused,
+                    is_maintenance_mode,
+                    is_sync_api_paused,
                 });
 
                 // Only emit a fresh InitialisationStatus when the site transitions
@@ -259,6 +295,9 @@ async fn subscription_worker_loop(
                             status: status.clone(),
                             last_successful: last_successful.clone(),
                             push_queue_count: count,
+                            is_sync_paused,
+                            is_maintenance_mode,
+                            is_sync_api_paused,
                         });
                     }
                 } else if !push_queue_queued {
@@ -272,8 +311,50 @@ async fn subscription_worker_loop(
                     });
                 }
             }
+
+            result = pause_receiver.recv() => {
+                if result.is_none() { break; } // all senders dropped
+
+                is_sync_paused = get_is_sync_paused(&service_provider);
+                is_maintenance_mode = get_is_maintenance_mode(&service_provider);
+                is_sync_api_paused = get_is_sync_api_paused(&service_provider);
+
+                // Nothing to attach the flag to before the first run has been observed; the
+                // client's poll covers that case.
+                if let Some(status) = &last_status {
+                    let _ = tx.send(ResolvedSubscription::SyncInfo {
+                        status: status.clone(),
+                        last_successful: last_successful.clone(),
+                        push_queue_count,
+                        is_sync_paused,
+                        is_maintenance_mode,
+                        is_sync_api_paused,
+                    });
+                }
+            }
         }
     }
+}
+
+fn get_is_sync_paused(service_provider: &Arc<ServiceProvider>) -> bool {
+    service_provider
+        .basic_context()
+        .and_then(|ctx| service_provider.settings.is_sync_paused(&ctx))
+        .unwrap_or(false)
+}
+
+fn get_is_maintenance_mode(service_provider: &Arc<ServiceProvider>) -> bool {
+    service_provider
+        .basic_context()
+        .and_then(|ctx| crate::sync::maintenance_mode::is_maintenance_mode(&ctx.connection))
+        .unwrap_or(false)
+}
+
+fn get_is_sync_api_paused(service_provider: &Arc<ServiceProvider>) -> bool {
+    service_provider
+        .basic_context()
+        .and_then(|ctx| crate::sync::sync_api_pause::is_sync_api_paused(&ctx.connection))
+        .unwrap_or(false)
 }
 
 fn get_push_queue_count(service_provider: &Arc<ServiceProvider>) -> Result<u64, RepositoryError> {

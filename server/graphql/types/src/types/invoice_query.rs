@@ -1,5 +1,6 @@
 use crate::types::{PurchaseOrderNode, ShippingMethodNode, SyncFileReferenceConnector};
 
+use super::campaign::CampaignNode;
 use super::patient::PatientNode;
 use super::program_node::ProgramNode;
 use super::{
@@ -11,10 +12,10 @@ use chrono::{DateTime, NaiveDate, Utc};
 use dataloader::DataLoader;
 
 use graphql_core::loader::{
-    AllowedCustomFieldKeysByScopeLoader, CurrencyByIdLoader, DiagnosisLoader, InvoiceByIdLoader,
-    InvoiceLineByInvoiceIdLoader, NameByIdLoaderInput, NameInsuranceJoinLoader, PatientLoader,
-    ProgramByIdLoader, PurchaseOrderByIdLoader, ShippingMethodByIdLoader, SyncFileReferenceLoader,
-    UserLoader,
+    AllowedCustomFieldKeysByScopeLoader, CampaignByIdLoader, CurrencyByIdLoader, DiagnosisLoader,
+    InvoiceByIdLoader, InvoiceLineByInvoiceIdLoader, NameByIdLoaderInput, NameInsuranceJoinLoader,
+    PatientLoader, ProgramByIdLoader, PurchaseOrderByIdLoader, ShippingMethodByIdLoader,
+    SyncFileReferenceLoader, UserLoader,
 };
 use graphql_core::{
     ContextExt,
@@ -466,6 +467,22 @@ impl InvoiceNode {
             });
 
         Ok(result)
+    }
+
+    /// The shipment's campaign (null = none): the default for new inbound
+    /// lines, or the campaign an outbound shipment issues for.
+    pub async fn campaign_id(&self) -> &Option<String> {
+        &self.row().campaign_id
+    }
+
+    pub async fn campaign(&self, ctx: &Context<'_>) -> Result<Option<CampaignNode>> {
+        let Some(campaign_id) = self.row().campaign_id.clone() else {
+            return Ok(None);
+        };
+
+        let loader = ctx.get_loader::<DataLoader<CampaignByIdLoader>>();
+        let result = loader.load_one(campaign_id).await?;
+        Ok(result.map(CampaignNode::from_domain))
     }
 
     pub async fn store(&self) -> StoreNode {

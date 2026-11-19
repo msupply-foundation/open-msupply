@@ -55,7 +55,7 @@
 
 /* The panel opens to the physical left in RTL, so it slides in from the other
    side. */
-:dir(rtl) .flyout:popover-open {
+[dir='rtl'] .flyout:popover-open {
   animation-name: flyout-in-rtl;
 }
 
@@ -111,6 +111,8 @@
   color: var(--text-body);
   font-size: var(--text-sm);
   text-align: start;
+  /* A row is a link when the host gives destinations URLs (#271). */
+  text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
 }

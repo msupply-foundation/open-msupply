@@ -1,3 +1,5 @@
+use crate::NullableUpdate;
+use crate::campaign::check_campaign_exists;
 use crate::invoice::{
     InvoiceRowStatusError, check_invoice_exists, check_invoice_is_editable, check_invoice_status,
     check_invoice_type, check_status_change, check_store,
@@ -47,6 +49,14 @@ pub fn validate(
             check_invoice_custom_fields_patch(connection, &invoice.r#type, properties)?
     {
         return Err(problem.into());
+    }
+
+    if let Some(NullableUpdate {
+        value: Some(campaign_id),
+    }) = &patch.campaign_id
+        && !check_campaign_exists(connection, campaign_id)?
+    {
+        return Err(CampaignDoesNotExist);
     }
 
     // Status check

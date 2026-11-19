@@ -64,6 +64,7 @@ define_linked_tables! {
         legacy_goods_received_id -> Nullable<Text>,
         custom_fields -> Nullable<crate::db_diesel::custom_fields_json::CustomFieldsJson>,
         prescription_request_id -> Nullable<Text>,
+        campaign_id -> Nullable<Text>,
     },
     links:{
          name_link_id -> name_id,
@@ -177,6 +178,11 @@ pub struct InvoiceRow {
     /// invoice was generated from — the order is remote-owned, so a
     /// patient-distributed copy of this invoice can land on sites without it.
     pub prescription_request_id: Option<String>,
+    /// The shipment-level campaign (None = routine). On inbound, the line
+    /// editor prefills new batches with it and lines added from a master list
+    /// or internal order take it; on outbound it's the campaign the shipment
+    /// issues for, and auto-allocation only picks batches of that campaign.
+    pub campaign_id: Option<String>,
     // Resolved from name_link - must be last to match view column order
     pub name_id: String,
     pub default_donor_id: Option<String>,

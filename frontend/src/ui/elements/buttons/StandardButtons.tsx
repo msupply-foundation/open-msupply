@@ -56,8 +56,19 @@ export const CancelButton = (props: StandardButtonProps) => (
   </Button>
 );
 
+/**
+ * A dialog's lone dismiss, where nothing can be confirmed (a read-only view).
+ * The cancel role: Escape closes it, and it claims no Save.
+ */
+export const DialogCloseButton = (props: StandardButtonProps) => (
+  <Button {...props} variant="secondary" confirms="cancel">
+    {t('button.close')}
+  </Button>
+);
+
 /*
- * There is deliberately NO CloseButton here. It existed from 2026-07-30 as the
+ * There is deliberately NO detail-footer CloseButton here (DialogCloseButton
+ * above is a dialog's, not a screen's). It existed from 2026-07-30 as the
  * action-footer counterpart to CancelButton — secondary, close glyph, labelled
  * — and was adopted by five verticals' detail footers over the migrations that
  * followed. D103 (spec owner, 2026-08-13) then removed the control itself: a
@@ -105,6 +116,19 @@ export const SaveButton = (props: StandardButtonProps) => {
 export const DialogSaveButton = (props: StandardButtonProps) => (
   <Button {...props} variant="primary" confirms="plain" shortcut={ALT_S}>
     {t('button.save')}
+  </Button>
+);
+
+/**
+ * Primary confirm for a line editor's ADD mode — same plain confirm and Alt+S
+ * wiring as DialogSaveButton (D55), just labelled "Add line": a line-add dialog
+ * reads better confirming with the verb than with a bare "Save" (the editor's
+ * UPDATE mode keeps DialogSaveButton). Kept here, beside Save, so the confirm
+ * role and shortcut live in one place rather than hand-built at the call site.
+ */
+export const DialogAddLineButton = (props: StandardButtonProps) => (
+  <Button {...props} variant="primary" confirms="plain" shortcut={ALT_S}>
+    {t('button.add-line')}
   </Button>
 );
 

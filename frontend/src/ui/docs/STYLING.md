@@ -101,11 +101,11 @@ Plus two that are **not** decorative and so are excluded from the reduce block: 
 - **Colour literals.** Stylelint does not flag `#fff`, `rgb(…)`, `hsl(…)` in component CSS, but they're banned outside `tokens.css` (every colour derives from a token — `var(--token)` or a `color-mix()` tint of one). **Grep new CSS for `#`, `rgb(`, `hsl(` before calling it done**, especially when porting from the RnD prototype, which hard-codes whites and `rgba()` tints.
 - **px sizing.** The rem/em rule (px only for hairline borders, radii, shadow offsets) is convention, not lint.
 - **Looks wrong.** All of this is static analysis — anything with visual surface also needs a render check (dev server / screenshot).
-- **Accessibility.** Keyboard pass, screen-reader smoke test, and contrast checks are manual for now. Step 6 covers reduced motion in CSS only — motion driven from JS (a WAAPI animation, a smooth scroll) is on you to route through [`ui/utils/createMediaQuery`](../utils/createMediaQuery.ts).
+- **Accessibility.** axe-core scans the showcase on every PR and the app nightly ([`e2e/README.md` § Accessibility scans](../../../e2e/README.md#accessibility-scans)), but only what axe can see, in the light theme. A keyboard pass, a screen-reader smoke test and dark-theme contrast are still manual. Step 6 covers reduced motion in CSS only — motion driven from JS (a WAAPI animation, a smooth scroll) is on you to route through [`ui/utils/createMediaQuery`](../utils/createMediaQuery.ts).
 
 ## Day-to-day flow
 
 1. Have `npm run dev` running — class-name types stay fresh as you edit CSS.
-2. Style with tokens: `var(--…)` for every colour, rem/em for every size, `var(--motion-…)` for every duration, logical properties for direction.
+2. Style with tokens: `var(--…)` for every colour, rem/em for every size, `var(--motion-…)` for every duration, logical properties for direction. Where a rule must know the direction outright (a slide's side, a chevron's turn), scope it with `[dir='rtl']` on the root, never `:dir(rtl)`: the production build lowers `:dir()` to a `:lang()` list that omits Dari, so such a rule silently never matches there (#1833; stylelint refuses it).
 3. Need a colour with no token? Add one to `tokens.css` (themed → inside the contract + a dark override), never a literal in component CSS. Same for a duration — a `--motion-*` token plus its reduce-block entry, never a literal.
 4. Done? `npm run check`, grep your new CSS for colour literals, and eyeball it rendered in both themes.

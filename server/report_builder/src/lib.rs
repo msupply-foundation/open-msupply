@@ -1,7 +1,4 @@
-pub mod build;
 pub mod print;
-
-use std::path::PathBuf;
 
 use clap::{Parser, Subcommand, ValueEnum};
 use serde::Serialize;
@@ -15,42 +12,7 @@ pub struct Args {
 
 #[derive(Subcommand)]
 pub enum Action {
-    Build(BuildArgs),
     Print(PrintArgs),
-}
-
-#[derive(clap::Args)]
-pub struct BuildArgs {
-    /// Project directory name
-    #[clap(short, long)]
-    pub dir: PathBuf,
-    /// output path
-    #[clap(short, long)]
-    pub output: Option<PathBuf>,
-    /// Main template name
-    #[clap(long)]
-    pub template: String,
-    #[clap(long)]
-    pub header: Option<String>,
-    #[clap(long)]
-    pub footer: Option<String>,
-
-    /// Name of the file containing a graphql query
-    #[clap(long)]
-    pub query_gql: Option<String>,
-    /// Default query type, one of: "invoice" | "stocktake" | "requisition",
-    #[clap(long)]
-    pub query_default: Option<String>,
-    /// SQL query name.
-    /// This argument requires that there is either
-    /// - a single {query_sql}.sql file (for both Sqlite and Postgres)
-    /// - a {query_sql}.sqlite.sql file and a {query_sql}.postgres.sql file
-    ///
-    /// The query result is put in the data object under `data.{query_sql}`.
-    /// Thus, the user has to take care that the query name {query_sql} does not conflict with a
-    /// GraphQL query since otherwise data from the GraphQL query might get overwritten.
-    #[clap(long, value_parser, value_delimiter = ' ')]
-    pub query_sql: Option<Vec<String>>,
 }
 
 #[derive(ValueEnum, Default, Clone, Serialize)]

@@ -654,7 +654,7 @@ mod test {
     // backdated_datetime + verified_datetime on the resulting invoice.
     #[actix_rt::test]
     async fn insert_inventory_adjustment_backdated_addition_success() {
-        use chrono::{Duration, Utc};
+        use chrono::{Duration, SubsecRound, Utc};
         use repository::{PreferenceRow, PreferenceRowRepository};
 
         let (_, connection, connection_manager, _) = setup_all(
@@ -681,7 +681,7 @@ mod test {
             .unwrap();
         let service = service_provider.invoice_service;
 
-        let three_days_ago = Utc::now() - Duration::days(3);
+        let three_days_ago = Utc::now().trunc_subsecs(6) - Duration::days(3);
 
         let starting_available = mock_stock_line_a().available_number_of_packs;
         let starting_total = mock_stock_line_a().total_number_of_packs;

@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { typedQuery, visibleOptions } from './comboboxLogic';
+import {
+  firstMatchKey,
+  nextHighlightKey,
+  skipsHighlight,
+  PINNED_SECTION,
+  type OptionNode,
+  sectionOptions,
+  typedQuery,
+  visibleOptions,
+} from './comboboxLogic';
 
 // A location-picker-shaped list: the case the cap exists for (a whole-store
 // location list, ~5,000 rows on the tablet that prompted it).
@@ -98,5 +107,213 @@ describe('typedQuery', () => {
     // server-backed lookup whose source can't match a composed label, nothing
     // at all. It is not a search.
     expect(typedQuery('ABC - Amoxicillin', item, label)).toBe('');
+  });
+});
+
+describe('sectionOptions — grouped mode', () => {
+  type Opt = { value: string; group?: string };
+  const opt = (value: string, group?: string): Opt => ({ value, group });
+  const sections = (items: Opt[]) => sectionOptions(items, i => i.group);
+
+  it('puts the ungrouped items in one empty-headed section, first', () => {
+    const result = sections([
+      opt('none'),
+      opt('routine'),
+      opt('c1', 'Campaign'),
+    ]);
+    expect(result.map(s => s.label)).toEqual([PINNED_SECTION, 'Campaign']);
+    expect(result[0]?.options.map(o => o.value)).toEqual(['none', 'routine']);
+  });
+
+  it('never emits a bare option — Kobalte reads every node as a section', () => {
+    const result = sections([opt('none'), opt('c1', 'Campaign')]);
+    expect(result.every(s => Array.isArray(s.options))).toBe(true);
+  });
+
+  it('buckets groups in first-seen order, not alphabetically', () => {
+    const result = sections([opt('z', 'Zebra'), opt('a', 'Ant')]);
+    expect(result.map(s => s.label)).toEqual(['Zebra', 'Ant']);
+  });
+
+  it('drops the pinned section when nothing is ungrouped', () => {
+    const result = sections([opt('c1', 'Campaign')]);
+    expect(result.map(s => s.label)).toEqual(['Campaign']);
+  });
+
+  it('drops a group whose items were all filtered away, heading and all', () => {
+    // The caller filters before sectioning, so an emptied group simply never
+    // reaches here — and must not leave a heading over nothing.
+    const result = sections([opt('none')]);
+    expect(result.map(s => s.label)).toEqual([PINNED_SECTION]);
+  });
+
+  it('returns nothing at all for no items', () => {
+    expect(sections([])).toEqual([]);
+  });
+});
+
+describe('firstMatchKey', () => {
+  const item = (key: string, disabled = false): OptionNode<string> => ({
+    type: 'item',
+    key,
+    rawValue: key,
+    disabled,
+  });
+  const section = (key: string): OptionNode<string> => ({
+    type: 'section',
+    key,
+    rawValue: key,
+    disabled: false,
+  });
+
+  it('picks the first option', () => {
+    expect(firstMatchKey([item('a'), item('b')])).toBe('a');
+  });
+
+  it('passes over section headings and disabled options', () => {
+    expect(
+      firstMatchKey([section('Group'), item('on-hold', true), item('ok')])
+    ).toBe('ok');
+  });
+
+  it('passes over skipped options — grouped mode pins', () => {
+    const pinned = new Set(['none']);
+    expect(
+      firstMatchKey([item('none'), item('match')], key => pinned.has(key))
+    ).toBe('match');
+  });
+
+  it('highlights nothing when no option qualifies', () => {
+    expect(firstMatchKey([item('x', true)])).toBeUndefined();
+    expect(firstMatchKey([])).toBeUndefined();
+  });
+});
+
+describe('skipsHighlight', () => {
+  it('keeps an ordinary row', () => {
+    expect(
+      skipsHighlight({ held: false, pinned: false, matchesQuery: true })
+    ).toBe(false);
+  });
+
+  it('keeps the held selection while it matches the query', () => {
+    // Skipping it would make Enter swap it for the next match.
+    expect(
+      skipsHighlight({ held: true, pinned: false, matchesQuery: true })
+    ).toBe(false);
+  });
+
+  it('skips the held selection when it is listed without matching', () => {
+    expect(
+      skipsHighlight({ held: true, pinned: false, matchesQuery: false })
+    ).toBe(true);
+  });
+
+  it('skips a pinned item the query does not name, keeps one it does', () => {
+    expect(
+      skipsHighlight({ held: false, pinned: true, matchesQuery: false })
+    ).toBe(true);
+    expect(
+      skipsHighlight({ held: false, pinned: true, matchesQuery: true })
+    ).toBe(false);
+  });
+});
+
+describe('nextHighlightKey', () => {
+  const item = (key: string): OptionNode<string> => ({
+    type: 'item',
+    key,
+    rawValue: key,
+    disabled: false,
+  });
+  // A Kobalte-collection-shaped list: iterable, with lookup by key.
+  const list = (...keys: string[]) => {
+    const nodes = keys.map(item);
+    return Object.assign(nodes, {
+      getItem: (key: string) => nodes.find(n => n.key === key),
+    });
+  };
+  const held = new Set(['held']);
+  const skip = (key: string) => held.has(key);
+
+  it('highlights the first match when nothing is highlighted', () => {
+    expect(
+      nextHighlightKey({
+        query: 'a',
+        queryChanged: true,
+        nodes: list('a1', 'a2'),
+        focused: undefined,
+      })
+    ).toBe('a1');
+  });
+
+  it('moves nothing while there is no query', () => {
+    expect(
+      nextHighlightKey({
+        query: ' ',
+        queryChanged: true,
+        nodes: list('a1'),
+        focused: undefined,
+      })
+    ).toBeUndefined();
+  });
+
+  it('keeps a row the user arrowed to while the results refresh', () => {
+    expect(
+      nextHighlightKey({
+        query: 'a',
+        queryChanged: false,
+        nodes: list('a1', 'a2'),
+        focused: 'a2',
+      })
+    ).toBeUndefined();
+  });
+
+  it('moves to the first match when the highlighted row drops out', () => {
+    expect(
+      nextHighlightKey({
+        query: 'ab',
+        queryChanged: true,
+        nodes: list('ab1', 'ab2'),
+        focused: 'a2',
+      })
+    ).toBe('ab1');
+  });
+
+  it('moves off a skipped row when the query changes', () => {
+    // Reopened on the held item, then typed over: it is still listed (the
+    // seed), but no longer an answer.
+    expect(
+      nextHighlightKey({
+        query: 'o',
+        queryChanged: true,
+        nodes: list('held', 'o1'),
+        focused: 'held',
+        skip,
+      })
+    ).toBe('o1');
+  });
+
+  it('leaves a skipped row the user arrowed onto', () => {
+    expect(
+      nextHighlightKey({
+        query: 'o',
+        queryChanged: false,
+        nodes: list('held', 'o1'),
+        focused: 'held',
+        skip,
+      })
+    ).toBeUndefined();
+  });
+
+  it('reports no move when the first match is already highlighted', () => {
+    expect(
+      nextHighlightKey({
+        query: 'a',
+        queryChanged: true,
+        nodes: list('a1'),
+        focused: 'a1',
+      })
+    ).toBeUndefined();
   });
 });

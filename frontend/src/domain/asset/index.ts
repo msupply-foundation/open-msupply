@@ -6,3 +6,4 @@ export {
   statusLabelKey,
   type AssetStatus,
 } from './assetStatus';
+export { categoryName, reasonName, typeName } from './seededNames';

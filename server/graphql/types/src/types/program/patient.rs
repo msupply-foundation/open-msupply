@@ -13,7 +13,7 @@ use repository::{
 };
 use serde::Serialize;
 use service::programs::patient::main_patient_doc_name;
-use service::programs::patient::patient_updated::patient_draft_document;
+use service::programs::patient::patient_updated::patient_draft_document_json;
 use service::usize_to_u32;
 
 use crate::types::document::DocumentNode;
@@ -43,6 +43,8 @@ pub struct PatientFilterInput {
     pub country: Option<StringFilterInput>,
     pub email: Option<StringFilterInput>,
     pub identifier: Option<StringFilterInput>,
+    /// Matches the code or the secondary code (code 2)
+    pub code_or_code_2: Option<StringFilterInput>,
     pub date_of_death: Option<DateFilterInput>,
     pub program_enrolment_name: Option<StringFilterInput>,
     pub next_of_kin_name: Option<StringFilterInput>,
@@ -70,6 +72,7 @@ impl From<PatientFilterInput> for PatientFilter {
             country: f.country.map(StringFilter::from),
             email: f.email.map(StringFilter::from),
             identifier: f.identifier.map(StringFilter::from),
+            code_or_code_2: f.code_or_code_2.map(StringFilter::from),
             date_of_death: f.date_of_death.map(DateFilter::from),
             program_enrolment_name: f.program_enrolment_name.map(StringFilter::from),
             next_of_kin_name: f.next_of_kin_name.map(StringFilter::from),
@@ -275,11 +278,8 @@ impl PatientNode {
             return Ok(None);
         };
 
-        let document_data = serde_json::from_value(document_data)
+        let draft = patient_draft_document_json(&self.patient, document_data)
             .map_err(|e| StandardGraphqlError::from_error(&e))?;
-        let draft = patient_draft_document(&self.patient, document_data);
-        let draft = serde_json::to_value(draft)
-            .map_err(|e| StandardGraphqlError::InternalError(format!("{e}")).extend())?;
         Ok(Some(draft))
     }
 

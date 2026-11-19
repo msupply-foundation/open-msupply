@@ -39,6 +39,8 @@ pub struct UpdateInput {
     currency_rate: Option<f64>,
     expected_delivery_date: Option<NullableUpdateInput<NaiveDate>>,
     shipping_method_id: Option<NullableUpdateInput<String>>,
+    /// The campaign this shipment issues for (null = routine).
+    campaign_id: Option<NullableUpdateInput<String>>,
     backdated_datetime: Option<DateTime<Utc>>,
     /// Patch of customFields key -> value (JSON object) merged into the
     /// invoice's custom properties; a `null` value clears that key, keys absent
@@ -128,6 +130,7 @@ impl UpdateInput {
             currency_rate,
             expected_delivery_date,
             shipping_method_id,
+            campaign_id,
             backdated_datetime,
             custom_fields,
         } = self;
@@ -148,6 +151,7 @@ impl UpdateInput {
             expected_delivery_date: expected_delivery_date
                 .map(|d| NullableUpdate { value: d.value }),
             shipping_method_id: shipping_method_id.map(|d| NullableUpdate { value: d.value }),
+            campaign_id: campaign_id.map(|d| NullableUpdate { value: d.value }),
             backdated_datetime,
             custom_fields: custom_fields.map(|json| json.0),
         }
@@ -205,6 +209,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
         ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
         ServiceError::ShippingMethodDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::CampaignDoesNotExist => BadUserInput(formatted_error),
         ServiceError::CantBackDate(_) => BadUserInput(formatted_error),
         ServiceError::ExceedsMaximumBackdatingDays => BadUserInput(formatted_error),
         ServiceError::UnknownPropertyKey(_) | ServiceError::InvalidPropertyValue { .. } => {

@@ -131,10 +131,12 @@
    the connectors, and the two fronts meet at the outgoing connector at 100%.
    Painted as two half-arc conics (top clockwise, bottom its mirror) over the
    pale full-ring track, all under a padding-box cover — the real border only
-   reserves the ring's thickness. At the default 0 the ring is the plain pale
-   border. */
+   reserves the ring's thickness. A step that can't be measured (no
+   --ring-progress set inline: a wizard's current step, a sync step without a
+   count) takes the default 1, a full ring in the strong tone, which is how the
+   reference app marks the current step; a measured step starts pale at 0. */
 .step[data-state='active'] .circle {
-  --ring-progress: 0;
+  --ring-progress: 1;
 
   color: var(--tone-dark);
   animation: progress-pulse var(--motion-pulse) infinite;
@@ -192,7 +194,7 @@
    inline-start (right) edge, so the flood runs right → left — the same two
    half-arcs, anchored at the right point (top counterclockwise, bottom
    clockwise). */
-:dir(rtl) .step[data-state='active'] .circle {
+[dir='rtl'] .step[data-state='active'] .circle {
   background:
     linear-gradient(var(--bg-white), var(--bg-white)) padding-box,
     conic-gradient(
@@ -214,7 +216,7 @@
    inline-end, i.e. right → left, so the same keyframes run in reverse and
    the band parks past the LEFT end. The band's gradient is symmetric, so
    only the travel flips. */
-:dir(rtl) .step[data-state='active']::before {
+[dir='rtl'] .step[data-state='active']::before {
   background-position-x: -43%;
   animation-direction: reverse;
 }
@@ -321,5 +323,48 @@
 @media (prefers-reduced-motion: reduce) {
   .step[data-state='active'] .circle {
     animation: none;
+  }
+}
+
+/* Compact (<600px, breakpoints.compact): six steps across ~270px gave each
+   column ~45px, and the labels ran into each other ("Pull V6ntegrate"). The
+   stepper turns vertical there — marker at the inline-start, label beside it,
+   count/elapsed after the label — with each connector dropping from the
+   previous marker to this one. */
+@media (max-width: 599px) {
+  .list {
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .step {
+    display: grid;
+    grid-template-columns: 2.25rem minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: var(--space-3);
+    text-align: start;
+  }
+
+  .label {
+    margin-block-start: 0;
+    font-size: var(--text-sm);
+  }
+
+  .count,
+  .elapsed {
+    min-block-size: 0;
+    grid-column: 3;
+  }
+
+  .count:empty,
+  .elapsed:empty {
+    display: none;
+  }
+
+  .step + .step::before {
+    inset-block: calc(-1 * var(--space-2)) auto;
+    inset-inline: calc(1.125rem - 2px) auto;
+    inline-size: 4px;
+    block-size: var(--space-2);
   }
 }

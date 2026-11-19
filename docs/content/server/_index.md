@@ -165,7 +165,7 @@ See [Config section](#configs) for more info on yaml configurations.
 
 ## Dependencies
 
-When using Postgres, Postgres 12 or higher is required.
+When using Postgres, Postgres 13 or higher is required.
 
 ### Windows
 
@@ -317,6 +317,8 @@ Note, to speed-up tests database templates are used (Sqlite + Postrgres), e.g. t
 To disable this you can set the environment variable `MSUPPLY_NO_TEST_DB_TEMPLATE=true`.
 However, in general this should not be needed but might be useful if you suspect a bug in the test template code.
 
+Postgres test databases are kept after a run, so you can look at one after a failure. A full run leaves many GB of them; set `MSUPPLY_DROP_TEST_DBS=true` to drop each test's database when it finishes (CI does this).
+
 ## Building docs
 
 Docs are built via github action, but can build local version with docker: [how to build docs locally](docker/zola_docs/README.md)
@@ -420,8 +422,11 @@ This allows site information (initialised/site) to be presented during discovery
 
 # Logging
 
-By default, the server logs to console with a logging level of `Info`
-You can configure this, to log to a file, for example, with a rollover of log files based on file size.
+By default (`base.yaml`), the server logs to a file in the `log` directory with a logging level of `Info`.
+When the active log file reaches `max_file_size` (in MB) it is gzip compressed and rotated, keeping up to `max_file_count` compressed files (default 50) in addition to the active file.
+If `max_file_size` is not set, it defaults to 100 MB for postgres builds (used for busier servers, e.g. central servers) and 20 MB for sqlite builds, including Android.
+The Windows server installer asks for these values, suggesting the default for the chosen database.
+In docker, set them in a mounted `local.yaml` or with `APP__LOGGING__MAX_FILE_SIZE` / `APP__LOGGING__MAX_FILE_COUNT`.
 See the `example.yaml` file for the available options.
 
 # Directory structure

@@ -106,7 +106,42 @@ impl SessionStore {
 
     /// Remove all sessions for a user (e.g. password change, admin force-logout).
     pub fn revoke_all_for_user(&mut self, user_id: &str) {
-        self.sessions.retain(|_, entry| entry.user_id != user_id);
+        self.revoke_all_for_user_except(user_id, None);
+    }
+
+    /// As `revoke_all_for_user`, but keeps the session `keep`, such as the request's own when a
+    /// user changes their own password.
+    pub fn revoke_all_for_user_except(&mut self, user_id: &str, keep: Option<&str>) {
+        self.sessions
+            .retain(|token, entry| entry.user_id != user_id || Some(token.as_str()) == keep);
+    }
+
+    /// Ends the user's sessions but `keep` after their account changed outside a login, as an
+    /// import changes it, and records `hashed_password`, their hash now, as what a kept session
+    /// was issued against. Otherwise their next login would take the new hash for a password
+    /// change and end the kept session too.
+    pub fn revoke_after_account_change(
+        &mut self,
+        user_id: &str,
+        hashed_password: &str,
+        keep: Option<&str>,
+    ) {
+        self.revoke_all_for_user_except(user_id, keep);
+        self.issued_against.insert(
+            user_id.to_string(),
+            IssuedAgainst::StoredHash(hashed_password.to_string()),
+        );
+    }
+
+    /// Remove every session whose user `keep` rejects. Returns how many were removed.
+    ///
+    /// Maintenance mode (#840) calls this with "is a server admin" as it turns on, so users
+    /// who were signed in go back to the login screen on their next request while whoever
+    /// flipped the switch stays signed in.
+    pub fn revoke_all_except(&mut self, keep: impl Fn(&str) -> bool) -> usize {
+        let before = self.sessions.len();
+        self.sessions.retain(|_, entry| keep(&entry.user_id));
+        before - self.sessions.len()
     }
 
     /// Records the password hash this user's sessions are being issued against, and
@@ -362,6 +397,37 @@ mod tests {
             store.validate_and_slide(&other).is_some(),
             "unrelated user's session preserved"
         );
+    }
+
+    #[test]
+    fn revoking_a_users_sessions_can_keep_one() {
+        let mut store = SessionStore::new();
+        let kept = store.create("u");
+        let other = store.create("u");
+        let someone_else = store.create("v");
+
+        store.revoke_all_for_user_except("u", Some(&kept));
+        assert!(store.validate_and_slide(&kept).is_some());
+        assert!(store.validate_and_slide(&other).is_none());
+        assert!(store.validate_and_slide(&someone_else).is_some());
+
+        // Another user's token keeps none of this user's.
+        store.revoke_all_for_user_except("u", Some(&someone_else));
+        assert!(store.validate_and_slide(&kept).is_none());
+    }
+
+    #[test]
+    fn a_session_kept_through_a_new_password_outlives_the_next_login() {
+        let mut store = SessionStore::new();
+        store.revoke_if_credentials_changed("u", "hash-1");
+        let kept = store.create("u");
+        let other = store.create("u");
+
+        store.revoke_after_account_change("u", "hash-2", Some(&kept));
+        assert!(store.validate_and_slide(&other).is_none());
+        // The next login finds the new hash, which the kept session already belongs to.
+        assert!(!store.revoke_if_credentials_changed("u", "hash-2"));
+        assert!(store.validate_and_slide(&kept).is_some());
     }
 
     #[test]

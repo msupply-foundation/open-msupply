@@ -49,6 +49,7 @@ pub fn unallocated_prescribed_line(
         manufacturer_id: None,
         legacy_goods_received_line_id: None,
         transfer_comment: None,
+        barcode: None,
         vvm_status_id: None,
         reason_option_id: None,
         campaign_id: None,

@@ -7,6 +7,7 @@ import { Breadcrumb } from '../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../ui/layout/Header/HeaderButtons';
 import { Toolbar } from '../ui/layout/Header/Toolbar';
 import { HeaderToolbar } from '../ui/layout/Header/HeaderToolbar';
+import { HeaderField } from '../ui/layout/Header/HeaderField';
 import { StandingBanner } from '../ui/layout/Header/StandingBanner';
 import { FormRowItem } from '../ui/layout/Form/FormRowItem';
 import { Select } from '../ui/elements/selectors/Select';
@@ -60,11 +61,11 @@ const CATEGORIES = [
 
 // Weighted variant: the prescription header's field mix — two person-name
 // pickers, a program and a prominent custom field around a fixed-format date —
-// the mix the weights exist for (#782): the date's text ("30 Jul 2026") asks
-// for ~74px and can never grow, while a 26-character patient name needs ~220px
-// of value room before it stops truncating. The pickers are the real header's
-// control — a Combobox, whose magnifier / clear / chevron chrome eats ~90px of
-// the slot before any name renders.
+// the mix the weights exist for (#782): the date's text ("30/07/2026") asks
+// for under 80px and can never grow, while a 26-character patient name needs
+// ~220px of value room before it stops truncating. The pickers are the real
+// header's control — a Combobox, whose magnifier / clear / chevron chrome eats
+// ~90px of the slot before any name renders.
 const PATIENTS = [
   'MOHAMED, DJIBRIL ABDULLAHI',
   'ADAMS, Cerys',
@@ -102,6 +103,11 @@ export const headerMetadata: PageMetadata = {
       id: 'header-page',
       title: 'Page header',
       searchTerms: ['title', 'actions', 'outbound'],
+    },
+    {
+      id: 'header-field',
+      title: 'Field on the title row',
+      searchTerms: ['field', 'picker', 'main row', 'step', 'who', 'patient'],
     },
     {
       id: 'header-toolbar',
@@ -167,6 +173,10 @@ export const headerMetadata: PageMetadata = {
 };
 
 export const HeaderShowcase = () => {
+  // The title-row field demo's picker.
+  const [fieldPatient, setFieldPatient] = createSignal<string | undefined>(
+    PATIENTS[1]
+  );
   // Interactive fields for the Toolbar field-cluster demo below.
   const [supplier, setSupplier] = createSignal('acme');
   const [reference, setReference] = createSignal('DEL-2231');
@@ -244,6 +254,56 @@ export const HeaderShowcase = () => {
         </DashboardCard>
 
         <DashboardCard
+          id="header-field"
+          title="Field on the title row — one choice before anything else"
+        >
+          <Lead>
+            <code>&lt;HeaderField&gt;</code> puts one labelled control on the
+            header's main row, between the breadcrumb and the page actions, for
+            a screen whose first job is that one choice (the Simple dispensing
+            screen's "Who is it for?"). It takes the room the breadcrumb and the
+            actions leave, the control capped at a short input's width. When the
+            row runs short the actions give way first — they shed their labels,
+            then wrap under the breadcrumb — and the field wraps onto a line of
+            its own only once the breadcrumb and its usable floor don't fit; in
+            the header's narrow tier it takes a row of its own under the title
+            row. <code>detail</code> is a quieter read-out of the chosen value
+            beside the control, wrapping under it when the row can't hold both.
+            Several fields are a <code>&lt;HeaderToolbar&gt;</code>'s job.
+          </Lead>
+          <PageFrame>
+            <Header>
+              <Breadcrumb
+                icon={<UserIcon />}
+                crumbs={[{ label: 'Dispensing' }]}
+              />
+              <HeaderField
+                label={<strong>Who is it for?</strong>}
+                detail={
+                  fieldPatient()
+                    ? 'P-0042 · 15/06/1988 (37 years) · Female'
+                    : undefined
+                }
+              >
+                <Combobox<string>
+                  label="Who is it for?"
+                  hideLabel
+                  width="full"
+                  items={PATIENTS}
+                  itemToString={name => name}
+                  value={fieldPatient()}
+                  onChange={name => setFieldPatient(name ?? undefined)}
+                />
+              </HeaderField>
+              <HeaderButtons>
+                <Button variant="secondary">Dispensing records</Button>
+              </HeaderButtons>
+            </Header>
+            <PageBody />
+          </PageFrame>
+        </DashboardCard>
+
+        <DashboardCard
           id="header-toolbar"
           title="Toolbar fields — the header field cluster"
         >
@@ -269,6 +329,12 @@ export const HeaderShowcase = () => {
               <Breadcrumb
                 icon={<TruckIcon />}
                 crumbs={[{ label: 'Inbound Shipments' }, { label: '27' }]}
+                status={
+                  <StatusChip
+                    label="Received"
+                    colour="var(--status-received)"
+                  />
+                }
               />
               <HeaderButtons>
                 <Button icon={<PlusCircleIcon />}>Add item</Button>
@@ -299,7 +365,6 @@ export const HeaderShowcase = () => {
                 <DateField
                   label="Received"
                   size="small"
-                  format="dd MMM yyyy"
                   value="2026-05-19"
                   disabled
                 />
@@ -397,7 +462,6 @@ export const HeaderShowcase = () => {
                   <DateField
                     label="Date"
                     size="small"
-                    format="dd MMM yyyy"
                     value={prescribed()}
                     onChange={setPrescribed}
                   />
@@ -490,7 +554,6 @@ export const HeaderShowcase = () => {
                 <DateField
                   label="Received"
                   size="small"
-                  format="dd MMM yyyy"
                   value={received()}
                   error={receivedError()}
                   onChange={setReceived}

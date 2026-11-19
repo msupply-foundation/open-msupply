@@ -15,6 +15,12 @@ export const mainConfig: Configuration = {
   module: {
     rules,
   },
+  // node-hid 3 finds its native binary at runtime from its own directory
+  // (pkg-prebuilds), which bundling would move out from under it. Loaded from
+  // node_modules instead: forge.config.ts § shipExternals puts it there.
+  externals: {
+    'node-hid': 'commonjs node-hid',
+  },
   resolve: {
     extensions: ['.js', '.ts', '.jsx', '.tsx', '.css', '.json'],
     plugins: [new TsconfigPathsPlugin()], // creates alias entries for the paths in tsconfig.json

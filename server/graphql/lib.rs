@@ -29,6 +29,7 @@ use graphql_asset::{
 use graphql_asset_catalogue::AssetCatalogueMutations;
 use graphql_asset_catalogue::AssetCatalogueQueries;
 use graphql_batch_mutations::BatchMutations;
+use graphql_central_data::{CentralDataMutations, CentralDataQueries};
 use graphql_clinician::{ClinicianMutations, ClinicianQueries};
 use graphql_cold_chain::{ColdChainMutations, ColdChainQueries};
 use graphql_contact::ContactQueries;
@@ -42,7 +43,7 @@ use graphql_general::campaign::{CampaignMutations, CampaignQueries};
 use graphql_general::custom_field::{CustomFieldConfigQueries, CustomFieldMutations};
 use graphql_general::help_document::{HelpDocumentMutations, HelpDocumentQueries};
 use graphql_general::{
-    CentralGeneralMutations, DiscoveryQueries, GeneralMutations, GeneralQueries,
+    BarcodeMutations, CentralGeneralMutations, DiscoveryQueries, GeneralMutations, GeneralQueries,
     InitialisationMutations, InitialisationQueries, InitialisationSubscriptions, MigrationQueries,
     SyncStatusSubscriptions,
 };
@@ -64,7 +65,7 @@ use graphql_purchase_order_line::{PurchaseOrderLineMutations, PurchaseOrderLineQ
 use graphql_repack::{RepackMutations, RepackQueries};
 use graphql_reports::{CentralReportMutations, ReportQueries};
 use graphql_requisition::{RequisitionMutations, RequisitionQueries};
-use graphql_requisition_line::RequisitionLineMutations;
+use graphql_requisition_line::{RequisitionLineMutations, RequisitionLineQueries};
 use graphql_site::{CentralSiteMutations, CentralSiteQueries};
 use graphql_stock_line::{StockLineMutations, StockLineQueries};
 use graphql_stock_relocation::{StockRelocationMutations, StockRelocationQueries};
@@ -126,6 +127,10 @@ impl CentralServerMutationNode {
         CentralGeneralMutations
     }
 
+    async fn barcode(&self) -> BarcodeMutations {
+        BarcodeMutations
+    }
+
     async fn plugins(&self) -> CentralPluginMutations {
         CentralPluginMutations
     }
@@ -153,6 +158,10 @@ impl CentralServerMutationNode {
     async fn site(&self) -> CentralSiteMutations {
         CentralSiteMutations
     }
+
+    async fn central_data(&self) -> CentralDataMutations {
+        CentralDataMutations
+    }
 }
 
 #[derive(Default, Clone)]
@@ -169,6 +178,10 @@ impl CentralServerQueryNode {
 
     async fn site(&self) -> CentralSiteQueries {
         CentralSiteQueries
+    }
+
+    async fn central_data(&self) -> CentralDataQueries {
+        CentralDataQueries
     }
 
     async fn custom_field(&self) -> CustomFieldConfigQueries {
@@ -212,6 +225,7 @@ pub struct Queries(
     pub StocktakeLineQueries,
     pub GeneralQueries,
     pub RequisitionQueries,
+    pub RequisitionLineQueries,
     pub ReportQueries,
     pub StockLineQueries,
     pub PrescriptionRequestQueries,
@@ -251,6 +265,7 @@ impl Queries {
             StocktakeLineQueries,
             GeneralQueries,
             RequisitionQueries,
+            RequisitionLineQueries,
             ReportQueries,
             StockLineQueries,
             PrescriptionRequestQueries,
@@ -360,6 +375,15 @@ impl BaseSubscriptions {
 
 #[derive(MergedSubscription, Default, Clone)]
 pub struct Subscriptions(pub BaseSubscriptions, pub SyncStatusSubscriptions);
+
+/// The SDL `remote_server_cli export-graphql-schema` writes to the committed
+/// pin, server/schema.graphql. One function for the exporter and the test that
+/// checks the pin, so the two can't disagree about what "the schema" is.
+pub fn operational_schema_sdl() -> String {
+    OperationalSchema::build(Queries::new(), Mutations::new(), Subscriptions::default())
+        .finish()
+        .sdl()
+}
 
 /// Upper bound on GraphQL query complexity — async-graphql's field-count
 /// metric: every selected field costs `1 + child_complexity`, fragment spreads
@@ -1054,6 +1078,47 @@ mod tests {
             worst.0,
             MAX_QUERY_COMPLEXITY,
             worst.1,
+        );
+    }
+
+    // Both front ends and mcp/ generate from the committed server/schema.graphql
+    // rather than a live server, so a server change that skips re-exporting it
+    // leaves every client type-checking against a schema the server no longer
+    // serves. Checked here rather than by a CI job of its own because the
+    // server test run has already built everything the export needs.
+    #[test]
+    fn committed_schema_matches_server() {
+        let pin_path = repo_root().join("server/schema.graphql");
+        let committed = std::fs::read_to_string(&pin_path)
+            .unwrap_or_else(|e| panic!("reading {}: {}", pin_path.display(), e))
+            // A Windows checkout with autocrlf still holds the same schema.
+            .replace("\r\n", "\n");
+        let exported = super::operational_schema_sdl();
+
+        if committed == exported {
+            return;
+        }
+
+        let first_difference = committed
+            .lines()
+            .zip(exported.lines())
+            .position(|(c, e)| c != e)
+            .unwrap_or_else(|| committed.lines().count().min(exported.lines().count()));
+        panic!(
+            "server/schema.graphql is out of date with the server's GraphQL types \
+             (first difference at line {}: committed {:?}, server {:?}).\n\
+             Re-export it with `cargo run --bin remote_server_cli -- export-graphql-schema` \
+             in ./server, then regenerate the clients from it: `pnpm codegen` in ./frontend \
+             and `yarn gql-codegen` in ./client.",
+            first_difference + 1,
+            committed
+                .lines()
+                .nth(first_difference)
+                .unwrap_or("<end of file>"),
+            exported
+                .lines()
+                .nth(first_difference)
+                .unwrap_or("<end of file>"),
         );
     }
 }

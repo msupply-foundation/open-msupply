@@ -107,6 +107,7 @@ export const AppBarButtonsComponent = () => {
         code: data?.id,
         assetNumber: `${data?.assetNumber ?? ''}`,
         datePrinted: `${date}`,
+        storeName: data?.store?.storeName ?? '',
       },
     });
   };

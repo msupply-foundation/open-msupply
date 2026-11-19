@@ -32,6 +32,7 @@ fn item_variant1() -> ItemVariantRow {
             .and_hms_opt(0, 0, 0)
             .unwrap(),
         created_by: None,
+        is_auto_created: false,
     }
 }
 
@@ -63,6 +64,7 @@ fn item_variant2() -> ItemVariantRow {
             .and_hms_opt(0, 0, 0)
             .unwrap(),
         created_by: None,
+        is_auto_created: false,
     }
 }
 

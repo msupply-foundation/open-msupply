@@ -11,19 +11,24 @@ use graphql_core::{
     ContextExt,
     loader::{
         AllowedCustomFieldKeysByScopeLoader, AncillaryItemsByAncillaryIdLoader,
-        AncillaryItemsByItemIdLoader, ItemCategoryLoader, ItemDirectionsByItemIdLoader,
-        ItemStatsLoaderInput, ItemStoreJoinLoader, ItemStoreJoinLoaderInput,
-        ItemVariantsByItemIdLoader, ItemsStatsForItemLoader, ItemsStockOnHandLoader,
-        ItemsStockOnHandLoaderInput, LocationTypeLoader, MasterListByItemIdLoader,
-        MasterListByItemIdLoaderInput, ProgramsByItemIdLoader, ProgramsByItemIdLoaderInput,
-        StockLineByItemAndStoreIdLoader, StockLineByItemAndStoreIdLoaderInput, WarningLoader,
+        AncillaryItemsByItemIdLoader, ItemCategoryLoader, ItemDefaultPriceLoader,
+        ItemDirectionsByItemIdLoader, ItemStatsLoaderInput, ItemStoreJoinLoader,
+        ItemStoreJoinLoaderInput, ItemVariantsByItemIdLoader, ItemsStatsForItemLoader,
+        ItemsStockOnHandLoader, ItemsStockOnHandLoaderInput, LocationTypeLoader,
+        MasterListByItemIdLoader, MasterListByItemIdLoaderInput, ProgramsByItemIdLoader,
+        ProgramsByItemIdLoaderInput, StockLineByItemAndStoreIdLoader,
+        StockLineByItemAndStoreIdLoaderInput, WarningLoader,
     },
     simple_generic_errors::InternalError,
     standard_graphql_error::StandardGraphqlError,
 };
-use repository::{Item, ItemRow, category_row::CategoryRow};
+use repository::{
+    EqualFilter, Item, ItemRow,
+    category_row::CategoryRow,
+    item_variant::item_variant::{ItemVariantFilter, ItemVariantRepository},
+};
 use serde_json::json;
-use service::{ListResult, item_stats::ItemStats};
+use service::{ListResult, item::ancillary_item::supply_wastage_rates_of, item_stats::ItemStats};
 
 #[derive(PartialEq, Debug)]
 pub struct ItemNode {
@@ -218,7 +223,24 @@ impl ItemNode {
         Ok(result)
     }
 
-    pub async fn variants(&self, ctx: &Context<'_>) -> Result<Vec<ItemVariantNode>> {
+    /// The item's variants. Auto-created ones, which central creates only to hold
+    /// a barcode, are left out unless `includeAutoCreated` is true.
+    pub async fn variants(
+        &self,
+        ctx: &Context<'_>,
+        include_auto_created: Option<bool>,
+    ) -> Result<Vec<ItemVariantNode>> {
+        if include_auto_created == Some(true) {
+            let variants = ItemVariantRepository::new(&ctx.get_connection_manager().connection()?)
+                .query_by_filter(
+                    ItemVariantFilter::new()
+                        .item_id(EqualFilter::equal_to(self.row().id.clone()))
+                        .include_auto_created(),
+                )
+                .map_err(StandardGraphqlError::from_repository_error)?;
+            return Ok(ItemVariantNode::from_vec(variants));
+        }
+
         let loader = ctx.get_loader::<DataLoader<ItemVariantsByItemIdLoader>>();
         let result = loader
             .load_one(self.row().id.clone())
@@ -250,6 +272,30 @@ impl ItemNode {
             .unwrap_or_default();
 
         Ok(AncillaryItemNode::from_vec(result))
+    }
+
+    /// This item's own wastage rate (%) as an ancillary supply, added on top of what the
+    /// links ordering it give (e.g. syringes broken or dropped); 0 when none. Stored on
+    /// those links (`ancillaryFor`), so an item no link orders has none.
+    pub async fn supply_wastage_rate(&self, ctx: &Context<'_>) -> Result<f64> {
+        let loader = ctx.get_loader::<DataLoader<AncillaryItemsByAncillaryIdLoader>>();
+        let links = loader
+            .load_one(self.row().id.clone())
+            .await?
+            .unwrap_or_default();
+        Ok(supply_wastage_rates_of(&links)
+            .get(&self.row().id)
+            .copied()
+            .unwrap_or(0.0))
+    }
+
+    /// The item's price per unit on the default price list, null when it is on none.
+    /// The same price `itemPrice` gives as `defaultPricePerUnit`, and what the server
+    /// charges a patient for each unit of a stock-out line. Not store-specific: the
+    /// default price list is the same in every store.
+    pub async fn default_price_per_unit(&self, ctx: &Context<'_>) -> Result<Option<f64>> {
+        let loader = ctx.get_loader::<DataLoader<ItemDefaultPriceLoader>>();
+        Ok(loader.load_one(self.row().id.clone()).await?)
     }
 
     pub async fn item_directions(&self, ctx: &Context<'_>) -> Result<Vec<ItemDirectionNode>> {
@@ -307,7 +353,7 @@ impl ItemNode {
     }
 
     pub async fn volume_per_pack(&self) -> f64 {
-        self.legacy_f64("volume_per_pack")
+        self.row().volume_per_pack
     }
 
     pub async fn margin(&self) -> f64 {
@@ -613,6 +659,7 @@ mod test {
                             }"#
                             .to_string(),
                             universal_code: Some("universal code".to_string()),
+                            volume_per_pack: 0.5,
                             ..Default::default()
                         },
                         ..Default::default()

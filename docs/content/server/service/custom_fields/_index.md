@@ -151,6 +151,16 @@ OG's `transaction_category` table is one pool of categories partitioned by a 3-c
 
 > **First OG push-back.** Unlike every custom field above, the categories **are pushed to OG** (`category_ID`/`category2_ID` on the v5 invoice push): invoices are *store* data OMS actively authors, so the "values are never pushed on to OG" rule is relaxed — OG reports keep seeing categories on OMS-created invoices. Only the category fields round-trip.
 
+### Purchase order fields
+
+`[purchase_order]category_ID` becomes the OPTION mapping custom field `purchase_order_category`, and `user_field_1/2` the TEXT fields `purchase_order_user_field_1/2` (prefixed because item already owns `user_field_N`), all on the `purchase_order` scope.
+
+- **Options**: `[purchase_order_category]` is its own table (`ID`, `Description`), not a `transaction_category` type. `PurchaseOrderCategoryTranslation` (central-only) authors one option per record, id = category id.
+- **Value**: the purchase order translator maps them ⇄ `purchase_order.custom_fields`; central merges on pull (`merge_legacy_custom_fields`), so OMS-authored keys survive a re-pull. Rides the `PurchaseOrder` changelog over v7. The `backfill_purchase_order_custom_fields` migration fills existing orders from `sync_buffer` and replays the category and label records.
+- **Editable** through `updatePurchaseOrder`'s `customFields` patch, in every order state (like the comment). UI: a "Custom fields" tab on the purchase order detail view.
+- **Pushed to OG**, like the transaction categories: purchase orders are store data OMS authors.
+- **Labels**: the user fields' labels are the `pref_blob` items `purchase_cust1_field` / `purchase_cust2_field`, each a single 4D text (`type = "t"`), applied by `legacy_field_labels` once they differ from OG's placeholders `cust_purchase_field` / `cust_purchase_field2`.
+
 ### Prescription request fields
 
 The first `Builtin` set (see above) — four fields on the `prescription_request` scope, present on every deployment with no configuration:

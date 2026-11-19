@@ -10,6 +10,7 @@ export type UpsertAncillaryItemVariables = {
     ancillaryItemId: string;
     itemQuantity: number;
     ancillaryQuantity: number;
+    excludePrincipalWastage?: boolean | null;
   };
 };
 
@@ -22,6 +23,7 @@ export type UpsertAncillaryItemResult = {
   id: string;
   itemQuantity: number;
   ancillaryQuantity: number;
+  excludePrincipalWastage: boolean;
   ancillaryItem: {
   id: string;
   code: string;
@@ -60,7 +62,7 @@ export type UpsertAncillaryItemResult = {
 };
 
 export const UpsertAncillaryItem = {
-  query: "mutation upsertAncillaryItem($storeId: String!, $input: UpsertAncillaryItemInput!) {\n  centralServer {\n    ancillaryItem {\n      upsertAncillaryItem(storeId: $storeId, input: $input) {\n        __typename\n        ... on AncillaryItemNode {\n          id\n          itemQuantity\n          ancillaryQuantity\n          ancillaryItem {\n            id\n            code\n            name\n          }\n        }\n        ... on UpsertAncillaryItemError {\n          error {\n            __typename\n            description\n            ... on DuplicateAncillaryItem {\n              __typename\n            }\n            ... on AncillaryCycleDetected {\n              __typename\n            }\n            ... on AncillaryMaxDepthExceeded {\n              max\n              actual\n            }\n            ... on DatabaseError {\n              __typename\n            }\n            ... on InternalError {\n              __typename\n            }\n          }\n        }\n      }\n    }\n  }\n}",
+  query: "mutation upsertAncillaryItem($storeId: String!, $input: UpsertAncillaryItemInput!) {\n  centralServer {\n    ancillaryItem {\n      upsertAncillaryItem(storeId: $storeId, input: $input) {\n        __typename\n        ... on AncillaryItemNode {\n          id\n          itemQuantity\n          ancillaryQuantity\n          excludePrincipalWastage\n          ancillaryItem {\n            id\n            code\n            name\n          }\n        }\n        ... on UpsertAncillaryItemError {\n          error {\n            __typename\n            description\n            ... on DuplicateAncillaryItem {\n              __typename\n            }\n            ... on AncillaryCycleDetected {\n              __typename\n            }\n            ... on AncillaryMaxDepthExceeded {\n              max\n              actual\n            }\n            ... on DatabaseError {\n              __typename\n            }\n            ... on InternalError {\n              __typename\n            }\n          }\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<UpsertAncillaryItemResult, UpsertAncillaryItemVariables>;
 
 export type DeleteAncillaryItemVariables = {
@@ -85,3 +87,25 @@ export type DeleteAncillaryItemResult = {
 export const DeleteAncillaryItem = {
   query: "mutation deleteAncillaryItem($storeId: String!, $input: DeleteAncillaryItemInput!) {\n  centralServer {\n    ancillaryItem {\n      deleteAncillaryItem(storeId: $storeId, input: $input) {\n        __typename\n        ... on DeleteResponse {\n          id\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<DeleteAncillaryItemResult, DeleteAncillaryItemVariables>;
+
+export type SetSupplyWastageRateVariables = {
+  storeId: string;
+  input: {
+    itemId: string;
+    wastageRate: number;
+  };
+};
+
+export type SetSupplyWastageRateResult = {
+  centralServer: {
+  ancillaryItem: {
+  setSupplyWastageRate: {
+  __typename: "SetSupplyWastageRateError" | "SupplyWastageRateNode";
+};
+};
+};
+};
+
+export const SetSupplyWastageRate = {
+  query: "mutation setSupplyWastageRate($storeId: String!, $input: SetSupplyWastageRateInput!) {\n  centralServer {\n    ancillaryItem {\n      setSupplyWastageRate(storeId: $storeId, input: $input) {\n        __typename\n      }\n    }\n  }\n}",
+} as TypedDocument<SetSupplyWastageRateResult, SetSupplyWastageRateVariables>;

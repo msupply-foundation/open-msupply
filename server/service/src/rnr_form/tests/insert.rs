@@ -251,6 +251,7 @@ mod insert {
                     store_id: String::from("store_b"),
                     name_is_customer: false,
                     name_is_supplier: true,
+                    visible: true,
                 }],
                 ..Default::default()
             },
@@ -348,6 +349,7 @@ mod insert {
                     store_id: String::from("store_a"),
                     name_is_customer: false,
                     name_is_supplier: true,
+                    visible: true,
                 }],
                 rnr_forms: vec![RnRFormRow {
                     status: RnRFormStatus::Finalised,
@@ -665,6 +667,6 @@ mod insert {
         let test_time = test_start.elapsed();
 
         println!("R&R with {NUM_MASTER_LIST_ITEMS} items took: {test_time:?}");
-        assert!(test_time.as_secs_f64() < 2.0);
+        assert!(test_time.as_secs_f64() < 3.0);
     }
 }

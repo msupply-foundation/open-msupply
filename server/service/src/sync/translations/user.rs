@@ -73,12 +73,14 @@ impl SyncTranslation for UserTranslation {
 
         let user_account = UserAccountRowRepository::new(connection).find_one_by_id(&id)?;
 
-        let (hashed_password, last_successful_sync) = match user_account {
+        // mSupply has no `deleted_datetime`, so a user deleted here stays deleted.
+        let (hashed_password, last_successful_sync, deleted_datetime) = match user_account {
             Some(user_account) => (
                 user_account.hashed_password,
                 user_account.last_successful_sync,
+                user_account.deleted_datetime,
             ),
-            None => ("".to_string(), None),
+            None => ("".to_string(), None, None),
         };
 
         let hashed_password = password_hash.map_or(hashed_password, |p| p);
@@ -95,6 +97,7 @@ impl SyncTranslation for UserTranslation {
             hashed_password,
             last_successful_sync,
             is_active,
+            deleted_datetime,
         };
         Ok(PullTranslateResult::upsert(result))
     }
@@ -117,7 +120,8 @@ fn user_language(language: i32) -> LanguageType {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use crate::sync::translations::IntegrationOperation;
+    use repository::{ChangelogSyncType, mock::MockDataInserts, test_db::setup_all};
 
     #[actix_rt::test]
     async fn test_user_translation() {
@@ -139,5 +143,58 @@ mod tests {
 
             assert_eq!(translation_result, record.translated_record);
         }
+    }
+
+    // covers: OMS-REG-CDIO-01.98
+
+    #[actix_rt::test]
+    async fn a_deleted_user_stays_deleted() {
+        use crate::sync::test::test_data::user as test_data;
+        let (_, connection, _, _) =
+            setup_all("user_translation_keeps_deleted", MockDataInserts::none()).await;
+        let record = test_data::test_pull_upsert_records()
+            .remove(0)
+            .sync_buffer_row;
+        let pull = || {
+            let PullTranslateResult::IntegrationOperations(operations) = UserTranslation
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record,
+                )
+                .unwrap()
+            else {
+                panic!("expected an upsert");
+            };
+            for operation in operations {
+                let IntegrationOperation::Upsert(upsert) = operation else {
+                    panic!("expected an upsert");
+                };
+                upsert
+                    .upsert_sync(
+                        &connection,
+                        ChangelogSyncType::SyncTypeV5V6 {
+                            source_site_id: None,
+                        },
+                    )
+                    .unwrap();
+            }
+        };
+        pull();
+
+        let repo = UserAccountRowRepository::new(&connection);
+        let deleted = UserAccountRow {
+            deleted_datetime: chrono::NaiveDate::from_ymd_opt(2026, 1, 2)
+                .unwrap()
+                .and_hms_opt(3, 4, 5),
+            ..repo.find_one_by_id(&record.record_id).unwrap().unwrap()
+        };
+        repo.upsert_one(&deleted).unwrap();
+
+        pull();
+        assert_eq!(
+            repo.find_one_by_id(&record.record_id).unwrap(),
+            Some(deleted)
+        );
     }
 }

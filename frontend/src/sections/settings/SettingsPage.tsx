@@ -21,7 +21,11 @@ import {
 } from '../../ui/icons';
 import { hasPermission } from '../../store/storeContext';
 import { isCentralServer } from '../../api/serverInfo';
-import { visibleSections, type SettingsAccess } from './sectionVisibility';
+import {
+  showCentralSyncControls,
+  visibleSections,
+  type SettingsAccess,
+} from './sectionVisibility';
 import { DisplaySettingsSection } from './display/DisplaySettingsSection';
 import styles from './Settings.module.css';
 import { SyncSection } from './sync/SyncSection';
@@ -35,7 +39,8 @@ import { ConfigurationSection } from './configuration/ConfigurationSection';
  * five collapsible sections in fixed order (Display settings →
  * Synchronisation → Support → Devices → Configuration), SINGLE-open: opening
  * one closes whichever was open. Hidden sections are omitted, not shown
- * disabled (OMS-REG-SET-01.14, -02.11, -03.14, -05.20, -05.23, -05.24) —
+ * disabled (OMS-REG-SET-01.14, -02.11, -03.14, -05.20, -05.24; Devices'
+ * barcode scanner is for everyone, -05.56) —
  * visibility is a UX convenience; every write is independently checked
  * server-side (spec/settings/rules.md § Access).
  *
@@ -89,7 +94,9 @@ const SettingsPage: Component = () => {
                 </span>
               </AccordionTrigger>
               <AccordionContent>
-                <SyncSection />
+                <SyncSection
+                  showCentralControls={showCentralSyncControls(access())}
+                />
               </AccordionContent>
             </AccordionItem>
           </Show>

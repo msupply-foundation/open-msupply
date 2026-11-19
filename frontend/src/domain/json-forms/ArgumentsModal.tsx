@@ -47,13 +47,14 @@ import {
 } from '../reasonOptions/reasonOptionsResource';
 import { ScheduleFormFields } from './ScheduleFormFields';
 import { storeContext, currentStoreId } from '../../store/storeContext';
-import { localTodayIso } from '../../ui/elements/inputs/dateTimeConvert';
+import { todayCalendarDate } from '../../intl/calendarDate';
 import {
   cleanArguments,
   dateArgumentDay,
   dateArgumentValue,
   dateFieldBounds,
   dateFieldViolation,
+  dateRangeViolation,
   dayStartInstant,
   parseArgumentSchema,
   periodSearchWrites,
@@ -369,6 +370,20 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
     attempted() && field.required && isEmpty(field.key)
       ? t('error.field-required')
       : undefined;
+  // Like the required nag, shown only after a refused OK.
+  const dateRangeError = (
+    field: Extract<ParsedField, { kind: 'dateRange' }>
+  ): string | undefined => {
+    if (!attempted()) return undefined;
+    switch (dateRangeViolation(field, values[field.key])) {
+      case 'required':
+        return t('error.field-required');
+      case 'bothDates':
+        return t('error.date-range-both-required');
+      default:
+        return undefined;
+    }
+  };
 
   // A date field's bound violation (OMS-REG-RPT-10.40), as its inline message.
   // Unlike the required nag this shows immediately — it marks an actively wrong
@@ -376,7 +391,7 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
   const dateError = (
     field: Extract<ParsedField, { kind: 'date' }>
   ): string | undefined => {
-    switch (dateFieldViolation(field, values, localTodayIso())) {
+    switch (dateFieldViolation(field, values, todayCalendarDate())) {
       case 'future':
         return t('error.date_disableFuture');
       case 'min':
@@ -397,18 +412,20 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
     // schema's required list gates them too (OMS-REG-RPT-10.35 /
     // OMS-REG-RPT-10.13) — without this, an empty submit reaches the report's
     // SQL as missing parameters.
-    const missing = fields().some(field =>
-      isRequirable(field)
-        ? field.required && isEmpty(field.key)
-        : field.kind === 'scheduleForm' &&
-          field.requiredKeys.some(key => isEmpty(key))
-    );
+    const missing = fields().some(field => {
+      if (isRequirable(field)) return field.required && isEmpty(field.key);
+      if (field.kind === 'scheduleForm')
+        return field.requiredKeys.some(key => isEmpty(key));
+      if (field.kind === 'dateRange')
+        return dateRangeViolation(field, values[field.key]) !== undefined;
+      return false;
+    });
     // A date outside its bounds also blocks (OMS-REG-RPT-10.40) — only typed
     // entry can produce one, and its message is already showing at the field.
     const outOfBounds = fields().some(
       field =>
         field.kind === 'date' &&
-        dateFieldViolation(field, values, localTodayIso()) !== undefined
+        dateFieldViolation(field, values, todayCalendarDate()) !== undefined
     );
     if (missing || outOfBounds) {
       setAttempted(true);
@@ -489,7 +506,8 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
               </Match>
               <Match
                 when={
-                  field.kind === 'date' && (!field.dateTime || field.dateOnly)
+                  field.kind === 'date' &&
+                  (!field.dateTime || field.dateOnly || field.monthOnly)
                     ? field
                     : undefined
                 }
@@ -497,19 +515,24 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
               >
                 {/* Calendar-day entry: plain `format: 'date'` fields, and
                     date-time fields whose element asks for date-only entry
-                    (OMS-REG-RPT-10.40) — those still store an instant (the picked day
-                    widened, dateArgumentValue), so a bare date never reaches
-                    the data query's DateTime variables. Bounds resolve live
-                    from the sibling values (min/max scope refs + no-future). */}
+                    (OMS-REG-RPT-10.40) or month-only entry (OMS-REG-RPT-10.44) —
+                    those still store an instant (the picked day widened,
+                    dateArgumentValue; a month is its 1st), so a bare date never
+                    reaches the data query's DateTime variables. Bounds resolve
+                    live from the sibling values (min/max scope refs +
+                    no-future). */}
                 {dateField => (
                   <DateField
                     label={dateField.label}
+                    monthOnly={dateField.monthOnly}
                     value={dateArgumentDay(values[dateField.key])}
                     min={
-                      dateFieldBounds(dateField, values, localTodayIso()).min
+                      dateFieldBounds(dateField, values, todayCalendarDate())
+                        .min
                     }
                     max={
-                      dateFieldBounds(dateField, values, localTodayIso()).max
+                      dateFieldBounds(dateField, values, todayCalendarDate())
+                        .max
                     }
                     disabled={dateField.readOnly}
                     required={dateField.required}
@@ -525,7 +548,10 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
               </Match>
               <Match
                 when={
-                  field.kind === 'date' && field.dateTime && !field.dateOnly
+                  field.kind === 'date' &&
+                  field.dateTime &&
+                  !field.dateOnly &&
+                  !field.monthOnly
                     ? field
                     : undefined
                 }
@@ -568,10 +594,8 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                     options={enumField.options}
                     value={selectValue(enumField.key)}
                     disabled={enumField.readOnly}
-                    // Select has no error slot; the required miss still gates
-                    // OK (OMS-REG-RPT-10.13) and this text says why. No
-                    // shipped schema marks an enum required today.
-                    helperText={requiredError(enumField)}
+                    // No shipped schema marks an enum required today.
+                    error={requiredError(enumField)}
                     // A picked choice must be emptiable again unless required
                     // (OMS-REG-RPT-10.42); the cleared key is omitted on
                     // submit (OMS-REG-RPT-10.15). A read-only field
@@ -596,7 +620,10 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                   onChange={value => setValues(field.key, value)}
                 />
               </Match>
-              <Match when={field.kind === 'dateRange'}>
+              <Match
+                when={field.kind === 'dateRange' ? field : undefined}
+                keyed
+              >
                 {/*
                  * DateRange arg shape (confirmed live against Pending
                  * Encounters): the uiSchema scope gives ONE property key, whose
@@ -604,20 +631,29 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                  * { <key>: { start, end } } (calendar dates) and store undefined
                  * when both ends are empty; cleanArguments() widens it to the
                  * wire `DatetimeFilterInput` — { afterOrEqualTo, beforeOrEqualTo }
-                 * — on submit (see schema.ts `toDatetimeFilter`).
+                 * — on submit (see schema.ts `toDatetimeFilter`). Entry is
+                 * pick-only, so `max` alone enforces no-future.
                  */}
-                <DateRangeField
-                  label={field.label}
-                  value={rangeValue(field.key)}
-                  onChange={range => {
-                    const start = range.start ?? '';
-                    const end = range.end ?? '';
-                    setValues(
-                      field.key,
-                      start || end ? { start, end } : undefined
-                    );
-                  }}
-                />
+                {rangeField => (
+                  <DateRangeField
+                    // Schemas often leave this blank; it's the accessible name
+                    label={rangeField.label || t('label.date-range')}
+                    value={rangeValue(rangeField.key)}
+                    max={
+                      rangeField.disableFuture ? todayCalendarDate() : undefined
+                    }
+                    required={rangeField.required}
+                    error={dateRangeError(rangeField)}
+                    onChange={range => {
+                      const start = range.start ?? '';
+                      const end = range.end ?? '';
+                      setValues(
+                        rangeField.key,
+                        start || end ? { start, end } : undefined
+                      );
+                    }}
+                  />
+                )}
               </Match>
               <Match when={field.kind === 'program' ? field : undefined} keyed>
                 {programField => (

@@ -12,6 +12,7 @@ How to build a page in `src/pages/`. Copy the closest recipe and go: [`pages/Hom
 - The page's **`<h1>` is the breadcrumb leaf** — never render another `h1`.
 - A page **does not pass the breadcrumb's section icon**: inside the shell, `Breadcrumb` shows the current route's nav-group glyph on its own (`ShellLayout` → `shellContext`'s `ShellSection` bridge). A record-**kind** glyph the screen's `ui-surface.md` calls for is a property of the **crumb** (`crumbs: [{ label, icon }]`, rendered before that crumb's label), not of the trail — the leading slot stays the section's. The page tones the crumb icon itself; `Breadcrumb`'s own `icon` prop is a last-resort override of the section glyph and no screen currently uses it.
 - A **detail page's header fields** (supplier, references, dates, status, settings toggles) go in a **`<HeaderToolbar>`**, never a hand-rolled `<Toolbar>` — it enforces the field-row layout so every detail header reads the same (see [Header field cluster](#header-field-cluster)).
+- A screen whose first job is **one choice** (the Simple dispensing screen's who-is-it-for) puts that control on the title row in a **`<HeaderField>`**, between `<Breadcrumb>` and `<HeaderButtons>` — not a `<Toolbar>` row of its own. It wraps under the title row by itself where there's no room.
 - Run **`npm run check`** when done.
 
 ## Anatomy
@@ -232,7 +233,7 @@ A detail page's **header fields** — a document's editable + read-only meta (su
       value room. Floors: 11 + 10 + 9 + 10 + 9.5 + 9.5 = 59rem, under the
       6 × 10rem the unweighted row already took, so the wrap point holds. */}
   <FormRowItem weight={1.9} minWidth="11rem">
-    <PatientSearch label="Patient" size="small" … />
+    <PatientField label="Patient" size="small" … />
   </FormRowItem>
   {/* No minWidth: Clinician and Program keep the row's own 10rem floor. */}
   <FormRowItem weight={1.55}>

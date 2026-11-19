@@ -21,6 +21,10 @@ From [TMF internal docs](https://app.diagrams.net/#G1o_xRQAhjVsnqhxhJEu9dY6AZ_lJ
 
 Note that only Open mSupply -> Open mSupply transfers have a `linked_invoice_id` on the Outbound invoice. When transferring to/from an mSupply Desktop site, the Inbound invoice will have a `linked_invoice_id` (referring to the Outbound half), but the Outbound won't be linked back with its Inbound invoice.
 
+## mSupply Desktop cancellations
+
+mSupply Desktop cancels a finalised invoice by saving a copy of it with `is_cancellation` set and every quantity negated (v5 sync translation makes them positive again). The copy keeps the invoice's name, its `linked_invoice_id` and its lines' `linked_invoice_line_id`. mSupply never treats a cancellation as half of a transfer, and neither do we: the processors skip an invoice that is a cancellation, or is linked to one, and the linked invoice lookups ignore cancellations. Otherwise a cancelled customer invoice would become a second inbound shipment, and a cancelled supplier invoice would be taken as the receipt of its outbound shipment.
+
 ## Request Requisition linked to Inbound Shipment
 
 When an inbound shipment is created from outbound shipment, we check for a requisition linked to the outbound shipment (response requisition) and check which request requisition is linked to that response requisition and link the inbound shipment with correct request requisition

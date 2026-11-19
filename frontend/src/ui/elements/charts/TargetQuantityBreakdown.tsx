@@ -1,6 +1,6 @@
 import { createMemo, createSignal, For, onCleanup, Show } from 'solid-js';
 import { t } from '../../../intl';
-import { formatNumber } from '../../../intl/formatNumber';
+import { roundedText } from '../../../intl/numberDisplay';
 import { remToPx } from '../../utils/rem';
 import styles from './TargetQuantityBreakdown.module.css';
 
@@ -18,8 +18,9 @@ const TEXT_KEEP_REM = 1.25;
 // number / label to show inside or beneath it.
 const MIN_BAR_WIDTH_FOR_VALUE = 5;
 const MIN_BAR_WIDTH_FOR_LABEL = 10;
-// Displayed values to 2 decimal places (the layout maths below keep round()).
-const fmt = (n: number) => formatNumber(n, { maximumFractionDigits: 2 });
+// Displayed values at the configured decimal places (the layout maths below
+// keep round()).
+const fmt = (n: number) => roundedText(n);
 
 /** Whether the month axis has room for text: the month counts, the "0" and the
  *  threshold / target markers. The original gates on the axis alone (wider
@@ -108,6 +109,12 @@ export const TargetQuantityBreakdown = (props: {
   thresholdMonths: number;
   /** Target months (max). */
   targetMonths: number;
+  /**
+   * The cannot-calculate reason when the monthly figure is zero. Defaults to
+   * the AMC wording; a caller charting another monthly demand (a forecast
+   * method's) passes its own.
+   */
+  zeroMonthlyMessage?: string;
 }) => {
   const amc = () => props.averageMonthlyConsumption;
   const soh = () => props.availableStockOnHand;
@@ -176,7 +183,7 @@ export const TargetQuantityBreakdown = (props: {
         <p class={styles.calcError} role="status">
           {t('error.unable-to-calculate')}:{' '}
           {amc() <= 0
-            ? t('error.amc-is-zero')
+            ? (props.zeroMonthlyMessage ?? t('error.amc-is-zero'))
             : t('error.soh-and-suggested-quantity-are-zero')}
         </p>
       }

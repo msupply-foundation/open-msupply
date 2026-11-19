@@ -1,4 +1,4 @@
-import { createMemo, createResource, type Component } from 'solid-js';
+import { createResource, type Component } from 'solid-js';
 import { FormRowItem } from '@/ui/layout/Form/FormRowItem';
 import { t } from '../../../intl';
 import { localisedDate } from '../../../intl/formatDateTime';
@@ -6,11 +6,7 @@ import { graphqlFetch } from '../../../api/graphql';
 import { gated } from '../../../api/gated';
 import { DateField } from '../../../ui/elements/inputs/DateField';
 import { Combobox } from '../../../ui/elements/selectors/Combobox';
-import {
-  PatientSearch,
-  minimalPatientOption,
-  type PatientOption,
-} from '../../../domain/patient';
+import { PatientField } from '../../patients';
 import { ClinicianSelect } from '../../../domain/clinician';
 import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
 import { Text } from '../../../ui/elements/typography/Text';
@@ -18,10 +14,8 @@ import {
   CustomFieldsToolbar,
   EMPTY_FIELD_VALUE,
 } from '../../../domain/customFields';
-import {
-  localTodayIso,
-  utcToLocalParts,
-} from '../../../ui/elements/inputs/dateTimeConvert';
+import { instantToLocalParts } from '../../../ui/elements/inputs/dateTimeConvert';
+import { todayCalendarDate } from '../../../intl/calendarDate';
 import {
   prescriptionRequestDateInstant,
   type UpdateInput,
@@ -64,16 +58,8 @@ export interface PrescriptionRequestToolbarProps {
 export const PrescriptionRequestToolbar: Component<
   PrescriptionRequestToolbarProps
 > = props => {
-  // A MEMO, not a getter: it MINTS an option object, so a getter would hand a
-  // new identity to the picker on every read (kdd/solid-reactivity-pitfalls
-  // §14).
-  const patientOption = createMemo((): PatientOption | undefined => {
-    const patient = props.node.patient;
-    return patient ? minimalPatientOption(patient.id, patient.name) : undefined;
-  });
-
   const shownDay = () =>
-    utcToLocalParts(props.node.prescriptionDatetime)?.date ?? null;
+    instantToLocalParts(props.node.prescriptionDatetime)?.date ?? null;
 
   // The active diagnoses the picker offers (the same consumed read
   // dispensing's side panel uses). Read non-suspending: this toolbar lives
@@ -86,19 +72,16 @@ export const PrescriptionRequestToolbar: Component<
   return (
     <>
       <FormRowItem weight={1.9} minWidth="11rem">
-        <PatientSearch
-          label={t('label.patient')}
-          size="small"
+        {/* A request always HAS a patient: never cleared, only swapped
+            (ui-standards/controls § clearability follows optionality). */}
+        <PatientField
           storeId={props.storeId}
-          selected={patientOption()}
+          size="small"
+          testId="prescription-request-patient"
+          patient={props.node.patient ?? undefined}
           disabled={props.disabled}
-          // A request always HAS a patient: never cleared, only swapped
-          // (ui-standards/controls § clearability follows optionality).
-          clearable={false}
           onEditPatient={props.onEditPatient}
-          onSelect={patient =>
-            patient && props.onSave({ patientId: patient.id })
-          }
+          onChange={patient => props.onSave({ patientId: patient.id })}
         />
       </FormRowItem>
       {/* Date of birth — the patient's, read live from the patient record
@@ -146,7 +129,7 @@ export const PrescriptionRequestToolbar: Component<
           size="small"
           testId="date-field"
           value={shownDay()}
-          max={localTodayIso()}
+          max={todayCalendarDate()}
           disabled={props.disabled}
           onChange={day => {
             if (!day || day === shownDay()) return;

@@ -1,0 +1,13 @@
+{
+  "name": "demo_program",
+  "version": "3.04.00",
+  "private": true,
+  "type": "module",
+  "omSupplyPlugin": {
+    "target": "frontend",
+    "types": []
+  },
+  "scripts": {
+    "build-plugin": "vite build"
+  }
+}

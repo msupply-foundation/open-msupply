@@ -24,10 +24,17 @@ pub struct InsertInput {
     pub colour: Option<String>,
     pub their_reference: Option<String>,
     pub comment: Option<String>,
-    pub max_months_of_stock: f64,
+    /// Defaults to the store's supply interval + safety buffer, or 1 month on a store whose
+    /// facility record carries no supply interval. Ignored, the store's supply interval +
+    /// safety buffer taken instead, where the store's `canChangeTargetMonthsOfStock`
+    /// preference is off and it has a supply interval
+    pub max_months_of_stock: Option<f64>,
     pub min_months_of_stock: f64,
     /// Defaults to 2 weeks from now
     pub expected_delivery_date: Option<NaiveDate>,
+    /// Starts the order with a line for every item on this master list, each requesting its
+    /// suggested quantity. Created in one step: if the lines can't be added, no order is created
+    pub master_list_id: Option<String>,
 }
 
 #[derive(Interface)]
@@ -93,6 +100,7 @@ impl InsertInput {
             max_months_of_stock,
             min_months_of_stock,
             expected_delivery_date,
+            master_list_id,
         } = self;
 
         ServiceInput {
@@ -105,6 +113,7 @@ impl InsertInput {
             min_months_of_stock,
             expected_delivery_date: expected_delivery_date
                 .or(Some(date_now_with_offset(expected_delivery_date_offset()))),
+            master_list_id,
         }
     }
 }
@@ -130,7 +139,10 @@ pub fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
 
         ServiceError::OtherPartyIsNotAStore => BadUserInput(formatted_error),
+        ServiceError::MasterListNotFoundForThisStore => BadUserInput(formatted_error),
         ServiceError::NewlyCreatedRequisitionDoesNotExist => InternalError(formatted_error),
+        ServiceError::AddFromMasterList(_) => InternalError(formatted_error),
+        ServiceError::UseSuggestedQuantity(_) => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 
@@ -321,9 +333,10 @@ mod test {
                     colour: Some("colour input".to_string()),
                     their_reference: Some("reference input".to_string()),
                     comment: Some("comment input".to_string()),
-                    max_months_of_stock: 1.0,
+                    max_months_of_stock: Some(1.0),
                     min_months_of_stock: 2.0,
-                    expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 1, 3).unwrap())
+                    expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 1, 3).unwrap()),
+                    master_list_id: Some("master list input".to_string()),
                 }
             );
             Ok(Requisition {
@@ -341,7 +354,8 @@ mod test {
             "colour": "colour input",
             "theirReference": "reference input",
             "comment": "comment input",
-            "expectedDeliveryDate": "2022-01-03"
+            "expectedDeliveryDate": "2022-01-03",
+            "masterListId": "master list input"
           },
           "storeId": "store_a"
         });

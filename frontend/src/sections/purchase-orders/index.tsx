@@ -3,9 +3,9 @@ import { Route } from '@solidjs/router';
 
 // The purchase-orders section route tree, mounted under
 // /{storeId}/replenishment/purchase-order by App.tsx — a destination the
-// navigation registry gates on the store's procurement functionality
-// (spec/purchase-orders rules § availability), so the route itself redirects
-// when the store has the preference off.
+// navigation registry gates on the purchase-order read permission
+// (spec/purchase-orders rules § availability), so the route itself shows the
+// no-permission notice to a user without it.
 //
 // The LIST screen (spec S1, with its create S2 and delete S3), the
 // outstanding-lines list (S5) and an order's own screen (S6, with S7-S9 and

@@ -43,7 +43,18 @@ pub(crate) fn create_dispensation(
             // across unresolved: `insert_prescription` writes what it is
             // given straight to `invoice.clinician_link_id`.
             clinician_id: request.clinician_link_id.clone(),
-            prescription_date: Some(request.prescription_datetime),
+            // Deliberately NOT the request's prescription date. On a
+            // dispensing invoice `prescription_date` is the backdating field
+            // (`insert_prescription` writes it to `backdated_datetime`), and a
+            // backdate drives every later stamp — picked, verified, the stock
+            // ledger entry, and the request's own `dispensed_datetime`, which
+            // the status processor copies from `verified_datetime` — plus the
+            // historical-stock check on every line save. The request's
+            // prescription date is when it was PRESCRIBED; the dispensation's
+            // date is when stock MOVES, and nobody has asked to backdate that.
+            // The prescribing date stays on the request, reachable through
+            // `prescription_request_id` (issue #931).
+            prescription_date: None,
             // Links the dispensation back to its source request
             prescription_request_id: Some(request.id.clone()),
         },

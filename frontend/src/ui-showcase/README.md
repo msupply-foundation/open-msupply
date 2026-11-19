@@ -15,6 +15,15 @@ A "storybook"-type area demonstrating every component in the UI library (`src/ui
 
 No backend is needed: the only network call on the showcase path is the custom-translations fetch, which fails silently on a static host so the bundled catalogs stand on their own. Hash routing means no rewrite rules, and deep links (`…/#/showcase/buttons`) work as-is; `VITE_BASE_PATH` is honoured for non-root mounting, same as the app build.
 
+### Where it is published
+
+Two places build it, both from this one command:
+
+- **<https://dev-docs.msupply.foundation/showcase/>** — the developer docs site, built by `.github/workflows/deploy-developer-docs.yml` with `VITE_BASE_PATH=/showcase/` and copied into the Zola output before the Pages artifact is uploaded. It tracks `develop`, and refreshes whenever the docs site deploys. This is the link to give someone who just wants to look at the components.
+- **Under the app on a deployed site**, at that deployment's `/showcase/`, mounted next to the app rather than standing alone.
+
+Because the base path is baked in at build time, a bundle built for one mount point cannot be copied to another — rebuild it with the right `VITE_BASE_PATH`.
+
 ## Isolation
 
 Nothing in the library (`src/ui/`) or the app may import from this folder — the dependency arrow only points the other way. The only entries are the standalone build's `src/showcase.tsx` (above) and the guarded branch in [`src/index.tsx`](../index.tsx):
@@ -30,6 +39,8 @@ if (import.meta.env.DEV && window.location.hash.startsWith('#/showcase')) {
 ## Adding a section
 
 Add an entry to the registry in [`sections.tsx`](./sections.tsx) (id, label, component, menu category) and create the matching `<Name>Showcase.tsx` (+ optional `.module.css`) beside it. The shell derives the menu and panels from the registry; the section id becomes its hash.
+
+Every section is scanned for WCAG 2.2 AA violations on every front end PR (`pnpm a11y:showcase`), so a new section also needs a baseline file, `frontend/e2e/a11y-baseline/showcase/<id>.json`: the scan fails while a section and its baseline don't pair up. Record it with `A11Y_UPDATE_BASELINE=1 pnpm a11y:showcase` and check what it wrote against a similar section's file. Anything beyond the debt they share is new, and is for fixing rather than recording. The section's table of contents isn't scanned: it's showcase chrome. See [`e2e/README.md` § Accessibility scans](../../e2e/README.md#accessibility-scans).
 
 ### Keep the page metadata + TOC in sync
 

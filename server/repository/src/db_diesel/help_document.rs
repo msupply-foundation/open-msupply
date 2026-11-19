@@ -2,7 +2,7 @@ use super::{DBType, HelpDocumentRow, StorageConnection, help_document_row::help_
 use diesel::prelude::*;
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_sort_no_case},
+    diesel_macros::{apply_equal_filter, apply_sort, apply_sort_no_case},
     repository_error::RepositoryError,
 };
 
@@ -62,7 +62,7 @@ impl<'a> HelpDocumentRepository<'a> {
                     apply_sort_no_case!(query, sort, help_document::title)
                 }
                 HelpDocumentSortField::CreatedDatetime => {
-                    apply_sort_no_case!(query, sort, help_document::created_datetime)
+                    apply_sort!(query, sort, help_document::created_datetime)
                 }
             }
         } else {
@@ -108,5 +108,33 @@ impl HelpDocumentFilter {
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {
         self.id = Some(filter);
         self
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{mock::MockDataInserts, test_db};
+
+    // Every sort key, both directions. Postgres rejects a collation on a
+    // non-text column (enum, timestamp) when planning, so this needs no rows.
+    #[actix_rt::test]
+    async fn test_help_document_sort() {
+        let (_, connection, _, _) =
+            test_db::setup_all("test_help_document_sort", MockDataInserts::none()).await;
+        let repo = HelpDocumentRepository::new(&connection);
+
+        for desc in [false, true] {
+            for key in [
+                HelpDocumentSortField::Title,
+                HelpDocumentSortField::CreatedDatetime,
+            ] {
+                let sort = Sort {
+                    key,
+                    desc: Some(desc),
+                };
+                repo.query(Pagination::all(), None, Some(sort)).unwrap();
+            }
+        }
     }
 }

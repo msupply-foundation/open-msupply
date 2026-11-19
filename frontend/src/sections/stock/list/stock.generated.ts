@@ -43,6 +43,10 @@ export type StockLineRowFragment = {
   id: string;
   name: string;
 } | null;
+  campaign: {
+  id: string;
+  name: string;
+} | null;
 };
 
 export type StockLinesVariables = {
@@ -63,19 +67,23 @@ export type StockLinesVariables = {
     code?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     name?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     isAvailable?: boolean | null;
     itemCodeOrName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     search?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     itemId?: {
     equalTo?: string | null;
@@ -110,14 +118,17 @@ export type StockLinesVariables = {
     name?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     code?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     codeOrName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     onHold?: boolean | null;
     assignedToAsset?: boolean | null;
@@ -154,18 +165,22 @@ export type StockLinesVariables = {
     name?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     code?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     description?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     existsForName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     existsForNameId?: {
     equalTo?: string | null;
@@ -199,9 +214,11 @@ export type StockLinesVariables = {
     equalAnyOrNull?: Array<string> | null;
     notEqualAll?: Array<string> | null;
   } | null;
+    onHold?: boolean | null;
+    isExpired?: boolean | null;
   } | null;
   sort?: Array<{
-    key: "expiryDate" | "manufactureDate" | "numberOfPacks" | "itemCode" | "itemName" | "batch" | "packSize" | "supplierName" | "locationCode" | "costPricePerPack" | "sellPricePerPack" | "vvmStatusThenExpiry" | "campaign";
+    key: "expiryDate" | "manufactureDate" | "numberOfPacks" | "itemCode" | "itemName" | "batch" | "packSize" | "supplierName" | "locationCode" | "costPricePerPack" | "sellPricePerPack" | "vvmStatusThenExpiry" | "campaign" | "onHold";
     desc?: boolean | null;
   }> | null;
   page?: {
@@ -220,5 +237,5 @@ export type StockLinesResult = {
 };
 
 export const StockLines = {
-  query: "query stockLines($storeId: String!, $filter: StockLineFilterInput, $sort: [StockLineSortInput!], $page: PaginationInput) {\n  stockLines(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {\n    ... on StockLineConnector {\n      __typename\n      totalCount\n      nodes {\n        ...StockLineRow\n      }\n    }\n  }\n}\n\nfragment StockLineRow on StockLineNode {\n  id\n  itemId\n  itemName\n  batch\n  expiryDate\n  manufactureDate\n  packSize\n  totalNumberOfPacks\n  availableNumberOfPacks\n  costPricePerPack\n  sellPricePerPack\n  onHold\n  supplierName\n  locationName\n  volumePerPack\n  totalVolume\n  location {\n    id\n    code\n    name\n  }\n  vvmStatus {\n    id\n    description\n  }\n  item {\n    id\n    code\n    unitName\n    isVaccine\n    doses\n    masterLists(storeId: $storeId) {\n      id\n      name\n    }\n  }\n  manufacturer(storeId: $storeId) {\n    id\n    name\n  }\n}",
+  query: "query stockLines($storeId: String!, $filter: StockLineFilterInput, $sort: [StockLineSortInput!], $page: PaginationInput) {\n  stockLines(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {\n    ... on StockLineConnector {\n      __typename\n      totalCount\n      nodes {\n        ...StockLineRow\n      }\n    }\n  }\n}\n\nfragment StockLineRow on StockLineNode {\n  id\n  itemId\n  itemName\n  batch\n  expiryDate\n  manufactureDate\n  packSize\n  totalNumberOfPacks\n  availableNumberOfPacks\n  costPricePerPack\n  sellPricePerPack\n  onHold\n  supplierName\n  locationName\n  volumePerPack\n  totalVolume\n  location {\n    id\n    code\n    name\n  }\n  vvmStatus {\n    id\n    description\n  }\n  item {\n    id\n    code\n    unitName\n    isVaccine\n    doses\n    masterLists(storeId: $storeId) {\n      id\n      name\n    }\n  }\n  manufacturer(storeId: $storeId) {\n    id\n    name\n  }\n  campaign {\n    id\n    name\n  }\n}",
 } as TypedDocument<StockLinesResult, StockLinesVariables>;

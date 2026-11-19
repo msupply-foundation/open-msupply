@@ -16,7 +16,7 @@ import {
   type TypedDocument,
 } from '@/api/graphql';
 import { gated } from '@/api/gated';
-import { formatNumber, t, tPlural } from '@/intl';
+import { displayNumber, t, tPlural } from '@/intl';
 import { hasPermission, storeContext } from '@/store/storeContext';
 import { CardGrid } from '@/ui/layout/CardGrid/CardGrid';
 import { DashboardCard } from '@/ui/elements/dashboard/DashboardCard';
@@ -374,7 +374,7 @@ export const DashboardBuiltInBody: Component = () => {
     }
   };
 
-  const num = (n: number | undefined) => formatNumber(n ?? 0);
+  const num = (n: number | undefined) => displayNumber(n ?? 0);
 
   // Suppression at render (OMS-REG-DB-02.6–.8): a built-in a loaded plugin
   // names by published id is absent, not disabled. Reactive, so a plugin
@@ -493,10 +493,9 @@ export const DashboardBuiltInBody: Component = () => {
                 />
               </StatsPanel>
             </Show>
-            {/* id: replenishment.inbound-external — procurement gate
-                (OMS-REG-DB-01.36) and the external read, both carried by the
-                panel's visibility; absent entirely when either is off, not
-                shown disabled. */}
+            {/* id: replenishment.inbound-external — the external read
+                (OMS-REG-DB-01.36), carried by the panel's visibility; absent
+                entirely without it, not shown disabled. */}
             <Show
               when={panelShown(DASHBOARD_IDS.replenishment.inboundExternal.id)}
             >

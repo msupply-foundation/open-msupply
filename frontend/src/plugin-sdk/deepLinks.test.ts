@@ -9,6 +9,7 @@ import {
   expiringSoonStockPath,
   inboundShipmentListPath,
   internalOrderListPath,
+  itemStockPath,
   lowStockItemsPath,
   outboundShipmentListPath,
   outOfStockItemsPath,
@@ -48,7 +49,7 @@ const wednesday = new Date(2026, 6, 22); // 2026-07-22
 describe('task-list targets', () => {
   // The registry's own spellings (src/nav/navConfig.ts), one builder each, so
   // a plugin tile never hand-encodes a host route (OMS-REG-PLG-04.6/.9;
-  // plugins/cook_islands/ui-surface.md § S2).
+  // private/plugins/cook_islands/ui-surface.md § S2).
   it('names each core list as the navigation registry spells it', () => {
     expect(inboundShipmentListPath()).toBe('replenishment/inbound-shipment');
     expect(outboundShipmentListPath()).toBe('distribution/outbound-shipment');
@@ -61,7 +62,7 @@ describe('task-list targets', () => {
 
   it('addresses one stocktake as the section routes it (:stocktakeId)', () => {
     // The record page behind a count — the Cook Islands count log's row
-    // target (plugins/cook_islands/ui-surface.md § S5). The segment is
+    // target (private/plugins/cook_islands/ui-surface.md § S5). The segment is
     // encoded so an id can never smuggle a separator.
     expect(stocktakeDetailPath('abc123')).toBe('inventory/stocktakes/abc123');
     expect(stocktakeDetailPath('a/b')).toBe('inventory/stocktakes/a%2Fb');
@@ -73,20 +74,36 @@ describe('stock paths', () => {
     expect(stockListPath()).toBe('inventory/stock');
   });
 
-  // OMS-REG-DB-01.41 — expired: expiry on or before today.
-  it('expired filters expiry ≤ today', () => {
+  // spec/items rules — the item page's stock on hand links to the register
+  // filtered to this item; searched by code, as the old UI did (#1790). The
+  // link's own filter replaces the list's default, so expired lines (which
+  // the figure counts) show too.
+  it("one item's stock searches the register by the item's code", () => {
+    expect(filterOf(itemStockPath('PARA500'))).toEqual({
+      search: { like: 'PARA500' },
+    });
+  });
+
+  it("encodes a code's URL-special characters", () => {
+    expect(filterOf(itemStockPath('A&B #1'))).toEqual({
+      search: { like: 'A&B #1' },
+    });
+  });
+
+  // OMS-REG-DB-01.41 — expired: expiry before today (#1786).
+  it('expired filters expiry < today', () => {
     expect(filterOf(expiredStockPath(wednesday))).toEqual({
-      expiryDate: { beforeOrEqualTo: '2026-07-22' },
+      expiryDate: { beforeOrEqualTo: '2026-07-21' }, // yesterday
     });
   });
 
   // OMS-REG-DB-01.42, D71 — expiring soon: exactly the count's window,
-  // (today, today + 30d] — today's expiries are the expired set's.
-  it('expiring soon spans tomorrow … today + 30 days', () => {
+  // [today, today + 30d] — a batch expiring today is still usable.
+  it('expiring soon spans today … today + 30 days', () => {
     expect(DAYS_TILL_EXPIRED).toBe(30);
     expect(filterOf(expiringSoonStockPath(wednesday))).toEqual({
       expiryDate: {
-        afterOrEqualTo: '2026-07-23', // tomorrow — today itself is "expired"
+        afterOrEqualTo: '2026-07-22', // today — not yet expired
         beforeOrEqualTo: '2026-08-21', // +30d
       },
     });

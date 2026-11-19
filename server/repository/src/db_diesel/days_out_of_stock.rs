@@ -10,9 +10,11 @@ use ts_rs::TS;
 // Not a queryable table outside of this
 table! {
     #[sql_name = "stock_movement"]
-    dos_filter_helper (item_id, store_id) {
+    dos_movement (item_id, store_id) {
         item_id -> Text,
-        store_id -> Text
+        store_id -> Text,
+        quantity -> Double,
+        datetime -> Timestamp,
     }
 }
 
@@ -67,19 +69,26 @@ impl<'a> DaysOutOfStockRepository<'a> {
             to,
         } = filter;
 
-        // Build filter_helper query for any present fields
-        let mut filter_helper_query = dos_filter_helper::table
-            .select((dos_filter_helper::item_id, dos_filter_helper::store_id))
-            .distinct()
+        // Stock movements for the filtered items/stores. The filters are passed as bind
+        // parameters on this query so the database can push them into the stock_movement
+        // view, rather than reading every store's full movement history and filtering
+        // afterwards.
+        let mut movements_query = dos_movement::table
+            .select((
+                dos_movement::item_id,
+                dos_movement::store_id,
+                dos_movement::quantity,
+                dos_movement::datetime,
+            ))
             .into_boxed();
 
-        apply_equal_filter!(filter_helper_query, item_id, dos_filter_helper::item_id);
-        apply_equal_filter!(filter_helper_query, store_id, dos_filter_helper::store_id);
+        apply_equal_filter!(movements_query, item_id, dos_movement::item_id);
+        apply_equal_filter!(movements_query, store_id, dos_movement::store_id);
 
         let dos_query = Dos {
             from,
             to,
-            filter_helper: filter_helper_query,
+            movements: movements_query,
         }
         .as_dos_query()?;
 
@@ -171,11 +180,30 @@ pub(crate) mod test {
         movements: Vec<(i64, i64)>,
         expected_dos: Option<f64>,
     ) {
+        test_one_with_pack_size(
+            test_name,
+            movement_date,
+            calculation_date,
+            1.0,
+            movements,
+            expected_dos,
+        )
+        .await;
+    }
+
+    async fn test_one_with_pack_size(
+        test_name: &str,
+        movement_date: NaiveDateTime,
+        calculation_date: NaiveDateTime,
+        pack_size: f64,
+        movements: Vec<(i64, i64)>,
+        expected_dos: Option<f64>,
+    ) {
         let test_stock_line = StockLineRow {
             id: format!("test_stock_line_{test_name}"),
             item_id: mock_item_a().id.clone(),
             store_id: mock_store_a().id.clone(),
-            pack_size: 1.0,
+            pack_size,
             ..Default::default()
         };
 
@@ -343,6 +371,50 @@ pub(crate) mod test {
             https://www.tablesgenerator.com/text_tables (file -> paste table data)
             */
             Some(11.0),
+        )
+        .await;
+
+        test_one(
+            "restocked_day_after_stock_out",
+            movement_date,
+            calculation_date,
+            vec![(5, 10), (22, -10), (23, 10)],
+            /*
+            Running out on the 22nd moves that row to the 23rd (the first full day without
+            stock), the same date as the restock row, so the two rows must be ordered
+            deterministically: out of stock first, then restocked
+            +------------------------+----+----+----+----+----+----+----+----+----+----+----+
+            |                        | 20 | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30 |
+            +------------------------+----+----+----+----+----+----+----+----+----+----+----+
+            | end of day balance     | 10 | 10 | 0  | 10 | 10 | 10 | 10 | 10 | 10 | 10 | 10 |
+            +------------------------+----+----+----+----+----+----+----+----+----+----+----+
+            | full day without stock | no | no | no | no | no | no | no | no | no | no | no |
+            +------------------------+----+----+----+----+----+----+----+----+----+----+----+
+            */
+            Some(0.0),
+        )
+        .await;
+
+        test_one_with_pack_size(
+            "out_of_stock_with_float_residue",
+            movement_date,
+            calculation_date,
+            0.1,
+            vec![(5, 3), (6, 6), (22, -9)],
+            /*
+            Same as out_of_stock_at_end, but in units of 0.1: 3 * 0.1 + 6 * 0.1 sums to
+            0.9000000000000001 while 9 * 0.1 is 0.9, so the balance after the 22nd is 1.1e-16
+            rather than 0 (in whichever order the rows are summed). It must still count as
+            out of stock
+            +------------------------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+            |                        | 20  | 21  | 22  | 23  | 24  | 25  | 26  | 27  | 28  | 29  | 30  |
+            +------------------------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+            | end of day balance     | 0.9 | 0.9 | ~0  | ~0  | ~0  | ~0  | ~0  | ~0  | ~0  | ~0  | ~0  |
+            +------------------------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+            | full day without stock | no  | no  | no  | yes | yes | yes | yes | yes | yes | yes | yes |
+            +------------------------+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
+            */
+            Some(8.0),
         )
         .await;
 

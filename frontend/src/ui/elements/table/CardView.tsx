@@ -19,6 +19,7 @@ import {
 } from '../accordion/Accordion';
 import { t } from '../../../intl';
 import { isKeyboardFocus } from './createRowFocus';
+import { RowLink, leftToBrowser } from './RowLink';
 import { visibleOnCard, type CardGroup } from './columnTypes';
 import {
   cardFieldMaxRem,
@@ -99,16 +100,26 @@ function cellField<T>(
   cell: TanCell<T, unknown>,
   isHeader: boolean
 ): JSX.Element {
-  // The value node — wrapped in a data-mono span for code-like columns
-  // (meta.mono) so the monospace font reaches the card too (table view applies
-  // it on the <td>). Only the VALUE is wrapped, never the field label.
+  // The value node — wrapped in a span for code-like columns (meta.mono) so the
+  // monospace font reaches the card too, and for a column that can mark a cell
+  // (meta.cellTone) so the ring has the value to draw around. A ringable
+  // value's wrapper is a block whether or not it is ringed, so the ring coming
+  // and going changes nothing else about it. Table view puts both on the <td>.
+  // Only the VALUE is wrapped, never the field label.
   const value = () => {
+    const meta = cell.column.columnDef.meta;
     const content = renderTemplate(
       cell.column.columnDef.cell,
       cell.getContext()
     );
-    return cell.column.columnDef.meta?.mono ? (
-      <span data-mono="">{content}</span>
+    return meta?.mono || meta?.cellTone ? (
+      <span
+        class={meta.cellTone ? styles.cardToneValue : undefined}
+        data-mono={meta.mono ? '' : undefined}
+        data-cell-tone={meta.cellTone?.(cell.row.original)}
+      >
+        {content}
+      </span>
     ) : (
       content
     );
@@ -131,7 +142,15 @@ function cellField<T>(
   // local — hoisting would resolve it once, outside any tracking scope, and
   // freeze the card's field labels in the locale that first painted them.
   return isHeader ? (
-    <FieldRow label={columnHeaderText(cell)} labelWidth="auto">
+    // first-line: the caption sits on the control's own line, so a message
+    // the control grows beneath it (a warning under a blank batch) doesn't
+    // pull the caption down to the middle of the taller block. Against a
+    // single-line control or a plain value, it coincides with centring.
+    <FieldRow
+      label={columnHeaderText(cell)}
+      labelWidth="auto"
+      align="first-line"
+    >
       {value()}
     </FieldRow>
   ) : (
@@ -314,7 +333,13 @@ function DisclosureGroup<T, G extends string>(props: {
       defaultValue={props.group.disclosure === 'open' ? [props.group.key] : []}
     >
       <AccordionItem value={props.group.key}>
-        <div onClick={event => event.stopPropagation()}>
+        {/* Keeps its own pointer events on a linked card (RowLink): a click
+            inside an open disclosure must not fall through to the card's link
+            any more than it reaches the row. */}
+        <div
+          class={styles.cardDisclosure}
+          onClick={event => event.stopPropagation()}
+        >
           <div class={styles.cardDisclosureHead}>
             <AccordionTrigger class={styles.cardDisclosureTrigger}>
               {/* Reuse the group caption's exact icon+label lead so a
@@ -361,6 +386,8 @@ export function CardView<T, G extends string>(props: {
   onRowClick?: (row: T) => void;
   /** Whether `onRowClick` applies to a row (see DataTable's prop). */
   rowClickable?: (row: T) => boolean;
+  /** The address a clickable row opens, as a link (see DataTable's prop). */
+  rowHref?: (row: T) => string | undefined;
   /**
    * Semantic text tone (see DataTable's rowTone) — in card view the tone
    * paints the card's IDENTITY title only (a whole-card repaint would
@@ -433,6 +460,8 @@ export function CardView<T, G extends string>(props: {
         const clickable = () =>
           props.onRowClick !== undefined &&
           (props.rowClickable?.(row.original) ?? true);
+        const href = () =>
+          clickable() ? props.rowHref?.(row.original) : undefined;
         return (
           <tr
             class={`${styles.cardRow} ${clickable() ? styles.rowClickable : ''}`}
@@ -458,12 +487,15 @@ export function CardView<T, G extends string>(props: {
             onFocus={event => {
               if (isKeyboardFocus(event)) rowFocus()?.onFocus();
             }}
-            onClick={() => {
-              if (clickable()) props.onRowClick?.(row.original);
+            onClick={event => {
+              if (!clickable() || leftToBrowser(event, Boolean(href()))) return;
+              props.onRowClick?.(row.original);
             }}
           >
             <td class={styles.cardCell}>
-              <div class={styles.card}>
+              {/* The row's link fills the card behind its content (RowLink). */}
+              <div class={styles.card} data-row-link={href() ? '' : undefined}>
+                <Show when={href()}>{link => <RowLink href={link()} />}</Show>
                 <div class={styles.cardHeader}>
                   <Show when={props.enableSelection}>
                     <BareCheckbox
@@ -472,7 +504,12 @@ export function CardView<T, G extends string>(props: {
                       data-testid="select-row-checkbox"
                       disabled={props.selectionDisabled}
                       checked={row.getIsSelected()}
-                      onChange={row.getToggleSelectedHandler()}
+                      onChange={event => {
+                        row.getToggleSelectedHandler()(event);
+                        // A row the page drops from the selection: put the
+                        // box back (TableRow does the same).
+                        event.currentTarget.checked = row.getIsSelected();
+                      }}
                       onClick={event => event.stopPropagation()}
                     />
                   </Show>

@@ -147,18 +147,46 @@
   border-inline-start: 1px solid var(--color-border-value);
 }
 
-/* Hover / menu-open — primary darkens; secondary recolours to the action tone. */
-.main[data-variant='primary']:hover:not(:disabled),
-.caret[data-variant='primary']:hover:not(:disabled),
+/* Menu open — primary darkens; secondary recolours to the action tone. */
 .caret[data-variant='primary'][data-expanded] {
   background: var(--secondary-dark);
 }
 
-.main[data-variant='secondary']:hover:not(:disabled),
-.caret[data-variant='secondary']:hover:not(:disabled),
 .caret[data-variant='secondary'][data-expanded] {
   background: var(--bg-group-main);
   color: var(--secondary-main);
+}
+
+/*
+ * Hover and press take the same look. Hover only where the primary pointer
+ * can hover, as on Button: a touch screen keeps the last half tapped in
+ * :hover, so it stayed recoloured — reading as "selected" beside a Button that
+ * went back to rest. On touch the look shows while the finger is down.
+ */
+@media (hover: hover) {
+  .main[data-variant='primary']:hover:not(:disabled),
+  .caret[data-variant='primary']:hover:not(:disabled) {
+    background: var(--secondary-dark);
+  }
+
+  .main[data-variant='secondary']:hover:not(:disabled),
+  .caret[data-variant='secondary']:hover:not(:disabled) {
+    background: var(--bg-group-main);
+    color: var(--secondary-main);
+  }
+}
+
+@media (hover: none) {
+  .main[data-variant='primary']:active:not(:disabled),
+  .caret[data-variant='primary']:active:not(:disabled) {
+    background: var(--secondary-dark);
+  }
+
+  .main[data-variant='secondary']:active:not(:disabled),
+  .caret[data-variant='secondary']:active:not(:disabled) {
+    background: var(--bg-group-main);
+    color: var(--secondary-main);
+  }
 }
 
 /* Disabled — the whole control greyed and inert (both halves). */
@@ -178,13 +206,13 @@
    metrics as Button.module.css — phone first, then the wider narrow-viewport
    range (≤1023px, breakpoints.navOverlay) that `collapsible="narrow"` opts
    into. Placed after the base .main rules so specificity ascends. */
-@media (max-width: 767px) {
-  .main[data-collapsible] {
+@media (max-width: 599px) {
+  .main[data-collapsible]:not([data-header-buttons] *) {
     min-inline-size: 3rem;
     padding-inline: 0.75rem;
   }
 
-  .main[data-collapsible] .label {
+  .main[data-collapsible]:not([data-header-buttons] *) .label {
     position: absolute;
     inline-size: 1px;
     block-size: 1px;
@@ -197,12 +225,12 @@
 }
 
 @media (max-width: 1023px) {
-  .main[data-collapsible='narrow'] {
+  .main[data-collapsible='narrow']:not([data-header-buttons] *) {
     min-inline-size: 3rem;
     padding-inline: 0.75rem;
   }
 
-  .main[data-collapsible='narrow'] .label {
+  .main[data-collapsible='narrow']:not([data-header-buttons] *) .label {
     position: absolute;
     inline-size: 1px;
     block-size: 1px;
@@ -212,6 +240,30 @@
     clip-path: inset(50%);
     white-space: nowrap;
   }
+}
+
+/* A page header whose labelled actions don't fit (Header measures it — see
+   Button.module.css): every icon-bearing split button's main half collapses —
+   except inside a dialog opened from the header, which keeps its labels. */
+[data-actions-collapsed]
+  > [data-header-buttons]
+  .main:has(.icon):not(dialog *) {
+  min-inline-size: 3rem;
+  padding-inline: 0.75rem;
+}
+
+[data-actions-collapsed]
+  > [data-header-buttons]
+  .main:has(.icon):not(dialog *)
+  .label {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 /* --- Menu (portaled to <body>; inherits dir for RTL) ------------------- */

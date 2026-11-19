@@ -2,7 +2,10 @@ use actix_multipart::form::{MultipartForm, tempfile::TempFile};
 use actix_web::{
     HttpRequest, Responder, ResponseError,
     dev::HttpServiceFactory,
-    http::header::{ContentDisposition, DispositionParam, DispositionType},
+    http::{
+        StatusCode,
+        header::{ContentDisposition, DispositionParam, DispositionType},
+    },
     post, put,
     web::{self, Data, Json},
 };
@@ -105,7 +108,14 @@ impl Display for ToResponseError {
         )
     }
 }
-impl ResponseError for ToResponseError {}
+impl ResponseError for ToResponseError {
+    fn status_code(&self) -> StatusCode {
+        match self.0 {
+            SyncParsedErrorV6::SyncApiPaused => StatusCode::SERVICE_UNAVAILABLE,
+            _ => StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
+}
 
 #[post("/download_file")]
 async fn download_file(

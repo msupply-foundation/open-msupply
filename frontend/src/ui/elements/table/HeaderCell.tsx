@@ -61,6 +61,8 @@ export function HeaderCell<T>(props: {
       data-align={align()}
       data-pinned={column().getIsPinned() || undefined}
       data-frozen-edge={props.frozenEdge(column())}
+      // A rule down the column's inline-end edge (meta.dividerEnd).
+      data-divider-end={column().columnDef.meta?.dividerEnd ? '' : undefined}
       // Keys this cell's RENDERED width back to its column when the sticky
       // offsets are measured (DataTable.measurePinnedOffsets).
       data-column-id={column().id}

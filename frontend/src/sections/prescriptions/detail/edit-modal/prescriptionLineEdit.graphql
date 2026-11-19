@@ -24,6 +24,7 @@ query prescriptionEditLines(
       inStorePacks
       availablePacks
       stockLineOnHold
+      barcode
       dosesPerUnit
       location {
         code
@@ -34,6 +35,12 @@ query prescriptionEditLines(
         description
         unusable
         priority
+      }
+      # The batch's Activity, shown read-only on each row so the dispenser can
+      # see what the stock is held for before issuing it.
+      campaign {
+        id
+        name
       }
     }
   }

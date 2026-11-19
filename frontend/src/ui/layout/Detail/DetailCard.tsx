@@ -7,9 +7,10 @@ export interface DetailCardProps {
    * `dir="auto"`, so a title in another script than the screen's keeps its own
    * reading order (a plugin's configuration label, say, still untranslated in
    * the operator's locale). The heading is shrink-to-fit in the header's flex
-   * row, so its own direction does not re-align the card.
+   * row, so its own direction does not re-align the card. Optional: without
+   * a title, meta or actions there is no header.
    */
-  title: string;
+  title?: string;
   /** Header-end actions (e.g. Edit/Delete IconButtons). */
   actions?: JSX.Element;
   /** The card body — arbitrary content (DetailSection/DetailRow, tables,
@@ -23,13 +24,35 @@ export interface DetailCardProps {
    * separation only needs stating once per edge.
    */
   surface?: 'raised' | 'bordered';
+  /**
+   * Spacing. `default` is a miniature detail view's room; `compact` tightens
+   * the padding, the gaps and the title for a dense grid of many small cards
+   * (the Simple dispensing screen's medicines), so more fit on one screen.
+   */
+  density?: 'default' | 'compact';
+  /**
+   * A quiet line under the title — a unit, a state badge — that belongs with
+   * the name rather than with the body. In the `inline` layout it stays with
+   * the title at the inline start.
+   */
+  meta?: JSX.Element;
+  /**
+   * `stacked` (default): the header over the body. `inline`: one row — the
+   * title and meta at the inline start, taking the room and wrapping, the body
+   * at the inline end, sized to its content. For a grid of many small cards
+   * whose body is a short row of controls (the Simple dispensing screen's
+   * amounts on a phone), so a card costs one row of the screen rather than
+   * two. The caller decides when, e.g. by viewport (createMediaQuery).
+   */
+  layout?: 'stacked' | 'inline';
   /** `data-testid` on the card's root (e2e/TESTIDS.md). */
   testId?: string;
 }
 
 /*
- * DetailCard — a titled card with header actions, for when several records of
- * the same kind are stacked as cards rather than one page being the whole
+ * DetailCard — a card with header actions, titled unless a page-level tab
+ * already names it, for when several records of the same kind are stacked as
+ * cards rather than one page being the whole
  * detail view (spec/ui-standards/components.md § Detail views). Extends the
  * DetailContainer/DetailSection/DetailRow/RecordNameHeader family with the one
  * shape it doesn't cover: a miniature detail view per record, each with its
@@ -44,20 +67,34 @@ export const DetailCard = (props: DetailCardProps): JSX.Element => {
   // insertion — resolve once so it isn't instantiated twice
   // (kdd/solid-reactivity-pitfalls §3).
   const actions = children(() => props.actions);
+  const meta = children(() => props.meta);
   return (
     <section
       class={styles.card}
       data-surface={props.surface ?? 'raised'}
+      data-density={props.density ?? 'default'}
+      data-layout={props.layout ?? 'stacked'}
       data-testid={props.testId}
     >
-      <div class={styles.header}>
-        <h2 class={styles.title} dir="auto">
-          {props.title}
-        </h2>
-        <Show when={actions()}>
-          <div class={styles.actions}>{actions()}</div>
-        </Show>
-      </div>
+      <Show when={props.title || meta() || actions()}>
+        <div class={styles.header}>
+          <Show when={props.title || meta()}>
+            <div class={styles.heading}>
+              <Show when={props.title}>
+                <h2 class={styles.title} dir="auto">
+                  {props.title}
+                </h2>
+              </Show>
+              <Show when={meta()}>
+                <div class={styles.meta}>{meta()}</div>
+              </Show>
+            </div>
+          </Show>
+          <Show when={actions()}>
+            <div class={styles.actions}>{actions()}</div>
+          </Show>
+        </div>
+      </Show>
       <div class={styles.body}>{props.children}</div>
     </section>
   );

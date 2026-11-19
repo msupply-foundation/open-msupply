@@ -1,10 +1,11 @@
 import { createMemo, For, Show } from 'solid-js';
 import { format } from 'date-fns';
 import { t } from '../../../intl';
-import { formatNumber } from '../../../intl/formatNumber';
+import { calendarDateOrInstantToDate } from '../../../intl/calendarDate';
+import { roundedText } from '../../../intl/numberDisplay';
 import { SvgPlot, linePath } from './svgPlot';
 
-const fmt = (n: number) => formatNumber(n, { maximumFractionDigits: 2 });
+const fmt = (n: number) => roundedText(n);
 import { ChartLegend } from './ChartLegend';
 import styles from './plotChart.module.css';
 
@@ -35,7 +36,11 @@ export const ConsumptionHistoryChart = (props: {
     )
   );
   const barClass = (d: ConsumptionHistoryPoint) =>
-    d.isHistoric ? styles.historic : d.isCurrent ? styles.current : styles.projected;
+    d.isHistoric
+      ? styles.historic
+      : d.isCurrent
+        ? styles.current
+        : styles.projected;
 
   return (
     <Show
@@ -48,11 +53,16 @@ export const ConsumptionHistoryChart = (props: {
           maxValue={maxValue()}
           width={props.width}
           height={props.height}
-          xLabel={i => format(new Date(data()[i].date), 'MMM')}
+          xLabel={i =>
+            format(calendarDateOrInstantToDate(data()[i].date), 'MMM')
+          }
           tooltip={i => (
             <>
               <div class={styles.tooltipHead}>
-                {format(new Date(data()[i].date), 'MMM yyyy')}
+                {format(
+                  calendarDateOrInstantToDate(data()[i].date),
+                  'MMM yyyy'
+                )}
               </div>
               <div>
                 {t('label.consumption')}: {fmt(data()[i].consumption)}

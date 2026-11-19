@@ -1,6 +1,6 @@
 import { stripEmpty } from '@/typeHelpers';
 import { DEFAULT_PAGE_SIZE } from '@/list/pageSize';
-import type { IsoDateTimeRange } from '@/ui/elements/selectors/FilterBar';
+import type { InstantRange } from '@/ui/elements/selectors/FilterBar';
 import type {
   TemperatureBreachRowFragment,
   TemperatureBreachesVariables,
@@ -66,13 +66,17 @@ export const OFFERED_BREACH_TYPES: readonly BreachType[] = [
 export type MonitoringFilter = {
   sensorName?: string | null;
   locationCode?: string | null;
-  startDatetime?: IsoDateTimeRange | null;
+  startDatetime?: InstantRange | null;
   breachType?: BreachType | null;
   unacknowledged?: boolean | null;
 };
 
 export type MonitoringTab = 'chart' | 'breaches' | 'log';
-export const TABS: readonly MonitoringTab[] = ['chart', 'breaches', 'log'];
+export const TABS = [
+  'chart',
+  'breaches',
+  'log',
+] as const satisfies readonly MonitoringTab[];
 export const DEFAULT_TAB: MonitoringTab = 'chart';
 
 /** The tab a `?tab=` value names; anything unknown is the first tab. */

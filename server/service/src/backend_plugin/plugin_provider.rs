@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use thiserror::Error;
 
 use crate::boajs::{self, BoaJsError};
+use crate::plugin::form_plugin::FormPluginSidecar;
 
 #[derive(Debug, Error, PartialEq)]
 #[error("Error in plugin {code}")]
@@ -108,6 +109,11 @@ where
 pub struct PluginBundle {
     pub backend_plugins: Vec<BackendPluginRow>,
     pub frontend_plugins: Vec<FrontendPluginRow>,
+    /// The declarative half of each form plugin in the bundle: its schema
+    /// versions and registry declarations, written to `form_schema` and
+    /// `document_registry` at install. Absent from a bundle with no form plugin.
+    #[serde(default)]
+    pub form_plugins: Vec<FormPluginSidecar>,
 }
 
 impl PluginInstance {
@@ -123,19 +129,19 @@ impl PluginInstance {
     pub fn get_all(r#type: PluginType) -> Vec<Arc<PluginInstance>> {
         let plugins = PLUGINS.read().unwrap();
 
-        for plugin in plugins.iter() {
-            log::info!(
+        let matching: Vec<_> = plugins.iter().filter(|p| p.has_type(&r#type)).collect();
+
+        // Debug, not info: get_all runs on every read of item store properties
+        // (item search, the inbound shipment prefill), whatever plugins are installed
+        for plugin in &matching {
+            log::debug!(
                 "Plugin loaded: {} (version {})",
                 plugin.instance.code,
                 plugin.instance.version
             );
         }
 
-        plugins
-            .iter()
-            .filter(|p| p.has_type(&r#type))
-            .map(|p| p.instance.clone())
-            .collect()
+        matching.into_iter().map(|p| p.instance.clone()).collect()
     }
 
     pub fn get_one_with_code(code: &str, r#type: PluginType) -> Option<Arc<PluginInstance>> {

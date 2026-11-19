@@ -33,16 +33,47 @@ sudo systemctl enable --now docker
 
 The distro `docker.io` package is enough: nothing here is version-sensitive, and it updates through normal `apt` with no third-party repo on a machine that holds registry credentials.
 
-**binfmt is host state.** Release tags also build `linux/arm64`. The compile stages cross-compile natively, but the runtime stages' `RUN` steps are emulated, and without binfmt they fail with `exec format error`. The distro packages register it via systemd so it survives a reboot (the `tonistiigi/binfmt` container does not). Only release tags build arm64, so a box without it passes everything else and fails the first real release. Check:
+**binfmt is host state.** Release tags also build `linux/arm64`. The compile stages cross-compile natively, but the runtime stages' `RUN` steps are emulated, and without binfmt they fail with `exec format error`. The distro packages register it via systemd so it survives a reboot (the `tonistiigi/binfmt` container does not). Only release tags build arm64, so a box without it passes everything else and fails the first real release. The image workflow's `Check arm64 emulation` step now fails an arm64 build up front with an error naming the runner and these packages, rather than with `exec format error` deep in the build log. Check:
 
 ```bash
 docker --version && docker buildx version
 docker run --rm --platform linux/arm64 debian:trixie-slim uname -m   # -> aarch64
 ```
 
+### Build cache limits
+
+**Set them before the first build.** With no `/etc/docker/daemon.json`, BuildKit's default garbage collection caps *cache mounts* — where the image build keeps its cargo target dirs and registry — at about 1.4% of the disk (2.5 GB on this one), and drops anything unused for 48 hours. One target dir is several times that, so it is evicted almost as soon as it is written and every image build compiles from cold (~20 minutes instead of seconds). Nothing reports this: the builds just stay slow.
+
+`/etc/docker/daemon.json` is the daemon's file — `~/.docker/config.json` is the client's (registry logins), and build settings there are ignored. The limits are tracked in [`.github/deploy/host/daemon.json`](https://github.com/msupply-foundation/open-msupply-internal/blob/develop/.github/deploy/host/daemon.json), and the daily [host check](#systemd) gives the commands to write it when the box's differs. Then:
+
+```bash
+sudo systemctl restart docker
+docker buildx inspect | grep -iA6 'gc policy'
+```
+
+Rule #0 must read `Filters: type==exec.cachemount` with `Keep Duration: 336h0m0s` and `Max Used Space: 50GiB`, and rule #1 `Max Used Space: 70GiB` with `Min Free Space: 50GiB` (docker shows the file's GB as GiB). Anything else means docker did not take the file as meant, and it says nothing about it: an unknown key under `builder` is silently ignored, and a malformed filter fails every GC pass rather than the restart. **The syntax is easy to get wrong** — each filter is `key=value` with ONE `=` (docker adds the second), and how long to keep is the `until` filter, not a field of its own.
+
+- **Restart when nothing is building or deploying.** Every container stops; the deployments, the proxy and the dashboard are `restart: unless-stopped`, so they come back on their own.
+- **The first rule is the cargo caches**: the target dirs (per database, architecture and profile; CI's test builds share the debug ones) and the registry. 50 GB holds the ones pull requests and develop merges use; a rarely built one (an arm64 release, say) is evicted and builds cold. `docker buildx du --verbose` shows what they actually take.
+- **The second bounds the whole build cache** at 70 GB and keeps 50 GB of the disk free, for images, deployments' databases and what a CI job writes while it runs: its test archive, postgres's test databases, sqlite's `test_output`. GC runs only when a build finishes, so the free space has to last a whole test run — at 30 GB, a postgres run filled the disk.
+- `docker builder prune --filter type=exec.cachemount` empties the cargo caches by hand; the next build of each is cold.
+- **A server CI job killed before its clean-up** (the runner lost, a reboot, a full disk) leaves its postgres container, with its test databases, and its 2.4 GB CI image. The first step of every server CI job removes those of any run that has finished, using [`.github/scripts/server-ci-cleanup.sh`](https://github.com/msupply-foundation/open-msupply-internal/blob/develop/.github/scripts/server-ci-cleanup.sh). It only finds what is named for a run. Volumes left with no container have no name to go by, so remove those by hand while nothing is running: `docker volume prune -f` removes only unnamed volumes no container uses, never a deployment's.
+
 ## Sizing
 
-Roughly **4 cores and 4–8 GB RAM per lane**, plus a small server's worth of RAM per deployment. RAM is what gets under-bought: rustc peaks while linking, and several lanes peaking together triggers the OOM killer. Disk: NVMe, and generous — `/var/lib/docker`, the caches, a target dir per lane and a database per deployment all grow. 500 GB is not excessive.
+Roughly **4 cores and 4–8 GB RAM per lane**, plus a small server's worth of RAM per deployment. RAM is what gets under-bought: rustc peaks while linking, and several lanes peaking together triggers the OOM killer.
+
+**Nothing on the host caps a lane's memory.** A job's real work does not run in the runner's process tree: `docker buildx build` compiles inside dockerd's BuildKit, and `docker run` containers run under containerd. A limit on the runner's systemd unit only ever covers the runner and the `docker` client, so it cannot stop a build. What bounds memory is how much each build runs at once (cargo's job count) and limits set on the containers themselves — add lanes only as far as the busiest days leave headroom, and watch available memory when you do.
+
+**Add swap.** With none, a brief spike past free memory goes straight to the OOM killer, which may pick a deployment's postgres; with some, it slows down instead:
+
+```bash
+sudo fallocate -l 16G /swapfile && sudo chmod 600 /swapfile
+sudo mkswap /swapfile && sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+```
+
+`docker-deploy-services.yaml`'s daily [host check](#systemd) reports a box with no swap. Disk: NVMe, and generous — `/var/lib/docker`, the caches, a target dir per lane and a database per deployment all grow. The box has 194 GB, and the build cache limits above are sized for it - with a bigger disk, raise them. 500 GB is not excessive.
 
 ## User and directories
 
@@ -59,7 +90,13 @@ sudo chown -R "$USER:$(id -gn)" /cache
 # Where each deployment's machine-id lives - see "Deployment state" below.
 sudo mkdir -p /opt/omsupply/deployments
 sudo chown "$USER:$(id -gn)" /opt/omsupply/deployments
+
+# The Launchpad's store: plugin bundles, report bundles, schemas.
+sudo mkdir -p /opt/omsupply/bundles
+sudo chown "$USER:$(id -gn)" /opt/omsupply/bundles
 ```
+
+- `/opt/omsupply/bundles` is a host directory rather than a docker volume so no prune, `down -v` or reinstalled daemon can take it. The workflows refuse to run without it rather than let docker create an empty one. See `.github/scripts/bundle-store.sh`.
 
 - `/cache/target` is split **per runner name** by the workflow: cargo locks a target dir, so lanes sharing one would serialise.
 - `/cache/sccache` is reserved for the containerised check jobs; nothing writes to it yet.
@@ -100,64 +137,15 @@ TOKEN=$(gh api -X POST repos/$OWNER_REPO/actions/runners/registration-token -q .
 
 ### systemd
 
-The build lanes share one template; `%i` is the lane. Written with a heredoc so `$USER` and `$HOME` resolve to you.
+The units are tracked in [`.github/deploy/host/`](https://github.com/msupply-foundation/open-msupply-internal/tree/develop/.github/deploy/host): one template for the build and e2e lanes (`actions-runner@.service`, `%i` is the lane) and one for the deploy lane, with `@USER@` and `@HOME@` standing for the runner user's.
+
+**`docker-deploy-services.yaml` checks the box against them on its daily run.** When they differ, its job summary shows the diff and the commands to apply it — the files written out in full, so they paste onto a box with no checkout — with the restarts they need left for a moment when nothing is running. Nothing is applied automatically. To change a unit, change the repo's copy, merge, then paste what the next run's summary gives; an edit made only on the box is reported until the repo agrees. A lane running under a unit set up by hand (`actions-runner-<lane>.service`) shows as `UNTRACKED`, and the commands move it onto `actions-runner@<lane>`. A lane that is installed but not enabled is left alone: lanes are switched off on purpose, to keep the box within its memory.
+
+On a new box, before any lane can run that workflow, copy the two files from the repo by hand with `@USER@`/`@HOME@` filled in, then:
 
 ```bash
-sudo tee /etc/systemd/system/actions-runner@.service >/dev/null <<EOF
-[Unit]
-Description=GitHub Actions runner %i
-After=network-online.target docker.service
-Wants=network-online.target
-Requires=docker.service
-
-[Service]
-User=$USER
-WorkingDirectory=$HOME/actions-runner-%i
-ExecStart=$HOME/actions-runner-%i/run.sh
-Restart=always
-RestartSec=5
-# One cold build cannot starve the deployments and the other lanes: past this
-# the kernel reclaims from the lane rather than from the rest of the machine.
-MemoryHigh=10G
-# run.sh traps SIGTERM and passes it to the runner, which finishes or cancels
-# the job it holds instead of dying mid-job. `mixed` sends the SIGTERM to
-# run.sh alone, and SIGKILLs whatever is left only after TimeoutStopSec.
-Environment=RUNNER_MANUALLY_TRAP_SIG=1
-KillMode=mixed
-TimeoutStopSec=5min
-
-[Install]
-WantedBy=multi-user.target
-EOF
 sudo systemctl daemon-reload
-sudo systemctl enable --now actions-runner@1 actions-runner@2 actions-runner@3 actions-runner@4
-```
-
-The deploy lane has a unit of its own, with the same stop behaviour but **no memory cap** — it is the lane that tears a stack down when the box is full:
-
-```bash
-sudo tee /etc/systemd/system/actions-runner-deploy.service >/dev/null <<EOF
-[Unit]
-Description=GitHub Actions runner deploy
-After=network-online.target docker.service
-Wants=network-online.target
-Requires=docker.service
-
-[Service]
-User=$USER
-WorkingDirectory=$HOME/actions-runner-deploy
-ExecStart=$HOME/actions-runner-deploy/run.sh
-Restart=always
-RestartSec=5
-Environment=RUNNER_MANUALLY_TRAP_SIG=1
-KillMode=mixed
-TimeoutStopSec=5min
-
-[Install]
-WantedBy=multi-user.target
-EOF
-sudo systemctl daemon-reload
-sudo systemctl enable --now actions-runner-deploy
+sudo systemctl enable --now actions-runner@1 actions-runner@2 actions-runner@3 actions-runner@4 actions-runner@e2e actions-runner-deploy
 ```
 
 ```bash
@@ -173,7 +161,7 @@ Adding a build lane is installing and registering `actions-runner-5`, then `syst
 
 Every deployment runs here: the named ones from `docker-named-deployment.yaml` (`develop`, the RC servers, ad-hoc ones) and every PR preview from `docker-pr-preview.yaml`. How to *use* them is on the [Docker page](../../docker/).
 
-Each is its own compose project — one container running the server and its own postgres, plus volumes — reached at `https://<name>.<DEPLOY_DOMAIN>`, where `<name>` is also the container name. A deployment costs one image however often it redeploys (superseded tags are removed once the new one is routable); teardown and `docker-expire.yaml` remove the rest.
+Each is its own compose project — one container running the server and its own postgres, plus volumes — reached at `https://<name>.<DEPLOY_DOMAIN>` (`http://` while they are [on the VPN only](#vpn-only-deployments)), where `<name>` is also the container name. A deployment costs one image however often it redeploys (superseded tags are removed once the new one is routable); teardown and `docker-expire.yaml` remove the rest — including images that were built but never deployed, which no deploy or teardown ever sees.
 
 **Today `build`, `deploy` and `e2e` share one machine and one daemon.** The workflows assume nothing about that — splitting them is moving the deploy lane, not changing a workflow — but while they share:
 
@@ -185,9 +173,11 @@ Each is its own compose project — one container running the server and its own
 | variable | default | what it does |
 |---|---|---|
 | `DEPLOY_DOMAIN` | *none — required* | the base every hostname hangs off, e.g. `preview.example.com`. Must match the proxy's `.env`. |
+| `DEPLOY_SCHEME` | `https` | how deployments are reached, for every link to one: the deploy's URL, the PR comment and the dashboard. `http` while they are [on the VPN only](#vpn-only-deployments); the dashboard itself is always `https`. |
 | `DEPLOY_STATE_DIR` | `/opt/omsupply/deployments` | where each deployment's `machine-id` file is kept; must exist and be writable by the runner user |
 | `DEPLOY_REFERENCE_FILE` | `e2e` | the dataset a new deployment is seeded from. `reference1` does not load on current servers. |
 | `DEPLOY_SHARED_DAEMON` | unset | see above |
+| `DEPLOY_BUNDLES_DIR` | `/opt/omsupply/bundles` | the Launchpad's store of plugin bundles, report bundles and schemas; must exist |
 | `BUNDLE_RETAIN_DAYS` | `30` | how long a branch's plugin bundles are kept on the dashboard — see [Plugin bundles](#plugin-bundles) |
 
 ### Deployment state
@@ -206,7 +196,10 @@ Everything else a deployment needs to remember is a **label on its container**, 
 
 The labels come from `docker/compose.deploy.yaml` as of the commit whose workflow is running — develop's for a dispatch — not the commit being deployed. That is also how older release tags deploy; see the [Docker page](../../docker/).
 
-**`docker-expire.yaml` reaps expired deployments daily** and its summary lists everything deployed and when each expires — the quickest answer to "what is on this box". Run it with `dry_run` to preview.
+**`docker-expire.yaml` reaps expired deployments daily** and its summary lists everything deployed and when each expires — the quickest answer to "what is on this box". Run it with `dry_run` to preview. The same sweep also:
+
+- **tears down the preview of any closed pull request**, whatever its label says. A PR's own close normally does that, but GitHub runs no `pull_request` workflow on a PR with merge conflicts, so before the close moved to `pull_request_target` a preview closed in conflict ran on for good.
+- **removes `msupplyfoundation/omsupply` images no container is running that are over a day old** — a build whose deploy was cancelled by the next push, or failed, leaves one, and at several GB each they were most of what filled the disk. Removing one costs at most a rebuild if that commit is deployed again.
 
 **Teardown marks the GitHub deployment inactive** (clearing the "Active" badge and dead link) but leaves the empty environment row in repository settings — deleting it needs Administration: write.
 
@@ -220,48 +213,143 @@ The reverse proxy in front of every deployment and the deployments dashboard liv
 - **A bad change does not take the box down.** A Caddyfile that does not validate, a `.mjs` that does not parse, or a dashboard page that fails its typecheck or tests fails the image build, before anything running is touched; the dashboard's tests run before that. If a new version still does not come up healthy, the previous image — kept on the box — is brought back, and the run fails.
 - **Trying a change before it merges:** run the workflow from your branch. That branch's copy stays on the box until the next run from `develop` — at the latest the daily scheduled one, which also puts back anything changed on the box by hand.
 
+#### How a request gets in
+
+As set up today ([VPN-only deployments](#vpn-only-deployments)). The dotted line comes into use once the wildcard DNS record and certificate are added at the edge.
+
+```mermaid
+flowchart LR
+    inet[Internet] --> edge[Edge<br/>TLS]
+    office[Office / VPN] -->|dashboard| edge
+    office -->|deployments| open
+    edge --> gated
+    subgraph caddy[Caddy on the box]
+        gated[":8080<br/>sign-in required"]
+        open[":80<br/>open"]
+    end
+    gated --> dash[Dashboard]
+    gated -.->|once wildcard DNS exists| deps
+    open --> deps[Deployments]
+    dash <--> gh[(GitHub)]
+```
+
+**The two doors.** Which one a request uses is decided by where it arrives, not by anything in the request: the edge only ever connects to `:8080`, and office/VPN machines reach `:80` directly. On `:8080`, Caddy asks the dashboard's `/auth/check` about every request first (`forward_auth`). The one exception is the dashboard's own `/auth/*`, where sign-in starts. Anyone without a sign-in wants [the public Launchpad](#the-public-launchpad), which isn't on the box. The bare domain must not resolve to the box on office/VPN DNS: `:80` would serve the dashboard over plain http, and sign-in breaks there. The proxy never looks at client addresses. If the edge is ever pointed at `:80`, the internet gets in without a sign-in.
+
+**What the dashboard holds.** Signing in goes through the GitHub App, and is refused unless that GitHub account can see the repository. Read access shows the page; write access adds the buttons. The GitHub token stays in the dashboard's memory and is never sent to the browser or written to disk. The client secret in `~/dashboard/.env` is the only credential stored on the box; the B2 key the Downloads list needs reaches it only for the length of a `publish-launchpad.yaml` run (see below). Nothing calls GitHub while nobody has the page open.
+
+**The cookies**, for when a sign-in misbehaves:
+
+| cookie | set for | what it is | lasts |
+|---|---|---|---|
+| `oms_dash_state` | the bare domain | a sign-in in progress, checked when GitHub sends the browser back | 10 minutes, or until the sign-in completes |
+| `oms_dash_session` | the bare domain | the dashboard session, and through it the person's GitHub token | the token's own life (8 hours), never more than 12 |
+| `oms_gate` | the whole domain | opens the `:8080` door for this browser; points at the session and holds no token | exactly as long as the session |
+
+**What happens when the dashboard is down or restarted:**
+
+- **Restarted** (every deploy that changes `.github/deploy/dashboard/`): sessions are only in memory, so everyone is signed out, on the dashboard and through the gated door, and signs in again.
+- **Down:** the gated door answers every request with an error, because there is nothing to answer `/auth/check`. The public Launchpad isn't affected. The open door keeps working: deployments on the VPN don't depend on the dashboard.
+- **GitHub down:** nobody can sign in, and the dashboard's GitHub details (commit subjects, "N behind", "deploying now") stop updating. What's running, and the state of each container, still come from `snapshot`.
+
 ### Reverse proxy
 
 | file | |
 |---|---|
-| `.github/deploy/proxy/compose.proxy.yaml` | the Caddy container, its ports, its CA volume and the shared network |
-| `.github/deploy/proxy/proxy.Caddyfile` | the one route for every deployment, and why it is Caddy (see its comments) |
+| `.github/deploy/proxy/compose.proxy.yaml` | the Caddy container, its ports and the shared network |
+| `.github/deploy/proxy/proxy.Caddyfile` | the one route for every deployment, the gate on the internet door, and why it is Caddy (see its comments) |
 
-Set up once, outside CI:
+Set up once, outside CI. This is the full setup, with deployments on the internet behind the gate; for the dashboard alone on the internet, see [VPN-only deployments](#vpn-only-deployments).
 
-1. **A wildcard DNS record** for `*.<DEPLOY_DOMAIN>`, pointing at whatever terminates TLS.
-2. **One vhost on the edge proxy** for `*.<DEPLOY_DOMAIN>`, forwarding to this box on port 80. Skip it if the box is reached directly.
+1. **DNS records** for `<DEPLOY_DOMAIN>` (the dashboard) and `*.<DEPLOY_DOMAIN>` (the deployments), both pointing at whatever terminates TLS.
+2. **The two doors**, both plain HTTP with `Host` kept:
+   - **the office and the VPN → port 80**, the open door: sync, LAN tablets and CI's route check use it. People reach it directly, which is why it is on 80 — its addresses carry no port.
+   - **the internet → the edge → port 8080**, the gated door: every request needs a GitHub sign-in (see [the gate](#the-gate-in-front-of-every-deployment)). Only the edge connects here, so the port can be anything.
+
+   The edge must **never send the internet to 80**. If office machines reach the edge through the office's public address, that address counts as the office.
 3. **Run `docker-deploy-services.yaml`.** It creates the `oms-edge` network if it is missing and brings the proxy up.
 
-It takes 80 and 443. If something already holds them, set `PROXY_PORT` / `PROXY_TLS_PORT` in `~/proxy/.env` and rerun the workflow — compose sees the changed value and recreates the proxy. CI reads the port back from the container and needs no variable.
+It takes 80, 8080 and 443. If something already holds them, set `PROXY_PORT` (open) / `PROXY_GATED_PORT` (gated) / `PROXY_TLS_PORT` (open, over TLS) in `~/proxy/.env` and rerun the workflow — compose sees the changed value and recreates the proxy. `PROXY_BIND` publishes the open door, on 80 and 443, on one address only; it is only needed if the box has an interface the internet can reach, since docker's published ports bypass `ufw`/firewalld. Behind NAT, leave it unset. CI reads the open door's address back from the container and needs no variable.
 
-Routing is a pure function of the hostname — `pr-470.<domain>` goes to the container `pr-470` on port 8000 — so a new deployment is routable the moment it is up and nothing is ever reloaded. Two consequences: **anything attached to `oms-edge` is reachable as a subdomain**, so attach nothing unrelated; and a deploy creates `oms-edge` if missing but **never the proxy**, so a box without one gives healthy, unroutable deployments (the deploy's route check says so).
+Routing is a pure function of the hostname — `pr-470.<domain>` goes to the container `pr-470` on port 8000, and the bare `<domain>` to the dashboard — so a new deployment is routable the moment it is up and nothing is ever reloaded. Two consequences: **anything attached to `oms-edge` is reachable as a subdomain**, so attach nothing unrelated; and a deploy creates `oms-edge` if missing but **never the proxy**, so a box without one gives healthy, unroutable deployments (the deploy's route check says so).
+
+#### VPN-only deployments
+
+The setup without a wildcard: the dashboard is on the internet, the deployments are reachable from the office and the VPN only. The gate still stands in front of the dashboard, and is ready for the deployments when they follow — the wildcard record, its certificate and one more edge route, with nothing on the box changing.
+
+`DEPLOY_DOMAIN` is still the public domain — the dashboard is the domain itself, the deployments are one label under it — and the office and VPN DNS answers for the deployments itself.
+
+1. **Public DNS and a certificate for `<DEPLOY_DOMAIN>` alone.** No wildcard, no DNS-01.
+2. **One edge route**, for that hostname only, to port 8080 with `Host` kept.
+3. **Office and VPN DNS:** `*.<DEPLOY_DOMAIN>` to the box, and the bare `<DEPLOY_DOMAIN>` left to public DNS (or pointed at the edge's internal address). It must not go to the box: there the dashboard is ungated plain http, and sign-in comes back to https and breaks. dnsmasq's `address=` covers the bare domain along with its subdomains, so with dnsmasq override the bare domain with a `host-record`, which wins over `address=`:
+
+   ```
+   address=/<DEPLOY_DOMAIN>/<box internal address>
+   host-record=<DEPLOY_DOMAIN>,<edge internal address>
+   ```
+4. **Set the `DEPLOY_SCHEME` repository variable to `http`**, and rerun `docker-deploy-services.yaml` so the dashboard's links follow.
+
+Deployments are plain HTTP on the VPN, which encrypts the hop already, and the links CI posts are `http://`. The open door also answers on 443, with a certificate from Caddy's internal CA, so an `https://` deployment link reaches the deployment behind a certificate warning instead of failing. See [Local HTTPS](#local-https).
+
+#### The gate in front of every deployment
+
+Deployments are seeded with datasets whose logins are known, and a logged-in user can download a deployment's whole database — so the internet door lets nothing through without a GitHub sign-in. Caddy puts each request to the dashboard's `/auth/check` first (`forward_auth`), and only the dashboard's own `/auth/*` is let through unasked.
+
+- **Who gets in:** anyone who can see this repository — the dashboard's own rule. Write access is still what the dashboard's buttons need.
+- **How:** signing in sets a second cookie, `oms_gate`, for the whole domain. It holds no token — a deployment runs some branch's code, so nothing sent to one may be worth stealing — and the proxy strips it before a request reaches a deployment. It ends when the dashboard session does: after at most 12 hours, on sign-out, or when the dashboard restarts.
+- **A page load** is sent to sign in and brought back to where it was going. **Anything else** — the app's own requests, a remote site syncing — gets a 401.
+- **No exception for sync:** sync credentials are in the seeded datasets, so they protect nothing. A remote site has to be in the office or on the VPN.
+- **If the dashboard is down**, every deployment is unreachable through the internet door. The open door does not depend on it.
+
+#### The public Launchpad
+
+The Home, Downloads and Schema pages are also published for anyone, as a static site on GitHub Pages. It isn't served from the box at all: `publish-launchpad.yaml` runs on the deploy lane, builds the site and pushes it to a public repo, and Pages serves that repo.
+
+- **One codebase:** the site is the dashboard's own page (`.github/deploy/dashboard/ui`) built with `pnpm build:public`, which keeps only those three pages and reads its data from `/data` instead of `/api`. `ui/src/site.ts` says which build is running.
+- **What leaves the box:** `<store>/releases.json`, the same file the Launchpad's Downloads page reads (see [Deployments dashboard](#deployments-dashboard)), with only the releases of open-mSupply and the original mSupply kept (`publicReleases` in `publish-launchpad.mjs`), and the public copy of the schema store, which names only releases, develop and main and sets their PR, deployment, commit and run fields to null (`publicIndex` in `publish-schema.mjs`). Nothing else of the store is read.
+- **When:** after any workflow that publishes something it lists (tag releases, installers, APKs, tag clean-ups, schema captures, named deployments), after the dashboard itself deploys, and once a day. A run with nothing new pushes nothing. An error from Docker Hub or B2, or a missing B2 key, fails the run, so both sides keep their last good list.
+- **The public repo** holds only what the workflow pushes, and is overwritten on each push. Don't edit it by hand.
+
+**Setting it up**, once:
+
+1. Create the public repo, empty, and install the tmf-ci-bot App on it.
+2. Set the repository variable `LAUNCHPAD_PUBLIC_REPO` (`<owner>/<name>`). Until it's set, the workflow only updates the Launchpad's own Downloads list. The site then works at `https://<owner>.github.io/<name>/`. For a domain of its own, also set `LAUNCHPAD_PUBLIC_DOMAIN` (e.g. `launchpad.msupply.foundation`); it must not be the Launchpad's own `DEPLOY_DOMAIN`.
+3. Run `publish-launchpad.yaml` by hand. Then in the public repo's **Settings → Pages**, deploy from the `main` branch, root folder.
+4. With a domain of its own: point a DNS `CNAME` for it at `<owner>.github.io`, and once Pages has checked it, tick **Enforce HTTPS**.
+
+#### Database schemas
+
+The Schema page's schemas are captured per **image**, never from a deployment. A deployment's database may have been restored from any dump, a client's included, and the dump would bring along objects the migrations don't remove, plus partitions sized to its data. So `schema-publish.sh` starts the image in a throwaway container instead: empty, no network, long enough to run its migrations. It reads the schema there and removes the container.
+
+- **When:** after every deploy (`docker-deploy.yaml`, which never fails the deploy over it) and for releases (`publish-schema.yaml`, or **Add a release**).
+- **Once per image:** the store remembers which images it has captured, so a reseed, a restart or a second server on the same commit only files the schema under its name, without starting anything. A new image costs one throwaway server start: a minute or two on the box.
+- **Files:** each file is named by a hash of exactly what it holds. Two versions share a file only when their schemas are identical.
+- **Upgrading from schema 1:** an older store was captured from deployments. The first publish clears it, and develop and the PR previews come back as they next deploy. Dispatch `publish-schema.yaml` with the release tags you want listed, e.g. `v2.20.0 v3.00.00 v3.04.00`.
 
 #### Local HTTPS
 
-The proxy also serves every deployment on 443 with a wildcard certificate from Caddy's own CA — for reaching deployments directly from this network, and for browser features that need a secure context. Trust the root on the machine you browse from:
+The open door answers on 443 too, for `*.<DEPLOY_DOMAIN>` and the old dashboard address, with certificates from Caddy's own CA (`tls internal`) — no ACME and no credentials on the box. It is there so the office and the VPN don't get stuck on https: without it, an `https://` deployment link — copied, or upgraded by the browser — fails, with nothing saying http would work. Like 80 it is ungated, so the edge must never send the internet to it.
 
-```bash
-docker cp oms-proxy:/data/caddy/pki/authorities/local/root.crt ./caddy-root.crt
-# macOS
-sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain caddy-root.crt
-# Debian/Ubuntu
-sudo cp caddy-root.crt /usr/local/share/ca-certificates/ && sudo update-ca-certificates
-```
+Not the bare domain: that goes to the edge (see [VPN-only deployments](#vpn-only-deployments)), and the dashboard sends HSTS, so a browser that has signed in once refuses a self-signed certificate there outright rather than warning. The same goes for a deployment if its domain ever comes under HSTS.
 
-Firefox has its own store: import the root, or set `security.enterprise_roots.enabled`. The CA lives in the `caddy-data` volume, so use plain `docker compose down`, never `down -v`, or every machine has to trust a new root.
+Use `http://` links: the 443 door is only there so an `https://` one doesn't dead-end. **Don't add the CA's root to a machine's trust store.** It can sign a certificate for any site, not just this domain, and its key is in a docker volume on a box whose runners run any branch's workflows - so anyone who can push a branch could intercept that machine's HTTPS traffic.
+
+The CA is in the `oms-proxy_caddy-data` volume, so it survives the new container each Caddyfile edit makes and a browser's click-through for a deployment keeps working. `docker compose down -v` on the proxy deletes it, and the warnings come back once.
 
 ### Deployments dashboard
 
 Shows every deployment on the box — the commit actually running, how far behind its branch, expiry, and whether a deploy is in flight — and lets QA and product start, extend, reseed and remove servers without the GitHub form. Its buttons dispatch the same workflows, with the signed-in person's own token.
 
-Two more tabs: **Plugin bundles** (see [below](#plugin-bundles)) and **Releases**, which lists every open-mSupply release, release candidate and nightly with its Docker images (click one to copy its `docker pull`), Windows installers and Android APKs. A third container, `releases`, builds that list every ten minutes from Docker Hub's public tags and the public `msupply-releases` B2 bucket, and writes it to a file the dashboard serves. It needs no credentials: the bucket can't be listed without a key, so each file is looked up by the name the release workflows upload it under. It lists whatever Docker Hub still holds: every release, and a month of nightlies and RCs, per `cleanup-docker-tags.yaml`. APKs are named after `package.json`'s version rather than the tag, so they're looked for under each way the tag spells its version; that misses only a one-off tag whose version differs from its branch's.
+Two more tabs: **Plugin bundles** (see [below](#plugin-bundles)) and **Downloads**, which lists every open-mSupply release, release candidate and nightly with its Docker images (click one to copy its `docker pull`), Windows installers and Android APKs. A switch beside the search shows the original mSupply's Windows installers instead: releases, dev builds, and builds dispatched from a branch. [The public Launchpad](#the-public-launchpad) has the same switch, with the releases of each app only.
 
-Its files are in `.github/deploy/dashboard/`. How it works and why — the container split around the docker socket, sign-in and access, where each field comes from — is in the header comments of `compose.dashboard.yaml`, `snapshot.mjs`, `releases.mjs` and `web.mjs`. The page itself is a Solid app in `ui/`, built into the image by the `Dockerfile`'s first stage; `ui/README.md` says how to run it locally.
+`publish-launchpad.yaml` builds both lists whenever an open-mSupply workflow publishes a build, and once a day, and writes them to `<store>/releases.json`, which the dashboard serves and the public Launchpad copies, releases only. Open-mSupply's rows are Docker Hub's public tags: every release, and a month of nightlies and RCs, per `cleanup-docker-tags.yaml`. Their files, and all of mSupply's, come from listing the public `msupply-releases` B2 bucket, where both apps' release workflows upload. A run lists the whole bucket, a handful of B2 calls. mSupply's builds run in another repository, which `workflow_run` doesn't hear from, so they show up at the next daily run. So does anything uploaded by hand, or run the workflow by hand. A box set up before this had a `releases` container: the services deploy removes it, and its volume can go with `docker volume rm oms-dashboard_releases`.
+
+**The B2 key.** Listing the bucket takes a key: the repository secrets `B2_LIST_KEY_ID` and `B2_LIST_APPLICATION_KEY`, which the workflow hands only to its lookup container, for the length of the run. Nothing is stored on the box. Make the key in Backblaze under **App Keys → Add a New Application Key**: restricted to `msupply-releases`, **Read Only**, without **Allow List All Bucket Names**. Don't reuse the release workflows' `B2_KEY_ID`: that one can write to the bucket. Without the secrets, or with a key that can't list the bucket, the run fails and the last good list stays.
+
+Its files are in `.github/deploy/dashboard/`. How it works and why — the container split around the docker socket, sign-in and access, where each field comes from — is in the header comments of `compose.dashboard.yaml`, `snapshot.mjs`, `releases.mjs`, `web.mjs` and `publish-launchpad.yaml`. The page itself is a Solid app in `ui/`, built into the image by the `Dockerfile`'s first stage; `ui/README.md` says how to run it locally.
 
 **1. Create the GitHub App** people sign in through, once, under the organisation (Settings → Developer settings → GitHub Apps → New):
 
-- **Callback URL:** `https://dashboard.<DEPLOY_DOMAIN>/auth/callback` (add `http://localhost:8000/auth/callback` to try it locally)
+- **Callback URL:** `https://<DEPLOY_DOMAIN>/auth/callback` (add `http://localhost:8000/auth/callback` to try it locally)
 - **Webhook:** off. **Installable:** only this account. Leave token expiry on.
 - **Repository permissions:** Actions read & write (the runs, and the buttons), Contents read (commit subjects, "behind"). Nothing else.
 - **Install** it on the organisation for this repository only, and **generate a client secret**.
@@ -277,25 +365,49 @@ EOF
 chmod 600 ~/dashboard/.env
 ```
 
-**3. Run `docker-deploy-services.yaml`**, then open `https://dashboard.<DEPLOY_DOMAIN>`. The client secret is the only credential on the box — no token is stored; everything is asked with the viewer's own. Read access to the repository shows the page, write access adds the buttons.
+**3. Run `docker-deploy-services.yaml`**, then open `https://<DEPLOY_DOMAIN>`. Its old address, `https://dashboard.<DEPLOY_DOMAIN>`, redirects there. The same sign-in is the [gate in front of every deployment](#the-gate-in-front-of-every-deployment) on the internet door. The client secret is the only credential stored on the box — no token is stored; everything is asked with the viewer's own. Read access to the repository shows the page, write access adds the buttons.
 
-- **No proxy change is needed**: the container is named `dashboard`, listens on 8000 and sits on `oms-edge`.
+- **The proxy finds it by name**: the bare domain goes to the container `dashboard` on port 8000, on `oms-edge`.
 - **Reserved names:** `dashboard`, `oms-dashboard`, `oms-dashboard-snapshot`, `oms-dashboard-releases` and `oms-proxy` are refused by the named-deployment workflow and the dashboard for every action, since a teardown is `docker compose -p <name> down -v`. The list is `BOX_SERVICES` in `.github/scripts/deploy-plan.js` and `web.mjs`.
 - **Buttons that dispatch a workflow branch** before it merges: add `DISPATCH_REF=<branch>` to `~/dashboard/.env` and rerun the workflow. The buttons dispatch on `develop` otherwise.
 
 ### Plugin bundles
 
-The dashboard's **Plugin bundles** tab (`https://dashboard.<DEPLOY_DOMAIN>/plugins`) lists ready-to-install bundles of the country plugins in `frontend/plugins/`, **one version line per plugin**: its released versions newest first, which version `develop` and each RC carry, and branch builds as pre-releases. Each has a download button; the file installs through the server's plugin upload or `remote_server_cli install-plugin-bundle`.
+The dashboard's **Plugin bundles** tab (`https://<DEPLOY_DOMAIN>/plugins`) lists ready-to-install bundles of the country plugins in `private/plugins/`, **one version line per plugin**: its released versions newest first, which version `develop` and each RC carry, and branch builds as pre-releases. Each has a download button; the file installs through the server's plugin upload or `remote_server_cli install-plugin-bundle`.
 
 They come from **`publish-bundles.yaml`**:
 
 - **Releasing a version:** bump the plugin's `version` (both halves, if it has a backend; `pnpm build:plugins` refuses halves that disagree) and merge it. The first build of a new version on `develop`, an RC branch or a release tag is published, and never changes after. A build whose bytes differ from the released version's is not published; the run warns, and the dashboard flags the branch. Bytes are the test, not source: a toolchain change (a vite or build-preset bump in the lockfile, a new `HOST_RUNTIME`) changes every bundle, and each plugin then needs a version bump to release, since what gets installed has changed.
 - **RC branches and release tags** release a version the same way, once the branch has this workflow. RC branches cut before it can be published by running the workflow by hand from `develop` on the RC; a plugin whose halves still disagree there (CIV before 3.0.0) is skipped with a warning and the rest publish.
-- **Pre-releases:** build a branch from the dashboard's Plugin bundles tab (its **Build a branch** button, for anyone with write access), or run the workflow by hand from Actions. The tab shows builds in flight and any that failed in the last day. Anything that differs from a release shows as a pre-release, the newest per branch, pruned after `BUNDLE_RETAIN_DAYS` (default 30).
+- **Pre-releases:** build a branch from the dashboard's Plugins page (its **Build from a branch** button, or **Build plugin bundles** on a server's own page, for anyone with write access), or run the workflow by hand from Actions. The Plugins page shows builds in flight and any that failed in the last day. Anything that differs from a release shows as a pre-release, the newest per branch, pruned after `BUNDLE_RETAIN_DAYS` (default 30).
 - **Compatibility** is recorded beside each version, not as part of it. Today it is derived from the version (the server loads a plugin whose major.minor is at most its own) and from the frontend half's host runtime; see `compatOf` in `.github/scripts/publish-bundles.mjs`.
-- **How:** the build runs `pnpm build:plugins` on a hosted runner and drops the `plugins/examples` bundles. A short job on the `deploy` lane then runs `publish-bundles.mjs` in a throwaway `node` container, which writes into the **`oms-bundles` volume**: `index.json` plus one file per distinct bundle, named by its sha256. The dashboard mounts it read-only. Both this workflow and `docker-deploy-services.yaml` create the volume if it is missing, so there is nothing to set up by hand.
+- **How:** the build runs `pnpm build:plugins` on a hosted runner and drops the `plugins/examples` bundles. A short job on the `deploy` lane then runs `publish-bundles.mjs` in a throwaway `node` container, which writes into the **Launchpad store** (`DEPLOY_BUNDLES_DIR`, see [User and directories](#user-and-directories)): `index.json` plus one file per distinct bundle, named by its sha256. The dashboard mounts it read-only.
 
-**The store is a cache, not the record.** The plugin build is reproducible (the same commit gives byte-identical bundles), so a pruned bundle, or a lost volume, is rebuilt by running the workflow on the commit it came from. Nothing on the box needs backing up for this.
+**The store is a cache, not the record.** The plugin build is reproducible (the same commit gives byte-identical bundles), so a pruned bundle, or a lost store, is rebuilt by running the workflow on the commit it came from. Nothing on the box needs backing up for this.
+
+### Report bundles
+
+The dashboard's **Reports** page (`https://<DEPLOY_DOMAIN>/reports`) lists each client's custom reports from `private/reports/clients/`, ready to install: **one `reports.json` per client per build**, holding every version of each of the client's reports, since a server picks the version of each report that suits it. It installs through the central server's report upload (**Manage → Reports**) or `remote_server_cli upsert-reports`.
+
+They come from **`publish-reports.yaml`**:
+
+- **What is kept:** the newest build of `develop`, of each RC branch and of each release tag, for good. A push there publishes when `private/reports/` or the bundler (`scripts/reports/`) changed; a release tag always does.
+- **Branch builds:** the Reports page's **Build from a branch** button (for anyone with write access), or the workflow run by hand. The newest per branch, pruned after `BUNDLE_RETAIN_DAYS` (default 30).
+- **A client that fails to build** keeps its last bundle for that ref, and the run warns; the other clients still publish. A client removed from the tree loses its bundle for that ref.
+- **Version bumps still matter.** A server installs a report by its id (`<code>_<version>_<is_custom>`) and keeps one it already has, so a report changed without a new version never reaches servers that had it. The store remembers the first `develop`/RC/tag build of each report version, and a later build that changes it is flagged on the page ("needs a version bump") and warned about in the run, naming the ref it differs from. Reports are compared as built, so a bundler or dependency change flags every report it changes. Two reports in one client with the same id are flagged too ("shares an id"): only one of them installs.
+- **How:** the build runs `scripts/reports/build-reports.mjs --each private/reports/clients` on the `build` lane, in a pinned `node` container (pnpm's store in `/cache/pnpm`), as `build-standard-reports.yaml` does. A short job on the `deploy` lane then runs `publish-reports.mjs` in a throwaway `node` container, which writes into the same **Launchpad store** as the plugin bundles, under `reports/`, and takes the same lock.
+
+The store is a cache here too: the report build is reproducible, so anything lost is rebuilt by running the workflow on the commit it came from. The run builds the ref's reports with its own copy of the bundler, so that works for any ref from the move to pnpm (#1444) on; nothing older can be built.
+
+### Datasets
+
+A new server, or one being reset, can start with more than the small sample data built into the image (`e2e`, `reference1`): any postgres custom-format dump (`pg_dump -Fc`) of an open-mSupply database added to the Launchpad, such as the reference system's (<https://reference.msupply.foundation>, 3 months, 12 months or 3 years of a fictional country's supply chain) or an anonymised client database.
+
+- **Adding one:** run **`publish-dataset.yaml`** by hand with a name (e.g. `reference-3-months`), the dump's URL - or `file:///path` for one you have copied onto the box - a label and a line of description. It downloads the dump into the store under `datasets/<name>/`, and reads the open-mSupply version it was taken at and its users straight out of it with `pg_restore` — nothing is restored. It must be a custom-format dump without privileges (`pg_dump -Fc --no-owner --no-privileges`); anything else is refused. Restoring any dump runs the SQL it holds, so only add dumps from somewhere you trust. Adding a name that exists replaces it; removing one (`remove`) deletes its file. Servers started from either keep their data.
+- **Choosing one:** the new-server form lists every dataset under **With example data**, and a server's **Reset data** has the same list, so a reset can switch data. Migrations only go forward, so a dataset is offered only to versions at least as new as the one it was taken at; the others are listed greyed out with why. A branch, a pull request or develop not yet deployed counts as current.
+- **Logins:** every user's password is set to `pass` as the server is seeded, as in the sample data, whatever the dump's own passwords were. A server's **Log in** card lists the dataset's users.
+- **How it is seeded:** `docker-deploy.yaml` restores the dump in a one-off container of the server's own image, on its new database volume, before the server first starts: the image's `entry-postgres.sh` restores it (images from v3.2 can), its migrations run, every password becomes `pass`, then `refresh-dates` (which also turns outgoing sync off) - see `.github/scripts/seed-from-dump.sh`. A seed that fails removes the volume, so the next deploy starts again rather than keeping a half-restored database.
+- **Kept until removed.** Unlike the bundles and schemas, a dataset is not reproducible from the repository, so nothing prunes it — and nothing backs it up either, beyond the host directory being outside docker. Mind the disk: the 3-year reference database is 440 MB as a dump, and every server seeded from it holds its own copy, restored.
 
 ## Verifying
 
@@ -322,6 +434,10 @@ Why the box is set up this way, so nobody has to rediscover it. Decisions record
 - **Distro `docker.io`, not Docker's own repo.** Nothing these jobs do is version-sensitive, and the distro package updates through normal `apt` with no third-party repo or GPG key on a machine that holds registry credentials.
 - **Lane roles are exclusive.** A lane carries one label so a 19-minute build never queues ahead of a one-minute deploy or teardown. That is why `e2e` became a role of its own rather than borrowing `build`; the reasoning is in the header of `frontend-e2e-nightly.yaml`.
 - **One machine-id per deployment**, not the host's: two deployments sharing one collide when both pair to the same central server. See `docker-deploy.yaml`.
+- **Local HTTPS with a self-signed CA, not a real certificate.** The office and the VPN reach deployments without the edge, so the edge's certificate is not there. A private CA is the only certificate the box can issue itself. It was removed once, when the edge took over TLS and nobody had installed its root; but office and VPN users still followed `https://` deployment links and got nothing. A warning to click through beats a page that doesn't load.
+- **Two front doors split by port, not by client address.** Every request reaches the proxy from the edge's address, so telling the internet from the office there would mean trusting `X-Forwarded-For`, and a mistake in that is a way past the gate. The edge knows the real client and picks the port. The open door is 80 because people reach it directly and type its addresses; the gated door is 8080 because only the edge connects to it, and is told the port once. See the header of `.github/deploy/proxy/proxy.Caddyfile`.
+- **No sync exception in the gate.** Sync credentials ship in the seeded datasets, so letting `/central/*` through would open every deployment's sync to the internet. Remote sites sync from the office or the VPN.
+- **A gate cookie separate from the dashboard's session.** It has to reach every deployment, and deployments run branch code, so it carries nothing but "signed in" — never the GitHub token. See the header of `.github/deploy/dashboard/web.mjs`.
 - **The proxy's host port is read back, not configured.** A `PROXY_PORT` repository variable used to duplicate what the proxy already knew, and a mismatch reported every deployment as unroutable. If it is still set on the repository it is inert. See `docker-deploy.yaml`.
 - **`DEPLOY_SHARED_DAEMON` skips the registry rather than adding a local one.** The image then exists only on this box's disk: a prune or a rebuilt box means recompiling rather than pulling, but costs no data, since databases are volumes. `skip_if_exists` probes the daemon instead of the registry while it is set. See `docker-named-deployment.yaml`.
 - **`e2e`, not `reference1`, as the default dataset.** `reference1` is a 2023 V5/V6 export, and `SyncBufferRow.source_site_id` is a plain `i32` with no `#[serde(default)]`, so it fails to deserialise (`missing field 'source_site_id'`) before integration. Fixing it is a server change: that `#[serde(default)]` plus a re-export. `e2e` is exercised nightly, so it cannot rot unnoticed.

@@ -49,6 +49,10 @@ export const Toolbar = () => {
                   label: t('label.finalised'),
                   value: PurchaseOrderNodeStatus.Finalised,
                 },
+                {
+                  label: t('label.cancelled'),
+                  value: PurchaseOrderNodeStatus.Cancelled,
+                },
               ],
               urlParameter: 'status',
               isDefault: false,

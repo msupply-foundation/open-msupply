@@ -9,7 +9,6 @@ import {
   genderLabelKey,
   groupPreferences,
   isAmcExplainerShown,
-  matchesPreferenceFilter,
   OFFERED_GENDER_OPTIONS,
   preferenceLabelKey,
   selectedGenders,
@@ -22,8 +21,9 @@ import {
 const pref = (
   key: GlobalPreference['key'],
   valueType: GlobalPreference['valueType'],
-  value: unknown = false
-): GlobalPreference => ({ key, valueType, value });
+  value: unknown = false,
+  overridingStores: GlobalPreference['overridingStores'] = null
+): GlobalPreference => ({ key, valueType, value, overridingStores });
 
 const CATALOGUE: GlobalPreference[] = [
   pref('allowTrackingOfStockByDonor', 'BOOLEAN'),
@@ -46,6 +46,11 @@ const CATALOGUE: GlobalPreference[] = [
     inventoryAdjustmentsEnabled: false,
     maxDays: 0,
   }),
+  pref('decimalPlacesForNumbers', 'INTEGER', 2),
+  pref('dispensingScreen', 'DISPENSING_SCREEN', 'STANDARD'),
+  pref('useUnnamedPatient', 'BOOLEAN'),
+  pref('startWithUnnamedPatient', 'BOOLEAN'),
+  pref('askForPatientType', 'BOOLEAN'),
 ];
 
 // Label lookup for filter tests — English labels, as displayed.
@@ -65,12 +70,13 @@ const GROUP_LABELS = {
   'title.average-monthly-consumption': 'Average monthly consumption',
   'label.expired-stock': 'Expired stock',
   'label.backdating': 'Backdating',
+  dispensing: 'Dispensing',
 } as const;
 const groupLabelOf = (group: { labelKey: keyof typeof GROUP_LABELS }) =>
   GROUP_LABELS[group.labelKey];
 
 describe('grouping (OMS-REG-GPREF-01.2)', () => {
-  it('splits the catalogue into ungrouped rows and the four groups, in served order', () => {
+  it('splits the catalogue into ungrouped rows and the five groups, in served order', () => {
     const { ungrouped, groups } = groupPreferences(CATALOGUE);
     expect(ungrouped.map(p => p.key)).toEqual([
       'allowTrackingOfStockByDonor',
@@ -83,6 +89,7 @@ describe('grouping (OMS-REG-GPREF-01.2)', () => {
       'itemMarginOverridesSupplierMargin',
       'isGaps',
       'displayPopulationBasedForecasting',
+      'decimalPlacesForNumbers',
     ]);
     // Groups ordered by their FIRST member's catalogue position — Procurement
     // first (authorisePurchaseOrder is row 2), then AMC, Expired stock,
@@ -92,6 +99,16 @@ describe('grouping (OMS-REG-GPREF-01.2)', () => {
       'title.average-monthly-consumption',
       'label.expired-stock',
       'label.backdating',
+      'dispensing',
+    ]);
+    // OMS-REG-GPREF-01.36: the four dispensing preferences, in served order.
+    expect(
+      groups.find(g => g.labelKey === 'dispensing')?.members.map(m => m.key)
+    ).toEqual([
+      'dispensingScreen',
+      'useUnnamedPatient',
+      'startWithUnnamedPatient',
+      'askForPatientType',
     ]);
     // Members keep catalogue order, not config order.
     expect(
@@ -103,15 +120,11 @@ describe('grouping (OMS-REG-GPREF-01.2)', () => {
 });
 
 describe('filter (OMS-REG-GPREF-01.4/.5/.6)', () => {
+  // The filter mechanics are the shared catalogue helper's (domain/preferences
+  // tests); this pins them to this page's groups and labels.
   const grouped = groupPreferences(CATALOGUE);
 
-  it('matches labels case-insensitively; a blank term matches everything', () => {
-    expect(matchesPreferenceFilter('Days in a month', 'DAYS')).toBe(true);
-    expect(matchesPreferenceFilter('Days in a month', '')).toBe(true);
-    expect(matchesPreferenceFilter('Days in a month', 'zzz')).toBe(false);
-  });
-
-  it('a member match keeps the whole group (.5)', () => {
+  it('a member match keeps the whole group (.5); no match leaves nothing (.6); clearing restores everything (.4)', () => {
     const filtered = filterCatalogue(
       grouped,
       labelOf,
@@ -122,27 +135,15 @@ describe('filter (OMS-REG-GPREF-01.4/.5/.6)', () => {
     expect(filtered.groups.map(g => g.labelKey)).toEqual([
       'label.expired-stock',
     ]);
-    // Whole group, both members.
     expect(filtered.groups[0]?.members).toHaveLength(2);
-  });
 
-  it('a group-label match keeps the group even when no member label matches (.5)', () => {
-    const filtered = filterCatalogue(
-      grouped,
-      labelOf,
-      groupLabelOf,
-      'procurement'
-    );
-    expect(filtered.groups.map(g => g.labelKey)).toEqual(['label.procurement']);
-  });
-
-  it('no match leaves nothing (.6); clearing restores everything (.4)', () => {
     const none = filterCatalogue(grouped, labelOf, groupLabelOf, 'zzzqqq');
     expect(none.ungrouped).toEqual([]);
     expect(none.groups).toEqual([]);
+
     const all = filterCatalogue(grouped, labelOf, groupLabelOf, '');
-    expect(all.ungrouped).toHaveLength(10);
-    expect(all.groups).toHaveLength(4);
+    expect(all.ungrouped).toHaveLength(11);
+    expect(all.groups).toHaveLength(5);
   });
 });
 
@@ -180,12 +181,30 @@ describe('auto-save input (OMS-REG-GPREF-01.8/.9)', () => {
     expect(
       buildAutoSaveInput('preventTransfersMonthsBeforeInitialisation', 6)
     ).toEqual({ preventTransfersMonthsBeforeInitialisation: 6 });
+    expect(buildAutoSaveInput('decimalPlacesForNumbers', 3)).toEqual({
+      decimalPlacesForNumbers: 3,
+    });
   });
 
   it('coerces wrong-typed values to the kind’s zero', () => {
     expect(buildAutoSaveInput('isGaps', 'yes')).toEqual({ isGaps: false });
     expect(buildAutoSaveInput('syncRecordsDisplayThreshold', 'x')).toEqual({
       syncRecordsDisplayThreshold: 0,
+    });
+  });
+
+  it('OMS-REG-GPREF-01.37: saves the dispensing screen as the word the wire takes, Standard unless Simple', () => {
+    expect(buildAutoSaveInput('dispensingScreen', 'SIMPLE')).toEqual({
+      dispensingScreen: 'SIMPLE',
+    });
+    expect(buildAutoSaveInput('dispensingScreen', 'STANDARD')).toEqual({
+      dispensingScreen: 'STANDARD',
+    });
+    expect(buildAutoSaveInput('dispensingScreen', null)).toEqual({
+      dispensingScreen: 'STANDARD',
+    });
+    expect(buildAutoSaveInput('useUnnamedPatient', true)).toEqual({
+      useUnnamedPatient: true,
     });
   });
 

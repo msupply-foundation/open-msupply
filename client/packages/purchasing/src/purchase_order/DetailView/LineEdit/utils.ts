@@ -23,7 +23,6 @@ export const createDraftPurchaseOrderLine = (
     expectedDeliveryDate: headerDates?.expectedDeliveryDate ?? null,
     requestedNumberOfUnits: 0,
     lineNumber: 0,
-    adjustedNumberOfUnits: null,
     pricePerPackBeforeDiscount: 0,
     pricePerPackAfterDiscount: 0,
     unit: item.unitName,
@@ -101,26 +100,11 @@ export const calculatePricesAndDiscount = (
 };
 
 export const calculateUnitQuantities = (
-  status: PurchaseOrderNodeStatus,
   data: Partial<DraftPurchaseOrderLine>
 ) => {
   const numberOfPacks = data?.numberOfPacks ?? 0;
   const requestedPackSize = data?.requestedPackSize ?? 0;
-  const totalUnits = numberOfPacks * requestedPackSize;
-
-  // Only adjust the requested number of units if the status is not confirmed yet
-  if (
-    status === PurchaseOrderNodeStatus.Confirmed ||
-    status === PurchaseOrderNodeStatus.Sent
-  ) {
-    return {
-      adjustedNumberOfUnits: totalUnits,
-    };
-  }
-  return {
-    requestedNumberOfUnits: totalUnits,
-    adjustedNumberOfUnits: totalUnits,
-  };
+  return { requestedNumberOfUnits: numberOfPacks * requestedPackSize };
 };
 
 type LineStatusOption = {

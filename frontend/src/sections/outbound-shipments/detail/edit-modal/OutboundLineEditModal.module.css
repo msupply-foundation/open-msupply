@@ -54,9 +54,12 @@
    inputs beside it use. A number, so tabular figures (ui-standards › tables ›
    data-type alignment) — it changes as the allocation does and shouldn't jitter. */
 .availableValue {
-  display: inline-flex;
-  align-items: center;
+  /* One line of text, not a flex row: a flex row drops the whitespace node
+     between the figure and its unit. line-height centres it in the input's
+     height as align-items did. */
+  display: inline-block;
   min-block-size: var(--input-height);
+  line-height: var(--input-height);
   font-variant-numeric: tabular-nums;
 }
 
@@ -68,22 +71,32 @@
   gap: var(--space-4);
 }
 
-/* The "placeholder added" info notice fills what's left of the row, wrapping
-   to its own full row when the header is tight. */
-/* The working area — the ONE scroll box between the header panel and the
-   footer, holding the batch grid and the advisory messages under it. They
-   scroll together, so a message costs nothing while the user is working in the
-   cards and is met at the end of them; a pinned band would have spent that
-   height on every screen, which on a tablet is most of a card. The table lays
-   out at content height inside it (DataTable's fitContent), so this is the
+/* The working area — the scroll box between the advisory messages and the
+   footer, holding the batch grid. The advisories sit above it, pinned, so they
+   stay in view however many batches the item has (issue #885); they only
+   render when something is reported, so a clean allocation spends no height
+   on them. The table lays out at content height inside it (DataTable's
+   fitContent), and the content above it fits the dialog body, so this is the
    only scroller — no box inside a box. */
 .workArea {
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: var(--space-3);
   min-block-size: 0;
   overflow-y: auto;
+}
+
+/* On a short screen (a landscape tablet with the keyboard up) there is no room
+   to pin the advisories: flex would hand this box next to nothing under them.
+   So it stops scrolling and takes its content height, and the dialog body is
+   the only scroller — the advisories scroll away above the cards, and the grid
+   keeps its floor (.batchGrid). 40rem is breakpoints.ts › veryShortViewport
+   (640px); a media query can't read the TS value, so keep the two in step. */
+@media (max-height: 40rem) {
+  .workArea {
+    flex: none;
+    overflow-y: visible;
+  }
 }
 
 /* The batch grid's flex region. The DataTable is flex: 1; min-block-size: 0 (it

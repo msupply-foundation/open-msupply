@@ -1,10 +1,10 @@
 import { createMemo, createSignal, Show } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import {
-  dateToIsoDate,
-  localDayToUtc,
-  utcToLocalDay,
-} from '../ui/elements/inputs/dateTimeConvert';
+  dateToCalendarDate,
+  calendarDateToInstant,
+  instantToCalendarDate,
+} from '../intl/calendarDate';
 import {
   DataTable,
   type CardGroup,
@@ -60,6 +60,7 @@ import {
   type AnatomyNode,
 } from './common';
 import type { PageMetadata } from './metadata';
+import { createLocalPagination } from '../ui/elements/table/createLocalPagination';
 
 /*
  * The Table & Card anatomy page (Layout Elements) — the interactive companion
@@ -146,7 +147,7 @@ const PACK_SIZES = [1, 10, 20, 30, 50, 100];
 // A stored instant for the given local calendar day, via the shared
 // conversion — so the mock rows display the intended day in any timezone.
 const isoDay = (month: number, day: number, year: number): string =>
-  localDayToUtc(dateToIsoDate(new Date(year, month - 1, day)));
+  calendarDateToInstant(dateToCalendarDate(new Date(year, month - 1, day)));
 
 // Expiry dates are generated RELATIVE to today so the near-expiry red tone
 // (getExpiryDateCell: ≤3 months out, past included) always has live examples
@@ -498,8 +499,6 @@ const WorkingTable = () => {
     desc: false,
   });
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
-  const [offset, setOffset] = createSignal(0);
-  const [pageSize, setPageSize] = createSignal(10);
   const [filter, setFilter] = createSignal<DemoFilter>({});
   const { config, setConfig } = createViewConfig('table');
   // Reset is offered only when the user has overridden a column (visibility /
@@ -512,7 +511,7 @@ const WorkingTable = () => {
   // offset may be past the end of the narrowed result set.
   const onFilterChange = (next: DemoFilter) => {
     setFilter(next);
-    setOffset(0);
+    page.reset();
   };
 
   // Client-side stand-in for the server's WHERE: search matches code OR name;
@@ -547,10 +546,15 @@ const WorkingTable = () => {
       return desc ? -cmp : cmp;
     });
   });
-  const rows = () => sorted().slice(offset(), offset() + pageSize());
+  // Pages the FILTERED set, so the page total tracks the active filter.
+  // Changeable page size, with nowhere to keep the choice.
+  const page = createLocalPagination(sorted, {
+    pageSize: 10,
+    onPageSizeChange: () => {},
+  });
   const onSort = (key: SortKey, desc: boolean) => {
     setSort({ key, desc });
-    setOffset(0);
+    page.reset();
   };
 
   const columns = (): Column<StockLine, SortKey>[] => [
@@ -607,7 +611,7 @@ const WorkingTable = () => {
   return (
     <DataTable
       columns={columns()}
-      rows={rows()}
+      rows={page.rows()}
       rowKey={r => r.id}
       // Filters live in the table's own toolbar (ui-standards § tables →
       // filtering); the page owns the filter state, like a real list.
@@ -632,18 +636,7 @@ const WorkingTable = () => {
       setConfig={setConfig}
       configIsDefault={configIsDefault()}
       emptyMessage="No items"
-      pagination={{
-        offset: offset(),
-        pageSize: pageSize(),
-        // The pager counts the FILTERED set, so the page total tracks the
-        // active filter.
-        total: filtered().length,
-        onOffsetChange: setOffset,
-        onPageSizeChange: size => {
-          setPageSize(size);
-          setOffset(0);
-        },
-      }}
+      pagination={page.pagination()}
     />
   );
 };
@@ -737,6 +730,76 @@ const RowStatesDemo = () => {
               : undefined
       }
     />
+  );
+};
+
+// Cell errors (meta.cellTone): an error about ONE field of a line rings that
+// field's cell — here the quantity of a line that would take stock below zero
+// — and the cell states it in words beneath the value. One predicate drives
+// both. The button clears and re-stamps the errors, as a page does when the
+// server answers again: the ring takes no room; only the message adds a line.
+const CellErrorsDemo = () => {
+  const [stamped, setStamped] = createSignal(true);
+  const quantityError = (row: StockLine) =>
+    stamped() && (row.id === 'sl-2' || row.id === 'sl-3');
+  const { config, setConfig } = createViewConfig('table');
+  const columns = (): Column<StockLine, SortKey>[] => [
+    {
+      c: { key: 'code' },
+      header: () => 'Code',
+      ...getCellDefinition<StockLine>('code'),
+    },
+    {
+      c: { key: 'name' },
+      header: () => 'Name',
+      ...getCellDefinition<StockLine>('name', { headerPosition: 'primary' }),
+    },
+    {
+      c: { key: 'quantity' },
+      header: () => 'Quantity',
+      ...getNumberCell<StockLine>({
+        cellTone: (row: StockLine) =>
+          quantityError(row) ? 'error' : undefined,
+      }),
+      size: remToPx(8),
+      // The number, and the error in words beneath it: the cell's own
+      // alignment places both, at the end in table view (a number column)
+      // and at the start on a card.
+      cell: info => (
+        <>
+          {info.row.original.quantity}
+          <Show when={quantityError(info.row.original)}>
+            <span
+              style={{
+                display: 'block',
+                color: 'var(--error-main)',
+                'font-size': 'var(--text-xs)',
+                'white-space': 'normal',
+              }}
+            >
+              Would take stock below zero
+            </span>
+          </Show>
+        </>
+      ),
+    },
+  ];
+  return (
+    <Stack gap="md">
+      <div>
+        <Button variant="secondary" onClick={() => setStamped(on => !on)}>
+          {stamped() ? 'Clear the errors' : 'Stamp the errors'}
+        </Button>
+      </div>
+      <DataTable
+        columns={columns()}
+        rows={DATA.slice(0, 4)}
+        rowKey={r => r.id}
+        showCardToggle
+        config={config()}
+        setConfig={setConfig}
+      />
+    </Stack>
   );
 };
 
@@ -849,6 +912,52 @@ const EditorTableDemo = () => {
       showFullScreen={false}
       cellAlign="start"
       emptyMessage="No lines"
+    />
+  );
+};
+
+// Grouped rows and a column rule: a schedule whose doses fall at shared ages.
+// The Age column takes meta.groupRows — each age shows once, on the first dose
+// at it, and its run's cells join, so a tinted run reads as one block — and
+// meta.dividerEnd, which rules it off from the doses it heads.
+interface ScheduleDose {
+  id: string;
+  age: string;
+  dose: string;
+  due: boolean;
+}
+
+const SCHEDULE: ScheduleDose[] = [
+  { id: 's1', age: 'At birth', dose: 'BCG', due: false },
+  { id: 's2', age: 'At birth', dose: 'Hep B 1', due: false },
+  { id: 's3', age: '6 weeks', dose: 'DTP 1', due: true },
+  { id: 's4', age: '6 weeks', dose: 'Polio 1', due: true },
+  { id: 's5', age: '6 weeks', dose: 'PCV 1', due: true },
+  { id: 's6', age: '10 weeks', dose: 'DTP 2', due: false },
+];
+
+const GroupedRowsDemo = () => {
+  const columns: Column<ScheduleDose, never>[] = [
+    {
+      c: { key: 'age' },
+      header: () => 'Age',
+      meta: { groupRows: true, dividerEnd: true },
+      size: remToPx(8),
+    },
+    { c: { key: 'dose' }, header: () => 'Dose', size: remToPx(10) },
+    {
+      c: { accessor: r => (r.due ? 'Due' : ''), id: 'status' },
+      header: () => 'Status',
+    },
+  ];
+  return (
+    <DataTable
+      columns={columns}
+      rows={SCHEDULE}
+      rowKey={r => r.id}
+      rowTint={r => (r.due ? 'unfinished' : undefined)}
+      rowAccent={r => (r.due ? 'unfinished' : undefined)}
+      showFullScreen={false}
     />
   );
 };
@@ -1221,7 +1330,7 @@ const SAMPLE_BATCHES: Batch[] = [
     batch: 'BN2044',
     numberOfPacks: 12,
     packSize: 100,
-    expiryDate: utcToLocalDay(monthsFromNow(14, 12)),
+    expiryDate: instantToCalendarDate(monthsFromNow(14, 12)),
     costPrice: 3.5,
     sellPrice: 4.73,
     location: 'A.01',
@@ -1232,7 +1341,7 @@ const SAMPLE_BATCHES: Batch[] = [
     batch: 'BN3120',
     numberOfPacks: 6,
     packSize: 50,
-    expiryDate: utcToLocalDay(monthsFromNow(2, 8)),
+    expiryDate: instantToCalendarDate(monthsFromNow(2, 8)),
     costPrice: 5.2,
     sellPrice: 7.02,
     location: 'COLD.1',
@@ -1529,6 +1638,61 @@ const ConditionalPaginationDemo = () => {
   );
 };
 
+// The pager with no total: a search over a large register can't afford to
+// count every match, so it fetches one row past the page and passes `more`.
+// The face is Previous · the pages so far · Next; Next is live while `more`
+// holds. Here the "server" has 4 pages.
+const NoTotalPaginationDemo = () => {
+  const [offset, setOffset] = createSignal(0);
+  const pageSize = 20;
+  return (
+    <Pagination
+      offset={offset()}
+      pageSize={pageSize}
+      more={offset() < pageSize * 3}
+      onOffsetChange={setOffset}
+    />
+  );
+};
+
+// An empty table two ways: the full empty state (illustration + "Nothing
+// here"), which suits a screen's own list, and `emptyGraphic={false}` — the
+// message alone, at a line's height, for a table among other content such as
+// a dialog's search results.
+const EmptyTablesDemo = () => {
+  const columns: Column<StockLine, SortKey>[] = [
+    { c: { key: 'code' }, header: () => 'Code' },
+    { c: { key: 'name' }, header: () => 'Name' },
+    { c: { key: 'quantity' }, header: () => 'Quantity' },
+  ];
+  return (
+    <Stack gap="md">
+      <div>
+        <Text variant="subtitle">The full empty state</Text>
+        <DataTable
+          columns={columns}
+          rows={[]}
+          rowKey={r => r.id}
+          showFullScreen={false}
+          emptyMessage="No items"
+        />
+      </div>
+      <div>
+        <Text variant="subtitle">emptyGraphic=&#123;false&#125;</Text>
+        <DataTable
+          columns={columns}
+          rows={[]}
+          rowKey={r => r.id}
+          showFullScreen={false}
+          emptyGraphic={false}
+          emptyMessage="No matching items"
+          empty={<Button variant="ghost">Create a new one</Button>}
+        />
+      </div>
+    </Stack>
+  );
+};
+
 // Mask the shell's full-screen context for this teaching page so every demo
 // table's full-screen button falls back to DataTable's standalone path — a
 // fixed, viewport-covering overlay (its `.fullScreen` rule) — instead of the
@@ -1546,7 +1710,15 @@ export const tableCardMetadata: PageMetadata = {
     {
       id: 'table-card-basics',
       title: 'Table basics',
-      searchTerms: ['cell', 'column', 'width', 'row states', 'tint'],
+      searchTerms: [
+        'cell',
+        'column',
+        'width',
+        'row states',
+        'tint',
+        'grouped rows',
+        'column rule',
+      ],
     },
     {
       id: 'table-card-proportion',
@@ -1564,6 +1736,11 @@ export const tableCardMetadata: PageMetadata = {
       id: 'table-card-pagination',
       title: 'Pagination',
       searchTerms: ['pager', 'page', 'rows per page', 'offset', 'footer'],
+    },
+    {
+      id: 'table-card-empty',
+      title: 'Empty tables',
+      searchTerms: ['empty state', 'nothing here', 'no results', 'no rows'],
     },
     {
       id: 'table-card-model',
@@ -1692,6 +1869,20 @@ export const TableCardShowcase = () => (
           <RowStatesDemo />
         </DashboardCard>
 
+        <DashboardCard title="Table basics · Cell errors">
+          <Lead>
+            An error about <em>one field</em> of a line rings that field's cell:{' '}
+            <code>meta.cellTone</code>, a function from the row to{' '}
+            <code>'error'</code> or nothing, set on the column the error is
+            about. The ring is colour, so the cell also says it in words on
+            screen, here a short message beneath the value — drive both from one
+            predicate. The ring is an outline, so it takes no room; only the
+            message adds a line. Flip to cards and the ring goes round the
+            value. Full rules are in <code>CARD_TABLE_MODEL.md</code>.
+          </Lead>
+          <CellErrorsDemo />
+        </DashboardCard>
+
         <DashboardCard title="Table basics · An editor table">
           <Lead>
             A table of in-place controls — a modal's line editor, the vaccine
@@ -1706,6 +1897,19 @@ export const TableCardShowcase = () => (
             centre-aligned table.
           </Lead>
           <EditorTableDemo />
+        </DashboardCard>
+
+        <DashboardCard title="Table basics · Grouped rows and a column rule">
+          <Lead>
+            A column that heads the rows after it — a schedule's age, a ledger's
+            date — takes <code>meta.groupRows</code>: each value shows once, on
+            the first row of its run of equal values, and the run's cells join
+            with no divider between them, so a row tint runs straight through.
+            Runs follow the rows as rendered, sorted and paged; an empty value
+            never groups. <code>meta.dividerEnd</code> rules the column off from
+            the ones it heads, header to footer, pinned or not. Table view only.
+          </Lead>
+          <GroupedRowsDemo />
         </DashboardCard>
 
         <DashboardCard
@@ -1738,6 +1942,30 @@ export const TableCardShowcase = () => (
             width so a crowded bar wraps it whole.
           </Lead>
           <ConditionalPaginationDemo />
+          <Lead>
+            A list too costly to count passes <code>more</code> instead of{' '}
+            <code>total</code>: it fetches one row past the page, and that row
+            says whether there's another. The pager is then Previous · the pages
+            so far · Next, with no last page or jump box, since there's no end
+            to jump to; a DataTable given such a pager shows no row count in its
+            toolbar either.
+          </Lead>
+          <NoTotalPaginationDemo />
+        </DashboardCard>
+
+        <DashboardCard
+          id="table-card-empty"
+          title="Table basics · Empty tables"
+        >
+          <Lead>
+            With no rows the table keeps its headers and frame, with the empty
+            state inside. A screen's own list gets the full one, illustration
+            and all; a table among other content — a dialog's search results —
+            passes <code>emptyGraphic=&#123;false&#125;</code> for the message
+            alone at a line's height. <code>empty</code> adds an action after
+            the message in either: a ghost button, no icon, that reads inline.
+          </Lead>
+          <EmptyTablesDemo />
         </DashboardCard>
 
         <Text variant="heading">Cards</Text>

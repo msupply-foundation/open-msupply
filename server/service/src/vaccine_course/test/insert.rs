@@ -39,6 +39,7 @@ mod query {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: false,
+            annual_doses_per_person: None,
             store_configs: vec![],
         };
 
@@ -59,6 +60,7 @@ mod query {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: false,
+            annual_doses_per_person: None,
             store_configs: vec![],
         };
 
@@ -80,6 +82,7 @@ mod query {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: false,
+            annual_doses_per_person: None,
             store_configs: vec![],
         };
 
@@ -136,6 +139,21 @@ mod query {
             Err(InsertVaccineCourseError::DoseMinAgesAreNotInOrder)
         );
 
+        // 2a - annual doses per person must be above 0
+        for annual_doses_per_person in [0.0, -1.0] {
+            let vaccine_course_insert_bad_doses_per_person = InsertVaccineCourse {
+                id: "vaccine_course_id_bad_doses_per_person".to_string(),
+                name: "vaccine_course_name_bad_doses_per_person".to_string(),
+                program_id: mock_immunisation_program_b().id.clone(),
+                annual_doses_per_person: Some(annual_doses_per_person),
+                ..Default::default()
+            };
+            assert_eq!(
+                service.insert_vaccine_course(&context, vaccine_course_insert_bad_doses_per_person),
+                Err(InsertVaccineCourseError::AnnualDosesPerPersonNotPositive)
+            );
+        }
+
         // 2b - success
 
         let vaccine_course_insert_d = InsertVaccineCourse {
@@ -149,6 +167,7 @@ mod query {
             use_in_gaps_calculations: true,
             wastage_rate: 0.1,
             can_skip_dose: true,
+            annual_doses_per_person: None,
             store_configs: vec![],
         };
 
@@ -158,6 +177,8 @@ mod query {
 
         assert_eq!(result.demographic_id, Some(mock_demographic_a().id));
         assert!(result.can_skip_dose);
+        // None given: the forecast counts every dose in the course
+        assert_eq!(result.annual_doses_per_person, None);
 
         // Check there are two items for the vaccine_course
         let item_repo = VaccineCourseItemRepository::new(&context.connection);

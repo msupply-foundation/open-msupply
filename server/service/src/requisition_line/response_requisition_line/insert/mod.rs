@@ -9,7 +9,8 @@ use chrono::Utc;
 use validate::validate;
 
 use repository::{
-    RepositoryError, RequisitionLine, RequisitionLineRow, RequisitionLineRowRepository,
+    ForecastMethod, RepositoryError, RequisitionLine, RequisitionLineRow,
+    RequisitionLineRowRepository,
 };
 
 #[derive(Debug, PartialEq, Clone, Default)]
@@ -63,6 +64,7 @@ pub fn insert_response_requisition_line(
             };
             let new_requisition_line_row = RequisitionLineRow {
                 id: input.id.clone(),
+                campaign_id: None,
                 item_id: item_row.id.clone(),
                 item_name: item_row.name.clone(),
                 requisition_id: requisition_row.id,
@@ -88,9 +90,9 @@ pub fn insert_response_requisition_line(
                 approval_comment: None,
                 available_volume: None,
                 location_type_id: None,
-                forecast_total_units: None,
-                forecast_total_doses: None,
-                vaccine_courses: None,
+                forecast_method: ForecastMethod::Amc,
+                forecast_monthly_consumption: 0.0,
+                forecast_data: None,
             };
 
             RequisitionLineRowRepository::new(connection).upsert_one(&new_requisition_line_row)?;

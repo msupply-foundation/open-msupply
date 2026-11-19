@@ -20,38 +20,56 @@ pub struct ItemPrice {
     pub calculated_price_per_unit: Option<f64>, // Only populated if we have a default price, without a default price we can't calculate the price
 }
 
+/// Items per default price query, well under SQLite's bind parameter limit.
+const DEFAULT_PRICE_LOOKUP_BATCH_SIZE: usize = 500;
+
+/// Each item's default price list price per unit, by item id: one query per
+/// 500 items. An item on no default price list has no entry; one whose line
+/// has no price maps to `None`. Where an item has several default price list
+/// lines, the one with the highest line id wins.
+pub fn get_default_prices_for_items(
+    connection: &StorageConnection,
+    item_ids: &[String],
+) -> Result<HashMap<String, Option<f64>>, RepositoryError> {
+    let mut prices = HashMap::new();
+    for chunk in item_ids.chunks(DEFAULT_PRICE_LOOKUP_BATCH_SIZE) {
+        // Ordered by line id, so the last line read for an item wins
+        let lines = MasterListLineRepository::new(connection).query_by_filter(
+            MasterListLineFilter::new()
+                .master_list(MasterListFilter::new().is_default_price_list(true))
+                .item_id(EqualFilter::equal_any(chunk.to_vec())),
+            None,
+        )?;
+        for line in lines {
+            prices.insert(line.item_id, line.price_per_unit);
+        }
+    }
+    Ok(prices)
+}
+
 pub fn get_pricing_for_items(
     connection: &StorageConnection,
     input: ItemPriceLookup,
 ) -> Result<HashMap<String, ItemPrice>, RepositoryError> {
-    // 1. Get the default price list & price per unit for the item
+    // 1. Get the default price list & price per unit for the items
+    let default_prices = get_default_prices_for_items(connection, &input.item_ids)?;
+
+    // 2. Check if we have a name, and that name is not a patient
+    let is_patient = match &input.customer_name_id {
+        Some(customer_name_id) => {
+            let num_patients = PatientRepository::new(connection).count(
+                Some(PatientFilter::new().id(EqualFilter::equal_to(customer_name_id.to_string()))),
+                None,
+            )?;
+
+            num_patients > 0
+        }
+        None => false,
+    };
+
     let mut item_prices = Vec::with_capacity(input.item_ids.len());
     for item_id in input.item_ids {
-        let default_price_per_unit = MasterListLineRepository::new(connection)
-            .query_by_filter(
-                MasterListLineFilter::new()
-                    .master_list(MasterListFilter::new().is_default_price_list(true))
-                    .item_id(EqualFilter::equal_to(item_id.to_string())),
-                None,
-            )?
-            .pop()
-            .and_then(|l| l.price_per_unit);
-
-        // 2. Check if we have a name, and that name is not a patient
-        let is_patient = match &input.customer_name_id {
-            Some(customer_name_id) => {
-                let num_patients = PatientRepository::new(connection).count(
-                    Some(
-                        PatientFilter::new()
-                            .id(EqualFilter::equal_to(customer_name_id.to_string())),
-                    ),
-                    None,
-                )?;
-
-                num_patients > 0
-            }
-            None => false,
-        };
+        let default_price_per_unit = default_prices.get(&item_id).copied().flatten();
 
         let discount_percentage = if is_patient {
             None // Patients get no discount

@@ -124,7 +124,6 @@ const ValidationDemo = () => {
           <DateField
             label="Expiry date"
             required
-            format="dd/MM/yyyy"
             value={expiry()}
             error={validation.errorFor('v-expiry')}
             onChange={setExpiry}
@@ -256,13 +255,11 @@ export const FormsShowcase = () => {
                     <FormRow>
                       <DateField
                         label="Expiry date"
-                        format="dd/MM/yyyy"
                         value={expiry()}
                         onChange={setExpiry}
                       />
                       <DateField
                         label="Manufacture date"
-                        format="dd/MM/yyyy"
                         value={manufactured()}
                         onChange={setManufactured}
                       />

@@ -1,10 +1,10 @@
-import { createResource, createSignal } from 'solid-js';
+import { Show, createResource, createSignal } from 'solid-js';
 import type { Component, JSX } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
-import { formatNumber } from '../../../intl/formatNumber';
 import { doseEquivalent } from '../stockCalc';
+import { Num } from '../../../ui/elements/typography/Num';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
@@ -18,10 +18,14 @@ import {
   type Column,
   type SortState,
 } from '../../../ui/elements/table/DataTable';
-import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
+import {
+  getCellDefinition,
+  getFlagCell,
+} from '../../../ui/elements/table/tableHelpers';
+import { remToPx } from '../../../ui/utils/rem';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
-import { PlusCircleIcon } from '../../../ui/icons';
+import { PauseIcon, PlusCircleIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
 import {
   DEFAULT_PAGE_SIZE,
@@ -29,7 +33,7 @@ import {
   rememberPageSize,
 } from '../../../list/pageSize';
 import { stripEmpty } from '../../../typeHelpers';
-import { stockPreferences } from '../../../store/storeContext';
+import { hasPermission, stockPreferences } from '../../../store/storeContext';
 import {
   StockLines,
   type StockLineRowFragment,
@@ -81,8 +85,10 @@ const DEFAULT_STATE: StockListState = {
   // The search (batch or item code/name) is the list's default filter
   // (ui-standards § tables → filtering): seeded present-as-null so its chip is
   // on the bar from the start; stripEmpty keeps it out of the query until
-  // typed.
-  filter: { search: null },
+  // typed. Expired stock is hidden on open (#1820) — a removable chip, not a
+  // gate. A link that carries its own filter (the dashboard's expiry stats)
+  // replaces this whole default, so it lands on exactly the lines it counts.
+  filter: { search: null, isExpired: false },
   sort: [{ key: 'itemName', desc: false }],
   offset: 0,
   first: DEFAULT_PAGE_SIZE,
@@ -103,6 +109,10 @@ const StockList: Component = () => {
   });
   const [createOpen, setCreateOpen] = createSignal(false);
   const prefs = () => stockPreferences();
+  // New stock is an inventory adjustment (spec/stock rules › Permissions,
+  // OMS-REG-SMV-02.42): without the permission the button, the empty state's
+  // add and Alt+N are all withheld, matching the detail view's Adjust.
+  const canAdjust = () => hasPermission('INVENTORY_ADJUSTMENT_MUTATE');
 
   // Alt+N — this screen's add action (spec/keyboard KB-R2,
   // OMS-REG-KBD-01.14/.15). Declared by the SCREEN, once, for the two controls
@@ -112,6 +122,7 @@ const StockList: Component = () => {
   createAddAction({
     name: 'button.new-stock',
     run: () => setCreateOpen(true),
+    disabled: () => !canAdjust(),
   });
 
   const variables = (): StockLinesVariables => ({
@@ -155,25 +166,29 @@ const StockList: Component = () => {
   const onFilterChange = (filter: StockFilter) =>
     setQuery({ ...query(), filter, offset: 0 });
 
-  const openLine = (id: string) =>
-    navigate(`/${params.storeId}/inventory/stock/${id}`);
+  const lineHref = (id: string) => `/${params.storeId}/inventory/stock/${id}`;
+  const openLine = (id: string) => navigate(lineHref(id));
 
   // A units figure with the dose equivalent appended as a suffix for vaccine
   // rows when manageVaccinesInDoses is on (spec/stock OMS-REG-INV-02.54) —
   // mirrors the items list's dose display (no bespoke styling).
-  const unitsText = (
+  const unitsCell = (
     units: number,
     isVaccine: boolean,
     doses: number
-  ): string => {
+  ): JSX.Element => {
     const asDoses = doseEquivalent(units, {
       showDoses: prefs().manageVaccinesInDoses,
       isVaccine,
       doses,
     });
-    return asDoses === undefined
-      ? formatNumber(units)
-      : `${formatNumber(units)} (${formatNumber(asDoses)} ${t('label.doses-short')})`;
+    return asDoses === undefined ? (
+      <Num value={units} />
+    ) : (
+      <>
+        <Num value={units} /> (<Num value={asDoses} /> {t('label.doses-short')})
+      </>
+    );
   };
 
   // Every column is shown by default; the user hides / reorders / pins them
@@ -185,8 +200,9 @@ const StockList: Component = () => {
   // Column order follows the current open-mSupply Stock ListView (Code · Name ·
   // Master lists · Batch · Expiry · Manufacture date · VVM · Location code ·
   // Location name · Unit · Pack size · Pack qty · SOH · Available stock · Cost
-  // · Sell · Total · Manufacturer · Supplier). Each column also declares its
-  // card slot per spec/stock S1 › card view.
+  // · Sell · Total · Manufacturer · Activity · Supplier), plus On hold after
+  // Batch, which that view lacks. Each column also declares its card slot per
+  // spec/stock S1 › card view.
   //
   // The card HEADER is Name-then-Code (the split for this screen), but the
   // TABLE keeps OMS's Code-first order — the one place the two views want a
@@ -237,6 +253,21 @@ const StockList: Component = () => {
       sortKey: 'batch',
       header: () => t('label.batch'),
       ...getCellDefinition('batch', { headerPosition: 'badge' }),
+    },
+    {
+      // On hold — card: badge, a warning chip beside Batch, so held lines
+      // show without opening each one (#1787).
+      c: { key: 'onHold' },
+      sortKey: 'onHold',
+      header: () => t('label.on-hold'),
+      ...getFlagCell(
+        t('label.on-hold'),
+        { headerPosition: 'badge' },
+        'warning',
+        () => <PauseIcon />
+      ),
+      // A marker cell is narrow; the header word is the binding constraint.
+      size: remToPx(5.5),
     },
     {
       // Expiry — card: always shown.
@@ -319,7 +350,7 @@ const StockList: Component = () => {
       cardGroup: 'more',
       ...getCellDefinition('units'),
       cell: info =>
-        unitsText(
+        unitsCell(
           lineUnits(info.row.original),
           info.row.original.item.isVaccine,
           info.row.original.item.doses
@@ -331,7 +362,7 @@ const StockList: Component = () => {
       header: () => t('label.available-stock'),
       ...getCellDefinition('units'),
       cell: info =>
-        unitsText(
+        unitsCell(
           lineAvailUnits(info.row.original),
           info.row.original.item.isVaccine,
           info.row.original.item.doses
@@ -368,6 +399,15 @@ const StockList: Component = () => {
       ...getCellDefinition('manufacturer'),
     },
     {
+      // Activity (the line's campaign) — card: More details. Sorts by the
+      // campaign's name server-side.
+      c: { accessor: r => r.campaign?.name ?? '', id: 'campaign' },
+      sortKey: 'campaign',
+      header: () => t('label.activity'),
+      cardGroup: 'more',
+      ...getCellDefinition('activity'),
+    },
+    {
       // Supplier — card: More details. Blank renders "Inventory adjustment".
       c: { accessor: r => r.supplierName ?? '', id: 'supplierName' },
       sortKey: 'supplierName',
@@ -386,14 +426,16 @@ const StockList: Component = () => {
   const crumbs = () => [{ label: t('stock') }];
 
   const emptyCreate = (): JSX.Element => (
-    <Button
-      variant="ghost"
-      shortcut={ALT_N}
-      data-testid="nothing-here-create-button"
-      onClick={() => setCreateOpen(true)}
-    >
-      {t('button.add-new-stock')}
-    </Button>
+    <Show when={canAdjust()}>
+      <Button
+        variant="ghost"
+        shortcut={ALT_N}
+        data-testid="nothing-here-create-button"
+        onClick={() => setCreateOpen(true)}
+      >
+        {t('button.add-new-stock')}
+      </Button>
+    </Show>
   );
 
   return (
@@ -403,14 +445,16 @@ const StockList: Component = () => {
         <Header>
           <Breadcrumb crumbs={crumbs()} />
           <HeaderButtons>
-            <Button
-              icon={<PlusCircleIcon />}
-              shortcut={ALT_N}
-              data-testid="new-stock-button"
-              onClick={() => setCreateOpen(true)}
-            >
-              {t('button.new-stock')}
-            </Button>
+            <Show when={canAdjust()}>
+              <Button
+                icon={<PlusCircleIcon />}
+                shortcut={ALT_N}
+                data-testid="new-stock-button"
+                onClick={() => setCreateOpen(true)}
+              >
+                {t('button.new-stock')}
+              </Button>
+            </Show>
             <ExportStockAction
               storeId={params.storeId}
               filter={() => query().filter}
@@ -437,6 +481,7 @@ const StockList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={row => openLine(row.id)}
+        rowHref={row => lineHref(row.id)}
         showCardToggle
         cardGroups={CARD_GROUPS}
         emptyMessage={t('error.no-stock')}

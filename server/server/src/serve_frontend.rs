@@ -1,3 +1,4 @@
+use crate::middleware::app_policy_for_document;
 use actix_web::http::StatusCode;
 use actix_web::{
     HttpRequest, HttpResponse, Responder, get,
@@ -99,11 +100,18 @@ fn cache_control_for(path: &str) -> header::CacheControl {
 }
 
 fn asset_response(path: &str, content: Vec<u8>) -> HttpResponse {
-    HttpResponse::Ok()
+    let mut response = HttpResponse::Ok();
+    response
         .content_type(from_path(path).first_or_octet_stream().as_ref())
         .append_header(("x-content-type-options", "nosniff"))
-        .append_header(cache_control_for(path))
-        .body(content)
+        .append_header(cache_control_for(path));
+    // A page's inline scripts (index.html's import map and pre-boot scripts) are allowed by hash
+    // here, where the page is read. The security headers middleware leaves this header alone.
+    if path.ends_with(".html") {
+        let policy = app_policy_for_document(&String::from_utf8_lossy(&content));
+        response.insert_header((header::CONTENT_SECURITY_POLICY, policy));
+    }
+    response.body(content)
 }
 
 fn serve_frontend(settings: &Settings, path: &str) -> HttpResponse {
@@ -364,5 +372,40 @@ mod test {
             .unwrap()
             .to_string();
         assert!(cache.contains("no-cache"), "got {}", cache);
+    }
+
+    #[actix_web::test]
+    async fn index_html_policy_allows_its_inline_scripts() {
+        let dir = TempDir::new().unwrap();
+        fs::write(
+            dir.path().join("index.html"),
+            "<html><script>abc</script></html>",
+        )
+        .unwrap();
+        let app = test::init_service(
+            App::new()
+                .app_data(Data::new(settings_with(dir.path())))
+                .configure(config_serve_frontend),
+        )
+        .await;
+
+        for uri in ["/", "/some/route", "/index.html"] {
+            let resp =
+                test::call_service(&app, test::TestRequest::get().uri(uri).to_request()).await;
+            let policy = resp
+                .headers()
+                .get(header::CONTENT_SECURITY_POLICY)
+                .unwrap()
+                .to_str()
+                .unwrap()
+                .to_string();
+            // sha256("abc")
+            assert!(
+                policy.contains(
+                    "script-src 'self' 'sha256-ungWv48Bz+pBQUDeXa4iI7ADYaOWF3qctBD/YfIAFa0='"
+                ),
+                "{uri}: {policy}"
+            );
+        }
     }
 }

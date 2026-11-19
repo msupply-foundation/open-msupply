@@ -273,7 +273,6 @@ mod test {
                     item_row: mock_item_a(),
                     location_row: None,
                     supplier_name_row: None,
-                    barcode_row: None,
                     item_variant_row: None,
                     vvm_status_row: None,
                     campaign_row: None,

@@ -1,4 +1,4 @@
-import { For } from 'solid-js';
+import { createSignal, For } from 'solid-js';
 import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
 import { Stack } from '../ui/layout/Stack/Stack';
 import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
@@ -7,6 +7,7 @@ import { StatusMarker } from '../ui/elements/feedback/StatusMarker';
 import { Badge } from '../ui/elements/feedback/Badge';
 import { StatusBadge } from '../ui/elements/feedback/StatusBadge';
 import { StatusChip } from '../ui/elements/feedback/StatusChip';
+import { StatusMenu } from '../ui/elements/feedback/StatusMenu';
 import { Popover } from '../ui/elements/feedback/Popover';
 import { Comment } from '../ui/elements/feedback/Comment';
 import { InfoTooltip } from '../ui/elements/feedback/InfoTooltip';
@@ -38,6 +39,15 @@ const STATUS_CHIPS: { label: string; colour: string }[] = [
   { label: 'Shipped', colour: 'var(--status-shipped)' },
   { label: 'Delivered', colour: 'var(--status-delivered)' },
   { label: 'Verified', colour: 'var(--status-verified)' },
+  { label: 'Overdue', colour: 'var(--status-overdue)' },
+];
+
+/* The encounter screen's statuses: the menu offers the three a user can set;
+   the chip itself may read a derived word (Missed) over the stored one. */
+const ENCOUNTER_STATUSES = [
+  { value: 'PENDING', label: 'Scheduled', colour: 'var(--status-allocated)' },
+  { value: 'VISITED', label: 'Visited', colour: 'var(--status-finalised)' },
+  { value: 'CANCELLED', label: 'Cancelled', colour: 'var(--status-new)' },
 ];
 
 export const feedbackMetadata: PageMetadata = {
@@ -97,6 +107,8 @@ export const feedbackMetadata: PageMetadata = {
 };
 
 export const FeedbackShowcase = () => {
+  const [menuStatus, setMenuStatus] = createSignal('PENDING');
+  const menuChip = () => ENCOUNTER_STATUSES.find(s => s.value === menuStatus());
   return (
     <ContentContainer size="form" align="start">
       <Stack gap="lg">
@@ -115,6 +127,54 @@ export const FeedbackShowcase = () => {
               {chip => <StatusChip label={chip.label} colour={chip.colour} />}
             </For>
           </Row>
+        </DashboardCard>
+
+        <DashboardCard title="StatusMenu — a status chip that opens its choices">
+          <Lead>
+            A record's status chip as the trigger of a menu of the statuses it
+            can move to (the encounter screen's chip beside its title). Kobalte
+            DropdownMenu with a RadioGroup under our markup: the current status
+            is the checked item, each option is its own chip, and picking one
+            only reports it — what the change means is the screen's. The chip
+            shown may read a derived word over the stored status (a Scheduled
+            visit whose date has passed reads Missed, in the error tone), so the
+            menu marks <code>value</code>, not the label. <code>disabled</code>{' '}
+            renders the chip alone, with no caret promising a change.
+          </Lead>
+          <Row gap="sm">
+            <StatusMenu
+              label={menuChip()?.label ?? ''}
+              colour={menuChip()?.colour ?? 'var(--status-new)'}
+              options={ENCOUNTER_STATUSES}
+              value={menuStatus()}
+              onSelect={setMenuStatus}
+              // The chip's text must be part of the name (WCAG 2.5.3), so the
+              // label follows the chip as it changes.
+              triggerLabel={`Status: ${menuChip()?.label ?? ''}. Change status`}
+            />
+            <StatusMenu
+              label="Missed"
+              colour="var(--status-overdue)"
+              options={ENCOUNTER_STATUSES}
+              value="PENDING"
+              onSelect={() => undefined}
+              triggerLabel="Status: Missed. Change status"
+            />
+            <StatusMenu
+              label="Visited"
+              colour="var(--status-finalised)"
+              options={ENCOUNTER_STATUSES}
+              value="VISITED"
+              onSelect={() => undefined}
+              triggerLabel="Status: Visited"
+              disabled
+            />
+          </Row>
+          <Note>
+            Left: live — pick a status and the chip follows. Middle: a derived
+            label (Missed) over a stored Pending, the menu marking Scheduled.
+            Right: read-only.
+          </Note>
         </DashboardCard>
 
         <DashboardCard title="Badge — count / status pill">

@@ -14,6 +14,7 @@ describe('item detail tab visibility (CAT-05.1/.2)', () => {
       'master-lists',
       'ledger',
       'ancillary',
+      'barcodes',
       'custom-fields',
       'variants',
       'log',
@@ -27,6 +28,7 @@ describe('item detail tab visibility (CAT-05.1/.2)', () => {
       'master-lists',
       'ledger',
       'ancillary',
+      'barcodes',
       'custom-fields',
       'log',
     ]);

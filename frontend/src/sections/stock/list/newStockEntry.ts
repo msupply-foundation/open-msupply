@@ -7,6 +7,11 @@
 //   .37 — confirm is unavailable until item, pack size, and pack quantity are set
 //   .36 — with active positive reasons configured, a reason is required
 
+import {
+  defaultSellPriceAtPackSize,
+  type DefaultSellPriceSource,
+} from '@/domain/item/defaultSellPrice';
+
 // Pack size must be at least 1 (spec/stock rules — introducing new stock).
 export const packSizeValid = (packSize: number | null | undefined): boolean =>
   (packSize ?? 0) >= 1;
@@ -27,3 +32,17 @@ export const canConfirmNewStock = (entry: {
   packSizeValid(entry.packSize) &&
   packsValid(entry.numberOfPacks) &&
   (!entry.positiveReasonsRequired || entry.hasReason);
+
+// The sell price once the item or the pack size changes (spec/stock rules ›
+// Default sell price for new stock): the store's default sell price carried
+// to the pack size, until the user types a sell price — which is kept. Left
+// as it is with no item defaults to hand yet, or no pack size.
+export const followingSellPrice = (entry: {
+  sellPricePerPack: number | undefined;
+  sellTyped: boolean;
+  item: DefaultSellPriceSource | undefined;
+  packSize: number | undefined;
+}): number | undefined =>
+  entry.sellTyped || !entry.item || entry.packSize == null
+    ? entry.sellPricePerPack
+    : defaultSellPriceAtPackSize(entry.item, entry.packSize);

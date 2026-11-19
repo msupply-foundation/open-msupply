@@ -1,5 +1,6 @@
 use super::{UpdateOutboundShipment, UpdateOutboundShipmentError, backdated_datetime_change};
 use crate::NullableUpdate;
+use crate::campaign::check_campaign_exists;
 use crate::common::check_shipping_method_exists;
 use crate::invoice::common::check_can_issue_in_foreign_currency;
 use crate::invoice::{
@@ -61,6 +62,14 @@ pub fn validate(
         && !check_shipping_method_exists(connection, shipping_method_id)?
     {
         return Err(ShippingMethodDoesNotExist);
+    }
+
+    if let Some(NullableUpdate {
+        value: Some(campaign_id),
+    }) = &patch.campaign_id
+        && !check_campaign_exists(connection, campaign_id)?
+    {
+        return Err(CampaignDoesNotExist);
     }
 
     // Backdating validation: preference enabled, only New outbound shipments, no lines, not future, max days

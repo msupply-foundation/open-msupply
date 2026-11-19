@@ -341,3 +341,46 @@ describe('distributeIssue partial-pack float dust (an exactly-covered request re
     expect(result.overAllocatedUnits).toBe(0);
   });
 });
+
+// Other-campaign batches are reported only when the fill passed them over —
+// the server allocate's rule — so a routine issue fully covered by untagged
+// stock doesn't warn about campaign stock it never needed.
+describe('distributeIssue other-campaign reporting', () => {
+  const campaign = (id: string) => line(id, 1, 5, ['other-campaign']);
+
+  it('does not report campaign stock after a fully covered request', () => {
+    const result = distributeIssue(
+      [line('routine', 1, 5), campaign('campaign')],
+      5
+    );
+    expect(result.packsById.get('routine')).toBe(5);
+    expect(result.skippedReasons.has('other-campaign')).toBe(false);
+  });
+
+  it('reports campaign stock the fill had to pass to reach later stock', () => {
+    const result = distributeIssue(
+      [campaign('campaign'), line('routine', 1, 5)],
+      5
+    );
+    expect(result.packsById.get('campaign')).toBe(0);
+    expect(result.packsById.get('routine')).toBe(5);
+    expect(result.skippedReasons.has('other-campaign')).toBe(true);
+  });
+
+  it('reports campaign stock when the request comes up short', () => {
+    const result = distributeIssue(
+      [line('routine', 1, 5), campaign('campaign')],
+      8
+    );
+    expect(result.shortfallUnits).toBe(3);
+    expect(result.skippedReasons.has('other-campaign')).toBe(true);
+  });
+
+  it('keeps reporting the other bar reasons regardless of position', () => {
+    const result = distributeIssue(
+      [line('routine', 1, 5), line('held', 1, 5, ['on-hold'])],
+      5
+    );
+    expect(result.skippedReasons.has('on-hold')).toBe(true);
+  });
+});

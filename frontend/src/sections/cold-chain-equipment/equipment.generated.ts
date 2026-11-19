@@ -25,7 +25,7 @@ export type AssetRowFragment = {
   name: string;
 } | null;
   statusLog: {
-  status: "NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | null;
+  status: "NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | "NOT_INSTALLED" | null;
   logDatetime: string;
 } | null;
   store: {
@@ -72,9 +72,10 @@ export type AssetDetailFragment = {
   name: string;
 } | null;
   statusLog: {
-  status: "NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | null;
+  status: "NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | "NOT_INSTALLED" | null;
   logDatetime: string;
   reason: {
+  id: string;
   reason: string;
 } | null;
 } | null;
@@ -129,7 +130,7 @@ export type AssetDetailFragment = {
 export type AssetLogRowFragment = {
   __typename: "AssetLogNode";
   id: string;
-  status: "NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | null;
+  status: "NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | "NOT_INSTALLED" | null;
   type: "STATUS_UPDATE" | "TEMPERATURE_MAPPING";
   comment: string | null;
   logDatetime: string;
@@ -157,10 +158,12 @@ export type AssetsListVariables = {
     notes?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     assetNumber?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     id?: {
     equalTo?: string | null;
@@ -172,6 +175,7 @@ export type AssetsListVariables = {
     serialNumber?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     classId?: {
     equalTo?: string | null;
@@ -215,16 +219,18 @@ export type AssetsListVariables = {
     storeCodeOrName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     storeId?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     functionalStatus?: {
-    equalTo?: "NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | null;
-    equalAny?: Array<"NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE"> | null;
-    notEqualTo?: "NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | null;
-    notEqualAll?: Array<"NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE"> | null;
+    equalTo?: "NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | "NOT_INSTALLED" | null;
+    equalAny?: Array<"NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | "NOT_INSTALLED"> | null;
+    notEqualTo?: "NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | "NOT_INSTALLED" | null;
+    notEqualAll?: Array<"NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | "NOT_INSTALLED"> | null;
   } | null;
   } | null;
   sort?: Array<{
@@ -265,7 +271,7 @@ export type AssetByIdResult = {
 };
 
 export const AssetById = {
-  query: "query assetById($storeId: String!, $assetId: String!) {\n  assets(storeId: $storeId, filter: {id: {equalTo: $assetId}}) {\n    ... on AssetConnector {\n      __typename\n      totalCount\n      nodes {\n        ...AssetDetail\n      }\n    }\n  }\n}\n\nfragment AssetDetail on AssetNode {\n  __typename\n  id\n  storeId\n  assetNumber\n  serialNumber\n  notes\n  catalogueItemId\n  installationDate\n  replacementDate\n  warrantyStart\n  warrantyEnd\n  needsReplacement\n  donorNameId\n  createdDatetime\n  modifiedDatetime\n  properties\n  catalogProperties\n  catalogueItem {\n    id\n    code\n    manufacturer\n    model\n  }\n  assetClass {\n    id\n    name\n  }\n  assetCategory {\n    id\n    name\n  }\n  assetType {\n    id\n    name\n  }\n  statusLog {\n    status\n    logDatetime\n    reason {\n      reason\n    }\n  }\n  store {\n    __typename\n    id\n    code\n    storeName\n    siteId\n  }\n  donor(storeId: $storeId) {\n    __typename\n    id\n    name\n    code\n    isSupplier\n    isDonor\n    isOnHold\n    store {\n      id\n    }\n  }\n  locations {\n    totalCount\n    nodes {\n      id\n      code\n      name\n      locationType {\n        id\n        name\n      }\n    }\n  }\n  documents {\n    nodes {\n      id\n      fileName\n      mimeType\n      createdDatetime\n      totalBytes\n    }\n  }\n  lockedFields {\n    serialNumber\n    catalogueItemId\n    warrantyStart\n    warrantyEnd\n  }\n}",
+  query: "query assetById($storeId: String!, $assetId: String!) {\n  assets(storeId: $storeId, filter: {id: {equalTo: $assetId}}) {\n    ... on AssetConnector {\n      __typename\n      totalCount\n      nodes {\n        ...AssetDetail\n      }\n    }\n  }\n}\n\nfragment AssetDetail on AssetNode {\n  __typename\n  id\n  storeId\n  assetNumber\n  serialNumber\n  notes\n  catalogueItemId\n  installationDate\n  replacementDate\n  warrantyStart\n  warrantyEnd\n  needsReplacement\n  donorNameId\n  createdDatetime\n  modifiedDatetime\n  properties\n  catalogProperties\n  catalogueItem {\n    id\n    code\n    manufacturer\n    model\n  }\n  assetClass {\n    id\n    name\n  }\n  assetCategory {\n    id\n    name\n  }\n  assetType {\n    id\n    name\n  }\n  statusLog {\n    status\n    logDatetime\n    reason {\n      id\n      reason\n    }\n  }\n  store {\n    __typename\n    id\n    code\n    storeName\n    siteId\n  }\n  donor(storeId: $storeId) {\n    __typename\n    id\n    name\n    code\n    isSupplier\n    isDonor\n    isOnHold\n    store {\n      id\n    }\n  }\n  locations {\n    totalCount\n    nodes {\n      id\n      code\n      name\n      locationType {\n        id\n        name\n      }\n    }\n  }\n  documents {\n    nodes {\n      id\n      fileName\n      mimeType\n      createdDatetime\n      totalBytes\n    }\n  }\n  lockedFields {\n    serialNumber\n    catalogueItemId\n    warrantyStart\n    warrantyEnd\n  }\n}",
 } as TypedDocument<AssetByIdResult, AssetByIdVariables>;
 
 export type AssetLogsListVariables = {
@@ -286,10 +292,10 @@ export type AssetLogsListVariables = {
     notEqualAll?: Array<string> | null;
   } | null;
     status?: {
-    equalTo?: "NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | null;
-    equalAny?: Array<"NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE"> | null;
-    notEqualTo?: "NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | null;
-    notEqualAll?: Array<"NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE"> | null;
+    equalTo?: "NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | "NOT_INSTALLED" | null;
+    equalAny?: Array<"NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | "NOT_INSTALLED"> | null;
+    notEqualTo?: "NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | "NOT_INSTALLED" | null;
+    notEqualAll?: Array<"NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | "NOT_INSTALLED"> | null;
   } | null;
     logDatetime?: {
     equalTo?: string | null;
@@ -299,6 +305,7 @@ export type AssetLogsListVariables = {
     user?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     reasonId?: {
     equalTo?: string | null;
@@ -344,14 +351,15 @@ export type AssetLogReasonsListVariables = {
     notEqualAll?: Array<string> | null;
   } | null;
     assetLogStatus?: {
-    equalTo?: "NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | null;
-    equalAny?: Array<"NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE"> | null;
-    notEqualTo?: "NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | null;
-    notEqualAll?: Array<"NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE"> | null;
+    equalTo?: "NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | "NOT_INSTALLED" | null;
+    equalAny?: Array<"NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | "NOT_INSTALLED"> | null;
+    notEqualTo?: "NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | "NOT_INSTALLED" | null;
+    notEqualAll?: Array<"NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | "NOT_INSTALLED"> | null;
   } | null;
     reason?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
   } | null;
 };
@@ -363,7 +371,7 @@ export type AssetLogReasonsListResult = {
   totalCount: number;
   nodes: Array<{
   id: string;
-  assetLogStatus: "NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE";
+  assetLogStatus: "NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | "NOT_INSTALLED";
   reason: string;
   commentsRequired: boolean;
 }>;
@@ -479,7 +487,7 @@ export type InsertAssetLogVariables = {
   input: {
     id: string;
     assetId: string;
-    status?: "NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | null;
+    status?: "NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | "NOT_INSTALLED" | null;
     reasonId?: string | null;
     comment?: string | null;
     type?: "STATUS_UPDATE" | "TEMPERATURE_MAPPING" | null;
@@ -505,10 +513,12 @@ export type AssetsExportVariables = {
     notes?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     assetNumber?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     id?: {
     equalTo?: string | null;
@@ -520,6 +530,7 @@ export type AssetsExportVariables = {
     serialNumber?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     classId?: {
     equalTo?: string | null;
@@ -563,16 +574,18 @@ export type AssetsExportVariables = {
     storeCodeOrName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     storeId?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     functionalStatus?: {
-    equalTo?: "NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | null;
-    equalAny?: Array<"NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE"> | null;
-    notEqualTo?: "NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | null;
-    notEqualAll?: Array<"NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE"> | null;
+    equalTo?: "NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | "NOT_INSTALLED" | null;
+    equalAny?: Array<"NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | "NOT_INSTALLED"> | null;
+    notEqualTo?: "NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | "NOT_INSTALLED" | null;
+    notEqualAll?: Array<"NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | "NOT_INSTALLED"> | null;
   } | null;
   } | null;
   sort?: Array<{

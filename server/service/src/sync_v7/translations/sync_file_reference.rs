@@ -62,6 +62,7 @@ mod tests {
             direction: SyncFileDirection::Upload,
             status: SyncFileStatus::Error,
             error: Some("boom".to_string()),
+            user_id: Some("user1".to_string()),
             ..base_row("file1")
         };
 
@@ -69,6 +70,7 @@ mod tests {
 
         assert_eq!(value.get("status"), Some(&serde_json::json!("Error")));
         assert_eq!(value.get("error"), Some(&serde_json::json!("boom")));
+        assert_eq!(value.get("user_id"), Some(&serde_json::json!("user1")));
         for local_only in [
             "direction",
             "retries",
@@ -149,6 +151,7 @@ mod tests {
             "total_bytes": 42,
             "status": "Done",
             "created_datetime": "2020-01-22T15:16:00",
+            "user_id": "user1",
         });
 
         let translated =
@@ -167,5 +170,40 @@ mod tests {
         assert_eq!(row.direction, SyncFileDirection::Download);
         assert_eq!(row.status, SyncFileStatus::Done);
         assert_eq!(row.total_bytes, 42);
+        assert_eq!(row.user_id, Some("user1".to_string()));
+    }
+
+    // A payload from a site predating the uploader field.
+    #[actix_rt::test]
+    async fn v7_pull_without_user_id_records_no_uploader() {
+        let (_, connection, _, _) = setup_all(
+            "v7_sync_file_reference_pull_without_user",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let id = "32345678-1234-1234-1234-123456789012";
+        let incoming = serde_json::json!({
+            "id": id,
+            "table_name": "asset",
+            "record_id": "rec1",
+            "file_name": "asset1.jpg",
+            "created_datetime": "2020-01-22T15:16:00",
+        });
+
+        let translated =
+            translate_sync_file_reference(&connection, ChangeLogInsertRow::default(), &incoming)
+                .unwrap();
+        for (upsert, changelog_row) in translated {
+            upsert
+                .upsert_sync(&connection, ChangelogSyncType::SyncTypeV7 { changelog_row })
+                .unwrap();
+        }
+
+        let row = SyncFileReferenceRowRepository::new(&connection)
+            .find_one_by_id(id)
+            .unwrap()
+            .unwrap();
+        assert_eq!(row.user_id, None);
     }
 }

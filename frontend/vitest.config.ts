@@ -1,5 +1,27 @@
 import { defineConfig } from 'vitest/config';
 
+/*
+ * The in-repo plugins sit beside frontend/ (../plugins, ../private/plugins),
+ * so a bare import in a plugin's test walks up past this package to the repo
+ * root's node_modules — the React client's yarn install, with its own graphql
+ * and no solid-js. Deduping resolves these from frontend/ instead: one Solid
+ * runtime for the plugin and the SDK it calls (two copies don't track each
+ * other's signals), and the same graphql the app is built with, whether or
+ * not the root happens to be installed.
+ */
+export const PLUGIN_SHARED_DEPS = ['solid-js', 'graphql'];
+
+// Run west of UTC unless told otherwise. A date bug that reads a calendar day
+// as UTC midnight shows the day BEFORE west of Greenwich and nothing at all
+// east of it, so a suite run in New Zealand or Timor-Leste would pass with the
+// bug in place (#1500). Set here, before the test workers start, so they all
+// inherit it; a `TZ` already in the environment wins. East of UTC the same
+// mistakes show differently (a day saved as the UTC day of local midnight lands
+// on the day before), so after changing date code also run
+// `TZ=Pacific/Auckland pnpm test`. An empty `TZ` counts as unset: Node reads
+// it as UTC.
+process.env.TZ ||= 'America/Los_Angeles';
+
 // Unit tests (intl, codegen helpers) run in node. The deterministic e2e
 // suites that need the real backend live under e2e/ (Playwright, not vitest).
 export default defineConfig({
@@ -29,6 +51,7 @@ export default defineConfig({
     // @tanstack/solid-table resolve as two disconnected instances (the
     // limitation renderTemplate.test.tsx documents).
     conditions: ['browser'],
+    dedupe: PLUGIN_SHARED_DEPS,
   },
   test: {
     // The in-repo country plugins are covered too — co-locating them buys
@@ -39,14 +62,23 @@ export default defineConfig({
       // The e2e scripts' own tests: the nightly workflow's helpers
       // (nightly-lib.mjs) and e2e:affected (affected.mjs).
       'scripts/**/*.test.mjs',
-      'plugins/*/src/**/*.test.ts',
+      '../plugins/*/src/**/*.test.ts',
+      '../private/plugins/*/src/**/*.test.ts',
+      // A form plugin's own tests sit beside its document types under
+      // `forms/`, which the `src` glob above does not reach.
+      '../plugins/examples/*/forms/**/*.test.ts',
+      '../plugins/*/forms/**/*.test.ts',
+      '../private/plugins/*/forms/**/*.test.ts',
+      // A plugin's data repairs, plain Node scripts beside the plugin.
+      '../plugins/*/repair/**/*.test.mjs',
+      '../private/plugins/*/repair/**/*.test.mjs',
       // cook_islands' backend half and shared domain core, named rather than
       // globbed: civ's backend tests are jest-style and import `@common/*`,
       // so they would fail the run on sight. `shared/` sits OUTSIDE the
-      // `plugins/*/src` glob — leaving it out silently skips the whole
+      // `plugins/*/src` globs — leaving it out silently skips the whole
       // domain-core suite, which is exactly what happened when it moved.
-      'plugins/cook_islands/backend/src/**/*.test.ts',
-      'plugins/cook_islands/shared/**/*.test.ts',
+      '../private/plugins/cook_islands/backend/src/**/*.test.ts',
+      '../private/plugins/cook_islands/shared/**/*.test.ts',
     ],
     environment: 'node',
   },

@@ -22,6 +22,7 @@ mutation upsertAncillaryItem(
           id
           itemQuantity
           ancillaryQuantity
+          excludePrincipalWastage
           ancillaryItem {
             id
             code
@@ -66,6 +67,24 @@ mutation deleteAncillaryItem(
         ... on DeleteResponse {
           id
         }
+      }
+    }
+  }
+}
+
+# The item's own wastage rate as a supply (rules.md § ancillary supplies ›
+# supply wastage). Its error union carries exactly SupplyWastageRateOutOfRange
+# (also client-guarded by the field's bounds); a missing item is a NON-typed
+# top-level error. Only the outcome is read: the field refetches the tab on
+# success and shows its own translated message on the typed error.
+mutation setSupplyWastageRate(
+  $storeId: String!
+  $input: SetSupplyWastageRateInput!
+) {
+  centralServer {
+    ancillaryItem {
+      setSupplyWastageRate(storeId: $storeId, input: $input) {
+        __typename
       }
     }
   }

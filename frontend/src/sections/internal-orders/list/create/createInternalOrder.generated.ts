@@ -64,9 +64,10 @@ export type InsertInternalOrderVariables = {
     colour?: string | null;
     theirReference?: string | null;
     comment?: string | null;
-    maxMonthsOfStock: number;
+    maxMonthsOfStock?: number | null;
     minMonthsOfStock: number;
     expectedDeliveryDate?: string | null;
+    masterListId?: string | null;
   };
 };
 

@@ -36,7 +36,6 @@ pub(crate) enum SyncStep {
 #[derive(Clone)]
 pub(crate) enum SyncStepProgress {
     PullCentral,
-    PullRemote,
     PullCentralV6,
     Push,
     PushCentralV6,
@@ -269,11 +268,16 @@ impl<'a> SyncLogger<'a> {
     }
 
     pub(crate) fn error(&mut self, error: &SyncError) -> Result<(), SyncLoggerError> {
-        error!("Error in sync: {}", format_error(error));
-
         // Convert to sync log error
 
         let SyncLogError { message, code } = SyncLogError::from_sync_error(error);
+
+        // An expected maintenance state, not a fault on this site
+        if code == Some(SyncApiErrorCode::SyncApiPaused) {
+            info!("Sync skipped: {}", format_error(error));
+        } else {
+            error!("Error in sync: {}", format_error(error));
+        }
 
         self.row = SyncLogV5V6Row {
             error_message: Some(message),
@@ -328,15 +332,6 @@ impl<'a> SyncLogger<'a> {
                     ..self.row.clone()
                 }
             }
-            SyncStepProgress::PullRemote => {
-                let (total, done) = get_progress(remaining, self.row.pull_remote_progress_total);
-
-                SyncLogV5V6Row {
-                    pull_remote_progress_total: total,
-                    pull_remote_progress_done: done,
-                    ..self.row.clone()
-                }
-            }
             SyncStepProgress::Push => {
                 let (total, done) = get_progress(remaining, self.row.push_progress_total);
 
@@ -372,6 +367,23 @@ impl<'a> SyncLogger<'a> {
             }
         };
 
+        self.update()?;
+        Ok(())
+    }
+
+    /// Remote pull progress as records pulled so far out of pulled + still queued. Legacy central
+    /// can keep queuing while a pull runs, so the total is re-estimated every batch instead of
+    /// being fixed at the first queue length (which left `done` stuck at 0 while the queue grew).
+    pub(crate) fn pull_remote_progress(
+        &mut self,
+        pulled: u64,
+        remaining: u64,
+    ) -> Result<(), SyncLoggerError> {
+        self.row = SyncLogV5V6Row {
+            pull_remote_progress_total: Some((pulled + remaining) as i32),
+            pull_remote_progress_done: Some(pulled as i32),
+            ..self.row.clone()
+        };
         self.update()?;
         Ok(())
     }
@@ -440,6 +452,10 @@ impl SyncLogError {
                 SyncParsedErrorV6::SyncVersionMismatch(_, _, _),
             )) => return Self::new(SyncApiErrorCode::V6ApiVersionIncompatible, sync_error),
 
+            SyncApiErrorVariant::V6(SyncApiErrorVariantV6::ParsedError(
+                SyncParsedErrorV6::SyncApiPaused,
+            )) => return Self::new(SyncApiErrorCode::SyncApiPaused, sync_error),
+
             // map connection errors
             SyncApiErrorVariant::V6(SyncApiErrorVariantV6::ConnectionError(_))
             | SyncApiErrorVariant::V5(SyncApiErrorVariantV5::ConnectionError { .. }) => {
@@ -490,7 +506,9 @@ fn v5_to_sync_log_error_code(code: &SyncErrorCodeV5) -> Option<SyncApiErrorCode>
 mod test {
     use crate::sync::{
         api::{ParsedError, SyncApiError, SyncApiErrorVariantV5, SyncErrorCodeV5},
+        api_v6::{SyncApiErrorV6, SyncApiErrorVariantV6, SyncParsedErrorV6},
         central_data_synchroniser::CentralPullError,
+        central_data_synchroniser_v6::RemotePushErrorV6,
         remote_data_synchroniser::{
             PostInitialisationError, RemotePullError, RemotePushError, WaitForSyncOperationError,
         },
@@ -608,6 +626,21 @@ mod test {
             SyncLogError {
                 message: format_error(&sync_error),
                 code: Some(SyncApiErrorCode::HardwareIdMismatch)
+            }
+        );
+        // RemotePushErrorV6 -> ParsedError::SyncApiPaused -> SyncApiPaused
+        let sync_error =
+            SyncError::RemotePushErrorV6(RemotePushErrorV6::SyncApiError(SyncApiErrorV6 {
+                source: SyncApiErrorVariantV6::ParsedError(SyncParsedErrorV6::SyncApiPaused),
+                url: Url::parse("http://localhost").unwrap(),
+                route: "push".to_string(),
+            }));
+        let sync_log_error = SyncLogError::from_sync_error(&sync_error);
+        assert_eq!(
+            sync_log_error,
+            SyncLogError {
+                message: format_error(&sync_error),
+                code: Some(SyncApiErrorCode::SyncApiPaused)
             }
         );
     }

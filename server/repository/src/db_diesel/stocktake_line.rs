@@ -1,16 +1,18 @@
 use super::{
-    LocationRow, NameRow, ReasonOptionRow, StockLineRow, StocktakeLineRow, StorageConnection,
-    item_row::item, location_row::location, name_row::name, reason_option_row::reason_option,
-    stock_line_row::stock_line, stocktake_line_row::stocktake_line,
+    CampaignRow, LocationRow, NameRow, ReasonOptionRow, StockLineRow, StocktakeLineRow,
+    StorageConnection, campaign_row::campaign, item_row::item, location_row::location,
+    name_row::name, reason_option_row::reason_option, stock_line_row::stock_line,
+    stocktake_line_row::stocktake_line,
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 use crate::{
-    DBType, EqualFilter, ItemFilter, ItemRepository, ItemRow, Pagination, RepositoryError, Sort,
-    StringFilter,
+    DBType, DateFilter, EqualFilter, ItemFilter, ItemRepository, ItemRow, Pagination,
+    RepositoryError, Sort, StringFilter,
     diesel_macros::{
-        apply_equal_filter, apply_sort, apply_sort_asc_nulls_last, apply_sort_no_case,
+        apply_date_filter, apply_equal_filter, apply_sort, apply_sort_asc_nulls_last,
+        apply_sort_no_case, apply_string_filter,
     },
 };
 
@@ -22,6 +24,12 @@ pub struct StocktakeLineFilter {
     pub item_code_or_name: Option<StringFilter>,
     pub item_id: Option<EqualFilter<String>>,
     pub stock_line_id: Option<EqualFilter<String>>,
+    pub donor_id: Option<EqualFilter<String>>,
+    pub campaign_id: Option<EqualFilter<String>>,
+    pub batch: Option<StringFilter>,
+    pub expiry_date: Option<DateFilter>,
+    pub manufacture_date: Option<DateFilter>,
+    pub campaign_name: Option<StringFilter>,
 }
 
 impl StocktakeLineFilter {
@@ -53,6 +61,36 @@ impl StocktakeLineFilter {
         self.stock_line_id = Some(filter);
         self
     }
+
+    pub fn donor_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.donor_id = Some(filter);
+        self
+    }
+
+    pub fn campaign_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.campaign_id = Some(filter);
+        self
+    }
+
+    pub fn batch(mut self, filter: StringFilter) -> Self {
+        self.batch = Some(filter);
+        self
+    }
+
+    pub fn expiry_date(mut self, filter: DateFilter) -> Self {
+        self.expiry_date = Some(filter);
+        self
+    }
+
+    pub fn manufacture_date(mut self, filter: DateFilter) -> Self {
+        self.manufacture_date = Some(filter);
+        self
+    }
+
+    pub fn campaign_name(mut self, filter: StringFilter) -> Self {
+        self.campaign_name = Some(filter);
+        self
+    }
 }
 
 pub enum StocktakeLineSortField {
@@ -65,6 +103,9 @@ pub enum StocktakeLineSortField {
     SnapshotNumberOfPacks,
     CountedNumberOfPacks,
     ReasonOption,
+    ManufactureDate,
+    Donor,
+    Campaign,
 }
 
 pub type StocktakeLineSort = Sort<StocktakeLineSortField>;
@@ -76,6 +117,7 @@ type StocktakeLineJoin = (
     Option<LocationRow>,
     Option<NameRow>,
     Option<ReasonOptionRow>,
+    Option<CampaignRow>,
 );
 
 #[derive(Debug, Clone, PartialEq, Default)]
@@ -86,6 +128,7 @@ pub struct StocktakeLine {
     pub location: Option<LocationRow>,
     pub donor: Option<NameRow>,
     pub reason_option: Option<ReasonOptionRow>,
+    pub campaign: Option<CampaignRow>,
 }
 
 pub struct StocktakeLineRepository<'a> {
@@ -158,6 +201,15 @@ impl<'a> StocktakeLineRepository<'a> {
                 StocktakeLineSortField::ReasonOption => {
                     apply_sort_no_case!(query, sort, reason_option::reason);
                 }
+                StocktakeLineSortField::ManufactureDate => {
+                    apply_sort_asc_nulls_last!(query, sort, stocktake_line::manufacture_date);
+                }
+                StocktakeLineSortField::Donor => {
+                    apply_sort_asc_nulls_last!(query, sort, name::name_);
+                }
+                StocktakeLineSortField::Campaign => {
+                    apply_sort_no_case!(query, sort, campaign::name);
+                }
             };
         }
 
@@ -181,6 +233,12 @@ impl<'a> StocktakeLineRepository<'a> {
             apply_equal_filter!(query, f.location_id, stocktake_line::location_id);
             apply_equal_filter!(query, f.item_id, item::id);
             apply_equal_filter!(query, f.stock_line_id, stocktake_line::stock_line_id);
+            apply_equal_filter!(query, f.donor_id, stocktake_line::donor_id);
+            apply_equal_filter!(query, f.campaign_id, stocktake_line::campaign_id);
+            apply_string_filter!(query, f.batch, stocktake_line::batch);
+            apply_date_filter!(query, f.expiry_date, stocktake_line::expiry_date);
+            apply_date_filter!(query, f.manufacture_date, stocktake_line::manufacture_date);
+            apply_string_filter!(query, f.campaign_name, campaign::name);
         }
 
         query
@@ -195,12 +253,13 @@ fn query() -> _ {
         .left_join(location::table)
         .left_join(name::table)
         .left_join(reason_option::table)
+        .left_join(campaign::table)
 }
 
 type BoxedStocktakeLineQuery = IntoBoxed<'static, query, DBType>;
 
 fn to_domain(
-    (line, item, stock_line, location, donor, reason_option): StocktakeLineJoin,
+    (line, item, stock_line, location, donor, reason_option, campaign): StocktakeLineJoin,
 ) -> StocktakeLine {
     StocktakeLine {
         line,
@@ -209,6 +268,7 @@ fn to_domain(
         location,
         donor,
         reason_option,
+        campaign,
     }
 }
 
@@ -232,4 +292,174 @@ fn apply_item_filter(
         return query.filter(item::id.eq_any(item_ids));
     }
     query
+}
+
+#[cfg(test)]
+mod test {
+    use chrono::NaiveDate;
+
+    use crate::{
+        CampaignRow, DateFilter, EqualFilter, Pagination, StocktakeLineFilter,
+        StocktakeLineRepository, StocktakeLineRow, StocktakeLineSort, StocktakeLineSortField,
+        StringFilter,
+        mock::{MockData, MockDataInserts, mock_campaign_a, mock_item_a, mock_stocktake_a},
+        test_db,
+    };
+
+    #[actix_rt::test]
+    async fn test_stocktake_line_campaign_filter() {
+        let line_with_campaign = StocktakeLineRow {
+            id: "stocktake_line_with_campaign".to_string(),
+            stocktake_id: mock_stocktake_a().id,
+            item_id: mock_item_a().id,
+            item_name: mock_item_a().name,
+            campaign_id: Some(mock_campaign_a().id),
+            ..Default::default()
+        };
+        let (_, connection, _, _) = test_db::setup_all_with_data(
+            "test_stocktake_line_campaign_filter",
+            MockDataInserts::all(),
+            MockData {
+                stocktake_lines: vec![line_with_campaign.clone()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let lines = StocktakeLineRepository::new(&connection)
+            .query_by_filter(
+                StocktakeLineFilter::new()
+                    .stocktake_id(EqualFilter::equal_to(mock_stocktake_a().id))
+                    .campaign_id(EqualFilter::equal_to(mock_campaign_a().id)),
+                None,
+            )
+            .unwrap();
+
+        assert_eq!(
+            lines.into_iter().map(|l| l.line.id).collect::<Vec<_>>(),
+            vec![line_with_campaign.id]
+        );
+    }
+
+    #[actix_rt::test]
+    async fn test_stocktake_line_campaign_name_filter_and_sort() {
+        // Lower case, so a case-sensitive sort would put it after "Campaign A"
+        let campaign_b = CampaignRow {
+            id: "campaign_b".to_string(),
+            name: "another campaign".to_string(),
+            ..Default::default()
+        };
+        let line = |id: &str, campaign_id: Option<String>| StocktakeLineRow {
+            id: id.to_string(),
+            stocktake_id: mock_stocktake_a().id,
+            item_id: mock_item_a().id,
+            item_name: mock_item_a().name,
+            campaign_id,
+            ..Default::default()
+        };
+        let (_, connection, _, _) = test_db::setup_all_with_data(
+            "test_stocktake_line_campaign_name_filter_and_sort",
+            MockDataInserts::all(),
+            MockData {
+                campaigns: vec![campaign_b.clone()],
+                stocktake_lines: vec![
+                    line("line_campaign_a", Some(mock_campaign_a().id)),
+                    line("line_campaign_b", Some(campaign_b.id.clone())),
+                    line("line_no_campaign", None),
+                ],
+                ..Default::default()
+            },
+        )
+        .await;
+        let repo = StocktakeLineRepository::new(&connection);
+
+        let by_name = repo
+            .query_by_filter(
+                StocktakeLineFilter::new()
+                    .stocktake_id(EqualFilter::equal_to(mock_stocktake_a().id))
+                    .campaign_name(StringFilter::like("Campaign A")),
+                None,
+            )
+            .unwrap();
+        assert_eq!(by_name.len(), 1);
+        assert_eq!(by_name[0].line.id, "line_campaign_a");
+        assert_eq!(by_name[0].campaign, Some(mock_campaign_a()));
+
+        let sorted = repo
+            .query(
+                Pagination::all(),
+                Some(
+                    StocktakeLineFilter::new().campaign_id(EqualFilter::equal_any(vec![
+                        mock_campaign_a().id,
+                        campaign_b.id,
+                    ])),
+                ),
+                Some(StocktakeLineSort {
+                    key: StocktakeLineSortField::Campaign,
+                    desc: None,
+                }),
+                None,
+            )
+            .unwrap();
+        assert_eq!(
+            sorted.into_iter().map(|l| l.line.id).collect::<Vec<_>>(),
+            vec!["line_campaign_b", "line_campaign_a"]
+        );
+    }
+
+    #[actix_rt::test]
+    async fn test_stocktake_line_expiry_date_filter() {
+        let line = |id: &str, expiry_date: Option<NaiveDate>| StocktakeLineRow {
+            id: id.to_string(),
+            stocktake_id: mock_stocktake_a().id,
+            item_id: mock_item_a().id,
+            item_name: mock_item_a().name,
+            expiry_date,
+            ..Default::default()
+        };
+        let (_, connection, _, _) = test_db::setup_all_with_data(
+            "test_stocktake_line_expiry_date_filter",
+            MockDataInserts::all(),
+            MockData {
+                stocktake_lines: vec![
+                    line("line_expires_jan", NaiveDate::from_ymd_opt(2026, 1, 15)),
+                    line("line_expires_jun", NaiveDate::from_ymd_opt(2026, 6, 15)),
+                    line("line_no_expiry", None),
+                ],
+                ..Default::default()
+            },
+        )
+        .await;
+        let repo = StocktakeLineRepository::new(&connection);
+        let ids = |filter: DateFilter| {
+            let mut ids = repo
+                .query_by_filter(
+                    StocktakeLineFilter::new()
+                        .stocktake_id(EqualFilter::equal_to(mock_stocktake_a().id))
+                        .expiry_date(filter),
+                    None,
+                )
+                .unwrap()
+                .into_iter()
+                .map(|l| l.line.id)
+                .collect::<Vec<_>>();
+            ids.sort();
+            ids
+        };
+
+        // Expiring on or before a date: a line with no expiry is never included
+        assert_eq!(
+            ids(DateFilter::before_or_equal_to(
+                NaiveDate::from_ymd_opt(2026, 3, 1).unwrap()
+            )),
+            vec!["line_expires_jan"]
+        );
+        assert_eq!(
+            ids(DateFilter::date_range(
+                &NaiveDate::from_ymd_opt(2026, 1, 1).unwrap(),
+                &NaiveDate::from_ymd_opt(2026, 12, 31).unwrap(),
+            )),
+            vec!["line_expires_jan", "line_expires_jun"]
+        );
+    }
 }

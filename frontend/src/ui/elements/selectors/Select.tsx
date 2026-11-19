@@ -2,7 +2,12 @@ import { children, createMemo, Show, type JSX } from 'solid-js';
 import * as KSelect from '@kobalte/core/select';
 import { keepPopupOpenOnInsideContent } from './dismissInsideGuard';
 import { t } from '../../../intl';
-import { CheckIcon, ChevronDownIcon, CloseIcon } from '../../icons';
+import {
+  AlertTriangleIcon,
+  CheckIcon,
+  ChevronDownIcon,
+  CloseIcon,
+} from '../../icons';
 import { usePortalMount } from '../../utils/portalMount';
 import type { FocusTarget } from '../../utils/createFocusTarget';
 import styles from './Select.module.css';
@@ -44,18 +49,31 @@ export interface SelectProps {
    * empties its bound state. Requires controlled usage (`value`): under
    * `clearable` an absent `value` reads as "no selection" rather than
    * uncontrolled. Default false — most selects are a must-have pick (a
-   * direction, a rows-per-page count) where emptiness is meaningless.
+   * direction, a rows-per-page count) where emptiness is meaningless. Hidden
+   * while `disabled`.
    */
   clearable?: boolean;
   /** Called when the clear affordance is activated (see `clearable`). */
   onClear?: () => void;
   placeholder?: string;
   helperText?: string;
+  /**
+   * Error message — presence switches the control to the error state (red
+   * border, `aria-invalid`), shown with an alert icon below the field in place
+   * of `helperText`. Mirrors TextField's and Combobox's `error`.
+   */
+  error?: string;
   disabled?: boolean;
   /**
    * Marks the field required: an asterisk on the label (TextField's marker, so
-   * a select and a text field read alike) plus `aria-required` on the trigger.
-   * Indication only — the gating stays with the form's own confirm rule.
+   * a select and a text field read alike). Indication only — the gating stays
+   * with the form's own confirm rule. No `aria-required`: the trigger is a
+   * `<button>` (Kobalte gives it `aria-haspopup`, not a combobox role), and
+   * ARIA does not allow the attribute there (axe `aria-allowed-attr`). The
+   * asterisk is `aria-hidden`, so the label also carries a visually hidden
+   * "Required"; the trigger takes its name from the label, so a screen reader
+   * hears "Reason, Required" (WCAG 1.3.1, 3.3.2). Under `hideLabel` the
+   * trigger's `aria-label` carries it instead.
    */
   required?: boolean;
   /**
@@ -111,10 +129,14 @@ const NO_OPTIONS_VALUE = '__no-options__';
  * Styled drop-down — Kobalte Select (headless). Same job as a native <select>
  * (pick one from a fixed list) but for when the closed control and the options
  * need RICH content the native <option> can't render: a status colour-dot, an
- * icon, a two-line option. Hand-rolling that means re-implementing exactly what
- * WCAG 2.2 grades — a role="listbox" popup, typeahead, arrow / Home / End keys,
- * focus return, RTL-aware placement. Kobalte supplies that contract (the Solid
- * analogue of the RnD prototype's Radix Select — same reasoning, see its
+ * icon, a two-line option. One FLAT list, and a list that CANNOT change while
+ * the popup is open (Kobalte's Select closes on an options change — which is
+ * why a searchable or grouped set belongs on {@link Combobox}, whose grouped
+ * mode holds pinned choices above labelled sections). Hand-rolling that means
+ * re-implementing exactly what WCAG 2.2 grades — a role="listbox" popup,
+ * typeahead, arrow / Home / End keys, focus return, RTL-aware placement.
+ * Kobalte supplies that contract (the Solid analogue of the RnD prototype's
+ * Radix Select — same reasoning, see its
  * UI_ELEMENTS.md); we own 100% of the markup + CSS, styled via Kobalte's
  * data-* state attributes.
  *
@@ -140,7 +162,9 @@ export const Select = (props: SelectProps) => {
     props.clearable
       ? (findOption(props.value) ?? null)
       : findOption(props.value);
-  const showClear = () => Boolean(props.clearable) && !!findOption(props.value);
+  // A disabled select cannot be cleared, so it offers no clear affordance.
+  const showClear = () =>
+    Boolean(props.clearable) && !props.disabled && !!findOption(props.value);
 
   // What Kobalte sees: the caller's options, or the disabled sentinel when it
   // has none (see NO_OPTIONS_VALUE). Resolution of `value` still runs against
@@ -172,6 +196,7 @@ export const Select = (props: SelectProps) => {
         <span class={styles.required} aria-hidden="true">
           *
         </span>
+        <span class={styles.srOnly}>, {t('messages.required-field')}</span>
       </Show>
     </KSelect.Label>
   );
@@ -196,6 +221,7 @@ export const Select = (props: SelectProps) => {
       }
       placeholder={props.placeholder ?? 'Select…'}
       disabled={props.disabled}
+      validationState={props.error ? 'invalid' : 'valid'}
       itemComponent={itemProps => (
         <KSelect.Item item={itemProps.item} class={styles.item}>
           <Show when={itemProps.item.rawValue.adornment}>
@@ -235,7 +261,7 @@ export const Select = (props: SelectProps) => {
           The trigger is a real <button>, so the ✕ can't nest inside it: a
           spacer reserves the slot in the trigger's flex row and the button
           overlays it from this wrapper. */}
-      <div class={styles.control}>
+      <div class={styles.control} data-error={props.error ? '' : undefined}>
         <KSelect.Trigger
           // Always a real callback: Kobalte forwards `ref` into its own
           // polymorphic element props, where a bare `undefined` is not the same
@@ -248,8 +274,16 @@ export const Select = (props: SelectProps) => {
           }}
           class={styles.trigger}
           data-testid={props.testId}
-          aria-label={props.hideLabel ? props.label : undefined}
-          aria-required={props.required ? 'true' : undefined}
+          // Under hideLabel the label (and its hidden "Required") isn't
+          // rendered, and a FieldRow's asterisk is aria-hidden too, so the
+          // name carries the required cue itself.
+          aria-label={
+            props.hideLabel
+              ? props.required
+                ? `${props.label}, ${t('messages.required-field')}`
+                : props.label
+              : undefined
+          }
         >
           <KSelect.Value<SelectOption> class={styles.value}>
             {state => state.selectedOption().label}
@@ -265,7 +299,6 @@ export const Select = (props: SelectProps) => {
           <button
             type="button"
             class={styles.clear}
-            disabled={props.disabled}
             aria-label="Clear selection"
             // Clearing removes this button (showClear turns false), so focus
             // must be handed to the trigger — dropped, it falls to <body> and
@@ -279,10 +312,26 @@ export const Select = (props: SelectProps) => {
           </button>
         </Show>
       </div>
-      <Show when={props.helperText}>
-        <KSelect.Description class={styles.helper} data-field-message="helper">
-          {props.helperText}
-        </KSelect.Description>
+      {/* The error (icon + text, never colour alone) takes the helper's place,
+          as TextField and Combobox. Kobalte's ErrorMessage renders only under
+          validationState="invalid" and wires it into aria-describedby. */}
+      <Show
+        when={props.error}
+        fallback={
+          <Show when={props.helperText}>
+            <KSelect.Description
+              class={styles.helper}
+              data-field-message="helper"
+            >
+              {props.helperText}
+            </KSelect.Description>
+          </Show>
+        }
+      >
+        <KSelect.ErrorMessage class={styles.error} data-field-message="error">
+          <AlertTriangleIcon class={styles.errorIcon} />
+          {props.error}
+        </KSelect.ErrorMessage>
       </Show>
       <KSelect.Portal mount={portalMount?.()}>
         <KSelect.Content

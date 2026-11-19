@@ -2,7 +2,7 @@ use super::{StorageConnection, sync_file_reference_row::sync_file_reference};
 
 use crate::{
     SyncFileReferenceRow,
-    diesel_macros::{apply_equal_filter, apply_sort_no_case},
+    diesel_macros::{apply_equal_filter, apply_sort, apply_sort_no_case},
 };
 
 use crate::{DBType, EqualFilter, Pagination, Sort, repository_error::RepositoryError};
@@ -65,7 +65,7 @@ impl<'a> SyncFileReferenceRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 SyncFileReferenceSortField::CreatedDateTime => {
-                    apply_sort_no_case!(query, sort, sync_file_reference::created_datetime)
+                    apply_sort!(query, sort, sync_file_reference::created_datetime)
                 }
                 SyncFileReferenceSortField::FileName => {
                     apply_sort_no_case!(query, sort, sync_file_reference::file_name)
@@ -145,5 +145,33 @@ impl SyncFileReferenceFilter {
     pub fn is_deleted(mut self, is_deleted: bool) -> Self {
         self.is_deleted = Some(is_deleted);
         self
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{mock::MockDataInserts, test_db};
+
+    // Every sort key, both directions. Postgres rejects a collation on a
+    // non-text column (enum, timestamp) when planning, so this needs no rows.
+    #[actix_rt::test]
+    async fn test_sync_file_reference_sort() {
+        let (_, connection, _, _) =
+            test_db::setup_all("test_sync_file_reference_sort", MockDataInserts::none()).await;
+        let repo = SyncFileReferenceRepository::new(&connection);
+
+        for desc in [false, true] {
+            for key in [
+                SyncFileReferenceSortField::CreatedDateTime,
+                SyncFileReferenceSortField::FileName,
+            ] {
+                let sort = Sort {
+                    key,
+                    desc: Some(desc),
+                };
+                repo.query(Pagination::all(), None, Some(sort)).unwrap();
+            }
+        }
     }
 }

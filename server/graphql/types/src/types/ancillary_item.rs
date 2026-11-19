@@ -24,6 +24,11 @@ impl AncillaryItemNode {
         self.ancillary_item.ancillary_quantity
     }
 
+    /// Ordered against the principal's quantity net of its wastage rate
+    pub async fn exclude_principal_wastage(&self) -> bool {
+        self.ancillary_item.exclude_principal_wastage
+    }
+
     pub async fn item_id(&self) -> &str {
         &self.ancillary_item.item_id
     }

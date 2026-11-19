@@ -170,6 +170,7 @@ const MasterListsList: Component = () => {
         onRowClick={row =>
           navigate(itemsForMasterListHref(params.storeId, row.id))
         }
+        rowHref={row => itemsForMasterListHref(params.storeId, row.id)}
         emptyMessage={t('error.no-master-lists')}
         config={tableConfig.config()}
         setConfig={tableConfig.setConfig}

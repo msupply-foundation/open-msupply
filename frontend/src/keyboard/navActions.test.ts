@@ -13,7 +13,6 @@ const state = {
   dispensary: false,
   programModule: false,
   vaccineModule: false,
-  procurement: false,
   central: false,
   // Permissions default to all-granted so the capability-gate tests read
   // clean; the permission-gate test opts out (navGates.test does the same).
@@ -25,12 +24,12 @@ vi.mock('../store/storeContext', () => ({
   isDispensary: () => state.dispensary,
   hasProgramModule: () => state.programModule,
   hasVaccineModule: () => state.vaccineModule,
-  hasProcurement: () => state.procurement,
   hasPermission: (permission: string) =>
     state.grantAll || state.permissions.has(permission),
 }));
 vi.mock('../api/serverInfo', () => ({
   isCentralServer: () => state.central,
+  isCentralStandalone: () => false,
 }));
 
 import { navConfig } from '../nav/navConfig';
@@ -51,7 +50,6 @@ beforeEach(() => {
   state.dispensary = false;
   state.programModule = false;
   state.vaccineModule = false;
-  state.procurement = false;
   state.central = false;
   state.grantAll = true;
   state.permissions = new Set();
@@ -98,7 +96,6 @@ describe('palette destinations', () => {
     state.dispensary = true;
     state.vaccineModule = true;
     state.central = true;
-    state.procurement = true;
     withActions(actions => {
       expect(names(actions)).toHaveLength(offeredLeafPaths().length);
     });

@@ -124,9 +124,10 @@ mod test {
     use crate::invoice::inbound_shipment::AddToInboundShipmentFromMasterListError as ServiceError;
     use crate::service_provider::ServiceProvider;
     use repository::{
-        MasterListLineRow, MasterListNameJoinRow, MasterListRow,
+        InvoiceRow, InvoiceRowRepository, ItemRow, ItemStoreJoinRow, ItemType, MasterListLineRow,
+        MasterListNameJoinRow, MasterListRow,
         mock::{
-            MockData, MockDataInserts, common::FullMockMasterList,
+            MockData, MockDataInserts, common::FullMockMasterList, mock_campaign_a,
             mock_empty_draft_inbound_shipment, mock_inbound_shipment_a, mock_inbound_shipment_c,
             mock_item_a, mock_item_b, mock_item_c, mock_item_d, mock_name_store_a,
             mock_outbound_shipment_c, mock_store_a, mock_store_c,
@@ -261,7 +262,7 @@ mod test {
             }
         }
 
-        let (_, _, connection_manager, _) = setup_all_with_data(
+        let (_, connection, connection_manager, _) = setup_all_with_data(
             "is_add_from_master_list_success",
             MockDataInserts::all(),
             MockData {
@@ -276,6 +277,14 @@ mod test {
             .context(mock_store_a().id, "".to_string())
             .unwrap();
         let service = service_provider.invoice_service;
+
+        // New lines take the shipment's default campaign
+        InvoiceRowRepository::new(&connection)
+            .upsert_one(&InvoiceRow {
+                campaign_id: Some(mock_campaign_a().id),
+                ..mock_empty_draft_inbound_shipment()
+            })
+            .unwrap();
 
         let result: Vec<repository::InvoiceLineRow> = service
             .add_to_inbound_shipment_from_master_list(
@@ -306,6 +315,11 @@ mod test {
         test_item_ids.sort();
 
         assert_eq!(item_ids, test_item_ids);
+        assert!(
+            result
+                .iter()
+                .all(|line| line.campaign_id == Some(mock_campaign_a().id))
+        );
         let line = result
             .iter()
             .find(|line| line.item_id == mock_item_a().id)
@@ -323,5 +337,94 @@ mod test {
         assert_eq!(line.number_of_packs, 0.0);
         assert_eq!(line.item_name, mock_item_b().name);
         assert_eq!(line.item_code, mock_item_b().code);
+    }
+
+    #[actix_rt::test]
+    async fn add_from_master_list_takes_default_sell_price() {
+        // The store's default sell price is 50.00 for a pack of 10
+        let priced_item = ItemRow {
+            id: "master_list_priced_item".to_string(),
+            name: "Master list priced item".to_string(),
+            code: "master_list_priced_item".to_string(),
+            r#type: ItemType::Stock,
+            default_pack_size: 10.0,
+            ..Default::default()
+        };
+        let unpriced_item = ItemRow {
+            id: "master_list_unpriced_item".to_string(),
+            name: "Master list unpriced item".to_string(),
+            code: "master_list_unpriced_item".to_string(),
+            r#type: ItemType::Stock,
+            default_pack_size: 10.0,
+            ..Default::default()
+        };
+        let master_list = FullMockMasterList {
+            master_list: MasterListRow {
+                id: "default_price_master_list".to_string(),
+                name: "default_price_master_list".to_string(),
+                code: "default_price_master_list".to_string(),
+                is_active: true,
+                ..Default::default()
+            },
+            joins: vec![MasterListNameJoinRow {
+                id: "default_price_master_list_join".to_string(),
+                master_list_id: "default_price_master_list".to_string(),
+                name_id: mock_name_store_a().id,
+            }],
+            lines: [&priced_item, &unpriced_item]
+                .iter()
+                .map(|item| MasterListLineRow {
+                    id: format!("default_price_master_list_{}", item.id),
+                    item_id: item.id.clone(),
+                    master_list_id: "default_price_master_list".to_string(),
+                    ..Default::default()
+                })
+                .collect(),
+        };
+
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "add_from_master_list_takes_default_sell_price",
+            MockDataInserts::all(),
+            MockData {
+                items: vec![priced_item.clone(), unpriced_item.clone()],
+                item_store_joins: vec![ItemStoreJoinRow {
+                    id: "master_list_priced_item_store_a".to_string(),
+                    item_id: priced_item.id.clone(),
+                    store_id: mock_store_a().id,
+                    default_sell_price_per_pack: 50.0,
+                    ..Default::default()
+                }],
+                full_master_lists: vec![master_list],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+
+        let result = service_provider
+            .invoice_service
+            .add_to_inbound_shipment_from_master_list(
+                &context,
+                ServiceInput {
+                    shipment_id: mock_empty_draft_inbound_shipment().id,
+                    master_list_id: "default_price_master_list".to_string(),
+                },
+            )
+            .unwrap();
+
+        let sell_price_of = |item_id: &str| {
+            result
+                .iter()
+                .find(|line| line.invoice_line_row.item_id == item_id)
+                .unwrap()
+                .invoice_line_row
+                .sell_price_per_pack
+        };
+        assert_eq!(sell_price_of(&priced_item.id), 50.0);
+        assert_eq!(sell_price_of(&unpriced_item.id), 0.0);
     }
 }

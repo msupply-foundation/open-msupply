@@ -32,8 +32,10 @@ impl RequisitionQueries {
         ctx: &Context<'_>,
         store_id: String,
         id: String,
+        #[graphql(desc = "Only a requisition of this type resolves; any other is RecordNotFound")]
+        r#type: Option<RequisitionNodeType>,
     ) -> Result<RequisitionResponse> {
-        get_requisition(ctx, &store_id, &id)
+        get_requisition(ctx, &store_id, &id, r#type)
     }
 
     pub async fn requisitions(

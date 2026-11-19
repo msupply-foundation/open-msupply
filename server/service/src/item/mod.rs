@@ -3,9 +3,11 @@ pub mod bundled_item;
 pub mod item;
 pub mod item_variant;
 pub mod packaging_variant;
+pub mod upsert;
 use ancillary_item::{
-    DeleteAncillaryItem, DeleteAncillaryItemError, UpsertAncillaryItem, UpsertAncillaryItemError,
-    delete_ancillary_item, get_ancillary_items, upsert_ancillary_item,
+    DeleteAncillaryItem, DeleteAncillaryItemError, SetSupplyWastageRate, SetSupplyWastageRateError,
+    UpsertAncillaryItem, UpsertAncillaryItemError, delete_ancillary_item, get_ancillary_items,
+    set_supply_wastage_rate, upsert_ancillary_item,
 };
 use bundled_item::{
     DeleteBundledItem, DeleteBundledItemError, UpsertBundledItem, UpsertBundledItemError,
@@ -13,8 +15,9 @@ use bundled_item::{
 };
 pub use item::*;
 use item_variant::{
-    DeleteItemVariant, DeleteItemVariantError, UpsertItemVariantError,
-    UpsertItemVariantWithPackaging, delete_item_variant, get_item_variants, upsert_item_variant,
+    DeleteItemVariant, DeleteItemVariantError, PromoteItemVariantError, UpsertItemVariantError,
+    UpsertItemVariantWithPackaging, delete_item_variant, get_item_variants, promote_item_variant,
+    upsert_item_variant,
 };
 use packaging_variant::{
     DeletePackagingVariant, DeletePackagingVariantError, UpsertPackagingVariant,
@@ -61,6 +64,14 @@ pub trait ItemServiceTrait: Sync + Send {
         input: DeleteItemVariant,
     ) -> Result<String, DeleteItemVariantError> {
         delete_item_variant(ctx, input)
+    }
+
+    fn promote_item_variant(
+        &self,
+        ctx: &ServiceContext,
+        id: &str,
+    ) -> Result<ItemVariant, PromoteItemVariantError> {
+        promote_item_variant(ctx, id)
     }
 
     fn get_packaging_variants(
@@ -137,6 +148,14 @@ pub trait ItemServiceTrait: Sync + Send {
         input: DeleteAncillaryItem,
     ) -> Result<String, DeleteAncillaryItemError> {
         delete_ancillary_item(ctx, input)
+    }
+
+    fn set_supply_wastage_rate(
+        &self,
+        ctx: &ServiceContext,
+        input: SetSupplyWastageRate,
+    ) -> Result<f64, SetSupplyWastageRateError> {
+        set_supply_wastage_rate(ctx, input)
     }
 }
 

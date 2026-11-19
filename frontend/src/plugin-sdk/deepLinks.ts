@@ -44,13 +44,14 @@
  *
  * Eager-surface note (kdd/bundling § the SDK-eager rule), as measured in
  * kdd/bundle-size-by-pr.md (#304): this module needs only the two small date
- * helpers (`addDays`, `dateToIsoDate`), which arrive through the existing
+ * helpers (`addDays`, `dateToCalendarDate`), which arrive through the existing
  * shared dateTimeConvert chunk — one the app entry already loads at boot — so
  * linking it costs the SDK no new download. The module itself splits out as a
  * small shared chunk linked by both importers (the SDK entry and the
  * dashboard's statLinks), fetched with whichever side loads first.
  */
-import { addDays, dateToIsoDate } from '../ui/elements/inputs/dateTimeConvert';
+import { addDays } from '../ui/elements/inputs/dateTimeConvert';
+import { dateToCalendarDate } from '../intl/calendarDate';
 import type { StockLinesVariables } from '../sections/stock/list/stock.generated';
 
 // The stock list filter object, exactly the generated GraphQL filter shape —
@@ -92,18 +93,18 @@ export const listPath = (path: string, filter?: object): string => {
   return `${path}?query=${encodeURIComponent(JSON.stringify({ filter }))}`;
 };
 
-// An inclusive expiry window over the `Date` scalar (plain ISO days — the
+// An inclusive expiry window over the `NaiveDate` scalar (calendar dates — the
 // stock list's expiryDate field), open-ended where a bound is null.
 const dateRange = (from: Date | null, to: Date | null) => ({
-  ...(from ? { afterOrEqualTo: dateToIsoDate(from) } : {}),
-  ...(to ? { beforeOrEqualTo: dateToIsoDate(to) } : {}),
+  ...(from ? { afterOrEqualTo: dateToCalendarDate(from) } : {}),
+  ...(to ? { beforeOrEqualTo: dateToCalendarDate(to) } : {}),
 });
 
 // ── Task-list targets ────────────────────────────────────────────────────────
 // The unfiltered core lists a contribution launches into (e.g. the Cook
-// Islands navigator's task tiles — plugins/cook_islands/ui-surface.md § S2).
-// Each returns the path as the navigation registry spells it, from one place,
-// so a plugin never spells (or misspells) a host route.
+// Islands navigator's task tiles — private/plugins/cook_islands/ui-surface.md
+// § S2). Each returns the path as the navigation registry spells it, from one
+// place, so a plugin never spells (or misspells) a host route.
 
 export const inboundShipmentListPath = (): string =>
   'replenishment/inbound-shipment';
@@ -120,7 +121,9 @@ export const internalOrderPath = (orderId: string): string =>
 
 // Named for the record it reaches, which the UI calls a dispensing record
 // (issue #551). The export keeps its original name so plugins built against it
-// keep compiling; it is the returned path that moved.
+// keep compiling; it is the returned path that moved. It opens the store's own
+// dispensing screen (#2188): the list, or the Simple screen in a store that
+// dispenses there.
 export const dispensingListPath = (): string => 'dispensary/dispensing';
 
 /** @deprecated Use {@link dispensingListPath} — the vertical is "Dispensing". */
@@ -128,7 +131,7 @@ export const prescriptionListPath = dispensingListPath;
 
 /**
  * One prescription's detail screen, by invoice id — what the Afghanistan
- * Daily Tally's submitted summary opens per cohort (plugins/afghanistan
+ * Daily Tally's submitted summary opens per cohort (private/plugins/afghanistan
  * ui-surface § S6). URI-encoded like the stocktake builder below.
  */
 export const prescriptionDetailPath = (prescriptionId: string): string =>
@@ -139,9 +142,9 @@ export const stocktakeListPath = (): string => 'inventory/stocktakes';
 /**
  * One stocktake's detail screen — the record page behind a count, which is
  * what the Cook Islands count log opens from a row
- * (plugins/cook_islands/stocktake/ui-surface.md § S5). A record path, not a
- * filtered list: it takes the record's id and nothing else. The segment is
- * URI-encoded so an id can never smuggle a path separator, though real ids
+ * (private/plugins/cook_islands/stocktake/ui-surface.md § S5). A record path,
+ * not a filtered list: it takes the record's id and nothing else. The segment
+ * is URI-encoded so an id can never smuggle a path separator, though real ids
  * are host-minted UUIDs.
  */
 export const stocktakeDetailPath = (stocktakeId: string): string =>
@@ -151,20 +154,38 @@ export const stocktakeDetailPath = (stocktakeId: string): string =>
 
 export const stockListPath = (): string => 'inventory/stock';
 
-/** Expired: expiry ≤ today (OMS-REG-DB-01.41). */
-export const expiredStockPath = (today: Date): string =>
+/**
+ * One item's stock: the register searched by the item's code, as the old UI's
+ * item page links it (#1790). It goes through the list's own search chip, so
+ * the user sees the filter and can clear it. Carrying its own filter, it
+ * replaces the list's default "not expired" chip — the item's stock on hand
+ * counts expired lines too, so the register shows them.
+ *
+ * Host-shared, NOT plugin surface (like listPath): only the item page links
+ * here.
+ */
+export const itemStockPath = (itemCode: string): string =>
   listPath(stockListPath(), {
-    expiryDate: dateRange(null, today),
+    search: { like: itemCode },
   } satisfies StockFilter);
 
 /**
- * Expiring soon: tomorrow … today + 30d — exactly the `stockCounts`
- * expiring-soon window (the count subtracts expired, so today's expiries
- * belong to the expired set; OMS-REG-DB-01.42, D71).
+ * Expired: expiry before today — a batch is usable to the end of its expiry
+ * day (OMS-REG-DB-01.41, #1786).
+ */
+export const expiredStockPath = (today: Date): string =>
+  listPath(stockListPath(), {
+    expiryDate: dateRange(null, addDays(today, -1)),
+  } satisfies StockFilter);
+
+/**
+ * Expiring soon: today … today + 30d — exactly the `stockCounts`
+ * expiring-soon window (the count subtracts expired, which stops at
+ * yesterday, so today's expiries are expiring soon; OMS-REG-DB-01.42, D71).
  */
 export const expiringSoonStockPath = (today: Date): string =>
   listPath(stockListPath(), {
-    expiryDate: dateRange(addDays(today, 1), addDays(today, DAYS_TILL_EXPIRED)),
+    expiryDate: dateRange(today, addDays(today, DAYS_TILL_EXPIRED)),
   } satisfies StockFilter);
 
 /**

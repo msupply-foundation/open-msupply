@@ -22,7 +22,7 @@ pub(crate) fn restore(
         pg_bin_dir,
     } = get_dirs_from_settings(settings)?;
 
-    confirmation(skip_confirmation)?;
+    confirmation(settings, skip_confirmation)?;
 
     let Dirs {
         file_dir,
@@ -43,15 +43,31 @@ pub(crate) fn restore(
     Ok(())
 }
 
-fn confirmation(skip_confirmation: bool) -> Result<(), BackupError> {
+fn confirmation(settings: &Settings, skip_confirmation: bool) -> Result<(), BackupError> {
     if is_develop() && skip_confirmation {
         return Ok(());
     }
 
+    let database = &settings.database;
+    let database_description = if cfg!(feature = "postgres") {
+        format!(
+            r#"Postgres database "{}" on {}:{}"#,
+            database.database_name, database.host, database.port
+        )
+    } else {
+        format!(r#"SQLite database "{}""#, database.database_name)
+    };
+    let base_dir = std::path::absolute(&settings.server.base_dir)
+        .unwrap_or_else(|_| PathBuf::from(&settings.server.base_dir));
+
     // In production confirm restore
     let confirmation = "I understand";
     println!(
-        r#"This operation will completely wipe your omSupply database and other omSupply, are you sure (please type "{confirmation}" to continue): "#
+        r#"This operation will completely wipe:
+  - the {database_description}
+  - the omSupply files folder {}
+and replace them with the backup. Are you sure? (please type "{confirmation}" to continue): "#,
+        base_dir.display()
     );
     let mut buffer = String::new();
     io::stdin().read_line(&mut buffer)?;

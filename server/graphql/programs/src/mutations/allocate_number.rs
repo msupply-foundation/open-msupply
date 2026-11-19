@@ -41,7 +41,7 @@ pub fn allocate_program_number(
     validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutateProgram,
+            resource: Resource::AllocateProgramNumber,
             store_id: Some(store_id.clone()),
             require_central_standalone: false,
         },

@@ -1,6 +1,6 @@
 use async_graphql::{InputObject, InputType};
 use chrono::{DateTime, NaiveDate, Utc};
-use repository::{DateFilter, DatetimeFilter, EqualFilter, StringFilter};
+use repository::{DateFilter, DatetimeFilter, EqualFilter, FloatFilter, StringFilter};
 
 // simple string filter
 #[derive(InputObject, Clone)]
@@ -9,6 +9,8 @@ pub struct StringFilterInput {
     equal_to: Option<String>,
     /// Search term must be included in search candidate (case insensitive)
     like: Option<String>,
+    /// Search candidate must start with the search term (case insensitive)
+    starts_with: Option<String>,
 }
 
 impl From<StringFilterInput> for StringFilter {
@@ -19,7 +21,7 @@ impl From<StringFilterInput> for StringFilter {
             not_equal_to: None,
             equal_any: None,
             not_equal_all: None,
-            starts_with: None,
+            starts_with: f.starts_with,
             ends_with: None,
         }
     }
@@ -102,6 +104,29 @@ impl From<DateFilterInput> for DateFilter {
             equal_to: f.equal_to,
             before_or_equal_to: f.before_or_equal_to,
             after_or_equal_to: f.after_or_equal_to,
+        }
+    }
+}
+
+#[derive(InputObject, Clone)]
+pub struct FloatFilterInput {
+    pub equal_to: Option<f64>,
+    pub below_or_equal_to: Option<f64>,
+    pub above_or_equal_to: Option<f64>,
+    /// Strict less-than (exclusive)
+    pub less_than: Option<f64>,
+    /// Strict greater-than (exclusive)
+    pub greater_than: Option<f64>,
+}
+
+impl From<FloatFilterInput> for FloatFilter {
+    fn from(f: FloatFilterInput) -> Self {
+        FloatFilter {
+            equal_to: f.equal_to,
+            below_or_equal_to: f.below_or_equal_to,
+            above_or_equal_to: f.above_or_equal_to,
+            less_than: f.less_than,
+            greater_than: f.greater_than,
         }
     }
 }

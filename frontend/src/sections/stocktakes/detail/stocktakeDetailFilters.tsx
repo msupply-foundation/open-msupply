@@ -1,11 +1,14 @@
 import { t } from '@/intl';
 import {
   FilterCombobox,
+  FilterDateRange,
+  FilterSelect,
   FilterTextInput,
   constructFilters,
   type Filter,
 } from '@/ui/elements/selectors/FilterBar';
 import { type Location } from '@/domain/location';
+import { campaignKindLabel, campaignsResource } from '@/domain/campaign';
 import type { StocktakeLineFilter } from './stocktakeLineFilter';
 
 // Type-driven, EXHAUSTIVE filter definitions for the stocktake detail lines,
@@ -18,15 +21,15 @@ import type { StocktakeLineFilter } from './stocktakeLineFilter';
 //
 // The detail table is server-filtered now (kdd/stocktake-line-editing), so the
 // only filters we can offer are the ones the backend supports: `itemCodeOrName`
-// (the item name/code search) and `locationId` (an exact-match location
-// picker), both addable chips in the table toolbar's FilterBar — the same
-// filter-chip model as the list. The
-// filters the OLD client-side filter offered but the server can't do yet —
-// batch (no field), expiry-before (no field) — are TODOs below. The "show
-// error lines" filter IS built, but it doesn't belong here: it's a boolean
-// toggle over the view's transient error id-set, not a wire-filter key the
-// user types into, so it rides FilterBar's `extra` group in
-// StocktakeLineFilters.tsx (resolved to `id.equalAny` at query time).
+// (the item name/code search), `locationId` (an exact-match location picker),
+// `expiryDate` (a date range over the line's expiry) and `campaignId` (the
+// line's Activity), all addable chips in the table toolbar's FilterBar — the
+// same filter-chip model as the list. The batch filter the OLD client-side
+// filter offered is a TODO below. The "show error lines" filter IS built, but
+// it doesn't belong here: it's a boolean toggle over the view's transient
+// error id-set, not a wire-filter key the user types into, so it rides
+// FilterBar's `extra` group in StocktakeLineFilters.tsx (resolved to
+// `id.equalAny` at query time).
 // The location filter uses the plain, VOLUME-BLIND picker: it only narrows the
 // line list to a location, so capacity is irrelevant (spec/stocktakes/
 // ui-surface.md). The locations are fetched by the detail VIEW (one fetch,
@@ -81,12 +84,60 @@ export const stocktakeDetailFilters = (
         />
       ),
     },
+    // Expiry — a date range over the line's own expiry (stocktake_line, so an
+    // edited expiry counts, and lines with no stock line are included). A
+    // `NaiveDate` scalar, so FilterDateRange (type="date") passes the calendar
+    // dates through, as the stock list does. "Expiring before" is the range
+    // with only an end date; a line with no expiry never matches.
+    expiryDate: {
+      label: () => t('label.expiry-date'),
+      render: props => (
+        <FilterDateRange
+          type="date"
+          label={t('label.expiry-date')}
+          testId={props.testId}
+          value={props.filter().expiryDate}
+          onChange={value => props.setPartialFilter({ expiryDate: value })}
+        />
+      ),
+    },
+    // Activity — single-select of the campaign register (both kinds), matching
+    // the line's campaign (server campaignId.equalTo). Each option reads back
+    // qualified by its kind, as the Activity picker does, since a name can
+    // repeat across the two kinds. Offered only while the register has entries
+    // (gated in StocktakeLineFilters).
+    campaignId: {
+      label: () => t('label.activity'),
+      render: props => (
+        <FilterSelect
+          label={t('label.activity')}
+          testId={props.testId}
+          value={props.filter().campaignId?.equalTo ?? ''}
+          options={[
+            { value: '', label: t('label.any') },
+            ...campaignsResource.noSuspense().map(c => ({
+              value: c.id,
+              label: `${campaignKindLabel(c.kind)} · ${c.name}`,
+            })),
+          ]}
+          onChange={value =>
+            props.setPartialFilter({
+              campaignId: value ? { equalTo: value } : null,
+            })
+          }
+        />
+      ),
+    },
 
     // ─ dismissed (not addable chips) ─────────────────────────────────────────
-    // TODO: batch filter. The old client filter offered it, but
-    // StocktakeLineFilterInput has no `batch` field — needs a backend addition.
-    // TODO: expiry-before filter. No expiry field on the server filter — needs
-    // a backend addition.
+    // TODO: batch filter. The old client filter offered it; the server now has
+    // `batch`, so it only needs a chip.
+    batch: null,
+    // Server-supported, no chip yet.
+    manufactureDate: null,
+    donorId: null,
+    // `campaignId` above already narrows by Activity.
+    campaignName: null,
     // `id` is dismissed HERE (it's not a user-typed chip), but it IS used by
     // the "show error lines" filter — driven from the view's error id-set as
     // `id.equalAny`, wired through FilterBar's `extra` group in

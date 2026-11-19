@@ -1,16 +1,23 @@
 import { createSignal, type Component } from 'solid-js';
 import { Show } from 'solid-js';
-import { t, tPlural } from '../../../intl';
+import { t } from '../../../intl';
 import { TextField } from '../../../ui/elements/inputs/TextField';
-import {
-  Select,
-  type SelectOption,
-} from '../../../ui/elements/selectors/Select';
+import { Select } from '../../../ui/elements/selectors/Select';
+import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { FormRowItem } from '../../../ui/layout/Form/FormRowItem';
 import { NameSearch, type NameSeed } from '../../../domain/name';
 import { type DebouncedEdit } from '../../../domain/debouncedEdit';
 import type { InternalOrderInfoFragment } from './internalOrderDetail.generated';
+import {
+  fixedTargetOptions,
+  storeFixedIntervalAndBuffer,
+  targetDiffersFromFixed,
+  targetDiffersFromStoreMessage,
+  targetMonthOptions,
+  targetSetByStoreMessage,
+  thresholdMonthOptions,
+} from './targetMonths';
 
 // The detail header's field cluster (spec/internal-orders S3 § toolbar),
 // rendered as the children of the page's <HeaderToolbar>: each field carries
@@ -34,8 +41,16 @@ export interface InternalOrderToolbarProps {
   editable: boolean;
   /** A program order locks supplier + MOS thresholds even while Draft. */
   isProgram: boolean;
-  /** The destination-customer field's store-preference gate (OMS-REG-REPL-04.55). */
+  /**
+   * The destination-customer field's store-preference gate
+   * (OMS-REG-REPL-04.55).
+   */
   showDestination: boolean;
+  /**
+   * The store preference letting users change a general order's target — on
+   * unless set; undefined while unresolved (rules › target months of stock).
+   */
+  canChangeTargetMonths: boolean | undefined;
   /** The shared header edit buffer; reads/writes theirReference. */
   edit: DebouncedEdit<HeaderEditFields>;
   /** A supplier change (replace-only); typed rejections come back inline. */
@@ -43,15 +58,19 @@ export interface InternalOrderToolbarProps {
   supplierError?: string;
   /** A destination-customer change (clearable → null clears). */
   onChangeDestination: (customerId: string | null) => void;
-  /** MOS threshold / target changes (each already confirmed here). */
-  onChangeThreshold: (months: number) => void;
-  onChangeTarget: (months: number) => void;
+  /**
+   * MOS threshold / target changes (each already confirmed here). Resolves
+   * once the save has landed or failed, when the picked value hands back to
+   * the stored one.
+   */
+  onChangeThreshold: (months: number) => Promise<void>;
+  onChangeTarget: (months: number) => Promise<void>;
 }
 
-// The MOS selects offer 1…6 months (label.number-months); the threshold also
-// offers "Not set" (stored as 0). Built at render so labels re-translate on a
-// language switch.
-const MONTH_VALUES = [1, 2, 3, 4, 5, 6];
+// The MOS selects offer 1…6 months (label.number-months) — the target also its
+// own value where it is none of those, the threshold also "Not set" (stored as
+// 0) — built at render so labels re-translate on a language switch
+// (targetMonths.ts).
 
 // A pending MOS change awaiting its confirmation (each change recalculates
 // every line's suggestion, so it passes a confirm — OMS-REG-REPL-04.52,
@@ -66,6 +85,29 @@ export const InternalOrderToolbar: Component<
   // Supplier + MOS are locked on a program order even while Draft
   // (OMS-REG-REPL-04.53), and on any non-editable order.
   const fieldsLocked = () => !props.editable || props.isProgram;
+  // The store fixes a general order's target to its supply interval + safety
+  // buffer when the changing-target-months preference is off on a store with
+  // a supply interval (OMS-REG-REPL-17.18) — the target only; the threshold
+  // stays changeable.
+  // Only explained where the target would otherwise be editable.
+  const fixedIntervalAndBuffer = () =>
+    fieldsLocked()
+      ? undefined
+      : storeFixedIntervalAndBuffer({
+          canChangeTargetMonths: props.canChangeTargetMonths,
+          supplyIntervalAndBuffer: props.node.supplyIntervalAndBuffer,
+          isProgram: props.isProgram,
+        });
+  // A target the store fixes that this order doesn't have yet (set before the
+  // store fixed it, or since its facility record changed) stays changeable,
+  // but only onto the store's.
+  const differsFromFixed = () => {
+    const fixed = fixedIntervalAndBuffer();
+    return (
+      fixed != null &&
+      targetDiffersFromFixed(props.node.maxMonthsOfStock, fixed)
+    );
+  };
 
   const supplierSeed = (): NameSeed => ({
     id: props.node.otherPartyId,
@@ -106,22 +148,21 @@ export const InternalOrderToolbar: Component<
   // Threshold ≤ target, enforced in the UI (the server accepts any values): a
   // threshold above the target, or a target below the threshold, can't be
   // chosen.
-  const thresholdOptions = (): SelectOption[] => [
-    { value: '', label: t('label.not-set') },
-    ...MONTH_VALUES.map(n => ({
-      value: String(n),
-      label: tPlural('label.number-months', n),
-      disabled:
-        props.node.maxMonthsOfStock > 0 && n > props.node.maxMonthsOfStock,
-    })),
-  ];
-  const targetOptions = (): SelectOption[] =>
-    MONTH_VALUES.map(n => ({
-      value: String(n),
-      label: tPlural('label.number-months', n),
-      disabled:
-        props.node.minMonthsOfStock > 0 && n < props.node.minMonthsOfStock,
-    }));
+  const thresholdOptions = () =>
+    thresholdMonthOptions(props.node.maxMonthsOfStock);
+  const targetOptions = () => {
+    const fixed = fixedIntervalAndBuffer();
+    return fixed != null && differsFromFixed()
+      ? fixedTargetOptions(
+          props.node.maxMonthsOfStock,
+          props.node.minMonthsOfStock,
+          fixed
+        )
+      : targetMonthOptions(
+          props.node.maxMonthsOfStock,
+          props.node.minMonthsOfStock
+        );
+  };
 
   const onThresholdChange = (value: string) => {
     if (value === thresholdValue()) return; // no-op / reconcile re-fire
@@ -158,11 +199,20 @@ export const InternalOrderToolbar: Component<
     setMinOverride(undefined);
     setMaxOverride(undefined);
   };
+  // Once the save settles the stored value takes over again: equal to the
+  // pick after a save, the old value after a rejection (e.g. a target the
+  // store fixes) — so a refused pick never lingers on the select.
   const confirmMos = () => {
     const pending = pendingMos();
     if (!pending) return;
-    if (pending.field === 'min') props.onChangeThreshold(pending.months);
-    else props.onChangeTarget(pending.months);
+    if (pending.field === 'min')
+      void props
+        .onChangeThreshold(pending.months)
+        .finally(() => setMinOverride(undefined));
+    else
+      void props
+        .onChangeTarget(pending.months)
+        .finally(() => setMaxOverride(undefined));
     setPendingMos(undefined);
   };
 
@@ -254,7 +304,29 @@ export const InternalOrderToolbar: Component<
           testId="max-months-of-stock-select"
           options={targetOptions()}
           value={targetValue()}
-          disabled={fieldsLocked()}
+          disabled={
+            fieldsLocked() ||
+            (fixedIntervalAndBuffer() != null && !differsFromFixed())
+          }
+          // Where the store fixes the target, a tooltip on the label names
+          // the supply interval and safety buffer that set it (spec S3 §
+          // toolbar) — on the label, as the inbound received date's reason,
+          // since a disabled trigger takes no hover. On a target that differs
+          // from it, the tooltip says the target can only move onto it.
+          labelInfo={
+            <Show when={fixedIntervalAndBuffer()}>
+              {intervalAndBuffer => (
+                <InfoTooltip
+                  text={
+                    differsFromFixed()
+                      ? targetDiffersFromStoreMessage(intervalAndBuffer())
+                      : targetSetByStoreMessage(intervalAndBuffer())
+                  }
+                  triggerTestId="max-months-of-stock-locked-info"
+                />
+              )}
+            </Show>
+          }
           onValueChange={onTargetChange}
         />
       </FormRowItem>

@@ -1,0 +1,4 @@
+/* The step's instruction notice sits above the table with the house gap. */
+.notice {
+  margin-block-end: var(--space-4);
+}

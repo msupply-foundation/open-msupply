@@ -64,6 +64,9 @@ pub fn insert_document_registry(
                 InsertDocRegistryError::DataSchemaDoesNotExist => {
                     StandardGraphqlError::BadUserInput(formatted_error)
                 }
+                InsertDocRegistryError::OwnedByPlugin(_) => {
+                    StandardGraphqlError::BadUserInput(formatted_error)
+                }
                 InsertDocRegistryError::InternalError(_) => {
                     StandardGraphqlError::InternalError(formatted_error)
                 }

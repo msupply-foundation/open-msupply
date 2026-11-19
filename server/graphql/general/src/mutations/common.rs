@@ -31,7 +31,6 @@ impl SyncSettingsInput {
                     central_pull: n,
                 })
                 .unwrap_or_default(),
-            disable_integration_transaction: false,
             relax_hardware_id_token_checks: false,
         }
     }

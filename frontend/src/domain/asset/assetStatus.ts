@@ -1,6 +1,6 @@
 import type { LocaleKey } from '@/intl';
 
-// The six functional statuses an asset can be in, and their names — the
+// The seven functional statuses an asset can be in, and their names — the
 // vocabulary the equipment register (status history, the status editor, the
 // list filter) and the asset catalogue's log reasons (each filed under one
 // status) share (kdd/domain-modules).
@@ -17,6 +17,7 @@ export type AssetStatus =
   | 'FUNCTIONING'
   | 'FUNCTIONING_BUT_NEEDS_ATTENTION'
   | 'NOT_FUNCTIONING'
+  | 'NOT_INSTALLED'
   | 'NOT_IN_USE'
   | 'UNSERVICEABLE';
 
@@ -30,6 +31,7 @@ export const ASSET_STATUSES: readonly AssetStatus[] = [
   'FUNCTIONING',
   'FUNCTIONING_BUT_NEEDS_ATTENTION',
   'NOT_FUNCTIONING',
+  'NOT_INSTALLED',
   'NOT_IN_USE',
   'UNSERVICEABLE',
 ] as const;
@@ -39,6 +41,7 @@ const STATUS_LABELS: Record<AssetStatus, LocaleKey> = {
   FUNCTIONING: 'status.functioning',
   FUNCTIONING_BUT_NEEDS_ATTENTION: 'status.functioning-but-needs-attention',
   NOT_FUNCTIONING: 'status.not-functioning',
+  NOT_INSTALLED: 'status.not-installed',
   NOT_IN_USE: 'status.not-in-use',
   UNSERVICEABLE: 'status.unserviceable',
 };

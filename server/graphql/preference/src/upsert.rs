@@ -5,12 +5,15 @@ use graphql_core::{
     ContextExt,
     standard_graphql_error::{StandardGraphqlError, validate_auth},
 };
-use graphql_types::types::{InvoiceNodeStatus, patient::GenderTypeNode};
+use graphql_types::types::{
+    InvoiceNodeStatus, dispensing_screen::DispensingScreenNode, patient::GenderTypeNode,
+};
 use repository::{GenderType, InvoiceStatus};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     preference::{
-        BackdatingData, StorePrefUpdate, UpsertPreferenceError, UpsertPreferences,
+        BackdatingData, CommonMedicine, DispensingScreenOption, StoreOverrideUpdate,
+        StorePrefUpdate, UpsertPreferenceError, UpsertPreferences,
         WarnWhenMissingRecentStocktakeData,
     },
 };
@@ -19,6 +22,23 @@ use service::{
 pub struct BoolStorePrefInput {
     pub store_id: String,
     pub value: bool,
+}
+
+/// One store's edit of a global preference it may override. A null `value`
+/// CLEARS the store's override, returning the store to the global value — the
+/// only way back once a store has pinned its own.
+#[derive(InputObject)]
+pub struct BoolStoreOverrideInput {
+    pub store_id: String,
+    pub value: Option<bool>,
+}
+
+/// One store's edit of the dispensing screen. A null `value` CLEARS the
+/// store's own value, returning the store to the global value.
+#[derive(InputObject)]
+pub struct DispensingScreenStoreOverrideInput {
+    pub store_id: String,
+    pub value: Option<DispensingScreenNode>,
 }
 
 #[derive(InputObject)]
@@ -60,6 +80,18 @@ pub struct WarnWhenMissingRecentStocktakeInput {
 }
 
 #[derive(InputObject)]
+pub struct CommonMedicineInput {
+    pub item_id: String,
+    pub amounts: Vec<f64>,
+}
+
+#[derive(InputObject)]
+pub struct CommonMedicinesInput {
+    pub store_id: String,
+    pub value: Vec<CommonMedicineInput>,
+}
+
+#[derive(InputObject)]
 pub struct InvoiceStatusOptionsInput {
     pub store_id: String,
     pub value: Vec<InvoiceNodeStatus>,
@@ -70,6 +102,7 @@ pub struct UpsertPreferencesInput {
     // Global preferences
     pub allow_tracking_of_stock_by_donor: Option<bool>,
     pub authorise_purchase_order: Option<bool>,
+    pub authorise_purchase_order_store_override: Option<Vec<BoolStoreOverrideInput>>,
     pub custom_translations: Option<BTreeMap<String, String>>,
     /// v2 custom translations, shape: `language -> namespace -> key -> value`.
     /// Passed as a JSON value to avoid nested-map InputObject friction.
@@ -91,13 +124,13 @@ pub struct UpsertPreferencesInput {
     pub backdating: Option<BackdatingInput>,
     pub receive_payments_from_prescriptions: Option<bool>,
     pub global_logo: Option<String>,
+    pub decimal_places_for_numbers: Option<i32>,
 
     // Store preferences
     pub blind_stocktake: Option<Vec<BoolStorePrefInput>>,
     pub manage_vaccines_in_doses: Option<Vec<BoolStorePrefInput>>,
     pub manage_vvm_status_for_stock: Option<Vec<BoolStorePrefInput>>,
     pub order_in_packs: Option<Vec<BoolStorePrefInput>>,
-    pub use_procurement_functionality: Option<Vec<BoolStorePrefInput>>,
     pub sort_by_vvm_status_then_expiry: Option<Vec<BoolStorePrefInput>>,
     pub use_simplified_mobile_ui: Option<Vec<BoolStorePrefInput>>,
     pub disable_manual_returns: Option<Vec<BoolStorePrefInput>>,
@@ -105,6 +138,7 @@ pub struct UpsertPreferencesInput {
     pub inbound_shipment_auto_verify: Option<Vec<BoolStorePrefInput>>,
     pub can_create_internal_order_from_a_requisition: Option<Vec<BoolStorePrefInput>>,
     pub select_destination_store_for_an_internal_order: Option<Vec<BoolStorePrefInput>>,
+    pub can_change_target_months_of_stock: Option<Vec<BoolStorePrefInput>>,
     pub external_inbound_shipment_lines_must_be_authorised: Option<Vec<BoolStorePrefInput>>,
     pub number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
         Option<Vec<IntegerStorePrefInput>>,
@@ -119,6 +153,17 @@ pub struct UpsertPreferencesInput {
     pub invoice_status_options: Option<Vec<InvoiceStatusOptionsInput>>,
     pub show_indicative_price_in_requisitions: Option<Vec<BoolStorePrefInput>>,
     pub do_not_print_placeholder_line_labels: Option<Vec<BoolStorePrefInput>>,
+    pub prompt_for_batch_and_expiry_on_inbound_shipments: Option<Vec<BoolStorePrefInput>>,
+    pub common_medicines: Option<Vec<CommonMedicinesInput>>,
+    // Dispensing (#2188): the global value, and a store's own value
+    pub dispensing_screen: Option<DispensingScreenNode>,
+    pub dispensing_screen_store_override: Option<Vec<DispensingScreenStoreOverrideInput>>,
+    pub use_unnamed_patient: Option<bool>,
+    pub use_unnamed_patient_store_override: Option<Vec<BoolStoreOverrideInput>>,
+    pub start_with_unnamed_patient: Option<bool>,
+    pub start_with_unnamed_patient_store_override: Option<Vec<BoolStoreOverrideInput>>,
+    pub ask_for_patient_type: Option<bool>,
+    pub ask_for_patient_type_store_override: Option<Vec<BoolStoreOverrideInput>>,
 }
 
 pub fn upsert_preferences(
@@ -157,6 +202,7 @@ impl UpsertPreferencesInput {
             // Global preferences
             allow_tracking_of_stock_by_donor,
             authorise_purchase_order,
+            authorise_purchase_order_store_override,
             custom_translations,
             custom_translations_v2,
             prevent_transfers_months_before_initialisation,
@@ -176,12 +222,12 @@ impl UpsertPreferencesInput {
             backdating,
             receive_payments_from_prescriptions,
             global_logo,
+            decimal_places_for_numbers,
             // Store preferences
             blind_stocktake,
             manage_vaccines_in_doses,
             manage_vvm_status_for_stock,
             order_in_packs,
-            use_procurement_functionality,
             sort_by_vvm_status_then_expiry,
             use_simplified_mobile_ui,
             disable_manual_returns,
@@ -189,6 +235,7 @@ impl UpsertPreferencesInput {
             inbound_shipment_auto_verify,
             can_create_internal_order_from_a_requisition,
             select_destination_store_for_an_internal_order,
+            can_change_target_months_of_stock,
             number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products,
             number_of_months_threshold_to_show_low_stock_alerts_for_products,
             number_of_months_threshold_to_show_over_stock_alerts_for_products,
@@ -200,12 +247,25 @@ impl UpsertPreferencesInput {
             external_inbound_shipment_lines_must_be_authorised,
             show_indicative_price_in_requisitions,
             do_not_print_placeholder_line_labels,
+            prompt_for_batch_and_expiry_on_inbound_shipments,
+            common_medicines,
+            dispensing_screen,
+            dispensing_screen_store_override,
+            use_unnamed_patient,
+            use_unnamed_patient_store_override,
+            start_with_unnamed_patient,
+            start_with_unnamed_patient_store_override,
+            ask_for_patient_type,
+            ask_for_patient_type_store_override,
         } = self;
 
         UpsertPreferences {
             // Global preferences
             allow_tracking_of_stock_by_donor: *allow_tracking_of_stock_by_donor,
             authorise_purchase_order: *authorise_purchase_order,
+            authorise_purchase_order_store_override: authorise_purchase_order_store_override
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             custom_translations: custom_translations.clone(),
             custom_translations_v2: custom_translations_v2
                 .clone()
@@ -236,6 +296,7 @@ impl UpsertPreferencesInput {
             }),
             receive_payments_from_prescriptions: *receive_payments_from_prescriptions,
             global_logo: global_logo.clone(),
+            decimal_places_for_numbers: *decimal_places_for_numbers,
             // Store preferences
             blind_stocktake: blind_stocktake
                 .as_ref()
@@ -247,9 +308,6 @@ impl UpsertPreferencesInput {
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             order_in_packs: order_in_packs
-                .as_ref()
-                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
-            use_procurement_functionality: use_procurement_functionality
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             sort_by_vvm_status_then_expiry: sort_by_vvm_status_then_expiry
@@ -275,6 +333,9 @@ impl UpsertPreferencesInput {
                 select_destination_store_for_an_internal_order
                     .as_ref()
                     .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            can_change_target_months_of_stock: can_change_target_months_of_stock
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
                 number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products
                     .as_ref()
@@ -312,6 +373,47 @@ impl UpsertPreferencesInput {
             do_not_print_placeholder_line_labels: do_not_print_placeholder_line_labels
                 .as_ref()
                 .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            prompt_for_batch_and_expiry_on_inbound_shipments:
+                prompt_for_batch_and_expiry_on_inbound_shipments
+                    .as_ref()
+                    .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            common_medicines: common_medicines
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            dispensing_screen: dispensing_screen.map(DispensingScreenOption::from),
+            dispensing_screen_store_override: dispensing_screen_store_override
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            use_unnamed_patient: *use_unnamed_patient,
+            use_unnamed_patient_store_override: use_unnamed_patient_store_override
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            start_with_unnamed_patient: *start_with_unnamed_patient,
+            start_with_unnamed_patient_store_override: start_with_unnamed_patient_store_override
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+            ask_for_patient_type: *ask_for_patient_type,
+            ask_for_patient_type_store_override: ask_for_patient_type_store_override
+                .as_ref()
+                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
+        }
+    }
+}
+
+impl DispensingScreenStoreOverrideInput {
+    pub fn to_domain(&self) -> StoreOverrideUpdate<DispensingScreenOption> {
+        StoreOverrideUpdate {
+            store_id: self.store_id.clone(),
+            value: self.value.map(DispensingScreenOption::from),
+        }
+    }
+}
+
+impl BoolStoreOverrideInput {
+    pub fn to_domain(&self) -> StoreOverrideUpdate<bool> {
+        StoreOverrideUpdate {
+            store_id: self.store_id.clone(),
+            value: self.value,
         }
     }
 }
@@ -376,6 +478,22 @@ impl InvoiceStatusOptionsInput {
         StorePrefUpdate {
             store_id: self.store_id.clone(),
             value: self.value.iter().map(|s| (*s).into()).collect(),
+        }
+    }
+}
+
+impl CommonMedicinesInput {
+    pub fn to_domain(&self) -> StorePrefUpdate<Vec<CommonMedicine>> {
+        StorePrefUpdate {
+            store_id: self.store_id.clone(),
+            value: self
+                .value
+                .iter()
+                .map(|medicine| CommonMedicine {
+                    item_id: medicine.item_id.clone(),
+                    amounts: medicine.amounts.clone(),
+                })
+                .collect(),
         }
     }
 }

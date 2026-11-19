@@ -1,4 +1,6 @@
-import { legacyCodePage, locale } from '@/intl';
+// Relative, not `@/intl`: the plugin SDK re-exports this module, and plugin
+// builds have no `@/` alias
+import { legacyCodePage, locale } from '../../intl';
 
 // Minimal CSV serialisation for list-screen exports (spec/reports
 // "Cross-cutting" / OMS-REG-RPT-09.15). Dependency-free — the app carries no

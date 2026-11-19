@@ -275,6 +275,8 @@ mod tests {
                 item_quantity: 1.0,
                 ancillary_quantity: 1.0,
                 deleted_datetime: None,
+                exclude_principal_wastage: false,
+                wastage_rate: 0.0,
             })
             .unwrap();
     }

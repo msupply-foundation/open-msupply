@@ -151,6 +151,7 @@ export const quantityColumns = (
           max={line.availableNumberOfPacks}
           decimalLimit={2}
           value={line.numberOfPacksToReturn}
+          emptyValue={0}
           onChange={value =>
             update(
               line.id,

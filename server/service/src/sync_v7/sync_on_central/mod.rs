@@ -5,7 +5,8 @@ use std::{
 
 use chrono::Utc;
 use repository::{
-    ChangelogCondition, ChangelogFilter, EqualFilter, KeyType, KeyValueStoreRepository, Pagination,
+    ChangelogCondition, ChangelogFilter, EqualFilter, KeyType, KeyValueStoreRepository,
+    NameRowRepository, Pagination, PatientRepository, PatientSort, PatientSortField,
     RepositoryError, SiteFilter, SiteRepository, SiteRow, SiteRowRepository, SourceSiteId,
     StorageConnection, SyncBufferRepository, SyncVersion,
     migrations::Version,
@@ -16,13 +17,17 @@ use util::format_error;
 
 use crate::{
     apis::patient_v4::PatientV4,
-    programs::patient::patient_updated::create_patient_name_store_join,
+    processors::ProcessorType,
+    programs::patient::patient_updated::activate_patient_name_store_join,
     service_provider::{ServiceContext, ServiceProvider},
     static_files::{StaticFile, StaticFileService},
     sync::{
         ActiveStoresOnSite, CentralServerConfig, GetActiveStoresOnSiteError,
         api::{SyncApiSettings, SyncApiV5},
         settings::SYNC_V5_VERSION,
+        sync_api_pause::{
+            SYNC_API_PAUSED_MESSAGE, is_sync_api_paused, remote_knows_sync_api_paused,
+        },
     },
     sync_v7::{
         api::{
@@ -168,6 +173,12 @@ pub async fn get_token(
 ///   `WaitingForCentralV7Upgrade` rather than upgrading locally — after
 ///   triggering COMS's own sync, so the wait is seconds, not a sync interval.
 ///
+/// - Sync API paused (including maintenance mode): refuses with the pause error
+///   before any of the above. The site could not initialise anyway, since every
+///   pull is refused while paused, so there is no point asking the legacy server
+///   to transition it or triggering a COMS sync the pause would skip. An already
+///   v7 site still gets its token, so an initialised remote can report the pause.
+///
 /// Acquires a connection per DB touch rather than holding one across the legacy
 /// server roundtrip, so a pool slot isn't tied up during the network call.
 async fn ensure_site_is_v7(
@@ -180,6 +191,9 @@ async fn ensure_site_is_v7(
     }
 
     let ctx = service_provider.basic_context()?;
+    if is_sync_api_paused(&ctx.connection)? {
+        return Err(sync_api_paused_error(&input.version));
+    }
     let api_v5 = build_v5_api_for_request(&ctx.connection, input)?;
 
     // Ask the legacy server to transition the site to v7. This is idempotent:
@@ -320,6 +334,32 @@ fn validate(
     Ok((site, ctx))
 }
 
+/// `validate` for endpoints that move records or files, which central refuses while inbound
+/// sync is paused. `get_token` and `site_status` skip this so remotes can report the state.
+fn validate_unpaused(
+    service_provider: &ServiceProvider,
+    common: &Common,
+) -> Result<(SiteRow, ServiceContext), SyncError> {
+    let (site, ctx) = validate(service_provider, common)?;
+    if is_sync_api_paused(&ctx.connection)? {
+        return Err(sync_api_paused_error(&common.version));
+    }
+    Ok((site, ctx))
+}
+
+/// `SyncApiPaused`, or for a remote too old to read it the same news as a `ConnectionError`
+/// (see `FIRST_VERSION_WITH_SYNC_API_PAUSED`)
+fn sync_api_paused_error(remote_version: &Version) -> SyncError {
+    if remote_knows_sync_api_paused(remote_version) {
+        SyncError::SyncApiPaused
+    } else {
+        SyncError::ConnectionError {
+            url: String::new(),
+            e: SYNC_API_PAUSED_MESSAGE.to_string(),
+        }
+    }
+}
+
 /// Validate v7 bearer-token site auth for endpoints living outside this module's
 /// route scope (e.g. the tus file upload in the server crate). Same checks as
 /// every v7 endpoint; local to central's DB, no legacy server involved.
@@ -340,7 +380,7 @@ pub async fn download_file(
     base_dir: String,
 ) -> Result<(actix_files::NamedFile, StaticFile), SyncError> {
     tokio::task::spawn_blocking(move || {
-        let (_site, _ctx) = validate(&service_provider, &common)?;
+        let (_site, _ctx) = validate_unpaused(&service_provider, &common)?;
 
         log::info!(
             "Sending file to v7 remote site for table: {}, record: {}, file: {}",
@@ -374,6 +414,7 @@ pub async fn site_status(
             site_id: site.id,
             central_site_id,
             is_multi_device_site: site.is_multi_device,
+            is_sync_api_paused: is_sync_api_paused(&ctx.connection)?,
         })
     })
     .await
@@ -387,7 +428,7 @@ pub async fn pull(
     input: pull::Input,
 ) -> pull::Response {
     tokio::task::spawn_blocking(move || {
-        let (site, ctx) = validate(&service_provider, &common)?;
+        let (site, ctx) = validate_unpaused(&service_provider, &common)?;
 
         let base = if site.is_multi_device {
             ChangelogFilter::multi_device_all_data_for_site(site.id, input.is_initialising, None)
@@ -443,21 +484,86 @@ pub async fn patient_search(
     input: patient_search::Input,
 ) -> patient_search::Response {
     tokio::task::spawn_blocking(move || {
-        let (_, ctx) = validate(&service_provider, &common)?;
+        let (_, ctx) = validate_unpaused(&service_provider, &common)?;
 
-        let results =
-            service_provider
-                .patient_service
-                .get_patients(&ctx, None, Some(input), None, None)?;
+        let patient_search::Input {
+            filter,
+            limit,
+            offset,
+        } = input;
 
-        Ok(results
-            .rows
-            .into_iter()
-            .map(name_row_to_patient_v4)
-            .collect())
+        let rows = match limit {
+            // A page: name order, then date of birth (ties broken by id, so
+            // pages don't overlap),
+            // and no count — the remote asks for one more than it shows to
+            // know whether there are more.
+            // Central has every site's patients, so a broad search can match
+            // millions, and sorting them is the slow part: the pages only
+            // cover the first SEARCH_MATCH_CAP found (PatientRepository::query_capped).
+            Some(limit) => PatientRepository::new(&ctx.connection).query_capped(
+                Pagination {
+                    limit,
+                    offset: offset.unwrap_or(0),
+                },
+                Some(filter),
+                Some(PatientSort {
+                    key: PatientSortField::Name,
+                    desc: None,
+                }),
+                None,
+                PatientRepository::SEARCH_MATCH_CAP,
+            )?,
+            // A remote from before the page was added, which shows every match
+            // it gets: at most SEARCH_MATCH_CAP of them, unsorted and
+            // uncounted, as a broad search would otherwise read and send
+            // millions.
+            None => PatientRepository::new(&ctx.connection).query(
+                Pagination {
+                    limit: PatientRepository::SEARCH_MATCH_CAP,
+                    offset: 0,
+                },
+                Some(filter),
+                None,
+                None,
+            )?,
+        };
+
+        Ok(patients_v4(&ctx.connection, rows)?)
     })
     .await
     .map_err(join_error)?
+}
+
+/// The patients central's search returns. A next of kin linked to a name shows
+/// as that name, as on the patient node.
+fn patients_v4(
+    connection: &StorageConnection,
+    rows: Vec<repository::NameRow>,
+) -> Result<Vec<PatientV4>, RepositoryError> {
+    let ids: Vec<String> = rows
+        .iter()
+        .filter_map(|row| row.next_of_kin_id.clone())
+        .collect();
+    let next_of_kin_names: HashMap<String, String> = NameRowRepository::new(connection)
+        .find_many_by_id(&ids)?
+        .into_iter()
+        .map(|row| (row.id, row.name))
+        .collect();
+
+    Ok(rows
+        .into_iter()
+        .map(|row| {
+            let linked_name = row
+                .next_of_kin_id
+                .as_ref()
+                .and_then(|id| next_of_kin_names.get(id).cloned());
+            let mut patient = name_row_to_patient_v4(row);
+            if linked_name.is_some() {
+                patient.next_of_kin_name = linked_name;
+            }
+            patient
+        })
+        .collect())
 }
 
 fn name_row_to_patient_v4(name: repository::NameRow) -> PatientV4 {
@@ -473,6 +579,8 @@ fn name_row_to_patient_v4(name: repository::NameRow) -> PatientV4 {
         gender: name.gender,
         code_2: name.national_health_number,
         is_deceased: name.is_deceased,
+        address1: name.address1,
+        next_of_kin_name: name.next_of_kin_name,
     }
 }
 
@@ -483,7 +591,7 @@ pub async fn patient_data_for_site(
     input: patient_data_for_site::Input,
 ) -> patient_data_for_site::Response {
     tokio::task::spawn_blocking(move || {
-        let (site, ctx) = validate(&service_provider, &common)?;
+        let (site, ctx) = validate_unpaused(&service_provider, &common)?;
 
         let patient_data_for_site::Input {
             patient_id,
@@ -494,7 +602,7 @@ pub async fn patient_data_for_site(
         let nsj_id = ctx
             .connection
             .transaction_sync(|con| {
-                create_patient_name_store_join(
+                activate_patient_name_store_join(
                     con,
                     &store_id,
                     &patient_id,
@@ -535,7 +643,7 @@ pub async fn push(
 ) -> push::Response {
     let sp = service_provider.clone();
     let (records_in_this_batch, remaining, site_id) = tokio::task::spawn_blocking(move || {
-        let (site, ctx) = validate(&sp, &common)?;
+        let (site, ctx) = validate_unpaused(&sp, &common)?;
         let site_id = site.id;
 
         let SyncBatchV7 {
@@ -649,6 +757,11 @@ fn integrate_for_site(
         },
         false,
     )?;
+
+    // Proposals pushed by the site may confirm a barcode, without waiting for
+    // central's own next sync to run its processors
+    ctx.processors_trigger
+        .trigger_processor(ProcessorType::BarcodeAutoConfirm);
     Ok(())
 }
 
@@ -678,13 +791,20 @@ mod tests {
     use super::*;
     use crate::{
         sync::{synchroniser_driver::SyncTrigger, test_util_set_is_central_server},
+        sync_v7::sync::SyncRecordV7,
         test_helpers::{ServiceTestContext, setup_all_and_service_provider},
     };
     use httpmock::MockServer;
     use repository::{
-        KeyType, KeyValueStoreRepository, SyncVersion, migrations::Version, mock::MockDataInserts,
+        ChangelogTableName, IntegrationResult, KeyType, KeyValueStoreRepository, LocationRow,
+        LocationRowRepository, PermissionType, RowActionType, StoreRow, StoreRowRepository,
+        SyncVersion, UserPermissionRow, UserPermissionRowRepository, UserStoreJoinRow,
+        UserStoreJoinRowRepository,
+        migrations::Version,
+        mock::{MockDataInserts, mock_store_a, mock_store_b, mock_user_account_a},
         test_db::setup_all,
     };
+    use serde_json::{json, to_value};
 
     const SITE_NAME: &str = "test_site";
     const PASSWORD_SHA256: &str = "hashed_password_value";
@@ -725,7 +845,11 @@ mod tests {
     }
 
     async fn setup(name: &str) -> (ServiceTestContext, Common) {
-        let context = setup_all_and_service_provider(name, MockDataInserts::none()).await;
+        setup_with(name, MockDataInserts::none()).await
+    }
+
+    async fn setup_with(name: &str, inserts: MockDataInserts) -> (ServiceTestContext, Common) {
+        let context = setup_all_and_service_provider(name, inserts).await;
         CentralServerConfig::set_is_central_server_on_startup();
         KeyValueStoreRepository::new(&context.connection)
             .set_i32(KeyType::SettingsSyncSiteId, Some(CENTRAL_SITE_ID))
@@ -1083,6 +1207,56 @@ mod tests {
         assert_eq!(stored.sync_version, SyncVersion::V5V6);
     }
 
+    /// A paused sync API refuses a not-yet-v7 site before asking the legacy server
+    /// to transition it: the site could not pull anyway, and the COMS sync it would
+    /// trigger is paused too.
+    #[actix_rt::test]
+    async fn ensure_site_is_v7_refuses_while_sync_api_paused() {
+        let mock_server = MockServer::start();
+        let upgrade = mock_server.mock(|when, then| {
+            when.method(httpmock::Method::GET)
+                .path("/sync/v5/v7_url_and_upgrade");
+            then.status(200)
+                .body(r#"{ "v7Url": "http://oms-central:8000" }"#);
+        });
+
+        let ServiceTestContext {
+            connection,
+            connection_manager,
+            ..
+        } = setup_all_and_service_provider(
+            "ensure_site_is_v7_refuses_while_sync_api_paused",
+            MockDataInserts::none(),
+        )
+        .await;
+        test_util_set_is_central_server(true);
+        KeyValueStoreRepository::new(&connection)
+            .set_bool(KeyType::SettingsSyncApiIsPaused, Some(true))
+            .unwrap();
+
+        let (sync_trigger, mut sync_receiver) = SyncTrigger::new_test();
+        let mut service_provider = ServiceProvider::new(connection_manager);
+        service_provider.sync_trigger = sync_trigger;
+
+        let site = non_v7_site(&connection, &mock_server.base_url());
+
+        let err = ensure_site_is_v7(&service_provider, site, &input())
+            .await
+            .unwrap_err();
+        assert_eq!(err, sync_api_paused_error(&input().version));
+        // Neither the legacy server nor a COMS sync was touched
+        assert_eq!(upgrade.hits(), 0);
+        assert!(sync_receiver.try_recv().is_err());
+
+        // An already v7 site still gets through, so it can report the pause
+        let v7_site = test_site(&connection, None);
+        assert!(
+            ensure_site_is_v7(&service_provider, v7_site, &input())
+                .await
+                .is_ok()
+        );
+    }
+
     #[actix_rt::test]
     async fn ensure_site_is_v7_propagates_stores_not_migrated() {
         let mock_server = MockServer::start();
@@ -1234,6 +1408,131 @@ mod tests {
     }
 
     #[actix_rt::test]
+    async fn patient_search_returns_address_and_next_of_kin() {
+        use repository::{NameRow, NameRowRepository, NameRowType, PatientFilter, StringFilter};
+
+        let (
+            ServiceTestContext {
+                service_provider,
+                connection,
+                ..
+            },
+            common,
+        ) = setup("sync_v7_patient_search_fields").await;
+
+        let repo = NameRowRepository::new(&connection);
+        repo.upsert_one(&NameRow {
+            id: "kin".to_string(),
+            name: "Koné, Awa".to_string(),
+            code: "KIN-1".to_string(),
+            r#type: NameRowType::Patient,
+            ..Default::default()
+        })
+        .unwrap();
+        repo.upsert_one(&NameRow {
+            id: "linked".to_string(),
+            name: "Traoré, Moussa".to_string(),
+            code: "SEARCH-1".to_string(),
+            phone: Some("555 0100".to_string()),
+            address1: Some("12 Rue du Marché".to_string()),
+            next_of_kin_id: Some("kin".to_string()),
+            next_of_kin_name: Some("stale text".to_string()),
+            r#type: NameRowType::Patient,
+            ..Default::default()
+        })
+        .unwrap();
+        repo.upsert_one(&NameRow {
+            id: "text_only".to_string(),
+            name: "Traoré, Fanta".to_string(),
+            code: "SEARCH-2".to_string(),
+            next_of_kin_name: Some("Ibrahim Traoré".to_string()),
+            r#type: NameRowType::Patient,
+            ..Default::default()
+        })
+        .unwrap();
+
+        let search = |limit: Option<u32>| patient_search::Input {
+            filter: PatientFilter::new().code(StringFilter::starts_with("search-")),
+            limit,
+            offset: None,
+        };
+
+        // A page (this version's remotes)
+        let patients = patient_search(service_provider.clone(), common.clone(), search(Some(10)))
+            .await
+            .unwrap();
+        let linked = patients.iter().find(|p| p.id == "linked").unwrap();
+        assert_eq!(linked.phone, "555 0100");
+        assert_eq!(linked.address1.as_deref(), Some("12 Rue du Marché"));
+        assert_eq!(linked.next_of_kin_name.as_deref(), Some("Koné, Awa"));
+        let text_only = patients.iter().find(|p| p.id == "text_only").unwrap();
+        assert_eq!(
+            text_only.next_of_kin_name.as_deref(),
+            Some("Ibrahim Traoré")
+        );
+
+        // No page (an older remote): every match, with the same lookup
+        let patients = patient_search(service_provider, common, search(None))
+            .await
+            .unwrap();
+        assert_eq!(patients.len(), 2);
+        let linked = patients.iter().find(|p| p.id == "linked").unwrap();
+        assert_eq!(linked.next_of_kin_name.as_deref(), Some("Koné, Awa"));
+    }
+
+    #[actix_rt::test]
+    async fn patient_search_pages_in_name_then_date_of_birth_order() {
+        use chrono::NaiveDate;
+        use repository::{NameRow, NameRowRepository, NameRowType, PatientFilter, StringFilter};
+
+        let (
+            ServiceTestContext {
+                service_provider,
+                connection,
+                ..
+            },
+            common,
+        ) = setup("sync_v7_patient_search_paging").await;
+
+        let repo = NameRowRepository::new(&connection);
+        let patient = |id: &str, name: &str, born: Option<(i32, u32, u32)>| NameRow {
+            id: id.to_string(),
+            name: name.to_string(),
+            code: format!("PAGE-{id}"),
+            date_of_birth: born.map(|(y, m, d)| NaiveDate::from_ymd_opt(y, m, d).unwrap()),
+            r#type: NameRowType::Patient,
+            ..Default::default()
+        };
+        for row in [
+            patient("d1990", "Diallo, Awa", Some((1990, 1, 1))),
+            patient("camara", "Camara, Ibou", None),
+            patient("d1980", "diallo, awa", Some((1980, 1, 1))),
+            patient("bah", "Bah, Sira", None),
+        ] {
+            repo.upsert_one(&row).unwrap();
+        }
+
+        let page = |offset: Option<u32>| patient_search::Input {
+            filter: PatientFilter::new().code(StringFilter::starts_with("page-")),
+            limit: Some(2),
+            offset,
+        };
+        let ids = |patients: Vec<PatientV4>| -> Vec<String> {
+            patients.into_iter().map(|p| p.id).collect()
+        };
+
+        let first = patient_search(service_provider.clone(), common.clone(), page(None))
+            .await
+            .unwrap();
+        assert_eq!(ids(first), ["bah", "camara"]);
+        // Namesakes, ignoring case, in date of birth order
+        let second = patient_search(service_provider, common, page(Some(2)))
+            .await
+            .unwrap();
+        assert_eq!(ids(second), ["d1980", "d1990"]);
+    }
+
+    #[actix_rt::test]
     async fn push_accepts_empty_batch() {
         let (
             ServiceTestContext {
@@ -1258,6 +1557,207 @@ mod tests {
         .unwrap();
 
         assert_eq!(count, 0);
+    }
+
+    /// #1639: a site's v7 push can't create, change or remove user permissions on central.
+    /// The new rows are the shape from the issue: every record's outer `storeId` is the
+    /// site's own store, while the row inside names another site's store.
+    #[actix_rt::test]
+    async fn push_cannot_change_user_permissions() {
+        use ChangelogTableName::{Location, UserPermission, UserStoreJoin};
+        use RowActionType::{Delete, Upsert};
+
+        let (
+            ServiceTestContext {
+                service_provider,
+                connection,
+                ..
+            },
+            common,
+        ) = setup_with(
+            "sync_v7_push_cannot_change_user_permissions",
+            MockDataInserts::none().names().stores().user_accounts(),
+        )
+        .await;
+        let site_id = 1;
+        let user_id = mock_user_account_a().id;
+        // store_a is the pushing site's own store; store_b belongs to site 2.
+        let own_store_id = mock_store_a().id;
+        let other_store_id = mock_store_b().id;
+        StoreRowRepository::new(&connection)
+            .upsert_one(&StoreRow {
+                site_id,
+                ..mock_store_a()
+            })
+            .unwrap();
+
+        // What central already holds, which the push tries to move and remove.
+        let existing_join = UserStoreJoinRow {
+            id: "existing_join".to_string(),
+            user_id: user_id.clone(),
+            store_id: own_store_id.clone(),
+            is_default: true,
+        };
+        let existing_permission = UserPermissionRow {
+            id: "existing_permission".to_string(),
+            user_id: user_id.clone(),
+            store_id: Some(own_store_id.clone()),
+            permission: PermissionType::StoreAccess,
+            context_id: None,
+        };
+        UserStoreJoinRowRepository::new(&connection)
+            .upsert_one(&existing_join)
+            .unwrap();
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&existing_permission)
+            .unwrap();
+
+        let record = |table_name, record_id: &str, action, data| SyncRecordV7 {
+            cursor: 0,
+            record_id: record_id.to_string(),
+            table_name,
+            action,
+            data,
+            store_id: Some(own_store_id.clone()),
+            transfer_store_id: None,
+            patient_id: None,
+        };
+        let grant = |id: &str, permission| {
+            let row = UserPermissionRow {
+                id: id.to_string(),
+                user_id: user_id.clone(),
+                store_id: Some(other_store_id.clone()),
+                permission,
+                context_id: None,
+            };
+            record(UserPermission, id, Upsert, to_value(row).unwrap())
+        };
+        let location = LocationRow {
+            id: "pushed_location".to_string(),
+            name: "Shelf 1".to_string(),
+            code: "S1".to_string(),
+            store_id: own_store_id.clone(),
+            ..Default::default()
+        };
+
+        let records = vec![
+            // The batch from the issue.
+            record(
+                UserStoreJoin,
+                "pushed_join",
+                Upsert,
+                to_value(UserStoreJoinRow {
+                    id: "pushed_join".to_string(),
+                    user_id: user_id.clone(),
+                    store_id: other_store_id.clone(),
+                    is_default: false,
+                })
+                .unwrap(),
+            ),
+            grant("pushed_store_access", PermissionType::StoreAccess),
+            grant("pushed_server_admin", PermissionType::ServerAdmin),
+            grant("pushed_report", PermissionType::Report),
+            // Changing and removing rows central already has.
+            record(
+                UserStoreJoin,
+                &existing_join.id,
+                Upsert,
+                to_value(UserStoreJoinRow {
+                    store_id: other_store_id.clone(),
+                    ..existing_join.clone()
+                })
+                .unwrap(),
+            ),
+            record(UserPermission, &existing_permission.id, Delete, json!({})),
+            // An ordinary record for the site's own store, in the same batch.
+            record(
+                Location,
+                &location.id,
+                Upsert,
+                to_value(location.clone()).unwrap(),
+            ),
+        ];
+        let pushed = records.len() as i64;
+
+        let count = push(
+            service_provider.clone(),
+            common,
+            SyncBatchV7 {
+                site_id,
+                max_cursor: 0,
+                last_cursor_in_batch: 0,
+                // Not the last batch, so push doesn't start integration in the
+                // background; the test runs it below instead.
+                remaining: 1,
+                records,
+            },
+        )
+        .await
+        .unwrap();
+        assert_eq!(count, pushed);
+
+        integrate_for_site(&service_provider, site_id).unwrap();
+
+        // Nothing granted, moved or removed.
+        let permission_repo = UserPermissionRowRepository::new(&connection);
+        for id in [
+            "pushed_store_access",
+            "pushed_server_admin",
+            "pushed_report",
+        ] {
+            assert_eq!(permission_repo.find_one_by_id(id).unwrap(), None, "{id}");
+        }
+        assert_eq!(
+            permission_repo
+                .find_one_by_id(&existing_permission.id)
+                .unwrap(),
+            Some(existing_permission)
+        );
+        assert_eq!(
+            UserStoreJoinRowRepository::new(&connection)
+                .find_many_by_user_id(&user_id)
+                .unwrap(),
+            vec![existing_join]
+        );
+
+        // The ordinary record still integrates.
+        assert_eq!(
+            LocationRowRepository::new(&connection)
+                .find_one_by_id(&location.id)
+                .unwrap(),
+            Some(location)
+        );
+
+        let buffer_rows: Vec<_> = SyncBufferRepository::new(&connection)
+            .get_all()
+            .unwrap()
+            .into_iter()
+            .filter(|row| row.source_site_id == site_id)
+            .collect();
+        assert_eq!(buffer_rows.len() as i64, pushed);
+        for row in buffer_rows {
+            if row.table_name == Location.to_string() {
+                assert_eq!(
+                    row.integration_result,
+                    Some(IntegrationResult::Success),
+                    "{:?}",
+                    row.integration_error
+                );
+            } else {
+                assert_eq!(
+                    row.integration_result,
+                    Some(IntegrationResult::Ignored),
+                    "{} {}",
+                    row.table_name,
+                    row.record_id
+                );
+                assert!(
+                    row.integration_error
+                        .unwrap()
+                        .contains("only editable by the central site")
+                );
+            }
+        }
     }
 
     #[actix_rt::test]
@@ -1288,5 +1788,114 @@ mod tests {
             response,
             Err(SyncError::SyncVersionMismatch { .. })
         ));
+    }
+
+    #[test]
+    fn older_remotes_are_told_of_the_pause_as_a_connection_error() {
+        assert_eq!(
+            sync_api_paused_error(&Version::from_str("3.03.00")),
+            SyncError::SyncApiPaused
+        );
+        assert_eq!(
+            sync_api_paused_error(&Version::from_str("3.02.00")),
+            SyncError::ConnectionError {
+                url: String::new(),
+                e: SYNC_API_PAUSED_MESSAGE.to_string(),
+            }
+        );
+    }
+
+    #[actix_rt::test]
+    async fn paused_central_refuses_data_but_reports_status() {
+        let (
+            ServiceTestContext {
+                service_provider,
+                connection,
+                ..
+            },
+            common,
+        ) = setup("sync_v7_inbound_paused").await;
+        KeyValueStoreRepository::new(&connection)
+            .set_bool(KeyType::SettingsSyncApiIsPaused, Some(true))
+            .unwrap();
+        // What a remote on this build is told (the package version only reaches 3.03 on the
+        // release branch, and central refuses remotes newer than itself, so it is not pinned)
+        let paused_error = sync_api_paused_error(&common.version);
+
+        let pulled = pull(
+            service_provider.clone(),
+            common.clone(),
+            pull::Input {
+                cursor: 0,
+                batch_size: 100,
+                is_initialising: false,
+                filter: None,
+            },
+        )
+        .await;
+        assert_eq!(pulled.err(), Some(paused_error.clone()));
+
+        // A remote too old to read `SyncApiPaused` is told in a form it can show
+        let old_remote_pulled = pull(
+            service_provider.clone(),
+            Common {
+                version: Version::from_str("3.02.00"),
+                ..common.clone()
+            },
+            pull::Input {
+                cursor: 0,
+                batch_size: 100,
+                is_initialising: false,
+                filter: None,
+            },
+        )
+        .await;
+        assert_eq!(
+            old_remote_pulled.err(),
+            Some(SyncError::ConnectionError {
+                url: String::new(),
+                e: SYNC_API_PAUSED_MESSAGE.to_string(),
+            })
+        );
+
+        let pushed = push(
+            service_provider.clone(),
+            common.clone(),
+            SyncBatchV7 {
+                site_id: 1,
+                max_cursor: 0,
+                last_cursor_in_batch: 0,
+                remaining: 0,
+                records: vec![],
+            },
+        )
+        .await;
+        assert_eq!(pushed.err(), Some(paused_error));
+
+        // Status stays available so the remote can tell the user why sync is not running
+        let status = site_status(service_provider.clone(), common.clone())
+            .await
+            .unwrap();
+        assert!(status.is_sync_api_paused);
+
+        KeyValueStoreRepository::new(&connection)
+            .set_bool(KeyType::SettingsSyncApiIsPaused, Some(false))
+            .unwrap();
+        let status = site_status(service_provider.clone(), common.clone())
+            .await
+            .unwrap();
+        assert!(!status.is_sync_api_paused);
+        let pulled = pull(
+            service_provider,
+            common,
+            pull::Input {
+                cursor: 0,
+                batch_size: 100,
+                is_initialising: false,
+                filter: None,
+            },
+        )
+        .await;
+        assert!(pulled.is_ok());
     }
 }

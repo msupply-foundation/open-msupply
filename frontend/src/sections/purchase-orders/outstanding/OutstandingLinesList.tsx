@@ -39,7 +39,7 @@ import { ExportOutstandingLinesAction } from './actions';
 // The outstanding-lines list (spec/purchase-orders S5) — every line the store
 // is still waiting for, across all its orders, and the way to the order behind
 // one. Reached only from S1's Outstanding lines action: it has no menu entry,
-// and it sits behind the same procurement gate as S1, applied to the route by
+// and it sits behind the same read-permission gate as S1, applied to the route by
 // the navigation registry rather than by this screen.
 //
 // READ-ONLY: no create action, no row selection, no bulk-action bar, no action
@@ -68,7 +68,7 @@ type ListState = {
 // past what this screen is.
 const ROW_SET = {
   status: { equalTo: 'SENT' },
-  receivedLessThanAdjusted: true,
+  receivedLessThanRequested: true,
 } as const satisfies OutstandingLineFilter;
 
 // Default sort: highest PO number first (OMS-FUN-PO-14.8), declared in ONE
@@ -178,9 +178,15 @@ const OutstandingLinesList: Component = () => {
 
   // Opening a row opens that line's ORDER, not the line — the line has no
   // screen of its own (OMS-FUN-PO-14.9).
-  const openRow = (row: Row) => {
+  const rowHref = (row: Row) => {
     const id = row.purchaseOrder?.id;
-    if (id) navigate(`/${params.storeId}/replenishment/purchase-order/${id}`);
+    return id
+      ? `/${params.storeId}/replenishment/purchase-order/${id}`
+      : undefined;
+  };
+  const openRow = (row: Row) => {
+    const href = rowHref(row);
+    if (href) navigate(href);
   };
 
   // Columns and crumbs are accessors (not plain arrays): their text comes from
@@ -251,7 +257,7 @@ const OutstandingLinesList: Component = () => {
       size: remToPx(14),
     },
     {
-      // The moment the ORDER became Ready for sending.
+      // The moment the ORDER became Approved.
       c: {
         accessor: row => row.purchaseOrder?.confirmedDatetime,
         id: 'confirmedDatetime',
@@ -272,14 +278,11 @@ const OutstandingLinesList: Component = () => {
       size: remToPx(11),
     },
     {
-      // What the ORDER expects of the line — its TOTAL, which the label says
-      // outright so it cannot be read as the amount outstanding
-      // (OMS-FUN-PO-14.2). Absent where the order carries no adjusted
-      // quantity: blank, not 0, which would be a different fact
-      // (ui-standards § absent values).
-      c: { key: 'adjustedNumberOfUnits' },
-      sortKey: 'adjustedNumberOfUnits',
-      header: () => t('label.adjusted-units-expected'),
+      // What the order asked for — the line's TOTAL, not the amount
+      // outstanding (OMS-FUN-PO-14.2).
+      c: { key: 'requestedNumberOfUnits' },
+      sortKey: 'requestedNumberOfUnits',
+      header: () => t('label.requested-units'),
       ...getNumberCell(),
       size: remToPx(9),
     },
@@ -348,6 +351,7 @@ const OutstandingLinesList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
+        rowHref={rowHref}
         // With nothing outstanding the list says so below its still-visible
         // headers (OMS-FUN-PO-14.4). No call to action: nothing is created
         // here.

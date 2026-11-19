@@ -271,6 +271,7 @@ fn generate_inbound_invoice(
         expected_delivery_date: outbound_invoice_row.expected_delivery_date,
         original_shipment_id,
         program_id: outbound_invoice_row.program_id.clone(),
+        campaign_id: outbound_invoice_row.campaign_id.clone(),
         shipping_method_id: outbound_invoice_row.shipping_method_id.clone(),
         charges_local_currency: 0.0,
         charges_foreign_currency: 0.0,

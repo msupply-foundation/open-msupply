@@ -1,6 +1,8 @@
 import { createEffect, createResource, createSignal, Show } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
 import { gated } from '../../../api/gated';
+import { pollSyncStatus } from '../../../api/syncStore';
+import { isCentralServer } from '../../../api/serverInfo';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { PasswordField } from '../../../ui/elements/inputs/PasswordField';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
@@ -17,8 +19,17 @@ import {
   syncSaveErrorKey,
   type SyncFormState,
 } from './syncForm';
-import { SyncSettings, UpdateSyncSettings } from './syncSettings.generated';
+import {
+  SetSyncPaused,
+  SyncSettings,
+  UpdateSyncSettings,
+} from './syncSettings.generated';
+import { ToggleSwitch } from '../../../ui/elements/inputs/ToggleSwitch';
+import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
+import { ProcessorsPause, SyncApiPause } from './CentralPauses';
+import { MaintenanceMode } from './MaintenanceMode';
 import { Stack } from '../../../ui/layout/Stack/Stack';
+import { createSaveOnToggle } from './saveOnToggle';
 import { HStack } from '../../../ui/layout/Stack/HStack';
 import { createFormValidation } from '../../../ui/layout/Form/formValidation';
 import { DisclosureToggle } from '../../../ui/elements/buttons/DisclosureToggle';
@@ -37,7 +48,12 @@ const ADVANCED_REGION_ID = 'sync-settings-advanced';
  * (OMS-REG-SET-02.15) — and the password always starts blank
  * (OMS-REG-SET-02.12).
  */
-export const SyncSection = () => {
+export const SyncSection = (props: {
+  /** Central server + Server Admin: also show the central-only controls —
+   * maintenance mode (#840), the sync API pause (#717) and the processor pause
+   * (#840). */
+  showCentralControls: boolean;
+}) => {
   // Stored settings (never includes the password). Non-suspending read —
   // this section lives inside an already-open page (kdd/solid-reactivity-
   // pitfalls § no remounts).
@@ -76,6 +92,52 @@ export const SyncSection = () => {
   const validation = createFormValidation(() => syncFieldErrors(form()));
 
   const [showAdvanced, setShowAdvanced] = createSignal(false);
+
+  /*
+   * Maintenance mode (central only) sets and clears all three pauses at once,
+   * and holds them while on: the switches below it re-read their state when it
+   * flips, and are disabled while it is on.
+   */
+  const [maintenanceOn, setMaintenanceOn] = createSignal(false);
+  const [pauseVersion, setPauseVersion] = createSignal(0);
+  const onMaintenanceChanged = () => {
+    setPauseVersion(version => version + 1);
+    void refetch();
+    void pollSyncStatus();
+  };
+
+  /*
+   * The pause switch (spec/settings/rules.md § Synchronisation) is a setting
+   * to flip, not a field of the form: it saves on change through its own
+   * mutation, so flipping it never re-sends the credentials, and it never
+   * arms the form's validation. A failed save reverts the switch
+   * (saveOnToggle). On success the stored value is re-read before the flip is
+   * released, and the shared sync store is re-polled so this session's chrome
+   * cell shows the paused state at once (other sessions get it from the live
+   * frame the server emits).
+   */
+  const [pauseError, setPauseError] = createSignal<string>();
+  const {
+    checked: paused,
+    busy: pauseBusy,
+    toggle: setPaused,
+  } = createSaveOnToggle(
+    () => stored()?.isPaused ?? false,
+    async next => {
+      setPauseError(undefined);
+      const result = await graphqlFetch(
+        SetSyncPaused,
+        { paused: next },
+        { background: true }
+      );
+      if (result.kind === 'success') {
+        await refetch();
+        void pollSyncStatus();
+      } else if (result.kind !== 'unauthenticated') {
+        setPauseError(t(SYNC_SAVE_FALLBACK_ERROR));
+      }
+    }
+  );
 
   const edit = (patch: Partial<SyncFormState>) => {
     touched = true;
@@ -139,6 +201,40 @@ export const SyncSection = () => {
       }}
     >
       <Stack>
+        <Show when={props.showCentralControls}>
+          <MaintenanceMode
+            onChanged={onMaintenanceChanged}
+            onState={setMaintenanceOn}
+          />
+        </Show>
+        <ToggleSwitch
+          label={t('label.pause-sync')}
+          variant="caution"
+          checked={paused()}
+          disabled={pauseBusy() || saving() || maintenanceOn()}
+          onChange={next => void setPaused(next)}
+          labelInfo={
+            <InfoTooltip
+              text={t(
+                isCentralServer()
+                  ? 'label.pause-sync-info-central'
+                  : 'label.pause-sync-info-remote'
+              )}
+              triggerTestId="sync-settings-pause-info"
+            />
+          }
+          testId="sync-settings-pause"
+        />
+        <Show when={pauseError()}>
+          {message => <Alert severity="error">{message()}</Alert>}
+        </Show>
+        {/* The pauses sit together: this server's own sync above, then the
+            sync API it serves to remote sites and its processors (central
+            only). */}
+        <Show when={props.showCentralControls}>
+          <SyncApiPause version={pauseVersion} disabled={maintenanceOn()} />
+          <ProcessorsPause version={pauseVersion} disabled={maintenanceOn()} />
+        </Show>
         {/* The standard form layout (kdd/form-layout): stacked full-width
           fields carrying their own labels, with the two numbers paired in a
           FormRow. The accordion header titles the group, so there is no

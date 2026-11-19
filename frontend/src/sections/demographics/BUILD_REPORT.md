@@ -1,6 +1,6 @@
 # Demographics — build report
 
-**Target stack:** SolidJS + Vite, shared component library in [`src/ui/`](../../ui/), roles resolved through [`spec/ui-standards/components.md`](../../../spec/ui-standards/components.md). Built from [`spec/demographics`](../../../spec/demographics/README.md) (`rules.md` → `contract.md` → `ui-surface.md`), pattern-matched to the reference vertical `src/sections/stocktakes/`, to `src/sections/custom-fields/` (the other draft-edited central grid) and to the patient editor (`src/sections/patients/detail/patientEditor.ts`, the logic-module shape).
+**Target stack:** SolidJS + Vite, shared component library in [`src/ui/`](../../ui/), roles resolved through [`spec/ui-standards/components.md`](../../../../spec/ui-standards/components.md). Built from [`spec/demographics`](../../../../spec/demographics/README.md) (`rules.md` → `contract.md` → `ui-surface.md`), pattern-matched to the reference vertical `src/sections/stocktakes/`, to `src/sections/custom-fields/` (the other draft-edited central grid) and to the patient editor (`src/sections/patients/detail/patientEditor.ts`, the logic-module shape).
 
 **Shape.** One screen (`ui-surface` S1) plus the shared leave confirmation (S2). The whole screen is one draft over one grid, so the vertical is a calculation, a draft store and a save:
 
@@ -17,7 +17,7 @@ One locale key was minted: `server-error.DemographicIndicatorAlreadyExistsForThi
 
 ## Anchor coverage
 
-Behaviour anchors: the behaviours of the case [`OMS-REG-MNG-03`](../../../spec/demographics/cases/OMS-REG-MNG-03%20-%20Validate%20Demographics%20Management.md), the source of truth — shown below as `.n` (`.12` is `OMS-REG-MNG-03.12`), as the colocated tests cite them.
+Behaviour anchors: the behaviours of the case [`OMS-REG-MNG-03`](../../../../spec/demographics/cases/OMS-REG-MNG-03%20-%20Validate%20Demographics%20Management.md), the source of truth — shown below as `.n` (`.12` is `OMS-REG-MNG-03.12`), as the colocated tests cite them.
 
 | Anchor            | Statement (abbrev.)                                                 | Test                                                                                                                                                      |
 | ----------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -147,4 +147,4 @@ The 2026-09-15 code review (PR #681). Three points were rulings and are recorded
 
 - **A declared `headerControl` slot for `DataTable`** — [#702](https://github.com/msupply-foundation/open-msupply-internal/issues/702); the five inherited consequences are listed under _Roles not built_ above. Until it lands the rate inputs keep the clamp, and card view has none.
 - **The `e2e/` suite exists** — `e2e/specs/demographics-regression.spec.ts`, anchored to `OMS-REG-MNG-03`, green on both front ends (its header lists the out-of-scope anchors with their reasons); the ids are contracted in [`e2e/TESTIDS.md` § Demographics](../../../e2e/TESTIDS.md#demographics). The vertical is reconciled (`spec/demographics/cases/`); the exploratory workflow is `exploratory/workflows/demographics.md`.
-- **Pre-existing, not this build:** `pnpm test` has one red test on this branch's base, `plugins/cook_islands/backend/src/manifest.test.ts` (backend manifest `3.0.0` vs frontend `3.02.00`), and `pnpm lint` carries nine pre-existing errors in plugin test files (`camelcase`, `no-control-regex`). Neither file is touched here; the section's own lint is clean.
+- **Pre-existing, not this build:** `pnpm test` has one red test on this branch's base, `private/plugins/cook_islands/backend/src/manifest.test.ts` (backend manifest `3.0.0` vs frontend `3.02.00`), and `pnpm lint` carries nine pre-existing errors in plugin test files (`camelcase`, `no-control-regex`). Neither file is touched here; the section's own lint is clean.

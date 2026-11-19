@@ -1,6 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { setDictionaries, setLocale } from '../../intl/intl';
 import commonEn from '../../intl/locales/en/common.json';
+import commonFr from '../../intl/locales/fr/common.json';
+import commonFrDj from '../../intl/locales/fr-DJ/common.json';
 
 // The gender-options gate (spec/patients rules.md § configuration gates,
 // OMS-REG-DIS-01.50; anchor OMS-REG-DIS-01.50): the genderOptions preference
@@ -77,5 +79,22 @@ describe('genderLabel (ui-surface § gender labels — fixed keys regardless of 
   it('renders a stored value even when the configured subset excludes it', () => {
     state.genderOptions = ['FEMALE'];
     expect(genderLabel('NON_BINARY')).toBe('Non-binary');
+  });
+});
+
+describe('genderLabel in a regional locale (spec/i18n — the fallback ladder)', () => {
+  afterAll(() => {
+    setDictionaries({ en: commonEn });
+    setLocale('en');
+  });
+
+  it("reads a key the variant leaves out from its base locale's catalogue", () => {
+    // fr-DJ carries no gender keys; French (Djibouti) reads them as French.
+    setDictionaries({ en: commonEn, fr: commonFr, 'fr-DJ': commonFrDj });
+    setLocale('fr-DJ');
+    expect(genderLabel('FEMALE')).toBe('Féminin');
+    expect(genderLabel('TRANSGENDER_MALE_HORMONE')).toBe(
+      'Transgender male hormone'
+    );
   });
 });

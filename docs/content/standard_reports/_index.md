@@ -40,8 +40,7 @@ The toggle report command can be useful to deactivate standard reports when a cl
 
 Always re-generate the relevant files after you update a report, or after you merge in a branch when you're working on reports - otherwise the server will not run. To do this:
 
-1. If you have not run the reports before or after version changes, install the dependencies: `yarn install` from the repo root
-2. To build the reports: `cd open-msupply/server` then `cargo run --bin remote_server_cli build-reports`.
+1. To build the reports: `node scripts/reports/build-reports.mjs` from the repo root. It installs each report tree's dependencies itself, with pnpm, from its lockfile.
 
 #### To Make a New Report
 
@@ -54,25 +53,22 @@ Always re-generate the relevant files after you update a report, or after you me
 
 #### To Make a new or Modified Report Available in the Client
 
-1. Build the reports: `cd open-msupply/server` then `cargo run --bin remote_server_cli build-reports`.
+1. Build the reports: `node scripts/reports/build-reports.mjs` from the repo root.
 2. Upsert the reports to the database's report table. You can either use the UI (central server > manage > reports > the big upload button > drag and drop `standard-reports.json` and `standard-forms.json`) or the CLI (`cd open-msupply/server` then `cargo run --bin remote_server_cli upsert-reports --overwrite`).
 
 ## Generating Reports
 
-There are three main steps to get started with reports:
+There are two main steps to get started with reports:
 
-1. Build the server
-2. Build the reports
-3. Upsert the reports to the database
+1. Build the reports - with Node, no server build needed
+2. Upsert the reports to the database - with the server CLI, or the UI
 
 ### Build the Server to access the CLI tools
 
-This is required before reports can be built in the following steps.
+The CLI is needed to upsert reports and to preview them with `show-report`, not to build them.
 
 From open-msupply/server:
 `cargo build`
-
-You can then use the CLI tools to build the reports, then upsert them to the database for access in the application.
 
 When developing in reports `cargo build` does not need to be re-run every time some changes have been made in the reports. It must be run to process the initial upsert, and then only after any server changes.
 
@@ -87,12 +83,12 @@ All commands can be run in two ways:
 
 ### Build Reports
 
-`build-reports --path <optional-directory-path>`
+`node scripts/reports/build-reports.mjs --path <optional-directory-path>`, from the repo root
 
-Generates all reports into a JSON array.
+Generates all reports into a JSON array. It needs Node and pnpm, not a server build - it used to be the server CLI's `build-reports` command.
 
 **What it does**
-This command builds reports from source files within the directory passed as the path argument. It searches through directories recursively, so any file structure can be used. If no path is passed, the build-reports command defaults to the `standard_forms` and `standard_report` directories containing OMS standard forms and reports respectively.
+This command builds reports from source files within the directory passed as the path argument. It searches through directories recursively, so any file structure can be used. If no path is passed, it builds the `standard_forms` and `standard_reports` directories containing OMS standard forms and reports respectively.
 
 It will attempt to build a report from any directory containing a `report-manifest.json` file. When it finds one, it processes all the report's source files and generates a JSON file.
 
@@ -102,10 +98,10 @@ Regardless if one or many reports are built, the generated JSON file will be an 
 
 `upsert-reports --path <optional-directory-path/generated/reports.json> --overwrite (optional)`
 
-Takes the generated JSON from the `build-reports` process and upserts it to the database, making reports available in the client application.
+Takes the generated JSON from [building the reports](#build-reports) and upserts it to the database, making reports available in the client application.
 
 **What it does**
-This command reads the JSON array created by `build-reports` and adds those reports to your database. The path you specify here should point to the generated JSON file created in the previous build step - this will be located in a `generated/` subdirectory.
+This command reads the JSON array created by `build-reports.mjs` and adds those reports to your database. The path you specify here should point to the generated JSON file created in the previous build step - this will be located in a `generated/` subdirectory.
 
 - If you built with `--path ~/custom-reports`, the generated file will be at `~/custom-reports/generated/reports.json`
 - If you built standard reports (no path), it defaults to `reports/generated/standard-reports.json` and no path is required in this step
@@ -122,7 +118,7 @@ Once uploaded, reports become available in the client and will sync to remote si
 cargo build
 
 # 2. Build reports and upload to database (after report changes)
-./target/debug/remote_server_cli build-reports --path ~/custom-reports &&
+node ../scripts/reports/build-reports.mjs --path ~/custom-reports &&
 ./target/debug/remote_server_cli upsert-reports --path ~/custom-reports/generated/reports.json --overwrite
 
 # 3. Start the server
@@ -154,6 +150,8 @@ Building reports will automatically install any node dependencies for a specific
 `show-report --path <path-to-report-dir-containing-report-manifest.json> --config <optional-path-to-dir-containing-test-config.json> --format <optional[html|excel]>`
 
 Show report replaces previously used print.sh and show.sh bash commands on the OMS reports repo.
+
+It builds the report with `scripts/reports/build-reports.mjs` before rendering it, so it needs Node and pnpm as well as the CLI.
 
 By default, running this command will generate and open an html file of the report. A `format` argument can be passed to generate an excel file instead.
 
@@ -386,7 +384,6 @@ These files must be compliant with JSON forms.
    |   ├── input.json (optional)
    |   ├── output.json (optional)
    |   ├── webpack.config.js
-   |   └── yarn.lock (generated)
    ├──  src
    |   ├── footer.html (optional)
    |   ├── header.html (optional)
@@ -609,7 +606,7 @@ if remote omSupply.version = 4.5 selected report = 3.5.1 -->
 
 Sometimes we need to manipulate data for ease of templating (templating should only deal with presentation, i.e. rounding, styles etc..), for this we can use javascript methods that will run in BoaJs runtime (on the server).
 
-These javascript methods are called convert_data, they can either be typescript or vanilla JS. Typescript will require more boilerplate code and type generations, graphql queries and argument schema can be generated by running `yarn && yarn generate-types` from within convert_data folder, note that server must be running as per codegen.yaml file which may require manual matching of ports.
+These javascript methods are called convert_data, they can either be typescript or vanilla JS. Typescript will require more boilerplate code and type generations, graphql queries and argument schema can be generated by running `pnpm install && pnpm generate-types` from within convert_data folder, note that server must be running as per codegen.yaml file which may require manual matching of ports.
 
 Exported convert_data methods will accept all of the data that would typically be passed on to the template, it can then manipulate data and return it, manipulated data will be passed on to templating.
 
@@ -617,7 +614,7 @@ It's a good idea to test convert_data with realistic input and output data.
 
 For full typescript examples with tests please see item-usage report.
 
-> Note typescript reports often require additional dependencies which are not installed by default. You may need to navigate to the report convert_data dir and run `yarn` to allow reports to build. This may be required even if no type regeneration is needed. For example, the item-usage report will require dependency installation on a new omSupply instance before it can be built.
+> `standard_reports/` and `standard_forms/` are each a pnpm workspace, with every report's convert_data package in it (see their `pnpm-workspace.yaml`). A new convert_data package has to fit the `<report>/<version>/convert_data_js` layout to be picked up; then run `pnpm install` in the tree to add it to the lockfile.
 
 #### Debugging and Logging
 
@@ -643,15 +640,15 @@ Logging of object is best done with JSON.stringify inside of the log method.
 
 #### Testing
 
-Run `yarn test` from the 'client' directory.
+Run `pnpm test` from the `standard_reports` or `standard_forms` directory.
 
-Any .test files within standard report or standard forms will be checked when conducting these tests.
+Any .test files within that tree will be checked when conducting these tests.
 
 #### Packager and Typescript
 
 webpack is used to package convert_data entrypoint file into a module.
 
-Typescript convert_data package will require base types (`convertDataTypes.ts`), configuration for graphql codegen and type dependencies (`codegenTypes.ts` and `codegen.yaml`) and a typescript config (`tsconfig.json`). Also extra dependencies and generate-types script is added to package.json. Types can be generated from graphql queries and argument form json schema using `yarn generate-types` script, note the server must be running on port 8000 over http and initialised.
+Typescript convert_data package will require base types (`convertDataTypes.ts`), configuration for graphql codegen and type dependencies (`codegenTypes.ts` and `codegen.yaml`) and a typescript config (`tsconfig.json`). Also extra dependencies and generate-types script is added to package.json. Types can be generated from graphql queries and argument form json schema using `pnpm generate-types` script, note the server must be running on port 8000 over http and initialised.
 
 If common types or utilities need to be shared, they must live withing rootDir specified by tsconfig.json or copied into report.
 

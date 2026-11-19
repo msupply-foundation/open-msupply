@@ -1281,6 +1281,10 @@ end
 <CustomCtrlInfo Left="200" Top="174" Width="95" Height="19" ID="605"/>
 <CustomCtrlInfo Left="27" Top="118" Width="150" Height="18" ID="213"/>
 <CustomCtrlInfo Left="200" Top="117" Width="200" Height="18" ID="824"/>
+<CustomCtrlInfo Left="27" Top="207" Width="167" Height="18" ID="214"/>
+<CustomCtrlInfo Left="200" Top="207" Width="82" Height="18" ID="822"/>
+<CustomCtrlInfo Left="27" Top="240" Width="167" Height="18" ID="215"/>
+<CustomCtrlInfo Left="200" Top="240" Width="82" Height="18" ID="823"/>
 </CustomCtrlList>
 <Events>
 <Event>
@@ -1320,6 +1324,20 @@ Screen.Back();
 <Args/>
 <Script>-- These actions are performed when the Next button is clicked.
 local sNextScreenName = "Select Install Folder";
+
+-- Log rotation values must be whole numbers of 1 or more (the server treats 0 as 10)
+local tLogFields = {
+	{var = "%omsupply_log_max_file_size%", label = "Log file size limit (MB)"},
+	{var = "%omsupply_log_max_file_count%", label = "Log files to keep"},
+};
+for index, tField in pairs(tLogFields) do
+	local nValue = tonumber(SessionVar.Get(tField.var));
+	if (nValue == nil) or (nValue &lt; 1) or (math.floor(nValue) ~= nValue) then
+		Dialog.Message("Error", tField.label .. " must be a whole number of 1 or more.", MB_OK, MB_ICONSTOP, MB_DEFBUTTON1);
+		return;
+	end
+	SessionVar.Set(tField.var, string.format("%d", nValue));
+end
 
 tRbSqliteProps = DlgRadioButton.GetProperties(CTRL_RADIO_BUTTON_02); -- If postgres is selected as db
 if tRbSqliteProps.Checked then
@@ -1364,6 +1382,19 @@ end
 
 if (e_MsgID == MSGID_CLICKED) then
 	-- a control was clicked...
+
+	if (e_CtrlID == CTRL_RADIO_BUTTON_01) or (e_CtrlID == CTRL_RADIO_BUTTON_02) then
+		-- Suggest the server's default log file size for the chosen database (larger for
+		-- postgres, which is used for busier servers), unless the user has changed it
+		local sLogSize = DlgEditField.GetProperties(CTRL_EDIT_02).Text;
+		if (sLogSize == "20") or (sLogSize == "100") then
+			if (e_CtrlID == CTRL_RADIO_BUTTON_02) then
+				DlgEditField.SetProperties(CTRL_EDIT_02, {Text = "100"});
+			else
+				DlgEditField.SetProperties(CTRL_EDIT_02, {Text = "20"});
+			end
+		end
+	end
 
 	if (e_CtrlID == CTRL_BUTTON_01) then
 
@@ -1483,6 +1514,58 @@ end
 <Variable>%omsupply_db_name%</Variable>
 </Control>
 <Control>
+<Type>2</Type>
+<ID>214</ID>
+<Visible>1</Visible>
+<Enabled>1</Enabled>
+<TabOrder>8</TabOrder>
+<IsHeading>0</IsHeading>
+</Control>
+<Control>
+<Type>6</Type>
+<ID>822</ID>
+<Visible>1</Visible>
+<Enabled>1</Enabled>
+<TabOrder>9</TabOrder>
+<TextAlign>0</TextAlign>
+<VertScroll>1</VertScroll>
+<HorizScroll>0</HorizScroll>
+<RTLReadingOrder>0</RTLReadingOrder>
+<Style>0</Style>
+<Mode>0</Mode>
+<MaskReturnMode>0</MaskReturnMode>
+<ReadOnly>0</ReadOnly>
+<StartNewRow>1</StartNewRow>
+<SizeColumns>4</SizeColumns>
+<Variable>%omsupply_log_max_file_size%</Variable>
+</Control>
+<Control>
+<Type>2</Type>
+<ID>215</ID>
+<Visible>1</Visible>
+<Enabled>1</Enabled>
+<TabOrder>10</TabOrder>
+<IsHeading>0</IsHeading>
+</Control>
+<Control>
+<Type>6</Type>
+<ID>823</ID>
+<Visible>1</Visible>
+<Enabled>1</Enabled>
+<TabOrder>11</TabOrder>
+<TextAlign>0</TextAlign>
+<VertScroll>1</VertScroll>
+<HorizScroll>0</HorizScroll>
+<RTLReadingOrder>0</RTLReadingOrder>
+<Style>0</Style>
+<Mode>0</Mode>
+<MaskReturnMode>0</MaskReturnMode>
+<ReadOnly>0</ReadOnly>
+<StartNewRow>1</StartNewRow>
+<SizeColumns>4</SizeColumns>
+<Variable>%omsupply_log_max_file_count%</Variable>
+</Control>
+<Control>
 <Type>1</Type>
 <ID>103</ID>
 <Visible>0</Visible>
@@ -1542,6 +1625,14 @@ end
 <IDS_CTRL_EDIT_04>open-msupply-database</IDS_CTRL_EDIT_04>
 <IDS_CTRL_EDIT_MASK_04/>
 <IDS_CTRL_EDIT_MASK_PLACE_HOLDER_04/>
+<IDS_CTRL_STATICTEXT_LABEL_04>Log file size limit (MB):</IDS_CTRL_STATICTEXT_LABEL_04>
+<IDS_CTRL_EDIT_02>20</IDS_CTRL_EDIT_02>
+<IDS_CTRL_EDIT_MASK_02/>
+<IDS_CTRL_EDIT_MASK_PLACE_HOLDER_02/>
+<IDS_CTRL_STATICTEXT_LABEL_05>Log files to keep:</IDS_CTRL_STATICTEXT_LABEL_05>
+<IDS_CTRL_EDIT_03>50</IDS_CTRL_EDIT_03>
+<IDS_CTRL_EDIT_MASK_03/>
+<IDS_CTRL_EDIT_MASK_PLACE_HOLDER_03/>
 </Messages>
 </SUF70Messages>
 </Languages>
@@ -4574,8 +4665,8 @@ else
 	config = config .. "  level: Info\r\n";
 	config = config .. "  directory: log\r\n";
 	config = config .. "  filename: omsupply.log\r\n";
-	config = config .. "  max_file_count: 10\r\n";
-	config = config .. "  max_file_size: 1\r\n";
+	config = config .. "  max_file_count: " .. SessionVar.Get("%omsupply_log_max_file_count%") .. "\r\n";
+	config = config .. "  max_file_size: " .. SessionVar.Get("%omsupply_log_max_file_size%") .. "\r\n";
 	TextFile.WriteFromString(SessionVar.Expand("%AppFolder%\\configuration\\local.yaml"), config, false);
 
 	-- Create omSupply Server keys in registry
@@ -4786,6 +4877,16 @@ g_HandleSystemReboot();
 <SessionVar>
 <Name>%postgres_db_port%</Name>
 <Value>5432</Value>
+<Type>10</Type>
+</SessionVar>
+<SessionVar>
+<Name>%omsupply_log_max_file_size%</Name>
+<Value>20</Value>
+<Type>10</Type>
+</SessionVar>
+<SessionVar>
+<Name>%omsupply_log_max_file_count%</Name>
+<Value>50</Value>
 <Type>10</Type>
 </SessionVar>
 <SessionVar>

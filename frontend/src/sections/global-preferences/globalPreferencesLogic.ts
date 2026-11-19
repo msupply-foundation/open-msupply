@@ -7,6 +7,14 @@ import type {
   GlobalPreferencesResult,
   UpsertGlobalPreferencesVariables,
 } from './globalPreferences.generated';
+import {
+  asDispensingScreen,
+  groupCatalogue,
+  PREFERENCE_GROUPS,
+  type CatalogueGroup,
+  type PreferenceGroupDef,
+  type PreferenceGroupLabelKey,
+} from '@/domain/preferences';
 
 /** One preference as `preferenceDescriptions` serves it — the served order IS
  *  the display order (contract § The catalogue). */
@@ -30,85 +38,36 @@ export const preferenceLabelKey = (
     : `preference.${key}`;
 
 // ---------------------------------------------------------------------------
-// Grouping (rules § The page)
+// Grouping (rules § The page) — the shared catalogue helpers (@/domain/
+// preferences) with this page's own map of which key sits in which group.
 
-export type GroupLabelKey =
-  | 'label.procurement'
-  | 'title.average-monthly-consumption'
-  | 'label.expired-stock'
-  | 'label.backdating';
+export type PreferenceGroup = CatalogueGroup<
+  GlobalPreference,
+  PreferenceGroupLabelKey
+>;
 
 /* Which group a preference belongs to; anything unlisted is ungrouped. */
-const GROUP_OF: Partial<Record<GlobalPreference['key'], GroupLabelKey>> = {
-  authorisePurchaseOrder: 'label.procurement',
-  adjustForNumberOfDaysOutOfStock: 'title.average-monthly-consumption',
-  daysInMonth: 'title.average-monthly-consumption',
-  expiredStockPreventIssue: 'label.expired-stock',
-  expiredStockIssueThreshold: 'label.expired-stock',
-  backdating: 'label.backdating',
+const GROUP_OF: Partial<
+  Record<GlobalPreference['key'], PreferenceGroupDef<PreferenceGroupLabelKey>>
+> = {
+  authorisePurchaseOrder: PREFERENCE_GROUPS.procurement,
+  adjustForNumberOfDaysOutOfStock: PREFERENCE_GROUPS.averageMonthlyConsumption,
+  daysInMonth: PREFERENCE_GROUPS.averageMonthlyConsumption,
+  expiredStockPreventIssue: PREFERENCE_GROUPS.expiredStock,
+  expiredStockIssueThreshold: PREFERENCE_GROUPS.expiredStock,
+  backdating: PREFERENCE_GROUPS.backdating,
+  dispensingScreen: PREFERENCE_GROUPS.dispensing,
+  useUnnamedPatient: PREFERENCE_GROUPS.dispensing,
+  startWithUnnamedPatient: PREFERENCE_GROUPS.dispensing,
+  askForPatientType: PREFERENCE_GROUPS.dispensing,
 };
 
-export interface PreferenceGroup {
-  labelKey: GroupLabelKey;
-  members: GlobalPreference[];
-}
+/** The served catalogue split into ungrouped rows and the five groups, both
+ *  in served order (OMS-REG-GPREF-01.2). */
+export const groupPreferences = (preferences: GlobalPreference[]) =>
+  groupCatalogue(preferences, GROUP_OF);
 
-export interface GroupedCatalogue {
-  ungrouped: GlobalPreference[];
-  groups: PreferenceGroup[];
-}
-
-/*
- * Split the served catalogue into the ungrouped rows and the collapsible
- * groups. Both orders derive from the SERVED order: groups appear where their
- * first member does, members keep catalogue order (OMS-REG-GPREF-01.2).
- */
-export const groupPreferences = (
-  preferences: GlobalPreference[]
-): GroupedCatalogue => {
-  const ungrouped: GlobalPreference[] = [];
-  const groups: PreferenceGroup[] = [];
-  for (const preference of preferences) {
-    const labelKey = GROUP_OF[preference.key];
-    if (!labelKey) {
-      ungrouped.push(preference);
-      continue;
-    }
-    const group = groups.find(g => g.labelKey === labelKey);
-    if (group) group.members.push(preference);
-    else groups.push({ labelKey, members: [preference] });
-  }
-  return { ungrouped, groups };
-};
-
-/** Case-insensitive substring match on a displayed label — a blank term
- *  matches everything (OMS-REG-GPREF-01.4). */
-export const matchesPreferenceFilter = (label: string, term: string): boolean =>
-  label.toLowerCase().includes(term.trim().toLowerCase());
-
-/*
- * The filtered catalogue: ungrouped rows match on their own label; a group is
- * all-or-nothing — kept whole when its label or ANY member matches
- * (OMS-REG-GPREF-01.5). The filter only hides rows; it never changes what an
- * edit saves (rules § The page).
- */
-export const filterCatalogue = (
-  catalogue: GroupedCatalogue,
-  labelOf: (preference: GlobalPreference) => string,
-  groupLabelOf: (group: PreferenceGroup) => string,
-  term: string
-): GroupedCatalogue => ({
-  ungrouped: catalogue.ungrouped.filter(preference =>
-    matchesPreferenceFilter(labelOf(preference), term)
-  ),
-  groups: catalogue.groups.filter(
-    group =>
-      matchesPreferenceFilter(groupLabelOf(group), term) ||
-      group.members.some(member =>
-        matchesPreferenceFilter(labelOf(member), term)
-      )
-  ),
-});
+export { filterCatalogue, matchesPreferenceFilter } from '@/domain/preferences';
 
 /*
  * Whether the AMC group carries the calculation explainer: either AMC
@@ -239,12 +198,16 @@ const BOOL_PREFERENCE_KEYS = [
   'isGaps',
   'displayPopulationBasedForecasting',
   'receivePaymentsFromPrescriptions',
+  'useUnnamedPatient',
+  'startWithUnnamedPatient',
+  'askForPatientType',
 ] as const satisfies readonly GlobalPreferenceKeyOf<boolean>[];
 const NUMBER_PREFERENCE_KEYS = [
   'preventTransfersMonthsBeforeInitialisation',
   'syncRecordsDisplayThreshold',
   'daysInMonth',
   'expiredStockIssueThreshold',
+  'decimalPlacesForNumbers',
 ] as const satisfies readonly GlobalPreferenceKeyOf<number>[];
 
 /**
@@ -257,16 +220,19 @@ const NUMBER_PREFERENCE_KEYS = [
  * explicitly: customTranslationsV2 saves through the editor's own path;
  * customTranslations (legacy) only ever rides along with it;
  * globalTableConfigs is the table-configuration feature's
- * (src/api/tableConfig.graphql), never this page's.
+ * (src/api/tableConfig.graphql), never this page's. Strings are in the net
+ * too — globalLogo, the one string, saves through its own editor (S5).
  */
 export type EveryGlobalPreferenceHandled<
   Unhandled extends never = Exclude<
-    GlobalPreferenceKeyOf<boolean | number | object>,
+    GlobalPreferenceKeyOf<boolean | number | string | object>,
     | (typeof BOOL_PREFERENCE_KEYS)[number]
     | (typeof NUMBER_PREFERENCE_KEYS)[number]
     | GlobalPreferenceKeyOf<object> // arrays (store-scoped) + composites, handled below/elsewhere
     | 'genderOptions'
     | 'backdating'
+    | 'globalLogo'
+    | 'dispensingScreen'
   >,
 > = Unhandled;
 
@@ -282,8 +248,8 @@ const isNumberKey = (
 /*
  * One changed preference as the mutation input — a one-field input, the
  * others untouched (contract § Editing). Undefined for keys this page never
- * auto-saves (the translations editor has its own save path; store-typed keys
- * never appear in a GLOBAL read).
+ * auto-saves (the translations and logo editors have their own save paths;
+ * store-typed keys never appear in a GLOBAL read).
  */
 export const buildAutoSaveInput = (
   key: GlobalPreference['key'],
@@ -303,6 +269,9 @@ export const buildAutoSaveInput = (
   }
   if (key === 'backdating') {
     return { backdating: asBackdatingParts(value) };
+  }
+  if (key === 'dispensingScreen') {
+    return { dispensingScreen: asDispensingScreen(value) };
   }
   return undefined;
 };

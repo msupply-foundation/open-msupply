@@ -111,6 +111,11 @@ fn builtin_custom_fields() -> Vec<BuiltinCustomField> {
             scopes: &[PRESCRIPTION_REQUEST_CUSTOM_FIELD_SCOPE],
             options: &[],
         },
+        // Seeded VISIBLE until f15c79bbfd (7 Sep 2026). Because `display_mode`
+        // is the deployment's once the row exists, changing it here reached
+        // no seeded database — the v3_04_00 migration
+        // `prescription_request_occupation_prominent` lifts rows still holding
+        // that default (issue #932).
         BuiltinCustomField {
             key: PRESCRIPTION_REQUEST_OCCUPATION,
             name: "Occupation",
@@ -669,10 +674,10 @@ mod tests {
         seed_builtin_custom_fields(&connection).unwrap();
 
         // No legacy definition is deleted by the builtin sweep, and no key is
-        // shared between the families: 25 legacy + 4 builtin rows, each with the
+        // shared between the families: 28 legacy + 4 builtin rows, each with the
         // kind its own seeder gave it.
         let all = field_repo.find_all().unwrap();
-        assert_eq!(all.len(), 29, "a key collided between the two families");
+        assert_eq!(all.len(), 32, "a key collided between the two families");
         assert!(
             all.iter()
                 .filter(|row| row.kind == CustomFieldKind::Legacy)

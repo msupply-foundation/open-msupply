@@ -1,7 +1,18 @@
 import type { JSX } from 'solid-js';
-import type { ColumnDefBase, ColumnMeta } from '@tanstack/solid-table';
+import type {
+  AggregationFn,
+  ColumnDefBase,
+  ColumnMeta,
+} from '@tanstack/solid-table';
 import { localisedDate, localisedTime } from '../../../intl/formatDateTime';
+import { calendarDateOrInstantToDate } from '../../../intl/calendarDate';
 import { formatNumber } from '../../../intl/formatNumber';
+import {
+  displayNumber,
+  displayVolume,
+  type DisplayedNumber,
+} from '../../../intl/numberDisplay';
+import { Num } from '../typography/Num';
 import { formatCurrency } from '../../../intl/currency';
 import { Comment } from '../feedback/Comment';
 import { StatusBadge } from '../feedback/StatusBadge';
@@ -18,11 +29,7 @@ import {
   type CellSpec,
 } from './_globalColumnConfig';
 import { remToPx } from '../../utils/rem';
-import {
-  differenceInCalendarDays,
-  differenceInMonths,
-  parseISO,
-} from 'date-fns';
+import { differenceInCalendarDays, differenceInMonths } from 'date-fns';
 import styles from './tableHelpers.module.css';
 
 // Shared helpers for the DataTable: cell fragments pages spread into their
@@ -96,27 +103,46 @@ export const getTextCell = <T,>(meta?: Meta): CellFragment<T> => ({
   meta: { ...meta },
 });
 
-// Numbers: right-aligned, displayed locale-formatted to at most 2 dp
-// (ui-standards § tables; the old app's number-cell default) — derived values
-// carry float dust and raw renders skip digit grouping. Display-only: the
-// underlying value is untouched. Non-number values (a pre-formatted string)
-// pass through; absent renders blank.
-export const getNumberCell = <T,>(meta?: Meta): CellFragment<T> => ({
+// A rounded figure: right-aligned, `display` choosing the places, the exact
+// figure hovered when the rounding dropped digits (ui-standards § tables ›
+// display rounding). Display-only: the underlying value is untouched. A
+// non-number (a pre-formatted string) passes through; absent renders blank.
+const roundedCell = <T,>(
+  display: (value: number) => DisplayedNumber,
+  meta?: Meta
+): CellFragment<T> => ({
   meta: { align: 'right', ...meta },
   cell: info => {
     const value = info.getValue<number | string | null | undefined>();
-    return typeof value === 'number'
-      ? formatNumber(value, { maximumFractionDigits: 2 })
-      : (value ?? '');
+    return typeof value === 'number' ? (
+      <Num value={display(value)} />
+    ) : (
+      (value ?? '')
+    );
   },
 });
 
+// Numbers at the installation's configured decimal places (the global
+// decimalPlacesForNumbers preference) — derived values carry float dust and
+// raw renders skip digit grouping.
+export const getNumberCell = <T,>(meta?: Meta): CellFragment<T> =>
+  roundedCell<T>(value => displayNumber(value), meta);
+
+// Volumes (m³) at a volume's own fixed places — a volume per pack runs orders
+// of magnitude below a count (intl/numberDisplay VOLUME_DECIMALS).
+export const getVolumeCell = <T,>(meta?: Meta): CellFragment<T> =>
+  roundedCell<T>(displayVolume, meta);
+
 // Percentage — a Number variant: right-aligned, value + '%' (blank when null).
+// Its own precision — the 2 dp every percentage input accepts (ui-standards ›
+// conventions) — exempt from the configured places and their mark.
 export const getPercentageCell = <T,>(meta?: Meta): CellFragment<T> => ({
   meta: { align: 'right', ...meta },
   cell: info => {
     const value = info.getValue<number | null | undefined>();
-    return value == null ? '' : `${formatNumber(value)}%`;
+    return value == null
+      ? ''
+      : `${formatNumber(value, { maximumFractionDigits: 2 })}%`;
   },
 });
 
@@ -147,15 +173,13 @@ export const getTimeCell = <T,>(meta?: Meta): CellFragment<T> => ({
 // ExpiryDateCell.
 const EXPIRY_WARNING_MONTHS = 3;
 
-// A date-only wire string ('YYYY-MM-DD', GraphQL NaiveDate) must be read as
+// A calendar date ('YYYY-MM-DD', GraphQL NaiveDate) must be read as
 // the LOCAL day: `new Date(string)` parses it as UTC midnight, which is the
 // PREVIOUS local day anywhere west of UTC — a batch would bold as "expired"
 // a day early there, while the domain's day-stable isExpired (string
-// comparison against the local day) still said "near expiry". parseISO
-// parses date-only strings at local midnight, keeping every calendar-day
+// comparison against the local day) still said "near expiry". calendarDateOrInstantToDate
+// reads a date-only string as local midnight, keeping every calendar-day
 // comparison on the store's clock.
-const asLocalDay = (value: string | Date): Date =>
-  typeof value === 'string' ? parseISO(value) : value;
 
 /**
  * Within the shared near-expiry warning window (or already past it) — the
@@ -164,19 +188,24 @@ const asLocalDay = (value: string | Date): Date =>
  * interaction) without restating the threshold.
  */
 export const isNearOrPastExpiry = (value: string | Date): boolean =>
-  differenceInMonths(asLocalDay(value), new Date()) <= EXPIRY_WARNING_MONTHS;
+  differenceInMonths(calendarDateOrInstantToDate(value), new Date()) <=
+  EXPIRY_WARNING_MONTHS;
 export const getExpiryDateCell = <T,>(meta?: Meta): CellFragment<T> => ({
   meta: { ...meta },
   cell: info => {
     const value = info.getValue<string | Date | null | undefined>();
     if (!value) return '';
     const almostExpired = isNearOrPastExpiry(value);
-    // ACTUALLY expired (the expiry day has arrived — calendar-day comparison,
-    // stable across the day) steps up from the near-expiry red to red + bold.
-    // Same day semantics as domain/allocation's isExpired, so the cell's
-    // tier always agrees with the row's Expired/Near-expiry badge.
+    // ACTUALLY expired (the expiry day has passed — a batch is usable to the
+    // end of its expiry day; calendar-day comparison, stable across the day)
+    // steps up from the near-expiry red to red + bold. Same day semantics as
+    // domain/allocation's isExpired, so the cell's tier always agrees with the
+    // row's Expired/Near-expiry badge.
     const expired =
-      differenceInCalendarDays(asLocalDay(value), new Date()) <= 0;
+      differenceInCalendarDays(
+        calendarDateOrInstantToDate(value),
+        new Date()
+      ) < 0;
     return (
       <span
         class={
@@ -304,6 +333,22 @@ export const formatCurrencyCell = (
   code?: string | null
 ): string => (value == null ? '' : formatCurrency(value, code));
 
+// Row grouping (DataTable rowGroup): the value every row in a group shares, or
+// nothing when they differ — for a column that restates the grouped value (an
+// item's name beside its code). A plain TanStack AggregationFn; typed <any>
+// like TanStack's own built-ins, whose row type is invariant.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const sharedValue: AggregationFn<any> = (columnId, leafRows) => {
+  const first = leafRows[0]?.getValue(columnId);
+  return leafRows.every(row => row.getValue(columnId) === first)
+    ? first
+    : undefined;
+};
+
+// A summed footer's figure over the rows on screen.
+export const sumBy = <T,>(rows: T[], value: (row: T) => number): number =>
+  rows.reduce((total, row) => total + value(row), 0);
+
 // `currency` is read per render, so a table whose document carries its own
 // currency (a purchase order) formats every cell and aggregate in it.
 export const getCurrencyCell = <T,>(
@@ -357,6 +402,8 @@ const kindFragment = <T,>(kind: CellKind, meta?: Meta): CellFragment<T> => {
       return getTextCell<T>({ mono: true, ...meta });
     case 'number':
       return getNumberCell<T>(meta);
+    case 'volume':
+      return getVolumeCell<T>(meta);
     case 'percentage':
       return getPercentageCell<T>(meta);
     case 'currency':

@@ -19,7 +19,6 @@ import {
 // render — preference gates AND read permissions together.
 
 const allGatesOn: DashboardGates = {
-  externalInboundPanel: true,
   emergencyStat: true,
   outOfStockRecentlyUsedStat: true,
   atRiskStat: true,
@@ -36,7 +35,6 @@ const holdingAll =
 const holdingNone = () => false;
 
 const allPanelsShown: PanelVisibility = panelVisibility(
-  allGatesOn,
   holdingAll(),
   /* dispensary */ true
 );
@@ -91,17 +89,13 @@ describe('the region built-ins', () => {
 
   it('keeps a gated-off piece present but hidden — its id stays an anchor target', () => {
     const panels = panelBuiltIns(
-      DASHBOARD_IDS.replenishment.id,
-      panelVisibility(
-        { ...allGatesOn, externalInboundPanel: false },
-        holdingAll(),
-        true
-      )
+      DASHBOARD_IDS.prescriptions.id,
+      panelVisibility(holdingAll(), /* dispensary */ false)
     );
-    expect(panels.map(p => p.id)).toContain('replenishment.inbound-external');
-    expect(
-      panels.find(p => p.id === 'replenishment.inbound-external')?.hidden
-    ).toBe(true);
+    expect(panels.map(p => p.id)).toContain('prescriptions.requests');
+    expect(panels.find(p => p.id === 'prescriptions.requests')?.hidden).toBe(
+      true
+    );
   });
 
   it('keeps a piece the user cannot READ present but hidden, likewise', () => {
@@ -109,7 +103,7 @@ describe('the region built-ins', () => {
     // anchored to a panel this user can't see still has a place to sort into.
     const panels = panelBuiltIns(
       DASHBOARD_IDS.inventory.id,
-      panelVisibility(allGatesOn, holdingAll('STOCK_LINE_QUERY'), true)
+      panelVisibility(holdingAll('STOCK_LINE_QUERY'), true)
     );
     expect(panels.map(p => p.id)).toEqual([
       'inventory.expiring-stock',
@@ -142,7 +136,7 @@ describe('panel visibility', () => {
   // the two that carry a store gate as well need both.
   it('maps each panel to the permission the server checks', () => {
     const panels = (...withheld: UserPermission[]) =>
-      panelVisibility(allGatesOn, holdingAll(...withheld), true);
+      panelVisibility(holdingAll(...withheld), true);
     const hidden = (withheld: UserPermission) =>
       Object.entries(panels(withheld))
         .filter(([, shown]) => !shown)
@@ -171,26 +165,15 @@ describe('panel visibility', () => {
     ]);
   });
 
-  it('needs both the procurement preference and the external read', () => {
-    const externalShown = (
-      gates: DashboardGates | undefined,
-      can: (permission: UserPermission) => boolean
-    ) =>
-      panelVisibility(gates, can, true)[
+  it('OMS-REG-DB-01.36: shows the external panel on the external read alone', () => {
+    const externalShown = (can: (permission: UserPermission) => boolean) =>
+      panelVisibility(can, true)[
         DASHBOARD_IDS.replenishment.inboundExternal.id
       ];
-    expect(externalShown(allGatesOn, holdingAll())).toBe(true);
-    expect(
-      externalShown(
-        { ...allGatesOn, externalInboundPanel: false },
-        holdingAll()
-      )
-    ).toBe(false);
-    expect(
-      externalShown(allGatesOn, holdingAll('INBOUND_SHIPMENT_EXTERNAL_QUERY'))
-    ).toBe(false);
-    // Unresolved context: the plainer surface.
-    expect(externalShown(undefined, holdingAll())).toBe(false);
+    expect(externalShown(holdingAll())).toBe(true);
+    expect(externalShown(holdingAll('INBOUND_SHIPMENT_EXTERNAL_QUERY'))).toBe(
+      false
+    );
   });
 
   it('shows the prescriptions panel only with the permission AND a dispensary', () => {
@@ -198,9 +181,7 @@ describe('panel visibility', () => {
       can: (permission: UserPermission) => boolean,
       dispensary: boolean
     ) =>
-      panelVisibility(allGatesOn, can, dispensary)[
-        DASHBOARD_IDS.prescriptions.requests.id
-      ];
+      panelVisibility(can, dispensary)[DASHBOARD_IDS.prescriptions.requests.id];
     expect(shown(holdingAll(), true)).toBe(true);
     expect(shown(holdingAll(), false)).toBe(false);
     expect(shown(holdingAll('PRESCRIPTION_REQUEST_QUERY'), true)).toBe(false);
@@ -210,11 +191,7 @@ describe('panel visibility', () => {
     // One permission carries both inventory panels, so losing it takes the
     // whole widget (OMS-REG-DB-01.61) — while the distribution widget, whose
     // panels answer to two different permissions, survives losing one.
-    const noStock = panelVisibility(
-      allGatesOn,
-      holdingAll('STOCK_LINE_QUERY'),
-      true
-    );
+    const noStock = panelVisibility(holdingAll('STOCK_LINE_QUERY'), true);
     expect(widgetShowsPanel(DASHBOARD_IDS.inventory.id, noStock)).toBe(false);
     expect(
       widgetBuiltIns(noStock).find(w => w.id === DASHBOARD_IDS.inventory.id)
@@ -222,7 +199,6 @@ describe('panel visibility', () => {
     ).toBe(true);
 
     const noOutbound = panelVisibility(
-      allGatesOn,
       holdingAll('OUTBOUND_SHIPMENT_QUERY'),
       true
     );
@@ -232,7 +208,7 @@ describe('panel visibility', () => {
   });
 
   it('hides every widget when the user holds no count permission at all', () => {
-    const none = panelVisibility(allGatesOn, holdingNone, true);
+    const none = panelVisibility(holdingNone, true);
     expect(Object.values(none).some(Boolean)).toBe(false);
     expect(widgetBuiltIns(none).every(w => w.hidden)).toBe(true);
   });

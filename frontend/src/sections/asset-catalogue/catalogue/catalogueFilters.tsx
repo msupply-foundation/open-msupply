@@ -1,3 +1,4 @@
+import { categoryName, typeName } from '@/domain/asset';
 import { t } from '@/intl';
 import {
   FilterSelect,
@@ -50,7 +51,9 @@ export const catalogueFilters = (options: {
           value={props.filter().categoryId?.equalTo ?? ''}
           options={[
             { value: '', label: t('label.any') },
-            ...options.categories().map(c => ({ value: c.id, label: c.name })),
+            ...options
+              .categories()
+              .map(c => ({ value: c.id, label: categoryName(c) })),
           ]}
           onChange={value =>
             props.setPartialFilter({
@@ -72,7 +75,7 @@ export const catalogueFilters = (options: {
             ...typesFor(
               options.types(),
               props.filter().categoryId?.equalTo
-            ).map(type => ({ value: type.id, label: type.name })),
+            ).map(type => ({ value: type.id, label: typeName(type) })),
           ]}
           onChange={value =>
             props.setPartialFilter({

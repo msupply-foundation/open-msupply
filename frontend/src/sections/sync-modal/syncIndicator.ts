@@ -4,6 +4,8 @@ import {
   pushQueueCount,
   liveConnected,
   pollSyncStatus,
+  syncPaused,
+  maintenanceMode,
 } from '../../api/syncStore';
 import { isCentralServer } from '../../api/serverInfo';
 import { storeContext } from '../../store/storeContext';
@@ -78,7 +80,9 @@ export const createSyncIndicator = (): {
       overview(),
       pushQueueCount(),
       displayThreshold,
-      now()
+      now(),
+      syncPaused(),
+      maintenanceMode()
     );
   };
 
@@ -92,8 +96,14 @@ export const createSyncIndicator = (): {
         return t('sync.waiting');
       case 'syncing':
         return t('sync-status.footer-syncing');
+      case 'maintenance':
+        return t('sync-status.footer-maintenance');
+      case 'paused':
+        return t('sync-status.footer-paused');
       case 'unreachable':
         return t('sync-status.footer-offline');
+      case 'sync-api-paused':
+        return t('sync-status.footer-sync-api-paused');
       case 'error':
         return t('sync-status.footer-error');
       case 'warning':
@@ -131,6 +141,9 @@ export const createSyncIndicator = (): {
       case 'synced':
         return localisedTimeAgo(state.finished, now());
       case 'unreachable':
+      case 'maintenance':
+      case 'paused':
+      case 'sync-api-paused':
         return lastSynced() ?? t('sync-status.footer-never-synced');
       case 'error':
       case 'warning':

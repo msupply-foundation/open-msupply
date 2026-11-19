@@ -174,16 +174,24 @@ describe('changing the manufacturer clears the item variant', () => {
   });
 });
 
-describe('campaign and program are one mutually-exclusive choice', () => {
-  // Both wrappers always travel together so choosing one side clears the
-  // other. No behaviour asserts this — carried as a gap probe in
-  // exploratory/workflows/stock.md.
-  it('choosing a program clears the campaign in the same patch', () => {
+describe('campaign and program are independent fields', () => {
+  // Two separate pickers over two wire fields: a line may carry either, both
+  // or neither, and editing one side leaves the other untouched.
+  it('choosing a program leaves an existing campaign alone', () => {
     const l = line({ campaign: { id: 'c1', name: 'Campaign' } });
-    const edit = { ...seedEdit(l), campaignId: null, programId: 'p1' };
-    const patch = buildPatch(edit, l);
-    expect(patch.campaignId).toEqual({ value: null });
+    const patch = buildPatch({ ...seedEdit(l), programId: 'p1' }, l);
+    expect(patch).not.toHaveProperty('campaignId');
     expect(patch.programId).toEqual({ value: 'p1' });
+  });
+
+  it('clearing the campaign leaves an existing program alone', () => {
+    const l = line({
+      campaign: { id: 'c1', name: 'Campaign' },
+      program: { id: 'p1', name: 'Program' },
+    });
+    const patch = buildPatch({ ...seedEdit(l), campaignId: null }, l);
+    expect(patch.campaignId).toEqual({ value: null });
+    expect(patch).not.toHaveProperty('programId');
   });
 
   it('sends neither wrapper when neither side changed', () => {

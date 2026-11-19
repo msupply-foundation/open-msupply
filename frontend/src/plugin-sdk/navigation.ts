@@ -41,10 +41,15 @@
  */
 import { type JSX } from 'solid-js';
 import { hostNavigate } from '../nav/hostNavigate';
-import { pageActions, pageFooter, pageTrail } from '../plugins/pageSlots';
+import {
+  pageActions,
+  pageFooter,
+  pageToolbar,
+  pageTrail,
+} from '../plugins/pageSlots';
 import { hostPathname } from '../nav/hostLocation';
 import {
-  routerBase,
+  documentHref,
   storePath,
   storeRelativePath,
 } from '../nav/storeRelativePath';
@@ -77,12 +82,12 @@ export interface NavigateOptions {
  */
 export const storeHref = (path: string): string => {
   const storeId = currentStoreId();
-  if (storeId === undefined) return `${routerBase}/`;
+  if (storeId === undefined) return documentHref('/');
   // The join is the shared one (storePath), so the SDK's spelling of a store
   // address cannot drift from the menu's or the keyboard's — one screen, one
-  // URL (OMS-REG-NAV-01.22). The mount prefix is this function's own: a bare
+  // URL (OMS-REG-NAV-01.22), and so is the mount (documentHref): a bare
   // `<a href>` gets no resolution from the router.
-  return `${routerBase}${storePath(storeId, path)}`;
+  return documentHref(storePath(storeId, path));
 };
 
 /**
@@ -132,9 +137,10 @@ export const navigateTo = (path: string, options?: NavigateOptions): void => {
  * every route navigation away from the calling page, for the life of the
  * component. Hold one with `preventDefault()` and replay it with
  * `retry(true)` — a page that saves before it leaves, and prompts only when
- * that save fails (plugins/afghanistan rules § drafts). A reload or tab close
- * is not a route leave: guard those with the browser's own `beforeunload`.
- * Bound by the shell, like `navigateTo`'s navigator (src/nav/hostBeforeLeave).
+ * that save fails (private/plugins/afghanistan rules § drafts). A reload or
+ * tab close is not a route leave: guard those with the browser's own
+ * `beforeunload`. Bound by the shell, like `navigateTo`'s navigator
+ * (src/nav/hostBeforeLeave).
  */
 export { onHostBeforeLeave as onBeforeLeave } from '../nav/hostBeforeLeave';
 export type { HostLeaveEvent as BeforeLeaveEvent } from '../nav/hostBeforeLeave';
@@ -160,6 +166,19 @@ export const usePageTrail = (
  */
 export const usePageActions = (actions: () => JSX.Element): void =>
   pageActions.use(() => actions);
+
+/**
+ * A plugin page's header field row (sdk-contract § the page contribution ›
+ * rendering): the host frame renders it in the header below the breadcrumb
+ * and actions, laid out as a host detail screen's (HeaderToolbar), so a page
+ * shows its facts and scoping inputs where the host's screens do rather than
+ * as a strip at the top of its body. Pass a render function of LabelledValues
+ * and inputs; it is evaluated in the frame, so signals it reads stay live.
+ * Given up when the calling component is disposed. Must be called under an
+ * owner (a component body).
+ */
+export const usePageToolbar = (toolbar: () => JSX.Element): void =>
+  pageToolbar.use(() => toolbar);
 
 /**
  * A plugin page's pinned action footer (sdk-contract § the page contribution

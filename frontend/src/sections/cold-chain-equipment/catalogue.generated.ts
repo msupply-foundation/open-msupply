@@ -14,6 +14,7 @@ export type AssetCategoriesListVariables = {
     name?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     classId?: {
     equalTo?: string | null;
@@ -54,6 +55,7 @@ export type AssetTypesListVariables = {
     name?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     categoryId?: {
     equalTo?: string | null;
@@ -94,6 +96,7 @@ export type AssetCatalogueItemsListVariables = {
     category?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     categoryId?: {
     equalTo?: string | null;
@@ -105,6 +108,7 @@ export type AssetCatalogueItemsListVariables = {
     class?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     classId?: {
     equalTo?: string | null;
@@ -116,18 +120,22 @@ export type AssetCatalogueItemsListVariables = {
     code?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     manufacturer?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     model?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     type?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     typeId?: {
     equalTo?: string | null;
@@ -139,10 +147,12 @@ export type AssetCatalogueItemsListVariables = {
     search?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     subCatalogue?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
   } | null;
   page?: {
@@ -194,6 +204,7 @@ export type AssetPropertiesListVariables = {
     name?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     assetClassId?: {
     equalTo?: string | null;

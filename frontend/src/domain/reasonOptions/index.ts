@@ -8,8 +8,10 @@ export {
 export {
   ReasonSelect,
   reasonsOfKind,
+  offeredReasons,
   reasonMatchesKind,
   adjustmentReasonRequired,
   type ReasonSelectProps,
   type ReasonKind,
+  type ReasonContext,
 } from './ReasonSelect';

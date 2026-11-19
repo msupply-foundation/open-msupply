@@ -19,7 +19,6 @@ import {
   ALT_N,
   ALT_S,
   ALT_SHIFT_M,
-  CTRL_S,
   MOD_K,
   PLUS,
   ariaKeyshortcuts,
@@ -57,7 +56,6 @@ const DEMO_SHORTCUTS = [
   { shortcut: ALT_SHIFT_M, role: 'Hide the more-info panel' },
   { shortcut: ALT_S, role: "A dialog's Save (fires from inside a field)" },
   { shortcut: MOD_K, role: 'Open the command palette' },
-  { shortcut: CTRL_S, role: 'Scan a barcode' },
   { shortcut: PLUS, role: 'Add batch — a bare character, the `always` tier' },
 ];
 

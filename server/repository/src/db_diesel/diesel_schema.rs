@@ -1,5 +1,4 @@
 use super::{
-    barcode_row::barcode,
     clinician_row::clinician,
     invoice_line::invoice_stats,
     invoice_line_row::invoice_line,
@@ -60,6 +59,5 @@ allow_tables_to_appear_in_same_query!(
     period,
     name_tag,
     name_tag_join,
-    barcode,
     clinician,
 );

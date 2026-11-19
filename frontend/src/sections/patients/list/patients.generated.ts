@@ -15,22 +15,27 @@ export type PatientsVariables = {
     name?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     code?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     code2?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     firstName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     lastName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     gender?: {
     equalTo?: "FEMALE" | "MALE" | "TRANSGENDER" | "TRANSGENDER_MALE" | "TRANSGENDER_MALE_HORMONE" | "TRANSGENDER_MALE_SURGICAL" | "TRANSGENDER_FEMALE" | "TRANSGENDER_FEMALE_HORMONE" | "TRANSGENDER_FEMALE_SURGICAL" | "UNKNOWN" | "NON_BINARY" | null;
@@ -46,26 +51,37 @@ export type PatientsVariables = {
     phone?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     address1?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     address2?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     country?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     email?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     identifier?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
+  } | null;
+    codeOrCode2?: {
+    equalTo?: string | null;
+    like?: string | null;
+    startsWith?: string | null;
   } | null;
     dateOfDeath?: {
     equalTo?: string | null;
@@ -75,10 +91,12 @@ export type PatientsVariables = {
     programEnrolmentName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     nextOfKinName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     dynamicFilter?: unknown | null;
   } | null;

@@ -20,7 +20,8 @@ export const createMediaQuery = (query: string): (() => boolean) => {
 /**
  * True when the viewport is narrow enough (tablet portrait and below) that the
  * nav should be an overlay. The same "narrow viewport" line also drives modal
- * dialogs to full screen — see Dialog.tsx.
+ * dialogs to full screen — see Dialog.tsx (which pairs it with
+ * useIsShortViewport for the landscape tablet).
  */
 export const useIsNavOverlay = () => createMediaQuery(mediaQuery.navOverlay);
 
@@ -38,10 +39,26 @@ export const useIsRailWide = () => createMediaQuery(mediaQuery.railWide);
  * chrome that a tall screen can afford: the outbound detail view folds its
  * totals strip into the status footer here rather than stacking a third bar
  * under the table. The width queries above cannot answer this — a landscape
- * screen is WIDE and short, so `useIsNavOverlay` never fires on one.
+ * screen is WIDE and short, so `useIsNavOverlay` never fires on one. The
+ * Dialog reads it for the same reason: a workbench dialog (`size="large" |
+ * "full"`) goes full screen here as it does below the narrow line, since on a
+ * landscape tablet its gutters cost the rows it exists to show (#246).
  */
 export const useIsShortViewport = () =>
   createMediaQuery(mediaQuery.shortViewport);
+
+/**
+ * True where a detail view's totals band should give way to its headline
+ * figure riding the status bar instead — a narrow viewport OR a short one.
+ * Both the outbound shipment's and the purchase order's bands make the same
+ * trade, and it is one decision rather than two: a band that folded on one
+ * screen and not the other would read as a bug.
+ */
+export const useFoldTotalsIntoBar = () => {
+  const narrow = useIsNavOverlay();
+  const short = useIsShortViewport();
+  return () => narrow() || short();
+};
 
 /**
  * True on phone-ish widths (below the compact breakpoint) — where the DataTable

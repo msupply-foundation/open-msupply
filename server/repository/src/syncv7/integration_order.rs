@@ -50,7 +50,6 @@ pub const INTEGRATION_ORDER: &[ChangelogTableName] = &[
     ChangelogTableName::Program,
     ChangelogTableName::Report,
     ChangelogTableName::AssetCatalogueType,
-    ChangelogTableName::Barcode,
     ChangelogTableName::Contact,
     ChangelogTableName::Document,
     ChangelogTableName::Encounter,
@@ -68,6 +67,8 @@ pub const INTEGRATION_ORDER: &[ChangelogTableName] = &[
     ChangelogTableName::Store,
     ChangelogTableName::VaccineCourse,
     ChangelogTableName::ActivityLog,
+    ChangelogTableName::BarcodeProposal,
+    ChangelogTableName::ConsumptionEstimate,
     ChangelogTableName::AssetCatalogueItem,
     ChangelogTableName::AncillaryItem,
     ChangelogTableName::BundledItem,
@@ -115,6 +116,7 @@ pub const INTEGRATION_ORDER: &[ChangelogTableName] = &[
     ChangelogTableName::StockRelocationLine,
     ChangelogTableName::StocktakeLine,
     ChangelogTableName::TemperatureLog,
+    ChangelogTableName::TemperatureSummary,
     ChangelogTableName::VVMStatusLog,
 ];
 

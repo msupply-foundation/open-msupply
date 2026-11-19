@@ -210,8 +210,9 @@ const OutboundShipmentsList: Component = () => {
     void refetch();
   };
 
-  const openRow = (row: ShipmentRow) =>
-    navigate(`/${params.storeId}/distribution/outbound-shipment/${row.id}`);
+  const rowHref = (row: ShipmentRow) =>
+    `/${params.storeId}/distribution/outbound-shipment/${row.id}`;
+  const openRow = (row: ShipmentRow) => navigate(rowHref(row));
 
   // The row's colour swatch, editable in place while the shipment is editable
   // (spec S1 column 1 — same gate as all edits). Saved via
@@ -405,6 +406,7 @@ const OutboundShipmentsList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
+        rowHref={rowHref}
         // Read-only rows (SHIPPED+) take the disabled state
         // (OMS-REG-DIST-01.17); they stay clickable — row click still opens the
         // detail.

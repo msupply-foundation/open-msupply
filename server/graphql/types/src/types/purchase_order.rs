@@ -1,17 +1,21 @@
 use self::dataloader::DataLoader;
 use crate::types::{
     CurrencyNode, NameNode, PurchaseOrderLineConnector, StoreNode, SyncFileReferenceConnector,
-    UserNode,
+    UserNode, filter_custom_fields,
 };
 use async_graphql::*;
 use chrono::{DateTime, NaiveDate, Utc};
 use graphql_core::ContextExt;
-use graphql_core::loader::{CurrencyByIdLoader, PurchaseOrderLinesByPurchaseOrderIdLoader};
+use graphql_core::loader::{
+    AllowedCustomFieldKeysByScopeLoader, CurrencyByIdLoader,
+    PurchaseOrderLinesByPurchaseOrderIdLoader,
+};
 use graphql_core::loader::{
     NameByIdLoader, NameByIdLoaderInput, StoreByIdLoader, SyncFileReferenceLoader, UserLoader,
 };
 use repository::{PurchaseOrder, PurchaseOrderRow, PurchaseOrderStatsRow};
 use service::ListResult;
+use service::purchase_order::update::PURCHASE_ORDER_CUSTOM_FIELD_SCOPE;
 
 #[derive(PartialEq, Debug)]
 pub struct PurchaseOrderNode {
@@ -144,34 +148,32 @@ impl PurchaseOrderNode {
     pub async fn heading_message(&self) -> &Option<String> {
         &self.row().heading_message
     }
-    pub async fn agent_commission(&self) -> &Option<f64> {
-        &self.row().agent_commission
-    }
-    pub async fn document_charge(&self) -> &Option<f64> {
-        &self.row().document_charge
-    }
-    pub async fn communications_charge(&self) -> &Option<f64> {
-        &self.row().communications_charge
-    }
-    pub async fn insurance_charge(&self) -> &Option<f64> {
-        &self.row().insurance_charge
-    }
-    pub async fn freight_charge(&self) -> &Option<f64> {
-        &self.row().freight_charge
-    }
     pub async fn freight_conditions(&self) -> &Option<String> {
         &self.row().freight_conditions
     }
+    /// Filtered to the keys visible on the purchase_order scope
+    pub async fn custom_fields(&self, ctx: &Context<'_>) -> Result<Option<serde_json::Value>> {
+        let Some(raw) = self.row().custom_fields.clone() else {
+            return Ok(None);
+        };
+        let loader = ctx.get_loader::<DataLoader<AllowedCustomFieldKeysByScopeLoader>>();
+        let allowed_keys = loader
+            .load_one(PURCHASE_ORDER_CUSTOM_FIELD_SCOPE.to_string())
+            .await?
+            .unwrap_or_default();
+        Ok(Some(filter_custom_fields(raw, &allowed_keys)))
+    }
 
+    /// The supplier discount on the stock lines; service lines take none
     pub async fn supplier_discount_amount(&self) -> f64 {
-        let line_total_before_discount = match &self.stats {
-            Some(stats) => stats.order_total_before_discount,
+        let discountable_total = match &self.stats {
+            Some(stats) => stats.supplier_discountable_total,
             None => 0.0,
         };
 
         let discount_percentage = self.row().supplier_discount_percentage.unwrap_or(0.0) / 100.0;
 
-        line_total_before_discount * discount_percentage
+        discountable_total * discount_percentage
     }
     pub async fn supplier_discount_percentage(&self) -> &Option<f64> {
         &self.row().supplier_discount_percentage
@@ -183,6 +185,10 @@ impl PurchaseOrderNode {
     pub async fn finalised_datetime(&self) -> Option<DateTime<Utc>> {
         let finalised_datetime = self.row().finalised_datetime;
         finalised_datetime.map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
+    }
+    pub async fn cancelled_datetime(&self) -> Option<DateTime<Utc>> {
+        let cancelled_datetime = self.row().cancelled_datetime;
+        cancelled_datetime.map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
 
     pub async fn documents(&self, ctx: &Context<'_>) -> Result<SyncFileReferenceConnector> {
@@ -244,6 +250,7 @@ pub enum PurchaseOrderNodeStatus {
     Confirmed,
     Sent,
     Finalised,
+    Cancelled,
 }
 
 impl PurchaseOrderConnector {

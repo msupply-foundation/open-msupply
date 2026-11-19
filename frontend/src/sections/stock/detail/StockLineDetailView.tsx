@@ -11,9 +11,8 @@ import {
 import { createStore } from 'solid-js/store';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
-import { gated } from '../../../api/gated';
+import { gated, notFound } from '../../../api/gated';
 import { t } from '../../../intl';
-import { formatNumber } from '../../../intl/formatNumber';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
@@ -46,24 +45,32 @@ import { Checkbox } from '../../../ui/elements/inputs/Checkbox';
 import { IdentityHeader } from '../../../ui/layout/IdentityHeader/IdentityHeader';
 import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
 import { RecordLink } from '../../../ui/elements/typography/RecordLink';
-import { StockIcon, BarIcon, SaveIcon, XCircleIcon } from '../../../ui/icons';
+import {
+  StockIcon,
+  BarIcon,
+  SaveIcon,
+  XCircleIcon,
+  CheckCircleIcon,
+} from '../../../ui/icons';
 import { LocationVolumeSelect } from '../../../domain/location';
 import { NameSearch } from '../../../domain/name';
-import { CampaignOrProgramSelect } from '../../../domain/campaign';
+import { ActivitySelect, ProgramSelect } from '@/domain/campaign';
 import { ActivityLogPanel } from '../../../domain/activityLog';
+import { createConfirmOnLeave } from '@/domain/confirmOnLeave';
 import {
   barcodeFieldFill,
   createScanControl,
+  proposeBarcode,
   ScanFieldButton,
   ScanNotice,
-  scanUnusableReason,
+  scanFieldHelper,
 } from '../../../domain/barcode';
 import { stockPreferences, hasPermission } from '../../../store/storeContext';
 import { runUpdateStockLine } from '../stockApi';
 import { totalVolume } from '../stockCalc';
-import { localTodayIso } from '../../../ui/elements/inputs/dateTimeConvert';
+import { todayCalendarDate } from '../../../intl/calendarDate';
 import { fetchStockLocations, locationsForItem } from '../stockLocations';
-import { EmptyState } from '../../../ui/elements/feedback/EmptyState';
+import { NotFoundNotice } from '../../../ui/elements/feedback/NotFoundNotice';
 import {
   StockLineById,
   type StockLineDetailFragment,
@@ -76,6 +83,7 @@ import { VvmHistoryPanel } from './VvmHistoryPanel';
 import { AdjustModal } from './AdjustModal';
 import { RepackModal } from './RepackModal';
 import { VvmStatusEntryModal } from './VvmStatusEntryModal';
+import { Num } from '../../../ui/elements/typography/Num';
 
 // The stock-line detail view (spec/stock S2). Inspect one line, edit its
 // attributes (buffered locally, committed on an explicit Save with a pre-save
@@ -116,7 +124,6 @@ const StockLineDetailView: Component = () => {
   const [saving, setSaving] = createSignal(false);
   const [saveError, setSaveError] = createSignal<string | undefined>();
   const [confirmSaveOpen, setConfirmSaveOpen] = createSignal(false);
-  const [discardOpen, setDiscardOpen] = createSignal(false);
   const [adjustOpen, setAdjustOpen] = createSignal(false);
   const [repackOpen, setRepackOpen] = createSignal(false);
   // A full repack's new line, offered once the repack modal has closed (spec
@@ -126,18 +133,20 @@ const StockLineDetailView: Component = () => {
     { entry?: StockLineVvmLogFragment } | undefined
   >();
 
-  // The Barcode field's scan affordance (spec/stock S2; barcode-scanning
-  // rules § Setting a code on a stock line): a scan fills the code, batch and
-  // expiry into the draft, which saves like any other edit. Ctrl+S answers it
-  // too — but not behind one of this screen's dialogs, where the scan would
-  // land in a form the user cannot see.
+  // Scanning into the Barcode field (spec/stock S2; barcode-scanning rules §
+  // Setting a code on a stock line): a scan fills the code, batch and expiry
+  // into the draft, which saves like any other edit. With a hardware scanner
+  // the whole screen listens (OMS-REG-BAC-01.137) and the scan never also
+  // types into the focused field; with a camera the field's button takes one
+  // (.138). Not behind one of this screen's dialogs, where the scan would
+  // land in a form the user cannot see (.134).
   const scanner = createScanControl({
     owner: 'stock-line',
     mode: 'field',
     disabled: () =>
       saving() ||
       confirmSaveOpen() ||
-      discardOpen() ||
+      leaveGuard.open() ||
       adjustOpen() ||
       repackOpen() ||
       vvmEntry() !== undefined,
@@ -154,12 +163,14 @@ const StockLineDetailView: Component = () => {
         storeId: v.storeId,
         id: { equalTo: v.stockLineId },
       });
+      // A failed read resolves undefined (the global error modal's case); an
+      // id that is no line of this store's resolves null — the not-found
+      // notice (api/gated.ts › notFound, #1746).
       if (result.kind !== 'success') return undefined;
-      const node = result.data.stockLines.nodes[0];
-      return node;
+      return result.data.stockLines.nodes[0] ?? null;
     }
   );
-  const line = (): Line | undefined => data.latest;
+  const line = (): Line | undefined => data.latest ?? undefined;
 
   // Seed the editable draft from a line: sets the draft and records the seeded
   // id. Called on load / line-id change (the effect below) and after a save
@@ -212,7 +223,7 @@ const StockLineDetailView: Component = () => {
   // equivalent in muted small text when the dose gate is on for a vaccine item.
   const qtyValue = (main: number, doseUnits: number) => (
     <>
-      {formatNumber(main)}
+      <Num value={main} />
       <Show when={showDoses()}>
         {' '}
         <span
@@ -221,7 +232,8 @@ const StockLineDetailView: Component = () => {
             'font-size': 'var(--text-xs)',
           }}
         >
-          ({formatNumber(doseUnits * (line()?.item.doses ?? 0))}{' '}
+          (
+          <Num value={doseUnits * (line()?.item.doses ?? 0)} />{' '}
           {t('label.doses')})
         </span>
       </Show>
@@ -249,15 +261,16 @@ const StockLineDetailView: Component = () => {
     );
   });
 
-  const doSave = async () => {
+  // Saving records the barcode on the line, then proposes it for the line's
+  // item; it never changes the barcode for other items (barcode-scanning
+  // rules § Setting a barcode on a stock line).
+  const commitSave = async () => {
     const l = line();
     if (!l) return;
     setSaving(true);
     setSaveError(undefined);
-    const outcome = await runUpdateStockLine(
-      params.storeId,
-      buildPatch(edit, l)
-    );
+    const patch = buildPatch(edit, l);
+    const outcome = await runUpdateStockLine(params.storeId, patch);
     setSaving(false);
     if (!outcome) return;
     if (outcome.kind === 'error') {
@@ -269,14 +282,26 @@ const StockLineDetailView: Component = () => {
     const saved = outcome.data;
     mutate(prev => (prev ? { ...prev, ...saved } : prev));
     seedFor(saved);
+    // The line is saved whatever this does; it's learned next time if not now.
+    if (patch.barcode)
+      void proposeBarcode(params.storeId, {
+        barcode: patch.barcode,
+        itemId: l.item.id,
+        packSize: l.packSize,
+      });
   };
+
+  // Any leave with unsaved edits prompts to discard (OMS-REG-INV-02.37).
+  // Discard re-seeds: a leave to another stock line keeps this view mounted.
+  const leaveGuard = createConfirmOnLeave({
+    isDirty,
+    onDiscard: () => {
+      const l = line();
+      if (l) seedFor(l);
+    },
+  });
 
   const leave = () => navigate(`/${params.storeId}/inventory/stock`);
-
-  const onCancelOrClose = () => {
-    if (isDirty()) setDiscardOpen(true);
-    else leave();
-  };
 
   const afterQuantityChange = () => {
     void refetch();
@@ -343,7 +368,7 @@ const StockLineDetailView: Component = () => {
       vvmEntry() !== undefined ||
       repackedToLineId() !== undefined ||
       confirmSaveOpen() ||
-      discardOpen(),
+      leaveGuard.open(),
   });
 
   const tabs = (): TabDef[] => [
@@ -354,7 +379,7 @@ const StockLineDetailView: Component = () => {
   ];
 
   const crumbs = (l: Line) => [
-    { label: t('stock'), onClick: onCancelOrClose },
+    { label: t('stock'), to: `/${params.storeId}/inventory/stock` },
     { label: l.itemName },
   ];
 
@@ -370,15 +395,19 @@ const StockLineDetailView: Component = () => {
           Suspense boundary won't fire on the initial load — the Show's own
           fallback shows the first-load spinner, or a not-found state once the
           fetch has resolved to nothing (a stale/other-store id —
-          OMS-REG-INV-02.49). */}
+          OMS-REG-INV-02.49). A failed read keeps the spinner, under the global
+          error modal (#1746). */}
       <Show
         when={line()}
         fallback={
-          data.loading ? (
-            <Spinner center />
-          ) : (
-            <EmptyState message={t('error.stock-not-found')} />
-          )
+          <Show when={notFound(data)} fallback={<Spinner center />}>
+            <NotFoundNotice
+              testId="stock-line-not-found-notice"
+              title={t('error.stock-not-found')}
+              description={t('messages.click-to-return-to-stock')}
+              onClose={() => navigate(`/${params.storeId}/inventory/stock`)}
+            />
+          </Show>
         }
       >
         {l => (
@@ -426,7 +455,7 @@ const StockLineDetailView: Component = () => {
                             ? 'dialog-button-cancel'
                             : 'dialog-button-close'
                         }
-                        onClick={onCancelOrClose}
+                        onClick={leave}
                       >
                         {isDirty() ? t('button.cancel') : t('button.close')}
                       </Button>
@@ -542,9 +571,9 @@ const StockLineDetailView: Component = () => {
                             onInput={e =>
                               setEdit('barcode', e.currentTarget.value)
                             }
-                            helperText={scanUnusableReason(scanner)}
+                            helperText={scanFieldHelper(scanner)}
                             endAction={
-                              scanner.available() ? (
+                              scanner.needsPress() ? (
                                 <ScanFieldButton control={scanner} />
                               ) : undefined
                             }
@@ -560,7 +589,7 @@ const StockLineDetailView: Component = () => {
                             <DateField
                               label={t('label.manufacture-date')}
                               testId="field-manufacture-date"
-                              max={localTodayIso()}
+                              max={todayCalendarDate()}
                               value={edit.manufactureDate}
                               onChange={v => setEdit('manufactureDate', v)}
                             />
@@ -584,6 +613,7 @@ const StockLineDetailView: Component = () => {
                               label={t('label.cost-price')}
                               data-testid="field-cost-price"
                               value={edit.costPricePerPack}
+                              emptyValue={0}
                               onChange={v =>
                                 setEdit('costPricePerPack', v ?? 0)
                               }
@@ -592,6 +622,7 @@ const StockLineDetailView: Component = () => {
                               label={t('label.sell-price')}
                               data-testid="field-sell-price"
                               value={edit.sellPricePerPack}
+                              emptyValue={0}
                               onChange={v =>
                                 setEdit('sellPricePerPack', v ?? 0)
                               }
@@ -640,7 +671,7 @@ const StockLineDetailView: Component = () => {
                               label={t('label.pack-size')}
                               data-testid="field-pack-size"
                             >
-                              {formatNumber(l().packSize)}
+                              <Num value={l().packSize} />
                             </LabelledValue>
                             <Checkbox
                               label={t('label.on-hold')}
@@ -655,6 +686,7 @@ const StockLineDetailView: Component = () => {
                               data-testid="field-volume-per-pack"
                               decimalLimit={10}
                               value={edit.volumePerPack}
+                              emptyValue={0}
                               onChange={v => setEdit('volumePerPack', v ?? 0)}
                             />
                             {/* Derived from the DRAFT volume per pack, not the
@@ -666,12 +698,13 @@ const StockLineDetailView: Component = () => {
                               label={t('label.total-volume')}
                               data-testid="field-total-volume"
                             >
-                              {formatNumber(
-                                totalVolume(
+                              <Num
+                                value={totalVolume(
                                   edit.volumePerPack,
                                   l().totalNumberOfPacks
-                                )
-                              )}
+                                )}
+                                volume
+                              />
                             </LabelledValue>
                           </FormRow>
                         </FormSection>
@@ -726,18 +759,22 @@ const StockLineDetailView: Component = () => {
                                 }}
                               />
                             </Show>
-                            <CampaignOrProgramSelect
-                              label={t('label.campaign')}
-                              inputTestId="field-campaign-or-program"
+                            <ProgramSelect
+                              inputTestId="field-program"
                               storeId={params.storeId}
-                              itemId={l().itemId}
-                              campaignId={edit.campaignId ?? undefined}
+                              itemIds={[l().itemId]}
                               programId={edit.programId ?? undefined}
-                              placeholder={t('label.none')}
-                              onChange={v => {
-                                setEdit('campaignId', v?.campaign?.id ?? null);
-                                setEdit('programId', v?.program?.id ?? null);
-                              }}
+                              onChange={p =>
+                                setEdit('programId', p?.id ?? null)
+                              }
+                            />
+                            <ActivitySelect
+                              inputTestId="field-activity"
+                              campaignId={edit.campaignId ?? undefined}
+                              campaign={l().campaign}
+                              onChange={c =>
+                                setEdit('campaignId', c?.id ?? null)
+                              }
                             />
                           </FormRow>
                         </FormSection>
@@ -785,14 +822,21 @@ const StockLineDetailView: Component = () => {
                 }}
               />
               {/* Full repack → offer navigation to the new line (spec
-                  OMS-REG-SMV-08.21). OK navigates, then every close path clears
-                  the signal — the detail route component is reused across
-                  :stockLineId changes, so a signal left set would reopen this
-                  over the new line. */}
+                  OMS-REG-SMV-08.21). The repack is already saved when this
+                  opens, so it is a notice with a choice of where to go — Stay
+                  or Go to new line — not an "Are you sure?" whose Cancel would
+                  read as undoing it (#1222); its icon is a check, not the
+                  help mark, for the same reason. Go navigates, then every close
+                  path clears the signal — the detail route component is reused
+                  across :stockLineId changes, so a signal left set would reopen
+                  this over the new line. */}
               <ConfirmDialog
                 open={repackedToLineId() !== undefined}
-                title={t('heading.are-you-sure')}
-                message={t('messages.all-packs-repacked')}
+                icon={<CheckCircleIcon />}
+                title={t('title.repack-complete')}
+                message={t('messages.full-repack-go-to-new-line')}
+                confirmLabel={t('button.go-to-new-line')}
+                cancelLabel={t('button.stay')}
                 onConfirm={() => {
                   const id = repackedToLineId();
                   if (id) navigate(`/${params.storeId}/inventory/stock/${id}`);
@@ -814,17 +858,17 @@ const StockLineDetailView: Component = () => {
                 title={t('heading.are-you-sure')}
                 message={t('messages.confirm-save-stock')}
                 confirmAction="save"
-                onConfirm={() => void doSave()}
+                onConfirm={() => void commitSave()}
                 onClose={() => setConfirmSaveOpen(false)}
               />
               {/* Discard prompt when leaving with unsaved edits. */}
               <ConfirmDialog
-                open={discardOpen()}
+                open={leaveGuard.open()}
                 title={t('heading.are-you-sure')}
                 message={t('messages.discard-changes')}
                 confirmLabel={t('button.discard')}
-                onConfirm={leave}
-                onClose={() => setDiscardOpen(false)}
+                onConfirm={leaveGuard.confirm}
+                onClose={leaveGuard.cancel}
               />
             </Page>
           </Tabs>

@@ -12,6 +12,7 @@ import { t } from '../../../intl';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
 import {
   getCellDefinition,
+  getFlagCell,
   getTextCell,
 } from '../../../ui/elements/table/tableHelpers';
 import { remToPx } from '../../../ui/utils/rem';
@@ -22,6 +23,7 @@ import { TrashIcon } from '../../../ui/icons';
 import { ItemAncillaryItems } from './ancillaryItems.generated';
 import { DeleteAncillaryItem } from './ancillaryItemMutations.generated';
 import { formatRatio } from './ancillaryItemEdit';
+import { SupplyWastageRateField } from './SupplyWastageRateField';
 import {
   AncillaryItemEditModal,
   type AncillaryEditorState,
@@ -58,19 +60,16 @@ export const ItemAncillaryPanel: Component<{
     async v => {
       const result = await graphqlFetch(ItemAncillaryItems, v);
       if (result.kind !== 'success') return undefined;
-      return result.data.items.nodes[0]?.ancillaryItems ?? [];
+      return result.data.items.nodes[0];
     }
   );
 
   // Read WITHOUT suspending: this panel mounts when its TAB is opened, so its
   // FIRST read is pending under the already-open detail screen's <Suspense> —
   // a suspending read there tears down and remounts the whole screen.
-  const rows = (): AncillaryRow[] => gated(data) ?? [];
+  const rows = (): AncillaryRow[] => gated(data)?.ancillaryItems ?? [];
 
-  const onSaved = () => {
-    props.onEditorChange(undefined);
-    void refetch();
-  };
+  const onSaved = () => void refetch();
 
   const confirmDelete = async () => {
     // Captured before ConfirmDialog's own onClose (fired right after
@@ -113,6 +112,16 @@ export const ItemAncillaryPanel: Component<{
         ...getTextCell(),
         size: remToPx(RATIO_WIDTH_REM),
       },
+      {
+        // The fact IS the flag (ui-standards › boolean cell): a link that
+        // orders against the principal's un-wasted quantity only.
+        c: {
+          accessor: row => row.excludePrincipalWastage,
+          id: 'excludePrincipalWastage',
+        },
+        header: () => t('label.exclude-principal-wastage'),
+        ...getFlagCell(t('label.exclude-principal-wastage')),
+      },
     ];
     if (props.isCentral) {
       cols.push({
@@ -139,6 +148,14 @@ export const ItemAncillaryPanel: Component<{
 
   return (
     <>
+      <SupplyWastageRateField
+        storeId={props.storeId}
+        itemId={props.itemId}
+        isCentral={props.isCentral}
+        rate={gated(data)?.supplyWastageRate}
+        isAncillary={(gated(data)?.ancillaryFor.length ?? 0) > 0}
+      />
+
       {/* No <Show> wrapper around the table: the DataTable owns the empty
           treatment, and gating on the row count would take the column headers
           down with it AND show "nothing here" during the first fetch instead of

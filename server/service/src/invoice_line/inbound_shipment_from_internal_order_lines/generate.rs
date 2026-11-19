@@ -1,6 +1,8 @@
 use crate::{
+    backend_plugin::types::transform_item_store_properties::Context,
     invoice::common::generate_invoice_user_id_update,
     invoice_line::stock_in_line::{StockLineInput, generate_batch, should_update_stock},
+    pricing::default_sell_price::DefaultSellPrices,
 };
 use repository::{
     InvoiceLineRow, InvoiceLineType, InvoiceRow, ItemRow, RepositoryError, RequisitionLineRow,
@@ -21,7 +23,22 @@ pub fn generate(
     existing_invoice_row: InvoiceRow,
     requisition_row: RequisitionLineRow,
 ) -> Result<GenerateResult, RepositoryError> {
-    let mut invoice_line = generate_line(requisition_row, item_row, existing_invoice_row.clone());
+    // The line is created at a pack size of one, and its stock may be created now,
+    // so it starts at the store's default sell price for a pack of one
+    let sell_price_per_pack = DefaultSellPrices::load(
+        connection,
+        Context::NewStock,
+        &existing_invoice_row.store_id,
+        vec![item_row.id.clone()],
+    )?
+    .for_pack(&item_row, 1.0)
+    .unwrap_or(0.0);
+    let mut invoice_line = generate_line(
+        requisition_row,
+        item_row,
+        existing_invoice_row.clone(),
+        sell_price_per_pack,
+    );
 
     let stock_line = if should_update_stock(&existing_invoice_row) {
         let batch = generate_batch(
@@ -32,7 +49,6 @@ pub fn generate(
                 store_id: existing_invoice_row.store_id.clone(),
                 supplier_id: existing_invoice_row.name_id.clone(),
                 on_hold: false,
-                barcode_id: None,
                 overwrite_stock_levels: true,
             },
         )?;
@@ -65,8 +81,10 @@ fn generate_line(
     InvoiceRow {
         id: invoice_id,
         tax_percentage,
+        campaign_id,
         ..
     }: InvoiceRow,
+    sell_price_per_pack: f64,
 ) -> InvoiceLineRow {
     InvoiceLineRow {
         id: uuid(),
@@ -84,7 +102,7 @@ fn generate_line(
         prescribed_quantity: None,
         total_before_tax: 0.0,
         total_after_tax: 0.0,
-        sell_price_per_pack: 0.0,
+        sell_price_per_pack,
         cost_price_per_pack: 0.0,
         batch: None,
         expiry_date: None,
@@ -98,9 +116,11 @@ fn generate_line(
         manufacturer_id: None,
         legacy_goods_received_line_id: None,
         transfer_comment: None,
+        barcode: None,
         vvm_status_id: None,
         reason_option_id: None,
-        campaign_id: None,
+        // The shipment's default campaign (issue #996)
+        campaign_id,
         program_id: None,
         shipped_number_of_packs: None,
         volume_per_pack: 0.0,

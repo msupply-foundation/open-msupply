@@ -4,6 +4,10 @@
 // gates only: the server accepts a status the preference hides. Pure over a
 // caller-supplied flow, so each vertical composes these with its own status
 // sequence.
+//
+// Hiding a stage withdraws it from what a surface OFFERS. It never renames a
+// record's status, and never hides where the record already is — nothing here
+// maps one status onto another.
 
 // Narrow `targets` (a flow, advance targets…) to the statuses the preference
 // allows, keeping the targets' order. An EMPTY preference restricts nothing —
@@ -15,16 +19,25 @@ export const filterByStatusPreference = <S extends string>(
 ): readonly S[] =>
   allowed.length === 0 ? targets : targets.filter(s => allowed.includes(s));
 
-// The lifecycle indicator's current stage within the OFFERED flow. When the
-// preference hides the actual status, the current stage falls back to the
-// nearest offered stage at-or-before it in the full flow (the current app's
-// getPreviousStatus fallback). −1 when nothing at-or-before is offered —
-// including a status outside the flow entirely.
+// The stages a lifecycle track shows: the allowed stages, PLUS the record's own
+// current stage when the preference hides it. A hidden stage is one this store
+// does not advance to — not a fact about a record already resting there, which
+// the track still has to place (a transfer's Picked is set by the sending
+// store, whatever the receiving store hides). Flow order is kept. An empty
+// preference restricts nothing, as above.
+export const trackStages = <S extends string>(
+  flow: readonly S[],
+  allowed: readonly string[],
+  current: string
+): readonly S[] =>
+  allowed.length === 0
+    ? flow
+    : flow.filter(status => allowed.includes(status) || status === current);
+
+// The current stage's index within the track's stages (trackStages, which
+// always carries the current stage). −1 — no step marked — only for a status
+// outside the flow entirely, as CANCELLED is.
 export const currentStep = (
-  flow: readonly string[],
-  offered: readonly string[],
+  stages: readonly string[],
   status: string
-): number => {
-  const actual = flow.indexOf(status);
-  return offered.findLastIndex(s => flow.indexOf(s) <= actual);
-};
+): number => stages.indexOf(status);

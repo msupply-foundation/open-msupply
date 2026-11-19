@@ -24,6 +24,7 @@ const line = (
   itemId: 'item-1',
   itemName: 'Amoxicillin 250mg',
   comment: 'short supply',
+  campaign: null,
   item: {
     code: 'AMX250',
     unitName: 'tablet',
@@ -45,9 +46,14 @@ const line = (
   expiringUnits: 2,
   daysOutOfStock: 7,
   pricePerUnit: null,
-  forecastTotalUnits: null,
-  forecastTotalDoses: null,
-  vaccineCourses: null,
+  forecastMethod: 'AMC',
+  forecastMonthlyConsumption: 30,
+  targetStock: 30,
+  forecastBreakdown: {
+    __typename: 'AmcForecastNode',
+    averageMonthlyConsumption: 30,
+  },
+  forecastMethodOptions: [],
   optionId: null,
   reason: { reason: 'Stock out' },
   ancillaryParents: [],
@@ -69,6 +75,7 @@ const order = (
   destinationCustomer: null,
   minMonthsOfStock: 1,
   maxMonthsOfStock: 3,
+  supplyIntervalAndBuffer: null,
   program: { id: 'prog-1', name: 'Malaria' },
   orderType: 'Monthly',
   period: { id: 'period-1', name: 'Jun 2025' },
@@ -87,20 +94,20 @@ const order = (
 });
 
 describe('lineMonthsOfStock', () => {
-  it('is available stock over AMC', () => {
+  it('is available stock over the line`s monthly demand', () => {
     expect(
       lineMonthsOfStock({
         availableStockOnHand: 60,
-        averageMonthlyConsumption: 30,
+        forecastMonthlyConsumption: 30,
       })
     ).toBe(2);
   });
 
-  it('is zero when the line has no recorded consumption', () => {
+  it('is zero when the line has no monthly demand', () => {
     expect(
       lineMonthsOfStock({
         availableStockOnHand: 60,
-        averageMonthlyConsumption: 0,
+        forecastMonthlyConsumption: 0,
       })
     ).toBe(0);
   });

@@ -19,9 +19,9 @@
  * hand-edited: `pnpm generate` does the export and this run in one step (the
  * counterpart of `yarn generate` in client/). Use plain `pnpm codegen` when
  * only a .graphql document changed — it needs no cargo and no backend. CI
- * enforces both halves: spec/IMPLEMENTING.md § C7 and the two workflows
- * (generate-schema.yml for pin == server, frontend-check-test.yaml for
- * generated types == pin).
+ * checks both halves: spec/IMPLEMENTING.md § C7 (pin == server is the
+ * `committed_schema_matches_server` test in server/graphql/lib.rs, run by the
+ * server tests; generated types == pin is frontend-check-test.yaml).
  *
  * Host and plugin documents differ in exactly one way: where the emitted file
  * imports `TypedDocument` from. A host document gets a relative path to
@@ -33,7 +33,7 @@
  * with its own module state instead of the host's live one.
  *
  * Usage: node codegen/run.js [path ...]
- *   A path narrows the run to documents under it, e.g. `plugins`.
+ *   A path narrows the run to documents under it, e.g. `../private/plugins`.
  *   SCHEMA_URL opts INTO introspecting a running server instead of the pin —
  *   for checking a branch whose backend has not reached schema.graphql
  *   yet. What it generates must not be committed: the pin is what the
@@ -84,7 +84,7 @@ function pinnedSchema() {
 
 async function main() {
   // Positional args narrow the run to documents under those paths, e.g.
-  //   node codegen/run.cjs plugins
+  //   node codegen/run.cjs ../private/plugins
   // Generating is destructive, so narrowing is how a run avoids rewriting
   // documents it has no business touching.
   const filters = process.argv.slice(2);

@@ -2,6 +2,7 @@ mod generate;
 mod validate;
 
 use generate::generate;
+pub(crate) use generate::generate as generate_inbound_shipment_service_line;
 use repository::{InvoiceLine, InvoiceLineRowRepository, RepositoryError};
 use validate::validate;
 

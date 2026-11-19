@@ -276,6 +276,7 @@ impl RequisitionTransferTester {
             comment: Some("line comment".to_string()),
             available_stock_on_hand: 1.0,
             average_monthly_consumption: 10.0,
+            forecast_monthly_consumption: 10.0,
             snapshot_datetime: Some(
                 NaiveDate::from_ymd_opt(2021, 1, 1)
                     .unwrap()
@@ -293,6 +294,7 @@ impl RequisitionTransferTester {
             suggested_quantity: 20.0,
             available_stock_on_hand: 30.0,
             average_monthly_consumption: 10.0,
+            forecast_monthly_consumption: 10.0,
             snapshot_datetime: Some(
                 NaiveDate::from_ymd_opt(2021, 1, 1)
                     .unwrap()

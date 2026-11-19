@@ -47,6 +47,7 @@ pub fn generate(
         requisition_id: None,
         purchase_order_id: None,
         prescription_request_id: None,
+        campaign_id: source_invoice.campaign_id.clone(),
 
         // --- Transport details ---
         transport_reference: source_invoice.transport_reference.clone(),
@@ -157,6 +158,7 @@ pub fn generate(
             legacy_goods_received_line_id: None,
             // No requisition link on the copy, so no request to explain.
             transfer_comment: None,
+            barcode: None,
         });
     }
 

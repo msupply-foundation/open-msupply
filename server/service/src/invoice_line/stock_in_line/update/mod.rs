@@ -48,6 +48,9 @@ pub struct UpdateStockInLine {
     pub shipped_pack_size: Option<f64>,
     pub status: Option<NullableUpdate<InvoiceLineStatus>>,
     pub reason_option_id: Option<NullableUpdate<String>>,
+    /// A barcode a user scanned or typed for the line, recorded on the line and on
+    /// the stock it goes into. An empty one clears it. Never proposes a barcode.
+    pub barcode: Option<String>,
 }
 
 type OutError = UpdateStockInLineError;

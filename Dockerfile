@@ -23,35 +23,41 @@
 # saving is - rustc is the expensive part, and it never runs emulated.
 #
 # The runtime stages DO take the target platform, so every RUN in them is
-# emulated on a cross build: faketime-builder's make, base's apt-get, and
-# postgres's postgresql-17 install. That needs binfmt_misc registered on the
-# HOST kernel - neither this file nor the workflow can arrange it, and a build
-# without it fails at the first foreign-arch RUN with "exec format error". See
-# docs/content/github-actions/self-hosted-runners for the host setup.
+# emulated on a cross build: faketime-builder's make, runtime's apt-get, and
+# postgres-runtime's postgresql-17 install. That needs binfmt_misc registered on
+# the HOST kernel, and a build without it fails at the first foreign-arch RUN
+# with "exec format error". docker-image.yaml checks for it before an arm64
+# build; see docs/content/github-actions/self-hosted-runners for the host setup.
 #
 #   [build host arch]     [build host arch]      [target arch]
 #     rust:<ver>            node:<ver>            debian:<ver>-slim
-#         |                     |                    |          |
-#         v                     v                    v          |
-#    server-base          frontend-build      faketime-builder  |
-#     .---'---.                 |                    |          |
-#     v       v                 '---------.----------'          |
-#  build-   build-                        v                     |
-#  sqlite  postgres                     base <------------------'
-#     |       |                        .--'--.
-#     |       |                        v     v
-#     '-------|-------------------> sqlite   |
-#             '------------------------------> postgres
-#                                       |         |
-#                                       v         v
-#                                      dev   postgres-dev
+#         |                     |                    |
+#         v                     v                    v
+#    server-base          frontend-build      faketime-builder
+#     .---'---.                 |                    |
+#     v       v                 |                    v
+#  build-   build-              |                 runtime ---------.
+#  sqlite  postgres             |                    |             v
+#     |       |                 '--------------->  base     postgres-runtime
+#     |       |                                    .-'-.           |
+#     |       |                                    v    '------.   |
+#     '-------|-------------------------------> sqlite         v   v
+#             '------------------------------------|------> postgres
+#                                                  v           v
+#                                                 dev     postgres-dev
 #
-#   base            <- both frontends, libfaketime, configuration, server/data
-#   sqlite/postgres <- base + that flavour's binaries    (sqlite = default target)
-#   dev variants    <- + node, yarn, client source; postgres also adds
-#                      postgresql-17 and gosu
+#   runtime          <- OS packages, libfaketime, Chromium   (no commit files)
+#   postgres-runtime <- runtime + postgresql-17 and gosu     (no commit files)
+#   base             <- runtime + both frontends, configuration, server/data
+#   sqlite           <- base + its binaries                  (default target)
+#   postgres         <- postgres-runtime + base's files + its binaries
+#   dev variants     <- + node, yarn, client source
 #
-# Everything above `base` is discarded; only the runtime stages are shipped.
+# The commit's files come last so that every OS layer stays cached between
+# builds; the postgres flavour copies them across from `base` rather than
+# installing its packages on top of them.
+#
+# Everything above the runtime stages is discarded; only those are shipped.
 #
 # The two server-build stages are deliberately separate rather than one stage
 # with an ARG: a build arg could disagree with --target and silently ship the
@@ -114,6 +120,15 @@ RUN set -eux; \
         "libpq-dev:${DEB}" "libfontconfig-dev:${DEB}"; \
     fi; \
     rm -rf /var/lib/apt/lists/*
+# Debug builds only: release already has neither. Full debuginfo was most of a
+# debug image - 5.8GB on disk against 1GB compressed - and line tables still
+# give file:line in panics and backtraces. Incremental compilation is wasted on
+# a cache mount every build changes. Also what lets CI's test builds
+# (.github/ci/server.Dockerfile, which sets the same) share the debug cache
+# mounts: cargo fingerprints both, so a mismatch keeps two copies of every
+# crate in the one mount.
+ENV CARGO_INCREMENTAL=0 \
+    CARGO_PROFILE_DEV_DEBUG=line-tables-only
 WORKDIR /src
 COPY server server
 # Resolved once and sourced by both build stages, so the cross recipe lives in
@@ -192,18 +207,23 @@ COPY standard_forms/generated standard_forms/generated
 # is absent or stale, which is not this build.
 FROM server-base AS server-build-sqlite
 ARG TARGETARCH
+ARG CARGO_PROFILE
+# How many rustc processes at once. Unset compiles one per CPU, and the build
+# lanes share one machine: four builds at that width outgrew its RAM. Declared
+# here so a value passed in reaches cargo as an env var; see docker-image.yaml.
+ARG CARGO_BUILD_JOBS
 # The cache id carries the target arch: an amd64 and an arm64 build produce
 # different artifacts, so sharing one target dir would make them evict each
 # other on every release.
 #
-# It deliberately does NOT carry CARGO_PROFILE. Cargo already separates profiles
-# into target/debug and target/release with their own fingerprints, so the two
-# coexist in one mount without interfering - and keeping the id as it is means
-# adding debug builds does not orphan the warm release cache that every release
-# and every develop merge depends on. The cost is a bigger mount (a debug target
-# dir is several times a release one, and the dev profile has incremental
-# compilation on by default); `docker builder prune --filter
-# type=exec.cachemount` is the release valve.
+# It also carries CARGO_PROFILE, and the registry mount does too - and that is
+# a trust boundary, not tidiness. Debug builds compile pull-request code: every
+# preview is one, and CI's test builds (.github/ci/server.Dockerfile) share the
+# debug mounts. Build scripts and proc-macros run with write access to every
+# mount they are given, so a release build sharing them would compile from
+# whatever an unreviewed branch left there. Release builds come only from
+# develop, RCs and tags, and keep mounts no pull request ever touches. Callers
+# pass `release` or `debug`, never `dev`, so each profile has one id.
 #
 # sharing=private, not locked: if two builds want the SAME id at once (a tag
 # build overlapping a develop merge, say), locked makes the second wait for the
@@ -212,14 +232,47 @@ ARG TARGETARCH
 # it is cold rather than free, and orphaned private caches accumulate on disk
 # (`docker builder prune --filter type=exec.cachemount`).
 #
-# The registry mount is sharing=shared: it is append-mostly downloaded .crate
-# files and cargo does its own locking, exactly as it does on a dev machine
-# running two projects at once. Leaving it `locked` would serialise EVERY pair
-# of concurrent builds on the registry even when their target dirs differ,
-# which defeats the per-db and per-arch ids entirely.
-RUN --mount=type=cache,id=cargo-target-sqlite-$TARGETARCH,target=/src/server/target,sharing=private \
-    --mount=type=cache,id=cargo-registry,target=/usr/local/cargo/registry,sharing=shared \
+# Every file under /src gets a fresh mtime before cargo runs - correctness, not
+# speed. Cargo decides a workspace crate is fresh by comparing its sources'
+# mtimes with when it last built them, never their contents. COPY keeps the
+# context's mtimes, and a runner's checkout keeps a file's mtime until git
+# rewrites it, so an unchanged file can be older than a build of a DIFFERENT
+# version of it that another branch, or CI's base-commit build, left in this
+# shared mount - and cargo would link that one. It happened: develop's images
+# reported 3.4 after the bump to 3.5, the version being package.json compiled
+# into repository. Touched inside the same RUN, so it never survives as a
+# cached layer: either BuildKit reuses this whole step, whose output came from
+# identical inputs, or the step runs and every workspace crate recompiles.
+# Dependencies are untouched: they live in the registry mount, keyed by
+# version. Also covers the files build scripts watch outside server/ (locales,
+# generated reports).
+#
+# The registry mount is sharing=shared for the build: it is append-mostly
+# downloaded .crate files, and `locked` would serialise EVERY pair of
+# concurrent builds on the registry even when their target dirs differ, which
+# defeats the per-db and per-arch ids entirely.
+#
+# But cargo's own locking does NOT cover it. The lock is
+# $CARGO_HOME/.package-cache, outside the mount, so each container has its own
+# and two builds unpacking the same crate into registry/src collide: "failed to
+# unpack package ... File exists". A warm registry hides it - there is nothing
+# to unpack - so it shows when the cache is cold, as after a GC under disk
+# pressure. Hence the `cargo fetch` before each build, under a flock on a file
+# IN the mount: every shared user mounts the same directory, so fetches take
+# turns, and the build that follows has nothing left to unpack. Seconds when
+# warm, and the lock is gone before the compile starts.
+#
+# Not a separate RUN with the mount `sharing=locked`. BuildKit's modes don't
+# exclude each other both ways: a `shared` request that finds the cache locked
+# doesn't wait, it is handed a NEW, empty cache under the same id - so a build
+# starting during another's fetch would compile against an empty registry, and
+# race on every crate. .github/ci/server.Dockerfile does the same, on the debug
+# mount it shares with these builds.
+RUN --mount=type=cache,id=cargo-target-sqlite-$CARGO_PROFILE-$TARGETARCH,target=/src/server/target,sharing=private \
+    --mount=type=cache,id=cargo-registry-$CARGO_PROFILE,target=/usr/local/cargo/registry,sharing=shared \
     set -eux; \
+    find /src -path /src/server/target -prune -o -type f -exec touch {} +; \
+    flock /usr/local/cargo/registry/.fetch-lock cargo fetch --manifest-path server/Cargo.toml; \
     . /cross.env; export $(cut -d= -f1 /cross.env); \
     . /profile.env; \
     cargo build --profile "$PROFILE_ARG" --manifest-path server/Cargo.toml $TARGET_FLAG \
@@ -230,12 +283,19 @@ RUN --mount=type=cache,id=cargo-target-sqlite-$TARGETARCH,target=/src/server/tar
 
 FROM server-base AS server-build-postgres
 ARG TARGETARCH
+ARG CARGO_PROFILE
+# How many rustc processes at once. Unset compiles one per CPU, and the build
+# lanes share one machine: four builds at that width outgrew its RAM. Declared
+# here so a value passed in reaches cargo as an env var; see docker-image.yaml.
+ARG CARGO_BUILD_JOBS
 # The cache id carries the target arch: an amd64 and an arm64 build produce
 # different artifacts, so sharing one target dir would make them evict each
 # other on every release.
-RUN --mount=type=cache,id=cargo-target-postgres-$TARGETARCH,target=/src/server/target,sharing=private \
-    --mount=type=cache,id=cargo-registry,target=/usr/local/cargo/registry,sharing=shared \
+RUN --mount=type=cache,id=cargo-target-postgres-$CARGO_PROFILE-$TARGETARCH,target=/src/server/target,sharing=private \
+    --mount=type=cache,id=cargo-registry-$CARGO_PROFILE,target=/usr/local/cargo/registry,sharing=shared \
     set -eux; \
+    find /src -path /src/server/target -prune -o -type f -exec touch {} +; \
+    flock /usr/local/cargo/registry/.fetch-lock cargo fetch --manifest-path server/Cargo.toml; \
     . /cross.env; export $(cut -d= -f1 /cross.env); \
     . /profile.env; \
     cargo build --profile "$PROFILE_ARG" --manifest-path server/Cargo.toml $TARGET_FLAG \
@@ -254,9 +314,6 @@ FROM --platform=$BUILDPLATFORM node:${NODE_VERSION} AS frontend-build
 WORKDIR /src
 COPY package.json yarn.lock .yarnrc.yml ./
 COPY client client
-COPY standard_reports standard_reports
-COPY standard_forms standard_forms
-COPY frontend frontend
 RUN corepack enable
 # Old UI, served under /old-ui/ - the PUBLIC_PATH is what rewrites asset URLs
 # and the router base, so it cannot be relocated after the fact.
@@ -264,6 +321,16 @@ RUN --mount=type=cache,id=yarn,target=/root/.yarn/berry/cache,sharing=locked \
     yarn install --immutable \
     && cd client \
     && NODE_OPTIONS="--max_old_space_size=4096" yarn build:old-ui
+# The new FE's source is copied only now, after the old UI build: it is not a
+# yarn workspace and build:old-ui never reads it, but copied above that build
+# it made every frontend/-only merge redo ~4 minutes of yarn install and
+# build:old-ui - the critical path of a deploy build.
+COPY frontend frontend
+# tsc -b type-checks the plugins (tsconfig.backend-plugins.json) and the
+# example forms the documentForm tests import, all under plugins/ since they
+# moved out of frontend/. private/plugins is left out: the vite build never
+# bundles plugins, and private/ is absent from the public mirror.
+COPY plugins plugins
 # New FE, served at /
 # The displayed interface version (vite.config.ts § appVersion) comes from
 # RELEASE_VERSION or else `git describe` - and .git is not in the build
@@ -278,18 +345,24 @@ RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store,sharing=lock
 # Build stage for libfaketime
 FROM debian:${DEBIAN_VERSION}-slim AS faketime-builder
 # ca-certificates is required for the HTTPS clone below and is NOT in
-# debian-slim - the same omission that `base` already accounts for. Missing it
+# debian-slim - the same omission that `runtime` already accounts for. Missing it
 # fails as "Problem with the SSL CA cert", which reads like a proxy or network
 # fault rather than a missing package.
 RUN apt-get update && apt-get install -y --no-install-recommends \
       ca-certificates git make gcc libc6-dev \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /usr/src/
-RUN git clone https://github.com/wolfcw/libfaketime.git
+# Pinned to a release. It is preloaded into every process in the image, apt
+# included, so an unpinned master breaks the build whenever master breaks - as
+# it did in November 2026, with apt's `sqv` dying mid-install.
+ARG LIBFAKETIME_VERSION=v0.9.13
+RUN git clone --depth 1 --branch ${LIBFAKETIME_VERSION} https://github.com/wolfcw/libfaketime.git
 WORKDIR /usr/src/libfaketime/src
 RUN make install
 
-# Common runtime stage (no binaries yet).
+# Common runtime OS (no binaries, nothing from this commit). Kept free of
+# per-commit files so every layer here - and in postgres-runtime below - stays
+# cached from one build to the next.
 #
 # Plain Debian, not rust:<ver>-slim. The runtime shipped a full Rust toolchain
 # it never used - roughly 700MB of compiler in every production image. What the
@@ -301,7 +374,7 @@ RUN make install
 # trust anchors are compiled into the binary - but anything else that reaches
 # the network from inside the image would fail confusingly without it, and it
 # costs a few hundred KB. tzdata IS already present.
-FROM debian:${DEBIAN_VERSION}-slim AS base
+FROM debian:${DEBIAN_VERSION}-slim AS runtime
 # curl is here for the container healthcheck, which runs *inside* the image -
 # debian-slim ships neither curl nor wget, so without it the probe cannot
 # execute and the container reports unhealthy however well the server is
@@ -319,6 +392,15 @@ RUN echo "/usr/local/lib/faketime/libfaketime.so.1" > /etc/ld.so.preload
 # This keeps the monotonic clock real while FAKETIME still moves the date.
 # See issue #12289.
 ENV FAKETIME_DONT_FAKE_MONOTONIC=1
+# libfaketime keeps shared memory in /dev/shm, which is only for handing a faked
+# time between processes started by the `faketime` wrapper. The image does not
+# use the wrapper - FAKETIME is set in the environment - so turn it off. Built
+# from an unpinned master, it left a faketime_shm_<pid> and faketime_lock_<pid>
+# behind for every process: the healthcheck every 10s filled the container's
+# 64MB /dev/shm in a couple of days, and from then on every new process (the
+# healthcheck, `docker exec`) died with SIGBUS, exit 135, while the server
+# itself kept running.
+ENV FAKETIME_DISABLE_SHM=1
 
 # PDF report export renders HTML through headless Chromium. Install the headless
 # shell (chromium-headless-shell) — the GUI-less build, roughly half the installed
@@ -335,6 +417,27 @@ RUN apt-get update && \
 ENV CHROME=/usr/bin/chromium-headless-shell
 ENV OMS_HEADLESS_CHROME_NO_SANDBOX=true
 
+RUN mkdir -p /database
+
+# The postgres flavour's OS packages, on the same commit-independent footing as
+# `runtime`. They used to be installed in `postgres` on top of `base`, whose
+# frontend and server/data layers change with every commit - so ~20s of
+# apt-get reran on every build to install the same packages.
+FROM runtime AS postgres-runtime
+RUN apt-get update && apt-get install -y postgresql-17 libpq5 gosu && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+# dbus (pulled in by postgresql-17) bakes a machine-id into the image at build
+# time. The machine_uid crate reads /var/lib/dbus/machine-id before
+# /etc/machine-id, so symlink them and truncate so entry.sh's runtime UUID
+# (or an operator's bind-mounted /etc/machine-id) is what gets read.
+RUN ln -sf /etc/machine-id /var/lib/dbus/machine-id && \
+    truncate -s 0 /etc/machine-id
+ENV PATH="/usr/lib/postgresql/17/bin:$PATH"
+RUN chown -R postgres:postgres /var/lib/postgresql
+
+# This commit's files, everything shipped bar the binaries. All of it lives
+# under /usr/src/omsupply, which is what lets `postgres` take it in one COPY.
+FROM runtime AS base
 WORKDIR /usr/src/omsupply/server
 COPY --chmod=755 docker/entry.sh .
 COPY server/data data
@@ -348,8 +451,6 @@ WORKDIR /usr/src/omsupply/server/configuration
 COPY server/configuration/base.yaml .
 COPY docker/local.yaml .
 
-RUN mkdir -p /database
-
 WORKDIR /usr/src/omsupply/server
 
 ENTRYPOINT ["/usr/src/omsupply/server/entry.sh"]
@@ -361,24 +462,38 @@ COPY --from=server-build-sqlite --chmod=755 /out/remote_server .
 COPY --from=server-build-sqlite --chmod=755 /out/remote_server_cli .
 
 # Postgres target
-FROM base AS postgres
+FROM postgres-runtime AS postgres
+COPY --from=base /usr/src/omsupply /usr/src/omsupply
+WORKDIR /usr/src/omsupply/server
+EXPOSE 8000
 COPY --from=server-build-postgres --chmod=755 /out/remote_server .
 COPY --from=server-build-postgres --chmod=755 /out/remote_server_cli .
-RUN apt-get update && apt-get install -y postgresql-17 libpq5 gosu && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
-# dbus (pulled in by postgresql-17) bakes a machine-id into the image at build
-# time. The machine_uid crate reads /var/lib/dbus/machine-id before
-# /etc/machine-id, so symlink them and truncate so entry.sh's runtime UUID
-# (or an operator's bind-mounted /etc/machine-id) is what gets read.
-RUN ln -sf /etc/machine-id /var/lib/dbus/machine-id && \
-    truncate -s 0 /etc/machine-id
-ENV PATH="/usr/lib/postgresql/17/bin:$PATH"
 COPY docker/local.postgres.yaml /usr/src/omsupply/server/configuration/local.yaml
 COPY --chmod=755 docker/entry-postgres.sh /usr/src/omsupply/server/entry-postgres.sh
-RUN chown -R postgres:postgres /var/lib/postgresql
 ENTRYPOINT ["/usr/src/omsupply/server/entry-postgres.sh"]
 
 FROM sqlite AS dev
+WORKDIR /usr/src/omsupply
+COPY client/.nvmrc .nvmrc
+
+RUN apt-get update && apt-get install -y curl rsync git && \
+    NODE_MAJOR=$(sed 's/^v//' .nvmrc | cut -d. -f1) && \
+    curl -fsSL https://deb.nodesource.com/setup_${NODE_MAJOR}.x | bash - && \
+    apt-get install -y nodejs && \
+    corepack enable && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+COPY package.json yarn.lock .yarnrc.yml ./
+COPY client client
+
+RUN yarn install --immutable && yarn cache clean
+
+RUN echo 'export NODE_OPTIONS="--max-old-space-size=8192"' >> ~/.bashrc
+
+WORKDIR /usr/src/omsupply/server
+EXPOSE 3003
+
+FROM postgres AS postgres-dev
 WORKDIR /usr/src/omsupply
 COPY client/.nvmrc .nvmrc
 
@@ -395,27 +510,6 @@ COPY standard_reports standard_reports
 COPY standard_forms standard_forms
 
 RUN yarn install --immutable && yarn cache clean
-
-RUN echo 'export NODE_OPTIONS="--max-old-space-size=8192"' >> ~/.bashrc
-
-WORKDIR /usr/src/omsupply/server
-EXPOSE 3003
-
-FROM postgres AS postgres-dev
-WORKDIR /usr/src/omsupply
-COPY client/.nvmrc .nvmrc
-COPY client client
-
-RUN apt-get update && apt-get install -y curl rsync git && \
-    NODE_MAJOR=$(sed 's/^v//' .nvmrc | cut -d. -f1) && \
-    curl -fsSL https://deb.nodesource.com/setup_${NODE_MAJOR}.x | bash - && \
-    apt-get install -y nodejs && \
-    npm install -g yarn && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
-COPY package.json .
-
-WORKDIR /usr/src/omsupply/client
-RUN yarn && yarn cache clean
 
 RUN echo 'export NODE_OPTIONS="--max-old-space-size=8192"' >> ~/.bashrc
 

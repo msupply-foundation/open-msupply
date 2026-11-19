@@ -30,6 +30,7 @@ import {
   type DraftIndicator,
   type Year,
 } from './draft';
+import { Num } from '@/ui/elements/typography/Num';
 
 // S1 — the demographics grid (spec/demographics ui-surface S1): the general
 // population baseline, the indicators' shares, the yearly growth rates in the
@@ -151,6 +152,7 @@ const DemographicsPage: Component = () => {
               endAdornment="%"
               value={row.populationPercentage}
               disabled={editor.saving()}
+              emptyValue={0}
               onChange={value => editor.setShare(row.id, value)}
             />
           </Show>
@@ -168,7 +170,7 @@ const DemographicsPage: Component = () => {
           <Show
             when={isGeneralRow(row)}
             // Every other row's current population derives from the baseline.
-            fallback={formatNumber(figures(row).current)}
+            fallback={<Num value={figures(row).current} />}
           >
             {/* The baseline — the one editable current population, a whole
                 number of people (rules § input bounds). */}
@@ -180,6 +182,7 @@ const DemographicsPage: Component = () => {
               decimalLimit={0}
               value={row.basePopulation}
               disabled={editor.saving()}
+              emptyValue={0}
               onChange={editor.setBaseline}
             />
           </Show>
@@ -204,6 +207,7 @@ const DemographicsPage: Component = () => {
             endAdornment="%"
             value={editor.draft.rates[rateKey(year)]}
             disabled={editor.saving()}
+            emptyValue={0}
             onChange={value => editor.setRate(year, value)}
             data-testid={`growth-rate-year-${year}`}
           />
@@ -217,7 +221,7 @@ const DemographicsPage: Component = () => {
         textLabel: () => yearLabel(year),
       },
       size: remToPx(11),
-      cell: info => formatNumber(figures(info.row.original).years[year - 1]),
+      cell: info => <Num value={figures(info.row.original).years[year - 1]} />,
     })),
   ];
 

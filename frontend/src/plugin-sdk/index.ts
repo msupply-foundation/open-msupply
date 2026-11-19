@@ -56,6 +56,35 @@ export type {
   NoPlacement,
 } from './types';
 
+// ── Document types — the base shapes a form plugin extends ─────────────────
+// A form plugin's document type extends one of these, and its JSON Schema is
+// emitted from that type at build (./documents.ts). Type-only, so erased at
+// build: nothing here is eager weight.
+export type {
+  DocumentData,
+  Patient,
+  Person,
+  Gender,
+  MaritalStatus,
+  Note,
+  NextOfKin,
+  Address,
+  ContactDetails,
+  SocioEconomics,
+  RelatedPerson,
+  DrugAllergy,
+  Allergies,
+  ProgramEnrolment,
+  ProgramEnrolmentStatus,
+  Encounter,
+  EncounterStatus,
+  Clinician,
+  User,
+  EncounterLocation,
+  ContactTrace,
+  ContactTraceLocation,
+} from './documents';
+
 // ── Auth & context ──────────────────────────────────────────────────────────
 /*
  * The session surface (sdk-contract § SDK surface — Auth & context): the same
@@ -101,6 +130,34 @@ export type {
   SaveContext,
   PrescriptionPaymentView,
   PrescriptionPaymentFormProps,
+} from './types';
+
+// ── Slot API — the document form slots ──────────────────────────────────────
+// A program record's body, per category: the form a plugin contributes for
+// one of its document types, written with the form library below.
+export type {
+  DocumentFormSlotId,
+  DocumentFormPlacement,
+  FormRecordView,
+  ProgramEnrolmentFormProps,
+  EncounterFormProps,
+  PatientFormProps,
+  EnrolmentFormComponent,
+  EncounterFormComponent,
+  PatientFormComponent,
+} from './types';
+// Each slot takes its form through its helper: eager and tiny, since each
+// only returns its argument, and the contribution is read at load.
+export { patientForm, encounterForm, enrolmentForm } from './forms';
+
+// ── Slot API — the patient toolbar trigger slot ─────────────────────────────
+// A button on the patient screen's header: the host draws it from the
+// trigger's label and icon, and runs its handler with the host actions.
+export type {
+  TriggerRender,
+  TriggerPatientView,
+  PatientTriggerProps,
+  PatientTriggerActions,
 } from './types';
 
 // ── UI kit ──────────────────────────────────────────────────────────────────
@@ -168,13 +225,17 @@ export type {
 } from '../ui/elements/selectors/Select';
 export { FormColumn } from '../ui/layout/Form/FormColumn';
 export { FormColumns } from '../ui/layout/Form/FormColumns';
+// The two-up row, for the demo program's forms (#468): a field with its
+// Generate button, weight beside height (kdd/form-layout). Already in the
+// eager graph (the patient details form renders it), so it adds nothing new.
+export { FormRow } from '../ui/layout/Form/FormRow';
 export { FormSection } from '../ui/layout/Form/FormSection';
 export type { FormSectionProps } from '../ui/layout/Form/FormSection';
 export { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
 export type { ContentContainerProps } from '../ui/layout/ContentContainer/ContentContainer';
 // The settings-form set — what the Stocktake Helper's Settings screen needs
-// (plugins/cook_islands, #489): save/discard actions, the numeric thresholds,
-// the item search box, and the per-item Priority toggle.
+// (private/plugins/cook_islands, #489): save/discard actions, the numeric
+// thresholds, the item search box, and the per-item Priority toggle.
 // NumberField and TextField are already in this barrel's graph (CurrencyField
 // wraps NumberField, which renders through TextField), so exporting them keeps
 // two modules alive that ship regardless; Button and ToggleSwitch are new
@@ -204,20 +265,21 @@ export { foldForSearch, matchesSearch } from '../ui/utils/searchText';
 export { SidePanelSection } from '../ui/layout/SidePanel/SidePanel';
 export type { SidePanelSectionProps } from '../ui/layout/SidePanel/SidePanel';
 // The date-range filter — what the Stocktake Helper's past-reports list needs
-// (plugins/cook_islands, #490): a pick-only range whose `max` refuses future
-// dates and whose pick flow cannot produce an inverted range. New CSS-bearing
-// modules in the SDK chunk — the field, its DatePickerPanel and their shared
-// styles (measured: kdd/bundle-size-by-pr).
+// (private/plugins/cook_islands, #490): a pick-only range whose `max` refuses
+// future dates and whose pick flow cannot produce an inverted range. New
+// CSS-bearing modules in the SDK chunk — the field, its DatePickerPanel and
+// their shared styles (measured: kdd/bundle-size-by-pr).
 export { DateRangeField } from '../ui/elements/inputs/DateRangeField';
 export type {
   DateRangeFieldProps,
+  CalendarDateRange,
   IsoDateRange,
 } from '../ui/elements/inputs/DateRangeField';
 
 /*
- * The Afghanistan Daily Tally's set (plugins/afghanistan ui-surface.md § S1–S7,
- * the roles its Layout lines name — README § host obligations lists them as
- * the kit gaps): the collapsible section group for its course cards and
+ * The Afghanistan Daily Tally's set (private/plugins/afghanistan ui-surface.md
+ * § S1–S7, the roles its Layout lines name — README § host obligations lists
+ * them as the kit gaps): the collapsible section group for its course cards and
  * coverage groups; the icon-only button for the counter steppers; the
  * mutually-exclusive choice for the session type; the row-status badge for
  * _Draft_ and the count badge for a group's running total; the error detail
@@ -270,8 +332,9 @@ export { HStack } from '../ui/layout/Stack/HStack';
 export type { HStackProps } from '../ui/layout/Stack/HStack';
 export { DetailCard } from '../ui/layout/Detail/DetailCard';
 export type { DetailCardProps } from '../ui/layout/Detail/DetailCard';
-// The recessed grouping panel: Quick Entry's record strip (plugins/afghanistan
-// ui-surface.md § S3) is one. Hand-rolled, pure CSS over tokens.
+// The recessed grouping panel: Quick Entry's record strip
+// (private/plugins/afghanistan ui-surface.md § S3) is one. Hand-rolled, pure
+// CSS over tokens.
 export { InsetPanel } from '../ui/layout/InsetPanel/InsetPanel';
 export type { InsetPanelProps } from '../ui/layout/InsetPanel/InsetPanel';
 export { ContentFooter } from '../ui/layout/ContentFooter/ContentFooter';
@@ -279,7 +342,7 @@ export type { ContentFooterProps } from '../ui/layout/ContentFooter/ContentFoote
 export { ContentFooterActions } from '../ui/layout/ContentFooter/ContentFooterActions';
 
 /*
- * The Afghanistan configuration editor's own set (plugins/afghanistan
+ * The Afghanistan configuration editor's own set (private/plugins/afghanistan
  * ui-surface.md § S8 — the five roles it names and no other audited surface
  * does, plus the reorderable list its Dose order tab needed built):
  * page-level tabs, the checkbox of the dose matrix, the multi-select of a
@@ -354,7 +417,13 @@ export {
   FilterTextInput,
   RecordLink,
   UnsavedChangesGuard,
+  UploadZone,
 } from './lazyComponents';
+export type { UploadZoneProps } from '../ui/elements/inputs/UploadZone';
+export type {
+  FileRejection,
+  RejectionReason,
+} from '../ui/elements/inputs/uploadFiles';
 export type { DialogProps } from '../ui/elements/feedback/Dialog';
 export type { ConfirmDialogProps } from '../ui/elements/feedback/ConfirmDialog';
 export type { DataTableProps } from '../ui/elements/table/DataTable';
@@ -378,6 +447,113 @@ export type {
 } from '../ui/elements/table/tableConfig';
 export type { PaginationProps } from '../ui/elements/table/Pagination';
 
+// ── Form library — the fields a plugin form is written with ─────────────────
+/*
+ * Lazy like the table: the fields, the AJV validator and the host's default
+ * forms are one host chunk, fetched when the first form opens (./
+ * lazyComponents.ts; kdd/custom-forms/specs.md § Forms in the UI). A field
+ * takes the draft the host hands a form and a path into the document type,
+ * checked by the compiler. The types are erased at build.
+ */
+export {
+  TextInput,
+  TextAreaInput,
+  NumberInput,
+  DateInput,
+  DateTimeInput,
+  SelectInput,
+  AutocompleteInput,
+  CheckboxInput,
+  DateOfBirthInput,
+  NotesInput,
+  MultiSelectInput,
+  PreviousEncounterValue,
+  PrescriptionInput,
+  FieldGroup,
+  FormDivider,
+} from './lazyComponents';
+/*
+ * The old client's category tiles and its program icons: a form's categories
+ * as tiles that open their fields in dialogs, replicating the old client's
+ * look until program forms move onto the core library's layout. The tiles are
+ * lazy from the form library's chunk; `ProgramIcon` is a small eager wrapper
+ * that loads the icons' shapes, their own chunk, when the first one renders.
+ */
+export { FormCategories, FormCategory } from './lazyComponents';
+export { ProgramIcon } from './programIcons/ProgramIcon';
+export type {
+  ProgramIconName,
+  ProgramIconProps,
+} from './programIcons/ProgramIcon';
+export type {
+  FormCategoriesProps,
+  FormCategoryProps,
+} from './formCategories/FormCategories';
+// The host's patient fields, for a `patient.form` to compose: lazy from the
+// same chunk.
+export {
+  PatientCodeField,
+  PatientCode2Field,
+  PatientFirstNameField,
+  PatientLastNameField,
+  PatientDateOfBirthField,
+  PatientGenderField,
+  PatientAddressField,
+  PatientPhoneField,
+  PatientNextOfKinField,
+  PatientDeceasedFields,
+} from './lazyComponents';
+export type {
+  LabelledPatientFieldProps,
+  PatientFieldProps,
+} from '../domain/patient/documentFields';
+// The host's enrolment ID field, for a `programEnrolment.form` to place.
+export { EnrolmentIdField } from './lazyComponents';
+export type { EnrolmentIdFieldProps } from '../domain/documentForm/EnrolmentIdField';
+export type { Draft } from '../domain/documentForm/draft';
+export type {
+  Path,
+  PathValue,
+  TextPath,
+  EnumPath,
+  NumberPath,
+  BooleanPath,
+  NotesPath,
+  EnumArrayPath,
+} from '../domain/documentForm/paths';
+export type { FieldSchemaInfo } from '../domain/documentForm/schemaNode';
+// Migrations between a document type's schema versions: eager and tiny, since
+// `defineMigration` only returns its argument, and the form contribution that
+// lists the steps is read at load.
+export { defineMigration } from './migrations';
+export type {
+  JsonScalar,
+  Migration,
+  MigrationStep,
+  MigrationTransform,
+  UnresolvedValues,
+} from '../domain/documentForm/migration';
+export type {
+  FieldProps,
+  TextInputProps,
+  TextAreaInputProps,
+  NumberInputProps,
+  DateInputProps,
+  DateTimeInputProps,
+  SelectInputProps,
+  AutocompleteInputProps,
+  AutocompleteOption,
+  CheckboxInputProps,
+  DateOfBirthInputProps,
+  FieldGroupProps,
+  FormDividerProps,
+} from '../domain/documentForm/fields';
+export type { NotesInputProps } from '../domain/documentForm/NotesInput';
+export type { MultiSelectInputProps } from '../domain/documentForm/MultiSelectInput';
+export type { PreviousEncounterValueProps } from '../domain/documentForm/PreviousEncounterValue';
+export type { PrescriptionInputProps } from '../domain/documentForm/PrescriptionInput';
+export type { NoteEditRestrictions } from '../domain/documentForm/notes';
+
 // ── List & table state — the URL and the stored column layout ───────────────
 /*
  * Where a plugin list screen's state lives, so it remembers what a host one
@@ -397,10 +573,11 @@ export type { Band, LayeredConfig } from '../ui/elements/table/tableConfig';
 
 // ── UI kit — icons that carry meaning ───────────────────────────────────────
 /*
- * The six the Cook Islands navigator names for its tiles (plugins/cook_islands
- * ui-surface.md § S2/S3): patient, inbox tray, truck, box with an arrow out,
- * stock, sheet — in that order below. That file describes the PICTURE and
- * never names an export, so this list is the mapping; keep the two in step.
+ * The six the Cook Islands navigator names for its tiles
+ * (private/plugins/cook_islands ui-surface.md § S2/S3): patient, inbox tray,
+ * truck, box with an arrow out, stock, sheet — in that order below. That file
+ * describes the PICTURE and never names an export, so this list is the
+ * mapping; keep the two in step.
  * Re-exported rather than copied into the plugin, so a fix to a path, an RTL
  * flip or an a11y attribute on the host icon reaches the contributed surface
  * too — a copied SVG would fork on the first such change.
@@ -451,11 +628,13 @@ export { CheckIcon } from '../ui/icons';
 // eagerly, so re-exporting costs nothing new.
 export { ChevronDownIcon } from '../ui/icons';
 /*
- * The Afghanistan Daily Tally's icons (plugins/afghanistan ui-surface.md):
- * the add icon on _New tally sheet_, the delete icon on _Discard draft_, the
- * minus and plus of the counter control, the success check beside
- * _Auto-allocated_, the forward arrow on Continue. All path data in the module
- * that already ships — the same bargain as the entries above.
+ * The Afghanistan Daily Tally's icons (private/plugins/afghanistan
+ * ui-surface.md): the add icon on _New tally sheet_, the delete icon on
+ * _Discard draft_, the minus and plus of the counter control, the success
+ * check beside _Auto-allocated_, the forward arrow on Continue.
+ * PlusCircleIcon is also the demo program's "Record follow-up" on the patient
+ * header (#468), drawn beside the host's own create actions. All path data in
+ * the module that already ships — the same bargain as the entries above.
  */
 export {
   ArrowRightIcon,
@@ -507,6 +686,7 @@ export {
   onBeforeLeave,
   usePageTrail,
   usePageActions,
+  usePageToolbar,
   usePageFooter,
 } from './navigation';
 export type { NavigateOptions, BeforeLeaveEvent } from './navigation';
@@ -566,6 +746,29 @@ export type {
  */
 export { gated } from '../api/gated';
 
+// ── Data access — program data ──────────────────────────────────────────────
+// What a form plugin reads and draws beyond its own document: a server
+// counter for generated identifiers, and the program events the server
+// derives from documents (./programs.ts).
+export { allocateProgramNumber, useActiveProgramEvents } from './programs';
+export type { ProgramEventView, ActiveProgramEventsInput } from './programs';
+export { usePreviousEncounter } from './encounters';
+export type {
+  PreviousEncounterInput,
+  PreviousEncounterView,
+} from './encounters';
+export {
+  createPrescription,
+  useItemBatches,
+  usePrescriptionSummary,
+} from './prescriptions';
+export type {
+  CreatePrescriptionInput,
+  CreatePrescriptionResult,
+  ItemBatchView,
+  PrescriptionSummaryView,
+} from './prescriptions';
+
 // ── Data access — the backend bridge ────────────────────────────────────────
 export { pluginBridge, usePluginQuery } from './bridge';
 export type { PluginBridge, PluginQuery } from './bridge';
@@ -579,11 +782,23 @@ export { generateUUID } from '../uuid';
 
 // ── Files out of the app ────────────────────────────────────────────────────
 /*
- * The configuration editor's _Download JSON_ (plugins/afghanistan ui-surface §
- * S8). One async function; its platform graph loads on the first save, so this
- * costs nothing eager (see ./files.ts for why a plugin must not hand-roll it).
+ * The configuration editor's _Download JSON_ (private/plugins/afghanistan
+ * ui-surface § S8). One async function; its platform graph loads on the first
+ * save, so this costs nothing eager (see ./files.ts for why a plugin must not
+ * hand-roll it).
  */
 export { saveFile } from './files';
+// Printing a document the plugin builds (the Laos DHIS2 stock report, #2231):
+// the host's report Print path, lazy like saveFile, for the same Android
+// reason.
+export { printHtml } from './files';
+export type { PrintResult } from './files';
+// Files into the app, as CSV: the host's own reader, so a plugin's import reads
+// a spreadsheet's CSV exactly as the host import screens do — a file saved in
+// a legacy Windows code page decodes, and the separator Excel used for the
+// user's locale (`,`, `;` or tab) is sniffed. From the module, not the
+// reportFiles barrel, which also carries the server-side Excel conversion.
+export { parseCsv, readCsvFile, toCsv } from '../domain/reportFiles/csv';
 export type { SaveFileResult } from './files';
 
 // ── Focus ───────────────────────────────────────────────────────────────────

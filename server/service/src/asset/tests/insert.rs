@@ -103,15 +103,15 @@ mod query {
             .collect();
         locations.sort_by(|a, b| b.volume.partial_cmp(&a.volume).unwrap());
 
-        // +5°C zone -> fridge type, volume 99
-        assert_eq!(locations[0].volume, 99.0);
+        // +5°C zone -> fridge type, 99 L -> 0.099 m³
+        assert_eq!(locations[0].volume, 0.099);
         assert_eq!(
             locations[0].location_type_id.as_deref(),
             Some("fridge_type")
         );
         assert_eq!(locations[0].name, "test_code +5°C");
-        // -20°C zone -> freezer type, volume 42
-        assert_eq!(locations[1].volume, 42.0);
+        // -20°C zone -> freezer type, 42 L -> 0.042 m³
+        assert_eq!(locations[1].volume, 0.042);
         assert_eq!(
             locations[1].location_type_id.as_deref(),
             Some("freezer_type")

@@ -1,20 +1,23 @@
 import { createSignal, For } from 'solid-js';
 import { Select } from '../ui/elements/selectors/Select';
+import { FieldRow } from '../ui/elements/inputs/FieldRow';
 import { Combobox } from '../ui/elements/selectors/Combobox';
 import { AsyncCombobox } from '../ui/elements/selectors/AsyncCombobox';
 import type { Page } from '../ui/utils/createPaginatedSearch';
 import { MultiSelect } from '../ui/elements/selectors/MultiSelect';
+import { PickerField } from '../ui/elements/selectors/PickerField';
+import { IconButton } from '../ui/elements/buttons/IconButton';
 import {
   ColourTagDot,
   ColourTagPicker,
   TAG_COLOURS,
 } from '../ui/elements/selectors/ColourTag';
-import { t } from '../intl';
+import { formatNumber, t } from '../intl';
 import { Dialog } from '../ui/elements/feedback/Dialog';
 import { InfoTooltip } from '../ui/elements/feedback/InfoTooltip';
 import { Button } from '../ui/elements/buttons/Button';
 import { CancelButton } from '../ui/elements/buttons/StandardButtons';
-import { PlusCircleIcon } from '../ui/icons';
+import { EditIcon, PlusCircleIcon } from '../ui/icons';
 import {
   FilterBar,
   FilterCheckbox,
@@ -56,7 +59,7 @@ const renderItem = (item: DemoItem) => (
       {item.code}
       {' · '}
       {item.availableStock > 0 ? (
-        `${item.availableStock.toLocaleString()} in stock`
+        `${formatNumber(item.availableStock)} in stock`
       ) : (
         <span class={styles.outOfStock}>Out of stock</span>
       )}
@@ -273,6 +276,18 @@ const DEMO_FILTERS: Filter<InvoiceFilter>[] = [
   },
 ];
 
+// The grouped-combobox demo's option set: a PINNED standing choice (no group)
+// and a tail of grouped rows. Emptying the field is the ✕, not a row. (The
+// Activity field itself groups BOTH its tiers and scopes them with a listbox
+// header — see domain/campaign/ActivitySelect; this demo is the pinned tier.)
+type RouteOption = { value: string; label: string; group?: string };
+const ROUTE_OPTIONS: RouteOption[] = [
+  { value: 'any', label: 'Any route' },
+  { value: 'oral', label: 'Oral', group: 'Route' },
+  { value: 'im', label: 'Intramuscular', group: 'Route' },
+  { value: 'sc', label: 'Subcutaneous', group: 'Route' },
+];
+
 export const selectorsMetadata: PageMetadata = {
   id: 'selectors',
   title: 'Selectors',
@@ -289,6 +304,11 @@ export const selectorsMetadata: PageMetadata = {
       searchTerms: ['clearable', 'clear', 'cross', 'empty', 'optional'],
     },
     {
+      id: 'selectors-grouped',
+      title: 'Grouped combobox',
+      searchTerms: ['grouped', 'pinned', 'divider', 'section'],
+    },
+    {
       id: 'selectors-label-info',
       title: 'Label help tooltip',
       searchTerms: ['labelInfo', 'tooltip', 'info', 'help', 'explanation'],
@@ -297,6 +317,11 @@ export const selectorsMetadata: PageMetadata = {
       id: 'selectors-autocomplete',
       title: 'Autocomplete / combobox',
       searchTerms: ['combobox', 'search', 'async', 'multi-select', 'typeahead'],
+    },
+    {
+      id: 'selectors-picker-field',
+      title: 'Picker field (opens a dialog)',
+      searchTerms: ['picker', 'dialog', 'patient', 'search', 'choose'],
     },
     {
       id: 'selectors-message-states',
@@ -370,10 +395,13 @@ const EMPTY_OPTION_FILTERS: Filter<EmptyOptionFilter>[] = [
 ];
 
 export const SelectorsShowcase = () => {
+  const [pickedPatient, setPickedPatient] = createSignal('Koriander, Basil');
+  const [pickerOpen, setPickerOpen] = createSignal(false);
   const [status, setStatus] = createSignal('allocated');
   const [adjustmentType, setAdjustmentType] = createSignal<string | undefined>(
     'addition'
   );
+  const [activity, setActivity] = createSignal<string | undefined>();
   // The no-options demo: both chips seeded present so they're openable on load.
   const [emptyOptionFilter, setEmptyOptionFilter] =
     createSignal<EmptyOptionFilter>({ category: null, categories: null });
@@ -489,6 +517,80 @@ export const SelectorsShowcase = () => {
         </DashboardCard>
 
         <DashboardCard
+          id="selectors-select-error"
+          title="Select — required and error"
+        >
+          <Lead>
+            <code>error</code> switches the control to the error state, as
+            TextField's and Combobox's do: a red border,{' '}
+            <code>aria-invalid</code>, and the message with an alert icon in
+            place of <code>helperText</code>.
+          </Lead>
+          <Select
+            label="Direction"
+            required
+            options={[
+              { value: 'increase', label: 'Increase' },
+              { value: 'decrease', label: 'Decrease' },
+            ]}
+            helperText="Not shown while there is an error"
+            error="Choose a direction"
+          />
+          <FieldRow label="Reason" required>
+            <Select
+              label="Reason"
+              hideLabel
+              required
+              options={[
+                { value: 'expired', label: 'Expired' },
+                { value: 'damaged', label: 'Damaged' },
+              ]}
+            />
+          </FieldRow>
+          <Note>
+            <code>required</code> is read out as well as shown: the asterisk is{' '}
+            <code>aria-hidden</code>, so the label carries a visually hidden
+            "Required" (the trigger reads "Direction, Required"). Under{' '}
+            <code>hideLabel</code>, as in a <code>FieldRow</code>, the trigger's{' '}
+            <code>aria-label</code> carries it.
+          </Note>
+        </DashboardCard>
+
+        <DashboardCard
+          id="selectors-grouped"
+          title="Grouped combobox — pinned options, then groups"
+        >
+          <Lead>
+            One list where the alternative is two controls and an extra click.{' '}
+            <code>itemGroup</code> names the heading an item belongs under, or
+            returns <code>undefined</code> to <em>pin</em> it above the groups:
+            pinned items first, a divider, then each group behind its own
+            small-caps heading. Typing narrows the grouped items only — a pinned
+            choice is never searched for, and a group whose items all fail drops
+            out with its heading.
+          </Lead>
+          <Combobox<RouteOption>
+            label="Route"
+            items={ROUTE_OPTIONS}
+            itemToString={o => (o.group ? `Route · ${o.label}` : o.label)}
+            itemToValue={o => o.value}
+            itemGroup={o => o.group}
+            filter={(o, input) =>
+              o.label.toLocaleLowerCase().includes(input.toLocaleLowerCase())
+            }
+            renderItem={o => o.label}
+            placeholder="None"
+            value={activity()}
+            onChange={o => setActivity(o?.value)}
+            helperText="Pick a grouped row to see the group-qualified value in the field"
+          />
+          <Note>
+            The chosen campaign reads back qualified by its tier — the option
+            rows stay bare, because inside the list the heading already says it.
+          </Note>
+        </DashboardCard>
+
+        <DashboardCard
           id="selectors-label-info"
           title="Help tooltip on the label — labelInfo"
         >
@@ -551,6 +653,72 @@ export const SelectorsShowcase = () => {
                 : 'Try "amox", "500", or a code like "ORS20"'
             }
           />
+        </DashboardCard>
+
+        <DashboardCard
+          id="selectors-picker-field"
+          title="Picker field — PickerField (picks in a dialog)"
+        >
+          <Lead>
+            For a choice too big for a drop-down that needs a search of its own
+            (a record's patient): a field-shaped button showing the value, which
+            opens the owner's dialog. Nothing is typed into it. An{' '}
+            <code>endAction</code> sits inside the box, outside the button.
+          </Lead>
+          <Stack gap="md">
+            <PickerField
+              label="Patient"
+              value={pickedPatient()}
+              placeholder="Choose a patient"
+              onOpen={() => setPickerOpen(true)}
+              endAction={
+                <IconButton
+                  icon={<EditIcon />}
+                  label="Edit"
+                  onClick={() => undefined}
+                />
+              }
+            />
+            <PickerField
+              label="Patient (small, empty)"
+              size="small"
+              placeholder="Choose a patient"
+              onOpen={() => setPickerOpen(true)}
+            />
+            <PickerField
+              label="Patient (disabled)"
+              value="Koriander, Basil"
+              disabled
+              onOpen={() => undefined}
+            />
+          </Stack>
+          <Dialog
+            open={pickerOpen()}
+            onClose={() => setPickerOpen(false)}
+            title="Choose a patient"
+          >
+            <Stack gap="sm">
+              <For
+                each={[
+                  'Koriander, Basil',
+                  'Traoré, Aminata',
+                  "Kouadio, N'Guessan",
+                ]}
+              >
+                {name => (
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      setPickedPatient(name);
+                      setPickerOpen(false);
+                    }}
+                  >
+                    {name}
+                  </Button>
+                )}
+              </For>
+            </Stack>
+          </Dialog>
         </DashboardCard>
 
         <DashboardCard title="Async autocomplete — AsyncCombobox (server-paginated)">

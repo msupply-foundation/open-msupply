@@ -1,6 +1,5 @@
 use super::{
     DBType, LocationRow, MasterListFilter, MasterListLineFilter, StockLineRow, StorageConnection,
-    barcode_row::barcode,
     campaign_row::campaign,
     item_row::item,
     item_variant::item_variant_row::{ItemVariantRow, item_variant},
@@ -12,8 +11,8 @@ use super::{
 };
 
 use crate::{
-    BarcodeRow, DateFilter, EqualFilter, Item, ItemFilter, ItemRepository, ItemRow, ItemSort,
-    ItemSortField, MasterListLineRepository, NameRow, Pagination, Sort, StringFilter,
+    DateFilter, EqualFilter, Item, ItemFilter, ItemRepository, ItemRow, ItemSort, ItemSortField,
+    MasterListLineRepository, NameRow, Pagination, Sort, StringFilter,
     campaign_row::CampaignRow,
     diesel_extensions::OrderByExtensions,
     diesel_macros::{
@@ -24,6 +23,7 @@ use crate::{
     repository_error::RepositoryError,
 };
 
+use chrono::NaiveDate;
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 #[derive(Debug, PartialEq, Clone, Default)]
@@ -32,7 +32,6 @@ pub struct StockLine {
     pub item_row: ItemRow,
     pub location_row: Option<LocationRow>,
     pub supplier_name_row: Option<NameRow>,
-    pub barcode_row: Option<BarcodeRow>,
     pub item_variant_row: Option<ItemVariantRow>,
     pub vvm_status_row: Option<VVMStatusRow>,
     pub campaign_row: Option<CampaignRow>,
@@ -52,6 +51,7 @@ pub enum StockLineSortField {
     SellPricePerPack,
     VvmStatusThenExpiry,
     Campaign,
+    OnHold,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -73,6 +73,10 @@ pub struct StockLineFilter {
     pub is_active: Option<bool>,
     pub is_program_stock_line: Option<bool>,
     pub campaign_id: Option<EqualFilter<String>>,
+    pub on_hold: Option<bool>,
+    /// Expired = expiry date before `today` (a batch is usable to the end of its expiry day);
+    /// a line with no expiry date is never expired
+    pub is_expired: Option<(bool, /* today */ NaiveDate)>,
 }
 
 pub type StockLineSort = Sort<StockLineSortField>;
@@ -83,7 +87,6 @@ type StockLineJoin = (
     Option<ItemVariantRow>,
     Option<LocationRow>,
     Option<NameRow>,
-    Option<BarcodeRow>,
     Option<VVMStatusRow>,
     Option<CampaignRow>,
 );
@@ -163,6 +166,9 @@ impl<'a> StockLineRepository<'a> {
                 }
                 StockLineSortField::Campaign => {
                     apply_sort_no_case!(query, sort, campaign::name);
+                }
+                StockLineSortField::OnHold => {
+                    apply_sort!(query, sort, stock_line::on_hold);
                 }
                 StockLineSortField::VvmStatusThenExpiry => {
                     // Complex sort, not using apply_sort
@@ -303,6 +309,8 @@ impl<'a> StockLineRepository<'a> {
                 is_active,
                 is_program_stock_line,
                 campaign_id,
+                on_hold,
+                is_expired,
             } = f;
 
             // OR filters must come first
@@ -337,6 +345,21 @@ impl<'a> StockLineRepository<'a> {
 
             if let Some(is_active) = is_active {
                 query = query.filter(item::is_active.eq(is_active));
+            }
+
+            if let Some(on_hold) = on_hold {
+                query = query.filter(stock_line::on_hold.eq(on_hold));
+            }
+
+            if let Some((is_expired, today)) = is_expired {
+                query = match is_expired {
+                    true => query.filter(stock_line::expiry_date.lt(today)),
+                    false => query.filter(
+                        stock_line::expiry_date
+                            .ge(today)
+                            .or(stock_line::expiry_date.is_null()),
+                    ),
+                };
             }
 
             query = match has_packs_in_store {
@@ -384,7 +407,6 @@ fn query() -> _ {
         .left_join(item_variant::table)
         .left_join(location::table)
         .left_join(name::table)
-        .left_join(barcode::table)
         .left_join(vvm_status::table)
         .left_join(campaign::table)
 }
@@ -398,7 +420,6 @@ fn to_domain(
         item_variant_row,
         location_row,
         supplier_name_row,
-        barcode_row,
         vvm_status_row,
         campaign_row,
     ): StockLineJoin,
@@ -408,7 +429,6 @@ fn to_domain(
         item_row,
         location_row,
         supplier_name_row,
-        barcode_row,
         item_variant_row,
         vvm_status_row,
         campaign_row,
@@ -479,6 +499,16 @@ impl StockLineFilter {
         self.campaign_id = Some(filter);
         self
     }
+
+    pub fn on_hold(mut self, filter: bool) -> Self {
+        self.on_hold = Some(filter);
+        self
+    }
+
+    pub fn is_expired(mut self, is_expired: bool, today: NaiveDate) -> Self {
+        self.is_expired = Some((is_expired, today));
+        self
+    }
 }
 
 impl StockLine {
@@ -499,9 +529,7 @@ impl StockLine {
     }
 
     pub fn barcode(&self) -> Option<&str> {
-        self.barcode_row
-            .as_ref()
-            .map(|barcode_row| barcode_row.gtin.as_str())
+        self.stock_line_row.barcode.as_deref()
     }
 }
 
@@ -559,7 +587,7 @@ mod test {
         }
 
         let (_, connection, _, _) = test_db::setup_all_with_data(
-            "test_stock_line_sort",
+            "test_repository_stock_line_sort",
             MockDataInserts::none().stores().items().names().units(),
             MockData {
                 // make sure to insert in wrong order
@@ -662,6 +690,143 @@ mod test {
                 Some(mock_store_a().id)
             )
             .unwrap()
+        );
+    }
+
+    #[actix_rt::test]
+    async fn test_stock_line_on_hold() {
+        fn line_held() -> StockLineRow {
+            StockLineRow {
+                id: "line_held".to_string(),
+                store_id: mock_store_a().id,
+                item_id: mock_item_a().id,
+                on_hold: true,
+                ..Default::default()
+            }
+        }
+
+        fn line_not_held() -> StockLineRow {
+            StockLineRow {
+                id: "line_not_held".to_string(),
+                store_id: mock_store_a().id,
+                item_id: mock_item_a().id,
+                on_hold: false,
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, _, _) = test_db::setup_all_with_data(
+            "test_stock_line_on_hold",
+            MockDataInserts::none().stores().items().names().units(),
+            MockData {
+                stock_lines: vec![line_held(), line_not_held()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let repo = StockLineRepository::new(&connection);
+
+        // Filter
+        assert_eq!(
+            vec![from_row(line_held(), mock_item_a())],
+            repo.query(
+                Pagination::new(),
+                Some(StockLineFilter::new().on_hold(true)),
+                None,
+                Some(mock_store_a().id)
+            )
+            .unwrap()
+        );
+        assert_eq!(
+            vec![from_row(line_not_held(), mock_item_a())],
+            repo.query(
+                Pagination::new(),
+                Some(StockLineFilter::new().on_hold(false)),
+                None,
+                Some(mock_store_a().id)
+            )
+            .unwrap()
+        );
+
+        // Sort desc puts held lines first
+        let sort = StockLineSort {
+            key: StockLineSortField::OnHold,
+            desc: Some(true),
+        };
+        assert_eq!(
+            vec![
+                from_row(line_held(), mock_item_a()),
+                from_row(line_not_held(), mock_item_a())
+            ],
+            repo.query(Pagination::new(), None, Some(sort), Some(mock_store_a().id))
+                .unwrap()
+        );
+        // Sort asc puts them last
+        let sort = StockLineSort {
+            key: StockLineSortField::OnHold,
+            desc: Some(false),
+        };
+        assert_eq!(
+            vec![
+                from_row(line_not_held(), mock_item_a()),
+                from_row(line_held(), mock_item_a())
+            ],
+            repo.query(Pagination::new(), None, Some(sort), Some(mock_store_a().id))
+                .unwrap()
+        );
+    }
+
+    #[actix_rt::test]
+    async fn test_stock_line_is_expired() {
+        let today = NaiveDate::from_ymd_opt(2026, 11, 4).unwrap();
+        fn line(id: &str, expiry_date: Option<NaiveDate>) -> StockLineRow {
+            StockLineRow {
+                id: id.to_string(),
+                store_id: mock_store_a().id,
+                item_id: mock_item_a().id,
+                expiry_date,
+                ..Default::default()
+            }
+        }
+        let expired_yesterday = line("expired_yesterday", today.pred_opt());
+        let expires_today = line("expires_today", Some(today));
+        let expires_tomorrow = line("expires_tomorrow", today.succ_opt());
+        let no_expiry = line("no_expiry", None);
+
+        let (_, connection, _, _) = test_db::setup_all_with_data(
+            "test_stock_line_is_expired",
+            MockDataInserts::none().stores().items().names().units(),
+            MockData {
+                stock_lines: vec![
+                    expired_yesterday.clone(),
+                    expires_today.clone(),
+                    expires_tomorrow.clone(),
+                    no_expiry.clone(),
+                ],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let repo = StockLineRepository::new(&connection);
+        let ids = |is_expired: bool| {
+            let mut ids: Vec<String> = repo
+                .query_by_filter(StockLineFilter::new().is_expired(is_expired, today), None)
+                .unwrap()
+                .into_iter()
+                .map(|l| l.stock_line_row.id)
+                .collect();
+            ids.sort();
+            ids
+        };
+
+        // Stock expiring today is still usable, so not expired, matching the dashboard
+        assert_eq!(ids(true), vec![expired_yesterday.id]);
+        // Stock with no expiry date is never expired
+        assert_eq!(
+            ids(false),
+            vec![expires_today.id, expires_tomorrow.id, no_expiry.id]
         );
     }
 

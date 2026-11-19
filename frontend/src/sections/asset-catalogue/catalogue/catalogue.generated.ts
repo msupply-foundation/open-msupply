@@ -14,6 +14,7 @@ export type AssetCatalogueItemsVariables = {
     category?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     categoryId?: {
     equalTo?: string | null;
@@ -25,6 +26,7 @@ export type AssetCatalogueItemsVariables = {
     class?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     classId?: {
     equalTo?: string | null;
@@ -36,18 +38,22 @@ export type AssetCatalogueItemsVariables = {
     code?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     manufacturer?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     model?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     type?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     typeId?: {
     equalTo?: string | null;
@@ -59,10 +65,12 @@ export type AssetCatalogueItemsVariables = {
     search?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     subCatalogue?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
   } | null;
   sort?: Array<{
@@ -93,9 +101,11 @@ export type AssetCatalogueItemsResult = {
   name: string;
 } | null;
   assetCategory: {
+  id: string;
   name: string;
 } | null;
   assetType: {
+  id: string;
   name: string;
 } | null;
 }>;
@@ -103,7 +113,7 @@ export type AssetCatalogueItemsResult = {
 };
 
 export const AssetCatalogueItems = {
-  query: "query assetCatalogueItems($filter: AssetCatalogueItemFilterInput, $sort: [AssetCatalogueItemSortInput!], $page: PaginationInput) {\n  assetCatalogueItems(filter: $filter, sort: $sort, page: $page) {\n    ... on AssetCatalogueItemConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        subCatalogue\n        code\n        manufacturer\n        model\n        assetClassId\n        assetCategoryId\n        assetTypeId\n        assetClass {\n          name\n        }\n        assetCategory {\n          name\n        }\n        assetType {\n          name\n        }\n      }\n    }\n  }\n}",
+  query: "query assetCatalogueItems($filter: AssetCatalogueItemFilterInput, $sort: [AssetCatalogueItemSortInput!], $page: PaginationInput) {\n  assetCatalogueItems(filter: $filter, sort: $sort, page: $page) {\n    ... on AssetCatalogueItemConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        subCatalogue\n        code\n        manufacturer\n        model\n        assetClassId\n        assetCategoryId\n        assetTypeId\n        assetClass {\n          name\n        }\n        assetCategory {\n          id\n          name\n        }\n        assetType {\n          id\n          name\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<AssetCatalogueItemsResult, AssetCatalogueItemsVariables>;
 
 export type AssetCategoriesVariables = Record<string, never>;

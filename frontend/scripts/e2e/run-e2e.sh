@@ -65,7 +65,7 @@
 #                     runs only
 #                     e2e/specs/plugins/<profile>/ (playwright.config.ts picks
 #                     the project from the same variable). A profile is a
-#                     plugin directory name: plugins/<profile>/, whose
+#                     plugin directory name: private/plugins/<profile>/, whose
 #                     package.json `name` is the plugin code. Profiles are
 #                     listed in e2e/README.md, not here — this script names
 #                     no deployment.
@@ -99,9 +99,9 @@ FE_DIR=$(cd "$SCRIPT_DIR/../.." && pwd)
 # Resolve a plugin profile up front, before any build: an unknown one is a
 # typo, and should cost nothing.
 if [[ -n "$PLUGIN_PROFILE" ]]; then
-  PLUGIN_MANIFEST="$FE_DIR/plugins/$PLUGIN_PROFILE/package.json"
+  PLUGIN_MANIFEST="$FE_DIR/../private/plugins/$PLUGIN_PROFILE/package.json"
   if [[ "$PLUGIN_PROFILE" == */* || ! -f "$PLUGIN_MANIFEST" ]]; then
-    echo "Unknown E2E_PLUGIN_PROFILE '$PLUGIN_PROFILE': no plugins/$PLUGIN_PROFILE/package.json" >&2
+    echo "Unknown E2E_PLUGIN_PROFILE '$PLUGIN_PROFILE': no private/plugins/$PLUGIN_PROFILE/package.json" >&2
     exit 1
   fi
   if [[ ! -d "$FE_DIR/e2e/specs/plugins/$PLUGIN_PROFILE" ]]; then
@@ -343,7 +343,16 @@ if [[ "$SERVERS" -gt 1 ]]; then
   echo "Splitting the suites across $SERVERS servers"
   SPEC_GROUPS=$(node "$SCRIPT_DIR/split-specs.mjs" assign "$LIST_FILE" "$SERVERS")
   rm -f "$LIST_FILE" "$LIST_FILE.err"
-  SERVERS=$(node -p "JSON.parse(process.argv[1]).length" "$SPEC_GROUPS")
+  # String(): `node -p` colours a printed number when FORCE_COLOR is set
+  # (Claude Code sets it), and a coloured count never satisfies the slot
+  # loop's -ge test below, so it would claim every free slot.
+  SERVERS=$(node -p "String(JSON.parse(process.argv[1]).length)" "$SPEC_GROUPS")
+fi
+# Every server boots its own database and dev server — anything but a small
+# positive integer here must stop the run, not size it.
+if ! [[ "$SERVERS" =~ ^[1-9][0-9]?$ ]]; then
+  echo "Bad server count '$SERVERS' — expected a positive integer (E2E_SERVERS)" >&2
+  exit 1
 fi
 
 # Pick a free port slot per server when none was requested: slot n -> server

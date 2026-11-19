@@ -1,6 +1,6 @@
 # Internal-order DETAIL screen (spec/internal-orders S3).
 #
-# The header read is `requisition(storeId, id)` → RecordNotFound | RequisitionNode.
+# The header read is `requisition(storeId, id, type)` → RecordNotFound | RequisitionNode.
 # ⚠️ Interim divergence: the lines come from the NESTED `lines` connection
 # (client-side sort/filter/pagination), NOT a server-paginated root
 # `requisitionLines` query — that query does not exist in the pinned schema or
@@ -36,17 +36,70 @@ fragment InternalOrderLine on RequisitionLineNode {
   expiringUnits
   daysOutOfStock
   pricePerUnit
-  # Population forecast (captured at line creation under
-  # displayPopulationBasedForecasting; null on a forecast-less line). The totals
-  # back the Target stock (population) surfaces; vaccineCourses is the per-course
-  # breakdown JSON the line editor parses for its calculation display
-  # (OMS-REG-REPL-11.7).
-  forecastTotalUnits
-  forecastTotalDoses
-  vaccineCourses
+  # The line's forecast (rules › forecasting): the same selection as
+  # domain/forecast's ForecastLine fragment, which the editor's forecast block
+  # takes. Monthly demand backs the MOS column, the over-minimum filter, and the
+  # target-stock column (targetStock = target months × monthly demand).
+  forecastMethod
+  forecastMonthlyConsumption
+  targetStock
+  forecastBreakdown {
+    __typename
+    ... on AmcForecastNode {
+      averageMonthlyConsumption
+    }
+    ... on PopulationForecastNode {
+      populationServed
+      courses {
+        courseName
+        demographicName
+        numberOfDoses
+        coverageRate
+        wastageRate
+        targetPopulation
+        annualDosesPerPerson
+        lossFactor
+        annualTargetDoses
+        dosesPerUnit
+        monthlyDoses
+        monthlyUnits
+      }
+    }
+    ... on AncillaryRatioForecastNode {
+      principals {
+        itemId
+        item {
+          code
+          name
+          unitName
+        }
+        principalMonthlyConsumption
+        itemQuantity
+        ancillaryQuantity
+        wastageRate
+        ownWastageRate
+        principalUsableConsumption
+        monthlyConsumption
+      }
+    }
+  }
+  # Every method, an unavailable one with its reason — the editor's method
+  # select. Batched server-side per order, so the whole line set costs one read.
+  forecastMethodOptions {
+    method
+    isAvailable
+    unavailableReason
+  }
   optionId
   reason {
     reason
+  }
+  # The line's Activity — the campaign its stock is ordered for (issue 595).
+  # Read as a node so the editor can label a campaign the register no longer
+  # offers (spec/campaigns contract › wire trap).
+  campaign {
+    id
+    name
   }
   # The items this line's item is configured as an ancillary of — backs the
   # "Ancillary of" flag on the Name column (OMS-REG-REPL-13.7); empty when none.
@@ -76,6 +129,16 @@ fragment InternalOrderInfo on RequisitionNode {
   }
   minMonthsOfStock
   maxMonthsOfStock
+  # The ordering store's supply interval + safety buffer + delivery lead time
+  # (rules › target months of stock), null where its facility record carries no
+  # supply interval: it
+  # explains a target the store fixes (the target select's lock tooltip) and
+  # one it set (the forecast's target-months caption, OMS-REG-REPL-17.17).
+  supplyIntervalAndBuffer {
+    supplyIntervalMonths
+    safetyBufferMonths
+    deliveryLeadTimeMonths
+  }
   program {
     id
     name
@@ -161,8 +224,12 @@ fragment InternalOrderInfo on RequisitionNode {
   }
 }
 
+# `type: REQUEST` filters: the server ANDs the type onto the id + store
+# filter, so the id of a customer requisition (RESPONSE) reads as RecordNotFound — the
+# not-found alert — instead of being handed back and rendered as this kind
+# (#1746).
 query internalOrderDetail($storeId: String!, $id: String!) {
-  requisition(storeId: $storeId, id: $id) {
+  requisition(storeId: $storeId, id: $id, type: REQUEST) {
     __typename
     ... on RequisitionNode {
       ...InternalOrderInfo
@@ -194,6 +261,13 @@ mutation updateInternalOrder(
         # ignore it.
         ... on OrderingTooManyItems {
           maxItemsInEmergencyOrder
+        }
+        # A target change on a store that fixes it to its supply interval +
+        # safety buffer (rules › target months of stock) — selected so the
+        # header save can tell it from a supplier rejection by its typed
+        # __typename.
+        ... on CannotChangeTargetMonthsOfStock {
+          description
         }
         # The reasons backstop names every offending line, so the send path can
         # flag their Reason cells in the table (OMS-REG-REPL-04.81).

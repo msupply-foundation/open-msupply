@@ -1,10 +1,12 @@
-/* Snapshot cell stacks a per-line "recount this line" error message beneath
-   the count when the snapshot and current count disagree (a
-   SnapshotCountCurrentCountMismatchLine error). Tokens only. */
+/* A line's error message, stacked beneath the value of the cell it is about:
+   "recount this line" under Snapshot when the snapshot and current count
+   disagree (SnapshotCountCurrentCountMismatchLine), "some packs are reserved
+   elsewhere" under Counted (StockLineReducedBelowZero), and the card body
+   field that carries Counted's message on a card. It follows its cell's alignment: end in the
+   table's number cells, start in a card field. Tokens only. */
 .lineError {
   display: block;
   color: var(--error-main);
   font-size: var(--text-xs);
   white-space: normal;
-  text-align: end;
 }
