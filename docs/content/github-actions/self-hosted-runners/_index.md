@@ -411,15 +411,10 @@ A new server, or one being reset, can start with more than the small sample data
 
 ## Verifying
 
+Every lane should be listed, online, with the labels its role needs:
+
 ```bash
 gh api repos/msupply-foundation/open-msupply-internal/actions/runners -q '.runners[]|[.name,.status,(.labels|map(.name)|join(","))]|@tsv'
-```
-
-Then run the benchmark workflow and compare its summary against other machines:
-
-```bash
-gh workflow run integration-test-check.yaml --ref develop \
-  -f cache=both -f change=layered -f cold=false
 ```
 
 ## Decisions
