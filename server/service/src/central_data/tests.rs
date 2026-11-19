@@ -4330,7 +4330,7 @@ async fn master_lists_export_then_import_makes_no_changes() {
         .unwrap();
     let path = write_file(dir.path(), bytes);
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
 
     assert_eq!(summary.errors, vec![]);
@@ -4401,7 +4401,7 @@ async fn master_list_rows_add_and_update_by_name() {
         ]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(
         row_errors(&summary),
@@ -4426,7 +4426,7 @@ async fn master_list_rows_add_and_update_by_name() {
         master_list_sheet(vec![master_list_row(new_list), master_list_row(edited)]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(
@@ -4537,7 +4537,7 @@ async fn a_master_list_is_renamed_by_its_id_but_no_name_or_code_is_taken() {
         ])]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.tables[0].updated, 1);
@@ -4609,7 +4609,7 @@ async fn an_inactive_master_list_does_not_hold_on_to_its_name() {
         ]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(
@@ -4650,7 +4650,7 @@ async fn a_master_list_without_a_code_is_edited_and_can_be_given_one() {
         ]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.tables[0].updated, 2);
@@ -4690,7 +4690,7 @@ async fn setting_a_master_list_inactive_counts_as_a_delete() {
     let path = write_file(dir.path(), bytes);
 
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.tables[0].deleted, 1);
@@ -4755,7 +4755,7 @@ async fn a_shared_master_list_name_asks_for_the_id() {
         ])]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(
@@ -4797,7 +4797,7 @@ async fn the_missing_program_master_list_is_not_exported_or_imported() {
         ]),
     );
     let summary = CentralDataService
-        .import(&ctx, &path, &no_sessions())
+        .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     let protected =
         "missing_program is protected, as the server needs it, so import can't change it";
