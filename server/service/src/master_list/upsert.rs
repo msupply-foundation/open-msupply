@@ -110,7 +110,7 @@ mod tests {
         }
     }
 
-    // covers: OMS-REG-CDIO-01.111
+    // covers: OMS-REG-CDIO-01.122
 
     #[actix_rt::test]
     async fn a_master_list_cannot_take_another_ones_name() {
@@ -138,7 +138,7 @@ mod tests {
         );
     }
 
-    // covers: OMS-REG-CDIO-01.113
+    // covers: OMS-REG-CDIO-01.124
 
     #[actix_rt::test]
     async fn only_active_master_lists_clash_by_name() {
@@ -160,7 +160,7 @@ mod tests {
         );
     }
 
-    // covers: OMS-REG-CDIO-01.74, .112
+    // covers: OMS-REG-CDIO-01.74, .123
 
     #[actix_rt::test]
     async fn a_code_is_optional_but_unique() {
@@ -179,7 +179,7 @@ mod tests {
         upsert_master_list(&connection, &master_list("c", "Hospital")).unwrap();
     }
 
-    // covers: OMS-REG-CDIO-01.109
+    // covers: OMS-REG-CDIO-01.125
 
     #[actix_rt::test]
     async fn the_missing_program_master_list_cannot_be_saved() {

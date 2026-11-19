@@ -4380,7 +4380,7 @@ async fn a_master_list_export_searches_code_and_name_and_filters_by_status() {
     assert_eq!(matching(Some(""), None), 2);
 }
 
-// covers: OMS-REG-CDIO-01.12, .27, .35, .58, .63, .76, .107
+// covers: OMS-REG-CDIO-01.12, .27, .35, .58, .63, .76, .120
 
 #[actix_rt::test]
 async fn master_list_rows_add_and_update_by_name() {
@@ -4475,7 +4475,7 @@ async fn master_list_rows_add_and_update_by_name() {
     );
 }
 
-// covers: OMS-REG-CDIO-01.74, .111
+// covers: OMS-REG-CDIO-01.74, .122
 
 #[actix_rt::test]
 async fn a_master_list_is_renamed_by_its_id_but_no_name_or_code_is_taken() {
@@ -4547,7 +4547,7 @@ async fn a_master_list_is_renamed_by_its_id_but_no_name_or_code_is_taken() {
     );
 }
 
-// covers: OMS-REG-CDIO-01.113
+// covers: OMS-REG-CDIO-01.124
 
 #[actix_rt::test]
 async fn an_inactive_master_list_does_not_hold_on_to_its_name() {
@@ -4623,7 +4623,7 @@ async fn an_inactive_master_list_does_not_hold_on_to_its_name() {
     assert!(find_master_list(&connection, "older_eml").is_some());
 }
 
-// covers: OMS-REG-CDIO-01.112
+// covers: OMS-REG-CDIO-01.123
 
 #[actix_rt::test]
 async fn a_master_list_without_a_code_is_edited_and_can_be_given_one() {
@@ -4670,7 +4670,7 @@ async fn a_master_list_without_a_code_is_edited_and_can_be_given_one() {
     );
 }
 
-// covers: OMS-REG-CDIO-01.108
+// covers: OMS-REG-CDIO-01.121
 
 #[actix_rt::test]
 async fn setting_a_master_list_inactive_counts_as_a_delete() {
@@ -4768,7 +4768,7 @@ async fn a_shared_master_list_name_asks_for_the_id() {
     );
 }
 
-// covers: OMS-REG-CDIO-01.109
+// covers: OMS-REG-CDIO-01.125
 
 #[actix_rt::test]
 async fn the_missing_program_master_list_is_not_exported_or_imported() {
