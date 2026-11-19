@@ -4514,7 +4514,7 @@ async fn a_master_list_is_renamed_by_its_id_but_no_name_or_code_is_taken() {
                 Some("name"),
                 "Master list hiv is already named HIV program. Give this master list another name, or make one of them inactive"
             ),
-            (6, Some("code"), "master list hiv has this code"),
+            (6, Some("code"), "Master list hiv already has code HIV"),
         ]
     );
     assert_eq!(

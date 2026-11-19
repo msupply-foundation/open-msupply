@@ -191,7 +191,13 @@ fn upsert_failure(
             duplicate_name_error(row, "master list", &other_id, &master_list.name).into()
         }
         UpsertMasterListError::DuplicateCode { other_id } => row
-            .error(CODE, format!("master list {other_id} has this code"))
+            .error(
+                CODE,
+                format!(
+                    "Master list {other_id} already has code {}",
+                    master_list.code
+                ),
+            )
             .into(),
         // Unreachable here: `import_row` refuses it first.
         UpsertMasterListError::Protected => protected_error(row, MISSING_PROGRAM).into(),
