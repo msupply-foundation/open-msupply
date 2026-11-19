@@ -306,3 +306,91 @@ async fn link_skips_request_deleted_after_record_read() {
         "the deleted request must not be written back"
     );
 }
+
+/// Approving sets the approval status and leaves the request's other fields as they are now, not
+/// as the record read them
+#[actix_rt::test]
+async fn approve_keeps_request_changes_made_after_record_read() {
+    let request = request_row("approve_race_request");
+    let response = response_row("approve_race_response", &request.id);
+    let (_, connection, _, _) = setup_all_with_data(
+        "approve_keeps_request_changes_made_after_record_read",
+        MockDataInserts::none().names().stores(),
+        MockData {
+            requisitions: vec![request.clone(), response.clone()],
+            ..Default::default()
+        },
+    )
+    .await;
+
+    let record = read_record(&connection, &response.id, &request.id);
+
+    RequisitionRowRepository::new(&connection)
+        .upsert_one(&RequisitionRow {
+            comment: Some("edited after the record was read".to_string()),
+            ..request.clone()
+        })
+        .unwrap();
+
+    let result = UpdateRequestRequisitionApprovedQuantitiesProcessor
+        .try_process_record(&connection, &record)
+        .unwrap();
+    assert!(
+        matches!(result, RequisitionTransferOutput::Processed(_)),
+        "expected the approval to be written, got {result:?}"
+    );
+
+    let request_after = requisition_row(&connection, &request.id);
+    assert_eq!(
+        request_after.approval_status,
+        Some(ApprovalStatusType::Approved)
+    );
+    assert_eq!(
+        request_after.comment,
+        Some("edited after the record was read".to_string()),
+        "approving must not undo a change made after the record was read"
+    );
+}
+
+/// Finalising sets the status and finalised date and leaves the request's other fields as they
+/// are now, not as the record read them
+#[actix_rt::test]
+async fn finalise_keeps_request_changes_made_after_record_read() {
+    let request = request_row("finalise_race_request");
+    let response = response_row("finalise_race_response", &request.id);
+    let (_, connection, _, _) = setup_all_with_data(
+        "finalise_keeps_request_changes_made_after_record_read",
+        MockDataInserts::none().names().stores(),
+        MockData {
+            requisitions: vec![request.clone(), response.clone()],
+            ..Default::default()
+        },
+    )
+    .await;
+
+    let record = read_record(&connection, &response.id, &request.id);
+
+    RequisitionRowRepository::new(&connection)
+        .upsert_one(&RequisitionRow {
+            comment: Some("edited after the record was read".to_string()),
+            ..request.clone()
+        })
+        .unwrap();
+
+    let result = UpdateRequestRequisitionStatusProcessor
+        .try_process_record(&connection, &record)
+        .unwrap();
+    assert!(
+        matches!(result, RequisitionTransferOutput::Processed(_)),
+        "expected the request to be finalised, got {result:?}"
+    );
+
+    let request_after = requisition_row(&connection, &request.id);
+    assert_eq!(request_after.status, RequisitionStatus::Finalised);
+    assert_eq!(request_after.finalised_datetime, Some(datetime(4)));
+    assert_eq!(
+        request_after.comment,
+        Some("edited after the record was read".to_string()),
+        "finalising must not undo a change made after the record was read"
+    );
+}
