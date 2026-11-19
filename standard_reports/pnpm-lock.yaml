@@ -326,7 +326,7 @@ importers:
         specifier: ^5.0.1
         version: 5.1.4(webpack@5.111.1)
 
-  transactions-items-by-name/latest/convert_data_js:
+  transaction-items-by-name/latest/convert_data_js:
     dependencies:
       ts-loader:
         specifier: ^9.5.2

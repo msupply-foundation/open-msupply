@@ -1,9 +1,16 @@
 import { Amount, Column, Crosstab, ItemByName, Row, Show } from "./types";
 
+// Ignoring case. Not localeCompare: the server's JS engine (Boa) compares by
+// character code there, which puts every capitalised name first.
+const compareText = (a: string, b: string) => {
+  const [x, y] = [a.toLowerCase(), b.toLowerCase()];
+  return x < y ? -1 : x > y ? 1 : 0;
+};
+
 const byNameThenCode = (
   a: { name: string; code: string },
   b: { name: string; code: string },
-) => a.name.localeCompare(b.name) || a.code.localeCompare(b.code);
+) => compareText(a.name, b.name) || compareText(a.code, b.code);
 
 const add = (total: Amount, amount: Amount) => {
   total.quantity += amount.quantity;

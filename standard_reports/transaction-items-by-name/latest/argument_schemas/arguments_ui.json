@@ -20,7 +20,21 @@
       "options": {
         "show": [
           ["OUTBOUND_SHIPMENT", "T#report.sales-to-customers"],
-          ["INBOUND_SHIPMENT", "T#report.purchases-from-suppliers"]
+          ["INBOUND_SHIPMENT", "T#report.purchases-from-suppliers"],
+          ["PRESCRIPTION", "T#report.dispensing-to-patients"],
+          ["CUSTOMER_RETURN", "T#report.returns-from-customers"],
+          ["SUPPLIER_RETURN", "T#report.returns-to-suppliers"]
+        ]
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/dateBasis",
+      "label": "T#report.date-basis",
+      "options": {
+        "show": [
+          ["CONFIRMED", "T#report.confirmed-date"],
+          ["SHIPPED", "T#report.shipped-date"]
         ]
       }
     },
@@ -44,6 +58,43 @@
         "min": "#/properties/after",
         "dateAsEndOfDay": true
       }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/stockTransfers",
+      "label": "T#report.stock-transfers",
+      "options": {
+        "show": [
+          ["INCLUDE", "T#report.include-stock-transfers"],
+          ["EXCLUDE", "T#report.exclude-stock-transfers"],
+          ["ONLY", "T#report.only-stock-transfers"]
+        ]
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/nameSearch",
+      "label": "T#report.name-search"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/donorSearch",
+      "label": "T#report.donor-search"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/itemSearch",
+      "label": "T#report.item-search"
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/itemCategory",
+      "label": "T#report.item-category"
+    },
+    {
+      "type": "MasterListSearch",
+      "scope": "#/properties/masterListId",
+      "label": "T#label.master-list"
     }
   ]
 }

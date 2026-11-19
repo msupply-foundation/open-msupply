@@ -705,7 +705,7 @@ fn now_at(
     Ok(datetime.into())
 }
 
-fn generate_report(
+pub(crate) fn generate_report(
     report: &ResolvedReportDefinition,
     data: serde_json::Value,
     arguments: Option<serde_json::Value>,

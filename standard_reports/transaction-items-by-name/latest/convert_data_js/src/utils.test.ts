@@ -46,6 +46,14 @@ describe("crosstab", () => {
     ]);
   });
 
+  it("sorts names ignoring case (OMS-REG-RPT-13.2)", () => {
+    const result = crosstab([
+      row({ name_id: "upper", name_code: "U", name_name: "Zebra Clinic" }),
+      row({ name_id: "lower", name_code: "L", name_name: "apple clinic" }),
+    ]);
+    expect(result.columns.map((column) => column.name)).toEqual(["apple clinic", "Zebra Clinic"]);
+  });
+
   it("leaves a cell empty where the item had nothing with that name (OMS-REG-RPT-13.3)", () => {
     const [amoxicillin, paracetamol] = crosstab(rows).rows;
     expect(amoxicillin.cells).toEqual([null, { quantity: 20, value: 4 }]);

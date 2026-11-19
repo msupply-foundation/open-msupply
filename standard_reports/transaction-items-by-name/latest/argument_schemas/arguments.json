@@ -12,8 +12,20 @@
         "transactionType": {
           "description": "Transaction type",
           "type": "string",
-          "enum": ["OUTBOUND_SHIPMENT", "INBOUND_SHIPMENT"],
+          "enum": [
+            "OUTBOUND_SHIPMENT",
+            "INBOUND_SHIPMENT",
+            "PRESCRIPTION",
+            "CUSTOMER_RETURN",
+            "SUPPLIER_RETURN"
+          ],
           "default": "OUTBOUND_SHIPMENT"
+        },
+        "dateBasis": {
+          "description": "Which date the date range applies to",
+          "type": "string",
+          "enum": ["CONFIRMED", "SHIPPED"],
+          "default": "CONFIRMED"
         },
         "after": {
           "description": "From date",
@@ -26,9 +38,40 @@
           "type": ["string", "null"],
           "format": "date-time",
           "default": null
+        },
+        "stockTransfers": {
+          "description": "Whether to include stock transfers between stores",
+          "type": "string",
+          "enum": ["INCLUDE", "EXCLUDE", "ONLY"],
+          "default": "INCLUDE"
+        },
+        "nameSearch": {
+          "description": "Customer or supplier code or name",
+          "type": ["string", "null"],
+          "default": null
+        },
+        "donorSearch": {
+          "description": "Donor code or name",
+          "type": ["string", "null"],
+          "default": null
+        },
+        "itemSearch": {
+          "description": "Item code or name",
+          "type": ["string", "null"],
+          "default": null
+        },
+        "itemCategory": {
+          "description": "Item category",
+          "type": ["string", "null"],
+          "default": null
+        },
+        "masterListId": {
+          "description": "Master list",
+          "type": ["string", "null"],
+          "default": null
         }
       },
-      "required": ["show", "transactionType"]
+      "required": ["show", "transactionType", "dateBasis", "stockTransfers"]
     }
   },
   "type": "object",
