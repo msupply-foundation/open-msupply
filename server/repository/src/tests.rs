@@ -1038,8 +1038,8 @@ mod repository_test {
         let with_shipment = ids(RequisitionFilter::new().a_shipment_has_been_created(true));
         let without_shipment = ids(RequisitionFilter::new().a_shipment_has_been_created(false));
 
-        // The bug needs an invoice with no requisition: its NULL in the
-        // sub-select used to blank the "no shipment" set.
+        // This needs an invoice with no requisition: its NULL in the
+        // sub-select would blank the "no shipment" set.
         let unlinked_invoices = sql_query(r#"select id from invoice where requisition_id is null"#)
             .load::<Id>(connection.lock().connection())
             .unwrap();
