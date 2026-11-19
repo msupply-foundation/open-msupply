@@ -32,6 +32,24 @@ To find the latest log file you can run `ls -r ~/actions-runner/_diag | tail -1`
 
 To see the end of that log file use `tail ~/actions-runner/_diag/FILENAME_FROM_COMMAND_ABOVE`
 
+### Lanes
+
+The mac mini runs several runner instances ("lanes"), each taking one job at a time, all with the same labels (`self-hosted,macOS`). Its jobs are mostly short PR checks - the front end check (`frontend-check-test.yaml`, whose check-and-build job and accessibility scan run side by side) and the React client checks - plus the Android APK, the mac demo and the server build. With several lanes, a long build holds one lane rather than every PR check.
+
+Each lane keeps Node 24 in its own tool cache (`actions/setup-node`), `.github/scripts/frontend-check-setup.sh` installs pnpm there once per version, and pnpm's store and Playwright's browsers stay on the mac between jobs. The front end check's "behaviour anchors" step needs `python3`, which the Xcode Command Line Tools provide.
+
+To add a lane, register another runner instance in its own directory, then install it as a service:
+
+```bash
+lane=2
+mkdir -p ~/actions-runner-$lane && cd ~/actions-runner-$lane
+# Download and unpack the runner as GitHub's "New self-hosted runner" page shows, then:
+TOKEN=$(gh api -X POST repos/msupply-foundation/open-msupply-internal/actions/runners/registration-token -q .token)
+./config.sh --unattended --url https://github.com/msupply-foundation/open-msupply-internal \
+  --token "$TOKEN" --name "tmfmacmini-$lane" --labels self-hosted,macOS
+./svc.sh install && ./svc.sh start
+```
+
 ## Testing a workflow before it is merged
 
 A `workflow_dispatch` workflow can be run from a branch, with the branch's own version of the workflow file, before it is merged anywhere:
