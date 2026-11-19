@@ -68,6 +68,15 @@ impl<'a> Row<'a> {
         self.headers.iter().any(|header| header == column)
     }
 
+    /// The column the row found its record by: `id` when it has one, else the lookup key's.
+    pub fn found_by<'c>(&self, key_column: &'c str) -> &'c str {
+        if self.text("id").is_some() {
+            "id"
+        } else {
+            key_column
+        }
+    }
+
     /// `None` when the column is missing or the cell is blank.
     pub fn text(&self, column: &str) -> Option<String> {
         self.cell(column)
@@ -213,6 +222,23 @@ mod tests {
             assert_eq!(row.cell("missing"), None);
             assert!(!row.has("missing"));
         });
+    }
+
+    #[test]
+    fn found_by_is_id_when_the_row_has_one() {
+        let headers: Vec<String> = ["id", "code"].map(String::from).to_vec();
+        let found_by = |cells: [&str; 2]| {
+            let cells: Vec<String> = cells.map(String::from).to_vec();
+            let row = Row {
+                sheet: "table",
+                number: 2,
+                headers: &headers,
+                cells: &cells,
+            };
+            row.found_by("code").to_string()
+        };
+        assert_eq!(found_by(["a1", "A"]), "id");
+        assert_eq!(found_by(["", "A"]), "code");
     }
 
     // covers: OMS-REG-CDIO-01.27

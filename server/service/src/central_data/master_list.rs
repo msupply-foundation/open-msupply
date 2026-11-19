@@ -174,9 +174,8 @@ impl SheetImport for MasterListSheet {
 
 /// On the column the row found it by.
 fn protected_error(row: &Row, name: &str) -> RowError {
-    let column = if row.text(ID).is_some() { ID } else { NAME };
     row.error(
-        column,
+        row.found_by(NAME),
         format!("{name} is protected, as the server needs it, so import can't change it"),
     )
 }

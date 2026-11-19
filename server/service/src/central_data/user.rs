@@ -454,9 +454,8 @@ fn upsert_failure(row: &Row, error: UpsertUserError) -> RowFailure {
 
 /// On the column the row found the user by. `name` is their saved username, else the row's id.
 fn protected_error(row: &Row, name: &str) -> RowError {
-    let column = if row.text(ID).is_some() { ID } else { USERNAME };
     row.error(
-        column,
+        row.found_by(USERNAME),
         format!("{name} is protected, as the server needs it, so import can't change it"),
     )
 }
