@@ -437,9 +437,12 @@ pub fn find_reference<T: KeyedTable>(
         lookup_reference(table, id.as_deref(), code.as_deref(), narrow)?
             .map(Some)
             .map_err(|error| {
-                row.error(
-                    error.column(code_column, id_column),
-                    error.message(code.as_deref()),
+                error.to_row_error(
+                    row.sheet,
+                    row.number,
+                    code_column,
+                    id_column,
+                    code.as_deref(),
                 )
             }),
     )
@@ -453,16 +456,29 @@ pub struct ReferenceError {
 }
 
 impl ReferenceError {
-    pub fn column<'c>(&self, code_column: &'c str, id_column: &'c str) -> &'c str {
-        if self.unknown_id {
-            id_column
-        } else {
-            code_column
+    /// The error on the sheet's row, in the id column when the id is to blame. `code` is the
+    /// row's code cell, which the message quotes.
+    pub fn to_row_error(
+        &self,
+        sheet: &str,
+        row: u32,
+        code_column: &str,
+        id_column: &str,
+        code: Option<&str>,
+    ) -> RowError {
+        RowError {
+            sheet: sheet.to_string(),
+            row: Some(row),
+            column: Some(
+                if self.unknown_id {
+                    id_column
+                } else {
+                    code_column
+                }
+                .to_string(),
+            ),
+            message: self.error.message(code.unwrap_or_default()),
         }
-    }
-
-    pub fn message(&self, code: Option<&str>) -> String {
-        self.error.message(code.unwrap_or_default())
     }
 }
 

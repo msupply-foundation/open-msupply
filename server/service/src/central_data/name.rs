@@ -309,9 +309,12 @@ impl SheetImport for NameSheet {
                     None
                 }
                 Err(e) => {
-                    errors.push(row.error(
-                        e.column(SUPPLYING_STORE_CODE, SUPPLYING_STORE_ID),
-                        e.message(code.as_deref()),
+                    errors.push(e.to_row_error(
+                        row.sheet,
+                        row.number,
+                        SUPPLYING_STORE_CODE,
+                        SUPPLYING_STORE_ID,
+                        code.as_deref(),
                     ));
                     None
                 }
@@ -467,12 +470,6 @@ impl NameSheet {
         let names = NameRowRepository::new(connection);
         let mut errors = Vec::new();
         for later in self.later.drain(..) {
-            let error = |column: &str, message: String| RowError {
-                sheet: later.sheet.clone(),
-                row: Some(later.row),
-                column: Some(column.to_string()),
-                message,
-            };
             let store_id = match lookup_reference(
                 &stores,
                 later.id.as_deref(),
@@ -481,9 +478,12 @@ impl NameSheet {
             )? {
                 Ok(store_id) => store_id,
                 Err(e) => {
-                    errors.push(error(
-                        e.column(SUPPLYING_STORE_CODE, SUPPLYING_STORE_ID),
-                        e.message(later.code.as_deref()),
+                    errors.push(e.to_row_error(
+                        &later.sheet,
+                        later.row,
+                        SUPPLYING_STORE_CODE,
+                        SUPPLYING_STORE_ID,
+                        later.code.as_deref(),
                     ));
                     continue;
                 }
@@ -499,7 +499,12 @@ impl NameSheet {
                 Ok(()) => {}
                 Err(UpsertNameError::DatabaseError(error)) => return Err(error),
                 // Unreachable: its row saved the rest of the name, and the store was just found.
-                Err(_) => errors.push(error(SUPPLYING_STORE_ID, NOT_FOUND.to_string())),
+                Err(_) => errors.push(RowError {
+                    sheet: later.sheet,
+                    row: Some(later.row),
+                    column: Some(SUPPLYING_STORE_ID.to_string()),
+                    message: NOT_FOUND.to_string(),
+                }),
             }
         }
         Ok(errors)
