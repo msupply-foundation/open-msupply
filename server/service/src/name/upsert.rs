@@ -9,18 +9,16 @@ use repository::{
 pub enum UpsertNameError {
     CodeRequired,
     NameRequired,
-    /// Another name of the same type has the code, which would make lookups by code and type
-    /// ambiguous. Deleted names don't count.
+    /// Another live name of this type has the code, which would make lookups ambiguous.
     DuplicateCode {
         other_id: String,
     },
-    /// A system name, such as the inventory adjustment name, which the server relies on.
+    /// A system name, which the server relies on.
     Protected,
-    /// References and `custom_data` are checked only when a save changes them, as sync can save
-    /// a supplying store that hasn't arrived yet.
+    /// References and `custom_data` are checked only when the save changes them, as sync can save
+    /// a supplying store before it arrives.
     SupplyingStoreNotFound,
     CurrencyNotFound,
-    /// `custom_data` isn't JSON.
     InvalidCustomData,
     DatabaseError(RepositoryError),
 }
@@ -34,7 +32,7 @@ impl From<RepositoryError> for UpsertNameError {
 #[derive(Debug, PartialEq)]
 pub enum DeleteNameError {
     Protected,
-    /// A store, or a record such as an invoice, refers to the name.
+    /// See `NameRowRepository::used_by`.
     InUse(NameUser),
     DatabaseError(RepositoryError),
 }
@@ -99,8 +97,8 @@ fn validate(
     }
     let repo = NameRowRepository::new(connection);
     let is_live = |name: &NameRow| name.deleted_datetime.is_none();
-    // Only a save that brings in the clash is checked, so names already sharing a code stay
-    // editable. A type change brings one in, as the code then meets other names.
+    // Only a save that brings in the clash is checked, so existing duplicates stay editable. A type
+    // change counts, as the code meets other names.
     let saved_same_type = saved.filter(|saved| saved.r#type == row.r#type);
     if let Some(other_id) = other_active_with_key(
         saved_same_type,
@@ -119,7 +117,7 @@ fn validate(
     )? {
         return Err(UpsertNameError::DuplicateCode { other_id });
     }
-    // What the save changes: a saved value, though no longer valid, stays editable.
+    // A saved value that's no longer valid stays editable.
     let changed = |value: fn(&NameRow) -> &Option<String>| {
         value(row)
             .as_ref()

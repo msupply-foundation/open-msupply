@@ -125,9 +125,8 @@ impl KeyedTable for UserAccountRowRepository<'_> {
     }
 }
 
-/// Names, looked up by code among the names of one type, as a code can belong to a name of each
-/// type. With no type, by code among every type. Deleted names are found too, so a row can restore
-/// one.
+/// Looked up by code within `r#type`, as a code can belong to a name of each type; with no type,
+/// among every type. Deleted names are found too, so a row can restore one.
 pub struct NamesOfType<'a> {
     pub repo: NameRowRepository<'a>,
     pub r#type: Option<NameRowType>,

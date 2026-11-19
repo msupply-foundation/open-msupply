@@ -317,7 +317,7 @@ describe('ExportCard', () => {
     });
   });
 
-  it('gives names a code or name search and no Status filter, leaving out patients (OMS-REG-CDIO-01.46, .132)', async () => {
+  it('gives names a code or name search and no Status filter (OMS-REG-CDIO-01.46)', async () => {
     open();
     expect(shown.fields['central-data-export-name-search']!.placeholder).toBe(
       'label.code-or-name-contains'
@@ -326,7 +326,6 @@ describe('ExportCard', () => {
 
     shown.checkboxes['central-data-export-name']!.onChange(true);
     await settle();
-    // No type picked, so the server keeps every type but patients.
     expect(countRequests().at(-1)).toEqual({
       tables: [{ table: 'NAME', contains: null, isActive: null }],
     });

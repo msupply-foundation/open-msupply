@@ -68,7 +68,7 @@ impl<'a> Row<'a> {
         self.headers.iter().any(|header| header == column)
     }
 
-    /// The column the row found its record by: `id` when it has one, else the lookup key's.
+    /// `id` when the row has one, else `key_column`.
     pub fn found_by<'c>(&self, key_column: &'c str) -> &'c str {
         if self.text("id").is_some() {
             "id"

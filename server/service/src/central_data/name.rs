@@ -82,7 +82,7 @@ const COLUMNS: &[&str] = &[
     DELETE_COLUMN,
 ];
 
-/// Every type but patients, who are imported on their own.
+/// No `PATIENT`: patients are imported on their own.
 const TYPES: &[(&str, NameRowType)] = &[
     ("FACILITY", NameRowType::Facility),
     ("BUILD", NameRowType::Build),
@@ -92,11 +92,10 @@ const TYPES: &[(&str, NameRowType)] = &[
     ("OTHERS", NameRowType::Others),
 ];
 
-/// Matched by `id`, else `code` and `type` together, as a code can belong to a name of each type.
-/// On an update a blank cell keeps the value, except in the optional columns, where it clears it.
-/// A `delete` row marks the name deleted, so what refers to it still finds it. Deleted names are
-/// exported with `DELETE`, so they import unchanged; a row for one without `DELETE` restores it.
-/// Patients and system names are neither exported nor imported.
+/// Matched by `id`, else `code` and `type` together. On an update a blank cell keeps the value,
+/// except in the optional columns, where it clears it. Deleted names export with `DELETE`, so they
+/// import unchanged; a row without `DELETE` restores one. Patients and system names are neither
+/// exported nor imported.
 pub(super) struct NameTable;
 
 impl ImportTable for NameTable {
@@ -144,8 +143,7 @@ impl ImportTable for NameTable {
         filter: &ExportFilter,
     ) -> Result<Vec<Vec<Value>>, RepositoryError> {
         let references = References::load(connection)?;
-        // In one query: patients aren't exported, and the export counts the rest against the
-        // import cap first.
+        // One query: the export has already checked the row count against the import cap.
         Ok(NameRowRepository::new(connection)
             .query_by_filter(name_filter(filter))?
             .into_iter()
@@ -185,11 +183,9 @@ struct NameSheet {
     references: References,
 }
 
-/// The tables a name refers to, for rows to find their supplying store and currency in and the
-/// cells that show their codes. Both are small. Currencies come on an earlier sheet, so they don't
-/// change while the name sheet runs, and no sheet adds stores yet.
-// shortcut: a supplying store must be saved. Once a store sheet imports, the spec has a name find
-// its supplying store after that sheet, so a name can refer to a store added in the same file.
+/// Read once: both are small, and neither changes while the name sheet runs.
+// shortcut: a supplying store must already be saved. Once a store sheet imports, find it after
+// that sheet, as the spec says, so a file can add both.
 struct References {
     stores: InMemory<StoreRow>,
     currencies: InMemory<CurrencyRow>,
@@ -223,9 +219,8 @@ impl SheetImport for NameSheet {
         let id = row.text(ID);
         let code = row.text(CODE);
 
-        // The id's record is checked before `find_record`, which looks among the row's type only:
-        // that way a patient or a type change is named as such, and a new id beside a code that
-        // only another type has still adds a name.
+        // Before `find_record`, which looks only within the row's type: a patient or a type change
+        // gets its own error, and a new id beside another type's code still adds a name.
         let repo = NameRowRepository::new(connection);
         if let Some(id) = &id
             && let Some(saved) = repo.find_one_by_id(id)?
@@ -234,7 +229,6 @@ impl SheetImport for NameSheet {
                 errors.push(patient_error(row, &saved));
                 return Err(RowFailure::Invalid(errors));
             }
-            // The type is part of the lookup key, so import never changes it.
             if let Some(r#type) = r#type.as_ref().filter(|r#type| **r#type != saved.r#type) {
                 errors.push(row.error(
                     TYPE,
@@ -261,8 +255,7 @@ impl SheetImport for NameSheet {
             id.as_deref(),
             code.as_deref(),
             |saved| &saved.name,
-            // A row with no id never finds a patient, and a deleted name doesn't make a live name's
-            // code ambiguous.
+            // Never a patient; a deleted name doesn't make a live one's code ambiguous.
             |names| {
                 let names = names
                     .into_iter()
@@ -380,7 +373,7 @@ impl SheetImport for NameSheet {
             created_datetime: saved.and_then(|name| name.created_datetime),
             // A row without `DELETE` restores a deleted name.
             deleted_datetime: None,
-            // No column: kept as saved, as are a patient's fields, which a name doesn't use.
+            // No column: kept as saved.
             ..saved.cloned().unwrap_or_default()
         };
 
@@ -418,7 +411,7 @@ impl NameSheet {
         existing: Option<NameRow>,
         mut errors: Vec<RowError>,
     ) -> Result<RowOutcome, RowFailure> {
-        // Already gone, as an exported deleted name is: the row changes nothing.
+        // Already deleted, as an exported deleted name is: unchanged.
         let Some(saved) = existing.filter(|saved| saved.deleted_datetime.is_none()) else {
             return already_deleted(row, CODE, errors);
         };
@@ -477,8 +470,8 @@ impl NameSheet {
     }
 }
 
-/// A row that gives the saved supplying store's id alone, as an export does for a store sync
-/// hasn't brought yet, keeps it.
+/// Whether the row gives only the saved supplying store's id, as exported for a store sync hasn't
+/// brought yet.
 fn keeps_saved_store(row: &Row, saved: Option<&NameRow>) -> bool {
     row.text(SUPPLYING_STORE_CODE).is_none()
         && row.text(SUPPLYING_STORE_ID).is_some_and(|id| {
@@ -486,7 +479,6 @@ fn keeps_saved_store(row: &Row, saved: Option<&NameRow>) -> bool {
         })
 }
 
-/// On the column the row found it by.
 fn protected_error(row: &Row, name: &str) -> RowError {
     row.error(
         row.found_by(CODE),
@@ -542,14 +534,14 @@ fn type_label(r#type: &NameRowType) -> String {
     }
 }
 
-/// Saved in UTC, so written with a `Z` rather than read as the reader's own time.
+/// Saved in UTC, so written with a `Z`.
 fn datetime_cell(datetime: Option<NaiveDateTime>) -> Value {
     datetime
         .map(|datetime| datetime.format("%Y-%m-%dT%H:%M:%SZ").to_string())
         .into()
 }
 
-/// Every name an export can hold: neither a patient nor a system name. Deleted names count.
+/// Neither a patient nor a system name; deleted names included.
 fn exportable() -> NameRowFilter {
     NameRowFilter {
         r#type: Some(EqualFilter {

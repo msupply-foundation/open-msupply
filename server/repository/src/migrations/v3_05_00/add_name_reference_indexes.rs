@@ -1,8 +1,7 @@
 use crate::migrations::*;
 
-/// Deleting a name checks every record that shows it, one column at a time. These columns had no
-/// index, so each check read the whole table. A nullable column's index holds only the rows that
-/// have a name, as most have none.
+/// `NameRowRepository::used_by` checks these columns, which had no index. A nullable column
+/// indexes only the rows that have a name.
 pub(crate) struct Migrate;
 
 impl MigrationFragment for Migrate {

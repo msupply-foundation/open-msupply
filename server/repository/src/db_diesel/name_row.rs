@@ -220,8 +220,8 @@ pub struct NameOmsFieldsRow {
     pub properties: Option<String>,
 }
 
-/// A kind of record that shows a name, so the name can't be deleted. Joins that only describe the
-/// name, such as which stores see it, its master lists, tags, insurance and contacts, aren't here.
+/// A record that shows a name, so the name can't be deleted. Joins that only describe the name
+/// (store visibility, master lists, tags, insurance, contacts) aren't here.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum NameUser {
     Store,
@@ -241,14 +241,13 @@ pub enum NameUser {
 }
 
 impl NameRow {
-    /// One of the names the server records its own work against, such as inventory adjustments.
-    /// The server finds them by exact code, so only that code makes one.
+    /// The server finds its system names by exact code, so a padded code is an ordinary name.
     pub fn is_system_name(&self) -> bool {
         SYSTEM_NAME_CODES.contains(&self.code.as_str())
     }
 }
 
-/// `NameRow::is_system_name` in SQL, or its opposite, for any query over the name table.
+/// `NameRow::is_system_name` in SQL.
 pub(crate) fn system_name_filter<QS>(
     is_system_name: bool,
 ) -> Box<dyn BoxableExpression<QS, DBType, SqlType = diesel::sql_types::Bool>>
@@ -354,8 +353,8 @@ impl<'a> NameRowRepository<'a> {
         Ok(())
     }
 
-    /// The first kind of record found that shows the name, through any of its links: each table
-    /// here is its link-resolving view, so a record pointing at a merged name's link counts.
+    /// The first kind of record found that shows the name. Queries the link-resolving views, so a
+    /// merged name's records count.
     pub fn used_by(&self, name_id: &str) -> Result<Option<NameUser>, RepositoryError> {
         use super::{
             assets::asset_row::asset, barcode_proposal_row::barcode_proposal,
@@ -376,8 +375,7 @@ impl<'a> NameRowRepository<'a> {
                 }
             };
         }
-        // One column per check, each with its own index: an OR across columns resolved through
-        // separate link joins makes Postgres read the whole table.
+        // One column per check: an OR across link-joined columns makes Postgres scan the table.
         check!(
             NameUser::Store,
             store::table.filter(store::name_id.eq(name_id))
@@ -450,7 +448,7 @@ impl<'a> NameRowRepository<'a> {
             NameUser::BarcodeProposal,
             barcode_proposal::table.filter(barcode_proposal::manufacturer_id.eq(name_id))
         );
-        // Holds the name's id itself, not a link. A deleted asset no longer shows it.
+        // The name's id, not a link. A deleted asset doesn't count.
         check!(
             NameUser::Asset,
             asset::table.filter(
@@ -509,8 +507,7 @@ impl<'a> NameRowRepository<'a> {
             .load(self.connection.lock().connection())?)
     }
 
-    /// Patients included, unlike `NameRepository`, which lists a store's names. Sorted by code,
-    /// then type, then id.
+    /// Unlike `NameRepository`, not scoped to a store, and patients included.
     pub fn query_by_filter(&self, filter: NameRowFilter) -> Result<Vec<NameRow>, RepositoryError> {
         Ok(filtered(filter)
             .order((name::code.asc(), name::type_.asc(), name::id.asc()))
@@ -735,7 +732,6 @@ mod test {
 
     // covers: OMS-REG-CDIO-01.135
 
-    // Records that show a name count; joins that only describe it, and deleted assets, don't.
     #[actix_rt::test]
     async fn used_by_counts_records_that_show_a_name_but_not_its_joins() {
         use crate::{
@@ -814,7 +810,6 @@ mod test {
         assert_eq!(names.used_by("visible").unwrap(), None);
     }
 
-    // A record pointing at a merged name's link still uses the name it was merged into.
     #[actix_rt::test]
     async fn used_by_follows_merged_links() {
         use crate::{
