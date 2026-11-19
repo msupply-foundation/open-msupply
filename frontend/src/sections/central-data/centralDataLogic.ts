@@ -54,6 +54,13 @@ export const TABLES: {
     hasStatus: true,
   },
   {
+    value: 'NAME',
+    labelKey: 'label.names',
+    sheet: 'name',
+    searchKey: 'label.code-or-name-contains',
+    hasStatus: false,
+  },
+  {
     value: 'USER',
     labelKey: 'label.users',
     sheet: 'user',
