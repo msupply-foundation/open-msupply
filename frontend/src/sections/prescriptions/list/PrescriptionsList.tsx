@@ -22,8 +22,8 @@ import {
   CommentHeader,
   getCellDefinition,
   getDateCell,
+  getDateTimeCell,
   getNumberCell,
-  getTimeCell,
 } from '../../../ui/elements/table/tableHelpers';
 import { remToPx } from '../../../ui/utils/rem';
 import { createTableConfig } from '../../../api/createTableConfig';
@@ -299,20 +299,17 @@ const PrescriptionsList: Component = () => {
       // (OMS-REG-DIS-03.49); its server sort key is the same coalescence.
       c: { accessor: prescriptionDateOf, id: 'prescriptionDatetime' },
       sortKey: 'invoiceDatetime',
-      header: () => t('label.dispensed-date'),
-      ...getDateCell(),
-      ...width(7),
+      // A Simple store finds a visit by when it was (rules › Dispensing
+      // records): the date and the time in one column, so sorting by it
+      // orders the day's visits too.
+      header: () =>
+        simpleStore() ? t('label.dispensed') : t('label.dispensed-date'),
+      ...(simpleStore() ? getDateTimeCell() : getDateCell()),
+      ...width(9.5),
     },
-    // A Simple store finds a visit by when it was and what was given (rules ›
-    // Dispensing records): the dispensed date's time, and the medicines.
+    // And by what was given.
     ...(simpleStore()
       ? [
-          {
-            c: { accessor: prescriptionDateOf, id: 'prescriptionTime' },
-            header: () => t('label.time'),
-            ...getTimeCell<PrescriptionRow>(),
-            ...width(5),
-          },
           {
             // One line, cut short; a clipped cell shows the whole list on
             // hover (the table's own reveal).

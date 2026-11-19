@@ -105,7 +105,7 @@ describe('prescriptionsToCsv (OMS-REG-DIS-03.52 — the list columns, in file fo
   });
 
   // OMS-REG-DIS-12.220
-  it('carries Time and Medicines after the date in a store on the Simple screen', () => {
+  it('carries the date and time in one Dispensed column, then Medicines, in a store on the Simple screen', () => {
     const csv = prescriptionsToCsv(
       [
         {
@@ -136,19 +136,21 @@ describe('prescriptionsToCsv (OMS-REG-DIS-03.52 — the list columns, in file fo
       'label.name',
       'label.status',
       'label.invoice-number',
-      'label.dispensed-date',
-      'label.time',
+      'label.dispensed',
       'label.medicines',
       'label.reference',
       'label.comment',
     ]);
     expect(line).toContain('"Paracetamol 500mg (20), ORS sachet (2)"');
+    // The date then the time, as the column shows them.
+    expect(line).toMatch(/,\S+ \d{1,2}:\d{2}( [AP]M)?,/);
   });
 
   // OMS-REG-DIS-12.221
-  it('has no Time or Medicines column in a store on the list', () => {
+  it('keeps Dispensed date, with no Medicines column, in a store on the list', () => {
     const csv = prescriptionsToCsv([row]);
-    expect(csv).not.toContain('label.time');
+    expect(csv).toContain('label.dispensed-date');
+    expect(csv).not.toContain('label.dispensed,');
     expect(csv).not.toContain('label.medicines');
   });
 

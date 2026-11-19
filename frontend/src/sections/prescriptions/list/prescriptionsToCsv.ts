@@ -28,8 +28,9 @@ type PrescriptionRow = PrescriptionsResult['invoices']['nodes'][number];
 // Category and Patient type on the reference store) trail the list's own, in
 // the same order and with the same display strings the table renders.
 //
-// In a store that dispenses on the Simple screen the file carries the list's
-// Time and Medicines columns too, after the date (rules › Dispensing records).
+// In a store that dispenses on the Simple screen the file follows the list: the
+// date and time in one Dispensed column, then Medicines (rules › Dispensing
+// records).
 export const prescriptionsToCsv = (
   rows: PrescriptionRow[],
   customFields: CustomFieldDef[] = [],
@@ -41,8 +42,8 @@ export const prescriptionsToCsv = (
     t('label.name'),
     t('label.status'),
     t('label.invoice-number'),
-    t('label.dispensed-date'),
-    ...(simple ? [t('label.time'), t('label.medicines')] : []),
+    simple ? t('label.dispensed') : t('label.dispensed-date'),
+    ...(simple ? [t('label.medicines')] : []),
     t('label.reference'),
     t('label.comment'),
     ...cf.fields,
@@ -51,13 +52,10 @@ export const prescriptionsToCsv = (
     shownPatientName(row.otherPartyName, row.isForUnnamedPatient),
     statusLabel(asPrescriptionStatus(row.status)),
     row.invoiceNumber,
-    exportDate(prescriptionDateOf(row)),
-    ...(simple
-      ? [
-          localisedTime(prescriptionDateOf(row)),
-          medicinesGiven(row.lines?.nodes ?? []),
-        ]
-      : []),
+    simple
+      ? `${exportDate(prescriptionDateOf(row))} ${localisedTime(prescriptionDateOf(row))}`
+      : exportDate(prescriptionDateOf(row)),
+    ...(simple ? [medicinesGiven(row.lines?.nodes ?? [])] : []),
     row.theirReference,
     row.comment,
     ...cf.values(row.customFields),
