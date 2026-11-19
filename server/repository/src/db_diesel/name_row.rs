@@ -452,12 +452,16 @@ impl<'a> NameRowRepository<'a> {
             NameUser::BarcodeProposal,
             barcode_proposal::table.filter(barcode_proposal::manufacturer_id.eq(name_id))
         );
-        // The name's id, not a link. A deleted asset doesn't count.
+        // `donor_name_id` holds a name link id and has no view. A deleted asset doesn't count.
         check!(
             NameUser::Asset,
             asset::table.filter(
                 asset::donor_name_id
-                    .eq(name_id)
+                    .eq_any(
+                        name_link::table
+                            .filter(name_link::name_id.eq(name_id))
+                            .select(name_link::id.nullable())
+                    )
                     .and(asset::deleted_datetime.is_null())
             )
         );
@@ -838,13 +842,13 @@ mod test {
     #[actix_rt::test]
     async fn used_by_follows_merged_links() {
         use crate::{
-            InvoiceRow, InvoiceRowRepository, NameLinkRow, NameLinkRowRepository, NameUser,
-            StoreRow, StoreRowRepository,
+            AssetRow, AssetRowRepository, InvoiceRow, InvoiceRowRepository, NameLinkRow,
+            NameLinkRowRepository, NameUser, StoreRow, StoreRowRepository,
         };
         let (_, connection, _, _) =
             setup_all("name_used_by_follows_merged_links", MockDataInserts::none()).await;
         let names = NameRowRepository::new(&connection);
-        for id in ["store_name", "kept", "merged"] {
+        for id in ["store_name", "kept", "merged", "donor_kept", "donor_merged"] {
             names
                 .upsert_one(&NameRow {
                     id: id.to_string(),
@@ -879,6 +883,26 @@ mod test {
         assert_eq!(names.used_by("kept").unwrap(), Some(NameUser::Invoice));
         assert_eq!(names.used_by("merged").unwrap(), None);
         assert_eq!(names.used_by("store_name").unwrap(), Some(NameUser::Store));
+
+        // An asset holds its donor's link id directly, with no view to resolve it.
+        AssetRowRepository::new(&connection)
+            .upsert_one(
+                &AssetRow {
+                    id: "fridge".to_string(),
+                    donor_name_id: Some("donor_merged".to_string()),
+                    ..Default::default()
+                },
+                None,
+            )
+            .unwrap();
+        NameLinkRowRepository::new(&connection)
+            .upsert_one(&NameLinkRow {
+                id: "donor_merged".to_string(),
+                name_id: "donor_kept".to_string(),
+            })
+            .unwrap();
+        assert_eq!(names.used_by("donor_kept").unwrap(), Some(NameUser::Asset));
+        assert_eq!(names.used_by("donor_merged").unwrap(), None);
     }
 
     // Covers the v2.01 legacy `name.properties` column. A NameRow upsert must
