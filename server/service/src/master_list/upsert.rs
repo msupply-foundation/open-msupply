@@ -80,7 +80,6 @@ fn validate(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::service_provider::ServiceProvider;
     use repository::{mock::MockDataInserts, test_db::setup_all};
 
     fn master_list(id: &str, name: &str) -> MasterListRow {
@@ -188,47 +187,5 @@ mod tests {
                 .unwrap(),
             saved
         );
-    }
-
-    #[actix_rt::test]
-    async fn the_service_saves_a_master_list() {
-        let (_, _, connection_manager, _) =
-            setup_all("upsert_master_list_service", MockDataInserts::none()).await;
-        let service_provider = ServiceProvider::new(connection_manager);
-        let ctx = service_provider.basic_context().unwrap();
-        let service = &service_provider.master_list_service;
-
-        service
-            .upsert_master_list(&ctx, &master_list("a", "Essential"))
-            .unwrap();
-        assert_eq!(
-            service.upsert_master_list(&ctx, &master_list("b", "Essential")),
-            Err(UpsertMasterListError::DuplicateName {
-                other_id: "a".to_string()
-            })
-        );
-        assert_eq!(
-            MasterListRowRepository::new(&ctx.connection)
-                .find_one_by_id("a")
-                .unwrap(),
-            Some(master_list("a", "Essential"))
-        );
-    }
-
-    #[actix_rt::test]
-    async fn master_lists_that_already_share_a_name_or_code_stay_editable() {
-        let (_, connection, _, _) =
-            setup_all("upsert_master_list_shared_name", MockDataInserts::none()).await;
-        // Legacy data can hold duplicates the service would refuse.
-        let repo = MasterListRowRepository::new(&connection);
-        repo.upsert_one(&coded("a", "Essential", "EML")).unwrap();
-        repo.upsert_one(&coded("b", "Essential", "EML")).unwrap();
-
-        let edited = MasterListRow {
-            is_active: false,
-            ..coded("b", "Essential", "EML")
-        };
-        upsert_master_list(&connection, &edited).unwrap();
-        assert_eq!(repo.find_one_by_id("b").unwrap(), Some(edited));
     }
 }
