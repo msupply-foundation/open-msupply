@@ -92,8 +92,12 @@ pub fn patients(
             &condition.custom_field_conditions(),
         )?;
     }
+    let is_visible = filter.as_ref().and_then(|filter| filter.is_visible);
     let mut filter = patients_query_filter(filter);
     filter.dynamic_filter = dynamic_filter;
+    if let Some(is_visible) = is_visible {
+        filter = filter.visible_in_store(&store_id, is_visible);
+    }
     let filter = Some(filter);
 
     let patients = service_provider

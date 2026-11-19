@@ -1,10 +1,10 @@
 import { createSignal } from 'solid-js';
-import { isCentralServer } from '../../api/serverInfo';
 import {
-  findCentralPatients,
+  findOtherFacilityPatients,
   findPatients,
   fold,
   namesKey,
+  type FindResult,
   type PatientFindRow,
 } from './patientFind';
 
@@ -97,9 +97,21 @@ export const createDuplicateCheck = (options: {
       firstName: terms.firstName,
       id: '',
     };
-    const centralRequest = isCentralServer()
-      ? undefined
-      : findCentralPatients(options.storeId(), nameTerms);
+    // This site's own patients at other stores come first, while central is
+    // still being asked; they show once this store's matches are in.
+    let siteFirst: FindResult | undefined;
+    let showSiteFirst: (() => void) | undefined;
+    const centralRequest = findOtherFacilityPatients(
+      options.storeId(),
+      nameTerms,
+      {
+        onSite: site => {
+          if (mine !== token) return;
+          siteFirst = site;
+          showSiteFirst?.();
+        },
+      }
+    );
 
     const local = await findPatients(options.storeId(), nameTerms);
     if (mine !== token) return;
@@ -135,14 +147,20 @@ export const createDuplicateCheck = (options: {
       });
     };
 
-    if (!centralRequest) return show([], 'done');
-    show([], 'pending');
+    showSiteFirst = () =>
+      show(siteFirst?.rows ?? [], 'pending', siteFirst?.more ?? false);
+    showSiteFirst();
     const central = await centralRequest;
+    showSiteFirst = undefined;
     if (mine !== token) return;
     // Anything but an answer means other facilities weren't checked, so it
     // never reads as "no existing patients".
     if (central.kind === 'ok') show(central.rows, 'done', central.more);
-    else show([], 'failed');
+    // Failed outright: what this site had already found still counts
+    else if (central.kind === 'failed')
+      show(siteFirst?.rows ?? [], 'failed', siteFirst?.more ?? false);
+    // Central's are missing, but this site's own at other stores still count
+    else show(central.site?.rows ?? [], 'failed', central.site?.more ?? false);
   };
 
   const reset = () => {

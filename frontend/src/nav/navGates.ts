@@ -4,7 +4,7 @@ import {
   hasVaccineModule,
   isDispensary,
 } from '../store/storeContext';
-import { isCentralServer } from '../api/serverInfo';
+import { isCentralServer, isCentralStandalone } from '../api/serverInfo';
 import { pluginRouteAccess } from '../plugins/pluginPages';
 import {
   navDestinations,
@@ -47,6 +47,10 @@ const CAPABILITY_PREDICATES: Record<NavCapability, () => boolean> = {
   // A server admin on a central server — admin plumbing, a capability gate
   // that happens to read the user (spec/navigation § central administration).
   centralAdmin: () => isCentralServer() && hasPermission('SERVER_ADMIN'),
+  // The same, on a central server that shares no central data with legacy
+  // mSupply (spec/navigation § the gate vocabulary).
+  standaloneCentralAdmin: () =>
+    isCentralServer() && isCentralStandalone() && hasPermission('SERVER_ADMIN'),
 };
 
 /** Whether a single capability gate passes (absent gate = always). */

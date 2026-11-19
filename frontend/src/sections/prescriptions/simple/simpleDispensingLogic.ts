@@ -391,7 +391,7 @@ export const repricedLines = (
 
 /**
  * The batch save for a visit: the record, one line per batch taken (packs
- * split where needed, first expiry first), and the move to Picked.
+ * split where needed, in allocation order), and the move to Picked.
  */
 export const dispenseInput = (
   prescriptionId: string,

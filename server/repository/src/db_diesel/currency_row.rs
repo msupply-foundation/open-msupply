@@ -1,5 +1,5 @@
 use super::StorageConnection;
-use crate::{ChangelogSyncType, Delete, SourceSiteId, Upsert};
+use crate::{ChangelogSyncType, Delete, SourceSiteId, Upsert, trim, trim_spaces};
 
 use crate::repository_error::RepositoryError;
 use crate::{ChangelogRepository, RowActionType};
@@ -39,6 +39,14 @@ pub struct CurrencyRow {
     pub date_updated: Option<NaiveDate>,
     pub is_active: bool,
 }
+
+/// A kind of record valued in a currency.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum CurrencyUser {
+    Invoice,
+    PurchaseOrder,
+}
+
 pub struct CurrencyRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -86,6 +94,48 @@ impl<'a> CurrencyRowRepository<'a> {
         ))
         .get_result(self.connection.lock().connection())?;
         Ok(exists)
+    }
+
+    /// Letter case counts; spaces around either code don't.
+    pub fn find_by_trimmed_code(&self, code: &str) -> Result<Vec<CurrencyRow>, RepositoryError> {
+        let result = currency::table
+            .filter(trim(currency::code).eq(trim_spaces(code)))
+            .order(currency::id.asc())
+            .load(self.connection.lock().connection())?;
+        Ok(result)
+    }
+
+    pub fn find_all(&self) -> Result<Vec<CurrencyRow>, RepositoryError> {
+        let result = currency::table
+            .order((currency::code.asc(), currency::id.asc()))
+            .load(self.connection.lock().connection())?;
+        Ok(result)
+    }
+
+    /// The first kind of record valued in the currency, if any.
+    pub fn used_by(&self, currency_id: &str) -> Result<Option<CurrencyUser>, RepositoryError> {
+        use super::{
+            invoice_row::invoice_with_links, purchase_order_row::purchase_order_with_links,
+        };
+        use diesel::dsl::exists;
+        let mut guard = self.connection.lock();
+        let connection = guard.connection();
+        if diesel::select(exists(
+            invoice_with_links::table.filter(invoice_with_links::currency_id.eq(currency_id)),
+        ))
+        .get_result(connection)?
+        {
+            return Ok(Some(CurrencyUser::Invoice));
+        }
+        if diesel::select(exists(
+            purchase_order_with_links::table
+                .filter(purchase_order_with_links::currency_id.eq(currency_id)),
+        ))
+        .get_result(connection)?
+        {
+            return Ok(Some(CurrencyUser::PurchaseOrder));
+        }
+        Ok(None)
     }
 
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<CurrencyRow>, RepositoryError> {
