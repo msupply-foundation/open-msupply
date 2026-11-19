@@ -5,8 +5,8 @@ use super::{
     delete::{DELETE, DELETE_COLUMN, already_deleted, check_unchanged, is_delete},
     field_changes,
     lookup::{
-        InMemory, NOT_FOUND, NamesOfType, active_first, find_record, find_reference,
-        record_conflict,
+        InMemory, LookupError, NOT_FOUND, NamesOfType, active_first, find_record, find_reference,
+        lookup_reference, record_conflict,
     },
     name_with_code,
     sheet::Value,
@@ -175,17 +175,27 @@ impl ImportTable for NameTable {
     ) -> Result<Box<dyn SheetImport>, RepositoryError> {
         Ok(Box::new(NameSheet {
             references: References::load(connection)?,
+            later: Vec::new(),
         }))
     }
 }
 
 struct NameSheet {
     references: References,
+    later: Vec<LaterStore>,
+}
+
+/// A supplying store that isn't saved yet, found once every sheet has run, as the store sheet
+/// comes after the name sheet and may add it. The name keeps its saved one until then.
+struct LaterStore {
+    name_id: String,
+    sheet: String,
+    row: u32,
+    code: Option<String>,
+    id: Option<String>,
 }
 
 /// Read once: both are small, and neither changes while the name sheet runs.
-// shortcut: a supplying store must already be saved. Once a store sheet imports, find it after
-// that sheet, as the spec says, so a file can add both.
 struct References {
     stores: InMemory<StoreRow>,
     currencies: InMemory<CurrencyRow>,
@@ -277,20 +287,35 @@ impl SheetImport for NameSheet {
             return Err(RowFailure::Invalid(errors));
         }
 
-        // Looked up for a `DELETE` row too, so a missing reference stops the import.
-        let supplying_store_id = if keeps_saved_store(row, saved) {
+        // Looked up for a `DELETE` row too, so a missing reference stops the import. One that
+        // isn't saved may be on the store sheet, except a `DELETE` row's.
+        let mut later_store = None;
+        let supplying_store_id = if keeps_saved_store(row, saved)
+            || !(row.has(SUPPLYING_STORE_CODE) || row.has(SUPPLYING_STORE_ID))
+        {
             None
         } else {
-            collect(
-                &mut errors,
-                find_reference(
-                    &self.references.stores,
-                    row,
-                    SUPPLYING_STORE_CODE,
-                    SUPPLYING_STORE_ID,
-                    std::convert::identity,
-                )?,
-            )
+            let code = row.text(SUPPLYING_STORE_CODE);
+            let id = row.text(SUPPLYING_STORE_ID);
+            match lookup_reference(
+                &self.references.stores,
+                id.as_deref(),
+                code.as_deref(),
+                std::convert::identity,
+            )? {
+                Ok(store_id) => Some(store_id),
+                Err(e) if e.error == LookupError::NotFound && !delete => {
+                    later_store = Some((code, id));
+                    None
+                }
+                Err(e) => {
+                    errors.push(row.error(
+                        e.column(SUPPLYING_STORE_CODE, SUPPLYING_STORE_ID),
+                        e.message(code.as_deref()),
+                    ));
+                    None
+                }
+            }
         };
         let currency_id = collect(
             &mut errors,
@@ -377,33 +402,109 @@ impl SheetImport for NameSheet {
             ..saved.cloned().unwrap_or_default()
         };
 
-        let change = match Change::between_upserts(saved, &new) {
+        let written = Change::between_upserts(saved, &new);
+        if written != Change::Unchanged {
+            upsert_name(connection, &new).map_err(|error| upsert_failure(row, &new, error))?;
+        }
+        // Counted now, though written once the store is found. Given only a code, it's taken to
+        // differ from the saved one, as the store's id isn't known yet.
+        let store_changes_later = later_store
+            .as_ref()
+            .is_some_and(|(_, id)| id.as_deref() != new.supplying_store_id.as_deref());
+        let change = match written {
             Change::Updated if saved.is_some_and(|saved| saved.deleted_datetime.is_some()) => {
                 Change::Restored
             }
+            Change::Unchanged if store_changes_later => Change::Updated,
             change => change,
         };
-        if change != Change::Unchanged {
-            upsert_name(connection, &new).map_err(|error| upsert_failure(row, &new, error))?;
+
+        let mut new_cells = cells(&new, &self.references);
+        if let Some((code, id)) = &later_store {
+            // As the row gives it; an id it doesn't give isn't known yet.
+            new_cells[column_position(SUPPLYING_STORE_CODE)] = code.clone().into();
+            if id.is_some() {
+                new_cells[column_position(SUPPLYING_STORE_ID)] = id.clone().into();
+            }
+        }
+        if let Some((code, id)) = later_store {
+            self.later.push(LaterStore {
+                name_id: new.id.clone(),
+                sheet: row.sheet.to_string(),
+                row: row.number,
+                code,
+                id,
+            });
         }
         Ok(RowOutcome {
             fields: existing
-                .map(|saved| {
-                    field_changes(
-                        COLUMNS,
-                        cells(&saved, &self.references),
-                        cells(&new, &self.references),
-                    )
-                })
+                .map(|saved| field_changes(COLUMNS, cells(&saved, &self.references), new_cells))
                 .unwrap_or_default(),
             record: name_with_code(&new.name, &new.code),
             record_id: new.id,
             change,
         })
     }
+
+    fn finish_file(
+        &mut self,
+        connection: &StorageConnection,
+    ) -> Result<Vec<RowError>, RepositoryError> {
+        self.find_later_stores(connection)
+    }
 }
 
 impl NameSheet {
+    /// After the store sheet, which may have added the stores `later` refers to.
+    fn find_later_stores(
+        &mut self,
+        connection: &StorageConnection,
+    ) -> Result<Vec<RowError>, RepositoryError> {
+        if self.later.is_empty() {
+            return Ok(Vec::new());
+        }
+        let stores = InMemory::new(StoreRowRepository::new(connection).all()?);
+        let names = NameRowRepository::new(connection);
+        let mut errors = Vec::new();
+        for later in self.later.drain(..) {
+            let error = |column: &str, message: String| RowError {
+                sheet: later.sheet.clone(),
+                row: Some(later.row),
+                column: Some(column.to_string()),
+                message,
+            };
+            let store_id = match lookup_reference(
+                &stores,
+                later.id.as_deref(),
+                later.code.as_deref(),
+                std::convert::identity,
+            )? {
+                Ok(store_id) => store_id,
+                Err(e) => {
+                    errors.push(error(
+                        e.column(SUPPLYING_STORE_CODE, SUPPLYING_STORE_ID),
+                        e.message(later.code.as_deref()),
+                    ));
+                    continue;
+                }
+            };
+            let Some(mut name) = names.find_one_by_id(&later.name_id)? else {
+                continue;
+            };
+            if name.supplying_store_id == store_id {
+                continue;
+            }
+            name.supplying_store_id = store_id;
+            match upsert_name(connection, &name) {
+                Ok(()) => {}
+                Err(UpsertNameError::DatabaseError(error)) => return Err(error),
+                // Unreachable: its row saved the rest of the name, and the store was just found.
+                Err(_) => errors.push(error(SUPPLYING_STORE_ID, NOT_FOUND.to_string())),
+            }
+        }
+        Ok(errors)
+    }
+
     fn delete(
         &self,
         connection: &StorageConnection,
@@ -470,6 +571,13 @@ impl NameSheet {
             fields: Vec::new(),
         })
     }
+}
+
+fn column_position(column: &str) -> usize {
+    COLUMNS
+        .iter()
+        .position(|other| *other == column)
+        .expect("a name column")
 }
 
 /// Whether the row gives only the saved supplying store's id, as exported for a store sync hasn't

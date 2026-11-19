@@ -213,6 +213,15 @@ pub(crate) trait SheetImport {
         Ok(Vec::new())
     }
 
+    /// Run once every sheet has run, for a reference to a record a later sheet adds, such as a
+    /// name's supplying store.
+    fn finish_file(
+        &mut self,
+        _connection: &StorageConnection,
+    ) -> Result<Vec<RowError>, RepositoryError> {
+        Ok(Vec::new())
+    }
+
     /// Users whose open sessions must end once the import is applied.
     fn sessions_to_end(&mut self) -> Vec<EndSessions> {
         Vec::new()
@@ -707,6 +716,8 @@ fn import_sheets<'a>(
         ));
     }
 
+    // Each sheet that ran, with its place in `summary.tables`, for `finish_file`.
+    let mut finishing = Vec::new();
     for (table, sheet, heading_errors, is_refused) in table_sheets {
         let row_errors_before = summary.error_count;
 
@@ -772,7 +783,13 @@ fn import_sheets<'a>(
         summary.add_errors(rows.finish_sheet(connection, &sheet.name)?);
         summary.sessions_to_end.extend(rows.sessions_to_end());
         changes.error_count = heading_errors + (summary.error_count - row_errors_before);
+        finishing.push((summary.tables.len(), rows));
         summary.tables.push(changes);
+    }
+    for (position, mut rows) in finishing {
+        let errors = rows.finish_file(connection)?;
+        summary.tables[position].error_count += errors.len() as u32;
+        summary.add_errors(errors);
     }
     Ok(summary)
 }

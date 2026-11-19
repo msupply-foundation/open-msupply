@@ -5313,13 +5313,6 @@ async fn name_references_are_found_by_code_or_id() {
     assert_eq!(
         row_errors(&summary),
         vec![
-            (
-                2,
-                Some("supplying_store_code"),
-                "referenced record not found"
-            ),
-            (3, Some("supplying_store_id"), "referenced record not found"),
-            (4, Some("supplying_store_id"), "referenced record not found"),
             (5, Some("currency_code"), "referenced record not found"),
             (6, Some("custom_data"), "custom_data must be JSON, or blank"),
             (
@@ -5327,6 +5320,14 @@ async fn name_references_are_found_by_code_or_id() {
                 Some("code"),
                 "This code belongs to a system name, which the server needs"
             ),
+            // Last, as a supplying store is looked for again once the store sheet could add it.
+            (
+                2,
+                Some("supplying_store_code"),
+                "referenced record not found"
+            ),
+            (3, Some("supplying_store_id"), "referenced record not found"),
+            (4, Some("supplying_store_id"), "referenced record not found"),
         ]
     );
 
@@ -5965,6 +5966,130 @@ async fn a_store_code_is_not_taken_and_its_site_must_be_on_the_server() {
         find_store(&connection, "store_main").unwrap().store_mode,
         StoreMode::Dispensary
     );
+}
+
+// covers: OMS-REG-CDIO-01.133, .143
+
+#[actix_rt::test]
+async fn a_name_finds_a_supplying_store_the_store_sheet_adds() {
+    let (connection, service_provider, dir) = store_setup("central_data_name_later_store").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let file = |names: Vec<Vec<Value>>, stores: Vec<Vec<Value>>| {
+        sheet::write(vec![
+            sheet_data("name", &NAME_HEADERS, names),
+            sheet_data("store", &STORE_HEADERS, stores),
+        ])
+        .unwrap()
+    };
+    // The clinic's saved values, but supplied by the store the file adds.
+    let clinic = name_row(&[
+        ("code", "CL1"),
+        ("type", "FACILITY"),
+        ("supplying_store_code", "NEW"),
+        ("phone", "007"),
+        ("custom_data", r#"{"beds":4}"#),
+        ("currency_code", "NZD"),
+    ]);
+    let new_store = new_store_row(&[("id", "new_store"), ("code", "NEW"), ("name_code", "WARD")]);
+    let path = write_file(
+        dir.path(),
+        file(
+            vec![
+                clinic,
+                new_name_row(&[
+                    ("code", "CL9"),
+                    ("type", "FACILITY"),
+                    ("name", "New clinic"),
+                    ("supplying_store_id", "new_store"),
+                ]),
+            ],
+            vec![new_store],
+        ),
+    );
+
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(
+        summary.changes[0],
+        RowChange {
+            sheet: "name".to_string(),
+            row: 2,
+            record: "Central clinic (CL1)".to_string(),
+            change: Change::Updated,
+            fields: vec![FieldChange {
+                column: "supplying_store_code",
+                from: "MS".to_string(),
+                to: "NEW".to_string(),
+            }],
+        }
+    );
+    // A preview writes nothing.
+    assert_eq!(
+        find_name(&connection, "clinic")
+            .unwrap()
+            .supplying_store_id
+            .as_deref(),
+        Some("store_main")
+    );
+
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    let supplier = |code: &str| {
+        NameRowRepository::new(&connection)
+            .find_by_trimmed_code(code)
+            .unwrap()
+            .remove(0)
+            .supplying_store_id
+    };
+    assert_eq!(supplier("CL1").as_deref(), Some("new_store"));
+    assert_eq!(supplier("CL9").as_deref(), Some("new_store"));
+
+    // Neither saved nor in the file; a DELETE row's must be saved, though the file adds it.
+    let path = write_file(
+        dir.path(),
+        file(
+            vec![
+                new_name_row(&[
+                    ("code", "CL8"),
+                    ("type", "FACILITY"),
+                    ("name", "Gone clinic"),
+                    ("supplying_store_code", "GONE"),
+                ]),
+                name_row(&[
+                    ("code", "CL9"),
+                    ("type", "FACILITY"),
+                    ("supplying_store_code", "NEW2"),
+                    ("delete", "DELETE"),
+                ]),
+            ],
+            vec![new_store_row(&[("code", "NEW2"), ("name_code", "MAIN")])],
+        ),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    let not_found: Vec<_> = row_errors(&summary)
+        .into_iter()
+        .filter(|(_, _, message)| *message == "referenced record not found")
+        .collect();
+    assert_eq!(
+        not_found,
+        vec![
+            (
+                3,
+                Some("supplying_store_code"),
+                "referenced record not found"
+            ),
+            (
+                2,
+                Some("supplying_store_code"),
+                "referenced record not found"
+            ),
+        ]
+    );
+    // Counted against the name sheet, after the store sheet's own error.
+    assert_eq!(summary.tables[0].table, CentralDataTable::Name);
+    assert_eq!(summary.tables[0].error_count, 3);
 }
 
 // covers: OMS-REG-CDIO-01.144
