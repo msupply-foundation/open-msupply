@@ -1,6 +1,6 @@
 use repository::{
-    KeyType, KeyValueStoreRepository, NameRowRepository, PaginationOption, RepositoryError,
-    SiteRowRepository, StorageConnection, Store, StoreRow, StoreRowRepository,
+    KeyType, KeyValueStoreRepository, NameRowRepository, NameRowType, PaginationOption,
+    RepositoryError, SiteRowRepository, StorageConnection, Store, StoreRow, StoreRowRepository,
 };
 use repository::{StoreFilter, StoreRepository, StoreSort};
 
@@ -41,6 +41,8 @@ pub enum UpsertStoreError {
         other_id: String,
     },
     NameNotFound,
+    /// A store's name must be a `STORE` name, so never a patient's or a system name.
+    NameNotStore,
     NameDeleted,
     /// A name is at most one store's.
     NameHasStore {
@@ -99,6 +101,9 @@ fn validate(
         let name = NameRowRepository::new(connection)
             .find_one_by_id(&row.name_id)?
             .ok_or(UpsertStoreError::NameNotFound)?;
+        if name.r#type != NameRowType::Store {
+            return Err(UpsertStoreError::NameNotStore);
+        }
         if name.deleted_datetime.is_some() {
             return Err(UpsertStoreError::NameDeleted);
         }

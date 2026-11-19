@@ -5848,11 +5848,12 @@ async fn store_rows_add_and_update_by_code() {
 // covers: OMS-REG-CDIO-01.24, .139
 
 #[actix_rt::test]
-async fn a_store_finds_its_name_by_code_and_type_or_by_id() {
+async fn a_store_finds_a_store_name_by_code_or_by_id() {
     let (connection, service_provider, dir) = store_setup("central_data_store_name").await;
     let ctx = service_provider.basic_context().unwrap();
-    // WARD as a facility's code too, so the code alone is ambiguous.
-    NameRowRepository::new(&connection)
+    let names = NameRowRepository::new(&connection);
+    // WARD is a facility's code too, but a blank type looks among store names.
+    names
         .upsert_one(&NameRow {
             id: "ward_facility".to_string(),
             code: "WARD".to_string(),
@@ -5861,19 +5862,29 @@ async fn a_store_finds_its_name_by_code_and_type_or_by_id() {
             ..Default::default()
         })
         .unwrap();
+    names
+        .upsert_one(&NameRow {
+            id: "old_store_name".to_string(),
+            code: "OLD".to_string(),
+            name: "Old store".to_string(),
+            r#type: NameRowType::Store,
+            deleted_datetime: datetime(2025, 1, 1),
+            ..Default::default()
+        })
+        .unwrap();
 
     let path = write_file(
         dir.path(),
         store_sheet(vec![
             new_store_row(&[("code", "A"), ("name_code", "NOPE"), ("name_type", "STORE")]),
-            new_store_row(&[("code", "B"), ("name_id", "clinic"), ("name_type", "STORE")]),
+            new_store_row(&[("code", "B"), ("name_id", "clinic")]),
             new_store_row(&[
                 ("code", "C"),
-                ("name_code", "CL2"),
+                ("name_code", "CL1"),
                 ("name_type", "FACILITY"),
             ]),
-            new_store_row(&[("code", "D"), ("name_code", "MAIN"), ("name_type", "STORE")]),
-            new_store_row(&[("code", "E"), ("name_code", "WARD")]),
+            new_store_row(&[("code", "D"), ("name_code", "OLD")]),
+            new_store_row(&[("code", "E"), ("name_code", "MAIN"), ("name_type", "STORE")]),
         ]),
     );
     let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
@@ -5883,41 +5894,125 @@ async fn a_store_finds_its_name_by_code_and_type_or_by_id() {
             (2, Some("name_code"), "referenced record not found"),
             (
                 3,
-                Some("name_type"),
-                "Central clinic (CL1) has type FACILITY, not STORE"
+                Some("name_id"),
+                "Central clinic (CL1) is of type FACILITY. A store's name must be of type STORE"
             ),
             (
                 4,
                 Some("name_code"),
-                "Closed clinic (CL2) is deleted, so a store can't have it"
+                "Central clinic (CL1) is of type FACILITY. A store's name must be of type STORE"
             ),
             (
                 5,
                 Some("name_code"),
-                "Main store (MAIN) is already store MS's name. A name can be only one store's"
+                "Old store (OLD) is deleted, so a store can't have it"
             ),
             (
                 6,
                 Some("name_code"),
-                "ambiguous reference, please provide id instead"
+                "Main store (MAIN) is already store MS's name. A name can be only one store's"
             ),
         ]
     );
 
-    // By id alone, or by code and type.
     let path = write_file(
         dir.path(),
         store_sheet(vec![
-            new_store_row(&[("code", "F"), ("name_id", "ward_facility")]),
-            new_store_row(&[("code", "G"), ("name_code", "WARD"), ("name_type", "store")]),
+            new_store_row(&[("code", "F"), ("name_code", "WARD")]),
+            new_store_row(&[("code", "G"), ("name_id", "main_store_name")]),
         ]),
+    );
+    // Main store gives up its name to G.
+    StoreRowRepository::new(&connection)
+        .upsert_one(&StoreRow {
+            name_id: "ward_facility".to_string(),
+            ..find_store(&connection, "store_main").unwrap()
+        })
+        .unwrap();
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(store_by_code(&connection, "F").name_id, "ward_name");
+    assert_eq!(store_by_code(&connection, "G").name_id, "main_store_name");
+
+    // A saved store whose name isn't a store name, as Main store's now is, keeps it and stays
+    // editable, and an unedited export of it imports unchanged.
+    let bytes = CentralDataService
+        .export(&ctx, &[stores_containing(Some("MS"), None)])
+        .unwrap();
+    let path = write_file(dir.path(), bytes);
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].unchanged, 1);
+    let path = write_file(
+        dir.path(),
+        store_sheet(vec![store_row(&[
+            ("code", "MS"),
+            ("store_mode", "DISPENSARY"),
+        ])]),
     );
     let summary = CentralDataService
         .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
-    assert_eq!(store_by_code(&connection, "F").name_id, "ward_facility");
-    assert_eq!(store_by_code(&connection, "G").name_id, "ward_name");
+    let main = find_store(&connection, "store_main").unwrap();
+    assert_eq!(
+        (main.name_id.as_str(), main.store_mode),
+        ("ward_facility", StoreMode::Dispensary)
+    );
+}
+
+// covers: OMS-REG-CDIO-01.139
+
+#[actix_rt::test]
+async fn a_store_cannot_have_a_patient_or_a_system_name() {
+    let (connection, service_provider, dir) = store_setup("central_data_store_patient_name").await;
+    let ctx = service_provider.basic_context().unwrap();
+
+    let path = write_file(
+        dir.path(),
+        store_sheet(vec![
+            new_store_row(&[("code", "A"), ("name_id", "patient")]),
+            new_store_row(&[("code", "B"), ("name_id", "invad")]),
+            new_store_row(&[
+                ("code", "C"),
+                ("name_code", "invad"),
+                ("name_type", "INVAD"),
+            ]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                2,
+                Some("name_id"),
+                "Moreau, Anna (P001) is of type PATIENT. A store's name must be of type STORE"
+            ),
+            (
+                3,
+                Some("name_id"),
+                "Inventory adjustments (invad) is of type INVAD. A store's name must be of type STORE"
+            ),
+            (
+                4,
+                Some("name_code"),
+                "Inventory adjustments (invad) is of type INVAD. A store's name must be of type STORE"
+            ),
+        ]
+    );
+    assert!(
+        StoreRowRepository::new(&connection)
+            .find_by_trimmed_code("A")
+            .unwrap()
+            .is_empty()
+    );
 }
 
 // covers: OMS-REG-CDIO-01.23, .39, .140

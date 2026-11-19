@@ -243,8 +243,9 @@ impl SheetImport for StoreSheet {
     }
 }
 
-/// As `find_reference`. `name_code` finds the name within `r#type`, and a name `name_id` finds
-/// must be of that type too.
+/// As `find_reference`. `name_code` finds the name within `r#type`, `STORE` when blank, so an
+/// unedited export finds a saved store's name whatever its type. `upsert_store` checks the type of
+/// a name the row changes, whichever column found it.
 fn find_name(
     connection: &StorageConnection,
     row: &Row,
@@ -252,31 +253,11 @@ fn find_name(
 ) -> Result<Result<Option<Option<String>>, RowError>, RepositoryError> {
     let names = NamesOfType {
         repo: NameRowRepository::new(connection),
-        r#type: r#type.clone(),
+        r#type: Some(r#type.unwrap_or(NameRowType::Store)),
     };
-    let found = find_reference(&names, row, NAME_CODE, NAME_ID, |names| {
-        let names = names
-            .into_iter()
-            .filter(|name| name.r#type != NameRowType::Patient)
-            .collect();
+    find_reference(&names, row, NAME_CODE, NAME_ID, |names| {
         active_first(names, |name| name.deleted_datetime.is_none())
-    })?;
-    // `NamesOfType` finds an id among every type.
-    if let (Ok(Some(Some(id))), Some(r#type)) = (&found, &r#type)
-        && let Some(name) = names.repo.find_one_by_id(id)?
-        && name.r#type != *r#type
-    {
-        return Ok(Err(row.error(
-            NAME_TYPE,
-            format!(
-                "{} has type {}, not {}",
-                name_with_code(&name.name, &name.code),
-                type_label(&name.r#type),
-                type_label(r#type)
-            ),
-        )));
-    }
-    Ok(found)
+    })
 }
 
 fn upsert_failure(
@@ -291,6 +272,9 @@ fn upsert_failure(
     } else {
         NAME_ID
     };
+    let name_type = name
+        .map(|name| type_label(&name.r#type))
+        .unwrap_or_default();
     let name = name.map_or_else(
         || store.name_id.clone(),
         |name| name_with_code(&name.name, &name.code),
@@ -303,6 +287,12 @@ fn upsert_failure(
             .into(),
         // Not checked here: `find_name` finds it among the saved names.
         UpsertStoreError::NameNotFound => row.error(name_column, NOT_FOUND).into(),
+        UpsertStoreError::NameNotStore => row
+            .error(
+                name_column,
+                format!("{name} is of type {name_type}. A store's name must be of type STORE"),
+            )
+            .into(),
         UpsertStoreError::NameDeleted => row
             .error(
                 name_column,
