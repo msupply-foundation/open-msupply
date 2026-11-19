@@ -46,7 +46,7 @@ pub fn csv_to_excel(
     // Write headers
     for (col_idx, header) in headers.iter().enumerate() {
         let cell = sheet.get_cell_mut((col_idx as u32 + 1, 1));
-        cell.set_value(header.to_string());
+        set_cell_text(cell, header);
         cell.get_style_mut().get_font_mut().set_bold(true);
     }
 
@@ -213,7 +213,7 @@ fn apply_header(sheet: &mut Worksheet, header_html: &str) -> u32 /* rows used */
     for (coordinate, el) in header_cells.into_iter() {
         let sheet_cell = sheet.get_cell_mut(coordinate);
 
-        sheet_cell.set_value(inner_text(el));
+        set_cell_text(sheet_cell, inner_text(el));
 
         apply_known_styles(sheet_cell, el);
 
@@ -257,7 +257,7 @@ fn apply_data_table_headers(
 
         if !body.ignore_table_header() {
             let cell = sheet.get_cell_mut((column_index, row_idx));
-            cell.set_value(header);
+            set_cell_text(cell, header);
             cell.get_style_mut().get_font_mut().set_bold(true);
         }
     }
@@ -334,7 +334,7 @@ fn apply_data_rows(
             if let Some(column_index) = index_to_column_index_map.get(&(cell_index as u32)).cloned()
             {
                 let sheet_cell = sheet.get_cell_mut((column_index, row_idx));
-                sheet_cell.set_value(cell);
+                set_cell_text(sheet_cell, cell);
                 sheet_cell.get_style_mut().get_font_mut().set_bold(true);
             }
         }
@@ -650,17 +650,19 @@ mod report_to_excel_test {
     }
 
     /// An item code like `030063` is text that happens to be digits: as a number Excel would
-    /// show `30063`. Numbers, zero and decimals below one still go in as numbers.
+    /// show `30063`. That holds for headings (a customer coded `007` in a crosstab) and total
+    /// rows too. Numbers, zero and decimals below one still go in as numbers.
     #[test]
     fn test_generate_excel_keeps_leading_zeros() {
         let report: GeneratedReport = GeneratedReport {
             document: r#"
           <table>
             <thead>
-              <tr><th>Code</th><th>Quantity</th><th>Zero</th><th>Price</th><th>Negative</th></tr>
+              <tr><th>Code</th><th>Quantity</th><th>Zero</th><th>Price</th><th>007</th></tr>
             </thead>
             <tbody>
               <tr><td>030063</td><td>100</td><td>0</td><td>0.50</td><td>-012</td></tr>
+              <tr excel-type="total-row"><td>0099</td><td>100</td><td></td><td></td><td></td></tr>
             </tbody>
           </table>
         "#
@@ -682,6 +684,32 @@ mod report_to_excel_test {
         assert_eq!(data_type("B2"), "n");
         assert_eq!(data_type("C2"), "n");
         assert_eq!(data_type("D2"), "n");
+        // Heading
+        assert_eq!(get_value(sheet, "E1"), "007");
+        assert_eq!(data_type("E1"), "s");
+        // Total row, after a blank row
+        assert_eq!(get_value(sheet, "A4"), "0099");
+        assert_eq!(data_type("A4"), "s");
+        assert_eq!(data_type("B4"), "n");
+    }
+
+    /// A list exported as CSV keeps its codes too
+    #[test]
+    fn test_csv_to_excel_keeps_leading_zeros() {
+        let base_dir = test_base_dir("csv_leading_zeros");
+        let file_id =
+            csv_to_excel(&base_dir, "Code,Quantity\n030063,100\n", "codes", None).unwrap();
+        let generated_file = StaticFileService::new(&base_dir)
+            .unwrap()
+            .find_file(&file_id, StaticFileCategory::Temporary)
+            .unwrap()
+            .unwrap();
+        let book = umya_spreadsheet::reader::xlsx::read(&generated_file.path).unwrap();
+        let sheet = book.get_sheet(&0).unwrap();
+
+        assert_eq!(get_value(sheet, "A2"), "030063");
+        assert_eq!(sheet.get_cell("A2").unwrap().get_data_type(), "s");
+        assert_eq!(sheet.get_cell("B2").unwrap().get_data_type(), "n");
     }
 
     #[test]
