@@ -2,6 +2,7 @@ use super::{Migration, MigrationFragment, version::Version};
 use crate::StorageConnection;
 
 mod add_consumption_estimate_table;
+mod add_instant_to_calendar_date_function;
 mod add_item_trim_code_index;
 mod add_location_type_fk_indexes;
 mod add_location_type_trim_code_index;
@@ -37,6 +38,7 @@ impl Migration for V3_05_00 {
             Box::new(record_standalone_central_admin::Migrate),
             Box::new(add_user_deleted_datetime::Migrate),
             Box::new(add_user_lower_trim_username_index::Migrate),
+            Box::new(add_instant_to_calendar_date_function::Migrate),
         ]
     }
 }
