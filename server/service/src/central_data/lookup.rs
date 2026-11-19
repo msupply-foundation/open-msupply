@@ -1,8 +1,9 @@
 use super::cells::{Row, RowError};
 use repository::{
     CurrencyRow, CurrencyRowRepository, ItemRow, ItemRowRepository, LocationTypeRow,
-    LocationTypeRowRepository, MasterListRow, MasterListRowRepository, RepositoryError, UnitRow,
-    UnitRowRepository, UserAccountRow, UserAccountRowRepository, trim_spaces,
+    LocationTypeRowRepository, MasterListRow, MasterListRowRepository, NameRow, NameRowRepository,
+    NameRowType, RepositoryError, StoreRow, UnitRow, UnitRowRepository, UserAccountRow,
+    UserAccountRowRepository, trim_spaces,
 };
 use std::collections::HashMap;
 
@@ -124,6 +125,34 @@ impl KeyedTable for UserAccountRowRepository<'_> {
     }
 }
 
+/// Names, looked up by code among the names of one type, as a code can belong to a name of each
+/// type. With no type, by code among every type. Deleted names are found too, so a row can restore
+/// one.
+pub struct NamesOfType<'a> {
+    pub repo: NameRowRepository<'a>,
+    pub r#type: Option<NameRowType>,
+}
+
+impl KeyedTable for NamesOfType<'_> {
+    type Record = NameRow;
+    fn id(name: &NameRow) -> &str {
+        &name.id
+    }
+    fn key(name: &NameRow) -> &str {
+        &name.code
+    }
+    fn find_by_id(&self, id: &str) -> Result<Option<NameRow>, RepositoryError> {
+        self.repo.find_one_by_id(id)
+    }
+    fn find_by_key(&self, code: &str) -> Result<Vec<NameRow>, RepositoryError> {
+        let mut names = self.repo.find_by_trimmed_code(code)?;
+        if let Some(r#type) = &self.r#type {
+            names.retain(|name| name.r#type == *r#type);
+        }
+        Ok(names)
+    }
+}
+
 /// A small table read once, for a sheet that refers to it but can't change it, so its rows don't
 /// each query it. Found as its repository finds them: spaces around a key don't count, letter
 /// case does unless `ANY_CASE`, and a key's records come in id order. Case is folded as Postgres
@@ -207,6 +236,39 @@ impl KeyedTable for InMemory<LocationTypeRow> {
         Ok(self.get(id).cloned())
     }
     fn find_by_key(&self, code: &str) -> Result<Vec<LocationTypeRow>, RepositoryError> {
+        Ok(self.with_key(code))
+    }
+}
+
+/// Looked up by code.
+impl KeyedTable for InMemory<StoreRow> {
+    type Record = StoreRow;
+    fn id(store: &StoreRow) -> &str {
+        &store.id
+    }
+    fn key(store: &StoreRow) -> &str {
+        &store.code
+    }
+    fn find_by_id(&self, id: &str) -> Result<Option<StoreRow>, RepositoryError> {
+        Ok(self.get(id).cloned())
+    }
+    fn find_by_key(&self, code: &str) -> Result<Vec<StoreRow>, RepositoryError> {
+        Ok(self.with_key(code))
+    }
+}
+
+impl KeyedTable for InMemory<CurrencyRow> {
+    type Record = CurrencyRow;
+    fn id(currency: &CurrencyRow) -> &str {
+        CurrencyRowRepository::id(currency)
+    }
+    fn key(currency: &CurrencyRow) -> &str {
+        CurrencyRowRepository::key(currency)
+    }
+    fn find_by_id(&self, id: &str) -> Result<Option<CurrencyRow>, RepositoryError> {
+        Ok(self.get(id).cloned())
+    }
+    fn find_by_key(&self, code: &str) -> Result<Vec<CurrencyRow>, RepositoryError> {
         Ok(self.with_key(code))
     }
 }

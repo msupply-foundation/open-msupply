@@ -1800,6 +1800,7 @@ export enum CentralDataTableNode {
   Item = 'ITEM',
   LocationType = 'LOCATION_TYPE',
   MasterList = 'MASTER_LIST',
+  Name = 'NAME',
   Unit = 'UNIT',
   User = 'USER',
 }

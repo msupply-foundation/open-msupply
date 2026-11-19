@@ -16,8 +16,9 @@ use repository::{
     CurrencyRow, CurrencyRowRepository, InvoiceRow, InvoiceRowRepository, ItemRow,
     ItemRowRepository, ItemType, ItemVariantRow, ItemVariantRowRepository, KeyType,
     KeyValueStoreRepository, LanguageType, LocationTypeRow, LocationTypeRowRepository,
-    MasterListRow, MasterListRowRepository, RequisitionLineRow, RequisitionLineRowRepository,
-    StorageConnection, UnitRow, UnitRowRepository, UserAccountRow, UserAccountRowRepository,
+    MasterListRow, MasterListRowRepository, NameRow, NameRowRepository, NameRowType,
+    RequisitionLineRow, RequisitionLineRowRepository, StorageConnection, StoreRow,
+    StoreRowRepository, UnitRow, UnitRowRepository, UserAccountRow, UserAccountRowRepository,
     UserStoreJoinRow, UserStoreJoinRowRepository, VENCategory,
     mock::{
         MockDataInserts, mock_draft_request_requisition_line, mock_item_a_variant_1,
@@ -4809,4 +4810,726 @@ async fn the_missing_program_master_list_is_not_exported_or_imported() {
         find_master_list(&connection, MISSING_PROGRAM),
         Some(placeholder)
     );
+}
+
+/// The name sheet's columns a test uses; the rest are left out, so they keep their saved values.
+const NAME_HEADERS: [&str; 15] = [
+    "id",
+    "code",
+    "type",
+    "name",
+    "is_customer",
+    "is_supplier",
+    "supplying_store_code",
+    "supplying_store_id",
+    "phone",
+    "is_manufacturer",
+    "is_donor",
+    "on_hold",
+    "custom_data",
+    "currency_code",
+    "delete",
+];
+
+fn name_sheet(rows: Vec<Vec<Value>>) -> Vec<u8> {
+    sheet::write(vec![sheet_data("name", &NAME_HEADERS, rows)]).unwrap()
+}
+
+/// A row of `NAME_HEADERS` with the given cells; the others are blank.
+fn name_row(cells: &[(&str, &str)]) -> Vec<Value> {
+    NAME_HEADERS
+        .iter()
+        .map(
+            |header| match cells.iter().find(|(column, _)| column == header) {
+                Some((_, cell)) if !cell.is_empty() => Value::Text(cell.to_string()),
+                _ => Value::Empty,
+            },
+        )
+        .collect()
+}
+
+/// The flags a new name needs, after `cells`.
+fn new_name_row(cells: &[(&'static str, &'static str)]) -> Vec<Value> {
+    let flags = [
+        ("is_customer", "TRUE"),
+        ("is_supplier", "FALSE"),
+        ("is_manufacturer", "FALSE"),
+        ("is_donor", "FALSE"),
+        ("on_hold", "FALSE"),
+    ];
+    name_row(&[cells, &flags].concat())
+}
+
+/// The clinic's saved values, so a row keeps them.
+const CLINIC_CELLS: [(&str, &str); 6] = [
+    ("code", "CL1"),
+    ("type", "FACILITY"),
+    ("supplying_store_code", "MS"),
+    ("phone", "007"),
+    ("custom_data", r#"{"beds":4}"#),
+    ("currency_code", "NZD"),
+];
+
+fn datetime(year: i32, month: u32, day: u32) -> Option<chrono::NaiveDateTime> {
+    NaiveDate::from_ymd_opt(year, month, day)
+        .unwrap()
+        .and_hms_opt(9, 30, 0)
+}
+
+fn central_clinic() -> NameRow {
+    NameRow {
+        id: "clinic".to_string(),
+        code: "CL1".to_string(),
+        name: "Central clinic".to_string(),
+        r#type: NameRowType::Facility,
+        is_customer: true,
+        supplying_store_id: Some("store_main".to_string()),
+        phone: Some(" 007 ".to_string()),
+        comment: Some("Open weekdays".to_string()),
+        margin: Some(12.5),
+        currency_id: Some("nzd".to_string()),
+        custom_data_string: Some(r#"{"beds":4}"#.to_string()),
+        created_datetime: datetime(2024, 3, 1),
+        ..Default::default()
+    }
+}
+
+fn closed_clinic() -> NameRow {
+    NameRow {
+        id: "closed".to_string(),
+        code: "CL2".to_string(),
+        name: "Closed clinic".to_string(),
+        r#type: NameRowType::Facility,
+        // Sync can save a supplying store that hasn't arrived yet.
+        supplying_store_id: Some("not_synced_yet".to_string()),
+        deleted_datetime: datetime(2025, 1, 1),
+        ..Default::default()
+    }
+}
+
+fn patient() -> NameRow {
+    NameRow {
+        id: "patient".to_string(),
+        code: "P001".to_string(),
+        name: "Moreau, Anna".to_string(),
+        r#type: NameRowType::Patient,
+        first_name: Some("Anna".to_string()),
+        last_name: Some("Moreau".to_string()),
+        ..Default::default()
+    }
+}
+
+fn find_name(connection: &StorageConnection, id: &str) -> Option<NameRow> {
+    NameRowRepository::new(connection)
+        .find_one_by_id(id)
+        .unwrap()
+}
+
+fn names_containing(contains: Option<&str>) -> ExportTable {
+    ExportTable {
+        table: CentralDataTable::Name,
+        filter: ExportFilter {
+            contains: contains.map(str::to_string),
+            ..Default::default()
+        },
+    }
+}
+
+/// Main store, coded MS, whose name is MAIN; the NZD currency; the clinic, which Main store
+/// supplies; a deleted clinic; a patient; and the system name `invad`.
+async fn name_setup(name: &str) -> (StorageConnection, ServiceProvider, TempDir) {
+    let (_, connection, connection_manager, _) = setup_all(name, MockDataInserts::none()).await;
+    let names = NameRowRepository::new(&connection);
+    names
+        .upsert_one(&NameRow {
+            id: "main_store_name".to_string(),
+            code: "MAIN".to_string(),
+            name: "Main store".to_string(),
+            r#type: NameRowType::Store,
+            is_supplier: true,
+            ..Default::default()
+        })
+        .unwrap();
+    StoreRowRepository::new(&connection)
+        .upsert_one(&StoreRow {
+            id: "store_main".to_string(),
+            name_id: "main_store_name".to_string(),
+            code: "MS".to_string(),
+            ..Default::default()
+        })
+        .unwrap();
+    CurrencyRowRepository::new(&connection)
+        .upsert_one(&CurrencyRow {
+            id: "nzd".to_string(),
+            code: "NZD".to_string(),
+            rate: 1.0,
+            is_home_currency: true,
+            date_updated: None,
+            is_active: true,
+        })
+        .unwrap();
+    for name in [
+        central_clinic(),
+        closed_clinic(),
+        patient(),
+        NameRow {
+            id: "invad".to_string(),
+            code: "invad".to_string(),
+            name: "Inventory adjustments".to_string(),
+            r#type: NameRowType::Invad,
+            ..Default::default()
+        },
+    ] {
+        names.upsert_one(&name).unwrap();
+    }
+    (
+        connection,
+        ServiceProvider::new(connection_manager),
+        TempDir::new().unwrap(),
+    )
+}
+
+// covers: OMS-REG-CDIO-01.10, .11, .22, .65, .134
+
+#[actix_rt::test]
+async fn names_export_then_import_makes_no_changes() {
+    let (connection, service_provider, dir) = name_setup("central_data_name_round_trip").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let ids = ["main_store_name", "clinic", "closed", "patient", "invad"];
+    let before = ids.map(|id| find_name(&connection, id));
+
+    let bytes = CentralDataService
+        .export(&ctx, &[names_containing(None)])
+        .unwrap();
+    let path = write_file(dir.path(), bytes);
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+
+    assert_eq!(summary.errors, vec![]);
+    // The deleted clinic too, exported with DELETE.
+    assert_eq!(summary.tables[0].unchanged, 3);
+    assert_eq!(summary.changes, vec![]);
+    assert_eq!(ids.map(|id| find_name(&connection, id)), before);
+}
+
+// covers: OMS-REG-CDIO-01.132, .134
+
+#[actix_rt::test]
+async fn a_name_export_writes_references_by_code_and_deleted_names_with_delete() {
+    let (_, service_provider, dir) = name_setup("central_data_name_export_cells").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let bytes = CentralDataService
+        .export(&ctx, &[names_containing(None)])
+        .unwrap();
+    let path = write_file(dir.path(), bytes);
+    let Ok(sheets) = sheet::read(&path, MAX_IMPORT_ROWS) else {
+        panic!("the export reads back")
+    };
+    let sheet = &sheets[0];
+    let cell = |row: usize, column: &str| {
+        let position = sheet.headers.iter().position(|h| h == column).unwrap();
+        sheet.rows[row].cells[position].clone()
+    };
+
+    // Sorted by code: CL1, CL2, MAIN. Neither the patient nor the system name.
+    assert_eq!(sheet.rows.len(), 3);
+    assert_eq!(cell(0, "supplying_store_code"), "MS");
+    assert_eq!(cell(0, "currency_code"), "NZD");
+    assert_eq!(cell(0, "type"), "FACILITY");
+    assert_eq!(cell(0, "created_datetime"), "2024-03-01T09:30:00Z");
+    assert_eq!(
+        (
+            cell(0, "delete").as_str(),
+            cell(0, "deleted_datetime").as_str()
+        ),
+        ("", "")
+    );
+    assert_eq!(
+        (
+            cell(1, "delete").as_str(),
+            cell(1, "deleted_datetime").as_str()
+        ),
+        ("DELETE", "2025-01-01T09:30:00Z")
+    );
+    // A store sync hasn't brought yet: its id, and no code.
+    assert_eq!(
+        (
+            cell(1, "supplying_store_code").as_str(),
+            cell(1, "supplying_store_id").as_str()
+        ),
+        ("", "not_synced_yet")
+    );
+    assert!(!sheet.headers.contains(&"date_of_birth".to_string()));
+}
+
+// covers: OMS-REG-CDIO-01.46, .47, .132
+
+#[actix_rt::test]
+async fn a_name_export_searches_code_and_name() {
+    let (_, service_provider, _) = name_setup("central_data_name_filter").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let matching = |contains: Option<&str>| {
+        let count = CentralDataService
+            .export_counts(&ctx, &[names_containing(contains)])
+            .unwrap()[0]
+            .count;
+        // Main store, the clinic and the deleted clinic.
+        assert_eq!(count.total, 3);
+        count.matching
+    };
+
+    assert_eq!(matching(None), 3);
+    assert_eq!(matching(Some(" clinic ")), 2);
+    assert_eq!(matching(Some("cl1")), 1);
+    assert_eq!(matching(Some("moreau")), 0);
+    assert_eq!(matching(Some("invad")), 0);
+}
+
+// covers: OMS-REG-CDIO-01.12, .27, .37, .58, .130
+
+#[actix_rt::test]
+async fn name_rows_add_and_update_by_code_and_type() {
+    let (connection, service_provider, dir) = name_setup("central_data_name_upsert").await;
+    let ctx = service_provider.basic_context().unwrap();
+    // The clinic's code as a store's adds a name.
+    let new_store = || {
+        new_name_row(&[
+            ("code", "CL1"),
+            ("type", "store"),
+            ("name", "Clinic store"),
+            ("custom_data", r#"{"region":"North"}"#),
+        ])
+    };
+    // Found by code and type; blank required cells keep their values, blank optional ones clear
+    // them, and missing columns keep theirs.
+    let edited = || name_row(&[("code", "CL1"), ("type", "FACILITY"), ("is_donor", "1")]);
+
+    let path = write_file(
+        dir.path(),
+        name_sheet(vec![
+            new_store(),
+            edited(),
+            name_row(&[
+                ("code", "NEW"),
+                ("type", "PATIENT"),
+                ("is_customer", "TRUE"),
+                ("is_supplier", "maybe"),
+            ]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                4,
+                Some("type"),
+                "\"PATIENT\" must be one of FACILITY, BUILD, INVAD, REPACK, STORE, OTHERS"
+            ),
+            (
+                4,
+                Some("is_supplier"),
+                "\"maybe\" must be TRUE, FALSE, 1 or 0"
+            ),
+            (4, Some("name"), "name is required for a new name"),
+            (
+                4,
+                Some("is_manufacturer"),
+                "is_manufacturer is required for a new name"
+            ),
+            (4, Some("is_donor"), "is_donor is required for a new name"),
+            (4, Some("on_hold"), "on_hold is required for a new name"),
+        ]
+    );
+    assert_eq!(find_name(&connection, "clinic"), Some(central_clinic()));
+
+    let path = write_file(dir.path(), name_sheet(vec![new_store(), edited()]));
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(
+        (summary.tables[0].inserted, summary.tables[0].updated),
+        (1, 1)
+    );
+    assert_eq!(summary.changes[0].record, "Clinic store (CL1)");
+    assert_eq!(
+        summary.changes[1]
+            .fields
+            .iter()
+            .map(|field| (field.column, field.from.as_str(), field.to.as_str()))
+            .collect::<Vec<_>>(),
+        [
+            ("supplying_store_code", "MS", ""),
+            ("supplying_store_id", "store_main", ""),
+            ("phone", " 007 ", ""),
+            ("is_donor", "FALSE", "TRUE"),
+            ("custom_data", r#"{"beds":4}"#, ""),
+            ("currency_code", "NZD", ""),
+            ("currency_id", "nzd", ""),
+        ]
+    );
+    // The comment and margin have no column, so they're kept.
+    assert_eq!(
+        find_name(&connection, "clinic"),
+        Some(NameRow {
+            supplying_store_id: None,
+            phone: None,
+            is_donor: true,
+            custom_data_string: None,
+            currency_id: None,
+            ..central_clinic()
+        })
+    );
+    let added = NameRowRepository::new(&connection)
+        .find_by_trimmed_code("CL1")
+        .unwrap()
+        .into_iter()
+        .find(|name| name.r#type == NameRowType::Store)
+        .unwrap();
+    assert!(added.created_datetime.is_some());
+    assert_eq!(
+        added,
+        NameRow {
+            id: added.id.clone(),
+            code: "CL1".to_string(),
+            name: "Clinic store".to_string(),
+            r#type: NameRowType::Store,
+            is_customer: true,
+            custom_data_string: Some(r#"{"region":"North"}"#.to_string()),
+            created_datetime: added.created_datetime,
+            ..Default::default()
+        }
+    );
+}
+
+// covers: OMS-REG-CDIO-01.131
+
+#[actix_rt::test]
+async fn a_name_code_and_type_are_not_changed_or_taken_by_import() {
+    let (connection, service_provider, dir) = name_setup("central_data_name_conflicts").await;
+    let ctx = service_provider.basic_context().unwrap();
+    // A live clinic took the deleted clinic's code.
+    NameRowRepository::new(&connection)
+        .upsert_one(&NameRow {
+            id: "reopened".to_string(),
+            code: "CL2".to_string(),
+            name: "Reopened clinic".to_string(),
+            r#type: NameRowType::Facility,
+            ..Default::default()
+        })
+        .unwrap();
+
+    let path = write_file(
+        dir.path(),
+        name_sheet(vec![
+            // The clinic's id with another type, then with another code.
+            name_row(&[("id", "clinic"), ("code", "CL1"), ("type", "STORE")]),
+            name_row(&[("id", "clinic"), ("code", "CL9"), ("type", "FACILITY")]),
+            // A new id beside the clinic's code and type.
+            new_name_row(&[
+                ("id", "copy"),
+                ("code", "CL1"),
+                ("type", "FACILITY"),
+                ("name", "Copy"),
+            ]),
+            // A store coded CL1, then the code with no type, which now finds two names.
+            new_name_row(&[("code", "CL1"), ("type", "STORE"), ("name", "Clinic store")]),
+            name_row(&[("code", "CL1"), ("phone", "123")]),
+            // Restoring the deleted clinic with the clinic's code, then with its own, now taken.
+            name_row(&[("id", "closed"), ("code", "CL1"), ("type", "FACILITY")]),
+            name_row(&[("id", "closed"), ("code", "CL2"), ("type", "FACILITY")]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                2,
+                Some("type"),
+                "type and id conflict: Central clinic (CL1) has type FACILITY and id clinic, but this row has type STORE and id clinic"
+            ),
+            (
+                3,
+                Some("code"),
+                "code and id conflict: Central clinic has code CL1 and id clinic, but this row has code CL9 and id clinic"
+            ),
+            (
+                4,
+                Some("code"),
+                "code and id conflict: Central clinic has code CL1 and id clinic, but this row has code CL1 and id copy"
+            ),
+            (
+                6,
+                Some("code"),
+                "ambiguous reference, please provide id instead"
+            ),
+            (
+                7,
+                Some("code"),
+                "code and id conflict: Closed clinic has code CL2 and id closed, but this row has code CL1 and id closed"
+            ),
+            (
+                8,
+                Some("code"),
+                "Name reopened already has code CL2 and type FACILITY"
+            ),
+        ]
+    );
+}
+
+// covers: OMS-REG-CDIO-01.24, .133
+
+#[actix_rt::test]
+async fn name_references_are_found_by_code_or_id() {
+    let (connection, service_provider, dir) = name_setup("central_data_name_references").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let new = |cells: &[(&'static str, &'static str)]| {
+        new_name_row(&[&[("type", "FACILITY"), ("name", "Clinic")][..], cells].concat())
+    };
+
+    let path = write_file(
+        dir.path(),
+        name_sheet(vec![
+            new(&[("code", "A"), ("supplying_store_code", "NOPE")]),
+            new(&[("code", "B"), ("supplying_store_id", "nope")]),
+            new(&[
+                ("code", "C"),
+                ("supplying_store_code", "MS"),
+                ("supplying_store_id", "other"),
+            ]),
+            new(&[("code", "D"), ("currency_code", "EUR")]),
+            new(&[("code", "E"), ("custom_data", "{")]),
+            new(&[("code", "invad")]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                2,
+                Some("supplying_store_code"),
+                "referenced record not found"
+            ),
+            (3, Some("supplying_store_id"), "referenced record not found"),
+            (4, Some("supplying_store_id"), "referenced record not found"),
+            (5, Some("currency_code"), "referenced record not found"),
+            (6, Some("custom_data"), "custom_data must be JSON, or blank"),
+            (
+                7,
+                Some("code"),
+                "This code belongs to a system name, which the server needs"
+            ),
+        ]
+    );
+
+    let path = write_file(
+        dir.path(),
+        name_sheet(vec![new(&[
+            ("code", "G"),
+            ("supplying_store_code", "MS"),
+            ("currency_code", "NZD"),
+        ])]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    let added = NameRowRepository::new(&connection)
+        .find_by_trimmed_code("G")
+        .unwrap()
+        .remove(0);
+    assert_eq!(
+        (
+            added.supplying_store_id.as_deref(),
+            added.currency_id.as_deref()
+        ),
+        (Some("store_main"), Some("nzd"))
+    );
+}
+
+// covers: OMS-REG-CDIO-01.25, .26, .55, .134, .135
+
+#[actix_rt::test]
+async fn a_deleted_name_is_kept_marked_deleted_and_a_later_row_restores_it() {
+    let (connection, service_provider, dir) = name_setup("central_data_name_delete").await;
+    let ctx = service_provider.basic_context().unwrap();
+    NameRowRepository::new(&connection)
+        .upsert_one(&NameRow {
+            id: "customer".to_string(),
+            code: "CU1".to_string(),
+            name: "Customer".to_string(),
+            r#type: NameRowType::Facility,
+            ..Default::default()
+        })
+        .unwrap();
+    InvoiceRowRepository::new(&connection)
+        .upsert_one(&InvoiceRow {
+            id: "shipment".to_string(),
+            name_id: "customer".to_string(),
+            store_id: "store_main".to_string(),
+            ..Default::default()
+        })
+        .unwrap();
+
+    let path = write_file(
+        dir.path(),
+        name_sheet(vec![
+            // A store's own name, a name an invoice uses, a typo, and a change beside DELETE.
+            name_row(&[("code", "MAIN"), ("type", "STORE"), ("delete", "DELETE")]),
+            name_row(&[("code", "CU1"), ("type", "FACILITY"), ("delete", "DELETE")]),
+            name_row(&[("code", "CL1"), ("type", "FACILITY"), ("delete", "delete")]),
+            name_row(&[
+                ("code", "CL1"),
+                ("type", "FACILITY"),
+                ("phone", "123"),
+                ("delete", "DELETE"),
+            ]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                2,
+                Some("delete"),
+                "Main store (MAIN) is used by a store, as its name, so it can't be deleted"
+            ),
+            (
+                3,
+                Some("delete"),
+                "Customer (CU1) is used by an invoice, so it can't be deleted"
+            ),
+            (
+                4,
+                Some("delete"),
+                "\"delete\" is not valid. Type DELETE to delete this row, or leave it blank"
+            ),
+            (
+                5,
+                Some("delete"),
+                "A row marked DELETE can't also change phone. Clear it or put back the saved value"
+            ),
+        ]
+    );
+
+    // As exported, then a row for a name that isn't there.
+    let path = write_file(
+        dir.path(),
+        name_sheet(vec![
+            name_row(&[CLINIC_CELLS.as_slice(), &[("delete", "DELETE")]].concat()),
+            name_row(&[("code", "GONE"), ("type", "FACILITY"), ("delete", "DELETE")]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(
+        (summary.tables[0].deleted, summary.tables[0].unchanged),
+        (1, 1)
+    );
+    let deleted = find_name(&connection, "clinic").unwrap();
+    assert!(deleted.deleted_datetime.is_some());
+
+    // Deleting it again changes nothing; a row without DELETE restores it.
+    let path = write_file(
+        dir.path(),
+        name_sheet(vec![name_row(
+            &[CLINIC_CELLS.as_slice(), &[("delete", "DELETE")]].concat(),
+        )]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.tables[0].unchanged, 1);
+    let path = write_file(dir.path(), name_sheet(vec![name_row(&CLINIC_CELLS)]));
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.changes[0].change, Change::Restored);
+    assert_eq!(
+        summary.changes[0].fields,
+        vec![FieldChange {
+            column: "delete",
+            from: "DELETE".to_string(),
+            to: String::new(),
+        }]
+    );
+    assert_eq!(find_name(&connection, "clinic"), Some(central_clinic()));
+}
+
+// covers: OMS-REG-CDIO-01.137
+
+#[actix_rt::test]
+async fn a_patient_is_not_imported_on_the_name_sheet() {
+    let (connection, service_provider, dir) = name_setup("central_data_name_patient").await;
+    let ctx = service_provider.basic_context().unwrap();
+
+    // By id; by id and code; by code alone, which finds no name, so it adds one.
+    let path = write_file(
+        dir.path(),
+        name_sheet(vec![
+            name_row(&[("id", "patient"), ("phone", "123")]),
+            name_row(&[("id", "patient"), ("code", "P001"), ("type", "OTHERS")]),
+            new_name_row(&[("code", "P001"), ("type", "OTHERS"), ("name", "Other")]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    let error = "Moreau, Anna (P001) is a patient. Patients aren't imported on the name sheet";
+    assert_eq!(
+        row_errors(&summary),
+        vec![(2, Some("id"), error), (3, Some("id"), error)]
+    );
+    assert_eq!(summary.tables[0].inserted, 1);
+    assert_eq!(find_name(&connection, "patient"), Some(patient()));
+}
+
+// covers: OMS-REG-CDIO-01.136
+
+#[actix_rt::test]
+async fn a_system_name_is_not_exported_or_imported() {
+    let (connection, service_provider, dir) = name_setup("central_data_name_system").await;
+    let invad = find_name(&connection, "invad");
+    let ctx = service_provider.basic_context().unwrap();
+    // Spaces around a system name's code don't make it another code.
+    NameRowRepository::new(&connection)
+        .upsert_one(&NameRow {
+            id: "repack".to_string(),
+            code: " repack ".to_string(),
+            name: "Repacks".to_string(),
+            r#type: NameRowType::Repack,
+            ..Default::default()
+        })
+        .unwrap();
+    let counts = CentralDataService
+        .export_counts(&ctx, &[names_containing(None)])
+        .unwrap();
+    assert_eq!(counts[0].count.total, 3);
+
+    // By code and type, then by id.
+    let path = write_file(
+        dir.path(),
+        name_sheet(vec![
+            name_row(&[("code", "invad"), ("type", "INVAD"), ("phone", "1")]),
+            name_row(&[("id", "invad"), ("delete", "DELETE")]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    let protected =
+        "Inventory adjustments is a system name, as the server needs it, so import can't change it";
+    assert_eq!(
+        row_errors(&summary),
+        vec![(2, Some("code"), protected), (3, Some("id"), protected)]
+    );
+    assert_eq!(find_name(&connection, "invad"), invad);
 }
