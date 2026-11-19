@@ -3,7 +3,7 @@ use super::{
     RowOutcome, SheetImport, SheetStart,
     cells::{Row, collect, keep_or_saved},
     field_changes,
-    lookup::{active_first, find_record},
+    lookup::find_by_id_or_name,
     sheet::Value,
 };
 use crate::unit::{UpsertUnitError, upsert_unit};
@@ -80,23 +80,16 @@ impl SheetImport for UnitSheet {
         let name = row.text(NAME);
 
         let repo = UnitRowRepository::new(connection);
-        let existing = match find_record(
-            &repo,
-            row,
-            NAME,
-            id.as_deref(),
-            // With an id, the name isn't checked against it: a different name renames the unit.
-            name.as_deref().filter(|_| id.is_none()),
-            |saved| &saved.name,
-            // An inactive unit doesn't make an active one's name ambiguous.
-            |units| active_first(units, |unit| unit.is_active),
-        )? {
-            Ok(existing) => existing,
-            Err(e) => {
-                errors.push(e);
-                return Err(RowFailure::Invalid(errors));
-            }
-        };
+        let existing =
+            match find_by_id_or_name(&repo, row, NAME, id.as_deref(), name.as_deref(), |unit| {
+                unit.is_active
+            })? {
+                Ok(existing) => existing,
+                Err(e) => {
+                    errors.push(e);
+                    return Err(RowFailure::Invalid(errors));
+                }
+            };
 
         let saved_name = existing.as_ref().map(|unit| unit.name.as_str());
         // Found by name, the row's name is the saved one in some letter case: it's kept. With an

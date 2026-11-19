@@ -3,7 +3,7 @@ use super::{
     SheetImport, SheetStart,
     cells::{Row, RowError, collect, keep_or_saved},
     field_changes,
-    lookup::{active_first, find_record},
+    lookup::find_by_id_or_name,
     sheet::Value,
 };
 use crate::master_list::upsert::{UpsertMasterListError, upsert_master_list};
@@ -93,16 +93,13 @@ impl SheetImport for MasterListSheet {
         let name = row.text(NAME);
 
         let repo = MasterListRowRepository::new(connection);
-        let existing = match find_record(
+        let existing = match find_by_id_or_name(
             &repo,
             row,
             NAME,
             id.as_deref(),
-            // With an id, the name isn't checked against it: a different name renames the list.
-            name.as_deref().filter(|_| id.is_none()),
-            |saved| &saved.name,
-            // An inactive list doesn't make an active one's name ambiguous.
-            |master_lists| active_first(master_lists, |master_list| master_list.is_active),
+            name.as_deref(),
+            |master_list| master_list.is_active,
         )? {
             Ok(existing) => existing,
             // Without it, the row's other checks would treat it as a new master list.

@@ -88,7 +88,7 @@ impl KeyedTable for ItemRowRepository<'_> {
     }
 }
 
-/// Looked up by name, as legacy master lists often have no code, active ones first.
+/// Looked up by name, as legacy master lists often have no code.
 impl KeyedTable for MasterListRowRepository<'_> {
     type Record = MasterListRow;
     fn id(master_list: &MasterListRow) -> &str {
@@ -304,6 +304,28 @@ pub fn find_record<T: KeyedTable>(
         },
         None => pick_one(narrow(by_key)).map_err(|e| row.error(column, e.message(key))),
     })
+}
+
+/// The saved record a row changes, by id, else by its name in `column`, for tables keyed by
+/// name. With an id the name isn't checked: a different name renames the record. An inactive
+/// record doesn't make an active one's name ambiguous.
+pub fn find_by_id_or_name<T: KeyedTable>(
+    table: &T,
+    row: &Row,
+    column: &str,
+    id: Option<&str>,
+    name: Option<&str>,
+    is_active: impl Fn(&T::Record) -> bool,
+) -> Result<Result<Option<T::Record>, RowError>, RepositoryError> {
+    find_record(
+        table,
+        row,
+        column,
+        id,
+        name.filter(|_| id.is_none()),
+        T::key,
+        |records| active_first(records, &is_active),
+    )
 }
 
 /// A reference to another table's record, given by a code column, an id column or both. `None`
