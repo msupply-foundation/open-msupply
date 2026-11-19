@@ -50,6 +50,14 @@ TOKEN=$(gh api -X POST repos/msupply-foundation/open-msupply-internal/actions/ru
 ./svc.sh install && ./svc.sh start
 ```
 
+Nothing cleans up after these jobs, so the mac's disk grows slowly: pnpm's store keeps every dependency version a lockfile has brought in, Playwright keeps a Chromium for each version it has used, and the bundle-size check keeps one file per develop `frontend/` tree. If disk runs short, prune them:
+
+```bash
+pnpm store prune                                                # packages no project links to
+ls ~/Library/Caches/ms-playwright                               # delete the older chromium_headless_shell-* folders
+find ~/.cache/oms-ci/bundle-size -type f -mtime +30 -delete     # old base measurements and stray .tmp files
+```
+
 ## Testing a workflow before it is merged
 
 A `workflow_dispatch` workflow can be run from a branch, with the branch's own version of the workflow file, before it is merged anywhere:
