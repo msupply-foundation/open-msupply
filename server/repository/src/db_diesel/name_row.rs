@@ -240,13 +240,35 @@ pub enum NameUser {
     Vaccination,
 }
 
+impl NameRow {
+    /// One of the names the server records its own work against, such as inventory adjustments.
+    /// The server finds them by exact code, so only that code makes one.
+    pub fn is_system_name(&self) -> bool {
+        SYSTEM_NAME_CODES.contains(&self.code.as_str())
+    }
+}
+
+/// `NameRow::is_system_name` in SQL, or its opposite, for any query over the name table.
+pub(crate) fn system_name_filter<QS>(
+    is_system_name: bool,
+) -> Box<dyn BoxableExpression<QS, DBType, SqlType = diesel::sql_types::Bool>>
+where
+    name::code: SelectableExpression<QS>,
+{
+    if is_system_name {
+        Box::new(name::code.eq_any(SYSTEM_NAME_CODES))
+    } else {
+        Box::new(name::code.ne_all(SYSTEM_NAME_CODES))
+    }
+}
+
 /// The name table alone, without the store joins `NameFilter` brings.
 #[derive(Clone, Default, Debug, PartialEq)]
 pub struct NameRowFilter {
     pub code_or_name: Option<StringFilter>,
     pub r#type: Option<EqualFilter<NameRowType>>,
     pub is_deleted: Option<bool>,
-    /// Names whose code, without spaces around it, is one of `SYSTEM_NAME_CODES`.
+    /// As `NameRow::is_system_name`.
     pub is_system_name: Option<bool>,
 }
 
@@ -272,9 +294,7 @@ fn filtered(filter: NameRowFilter) -> BoxedNameRowQuery {
         None => query,
     };
     match is_system_name {
-        // Trimmed, as a code saved with spaces around it is still that code.
-        Some(true) => query.filter(trim(name::code).eq_any(SYSTEM_NAME_CODES)),
-        Some(false) => query.filter(trim(name::code).ne_all(SYSTEM_NAME_CODES)),
+        Some(is_system_name) => query.filter(system_name_filter(is_system_name)),
         None => query,
     }
 }

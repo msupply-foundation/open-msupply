@@ -2,9 +2,8 @@ use crate::record_key::{KeyCase, other_active_with_key};
 use chrono::Utc;
 use repository::{
     CurrencyRowRepository, NameRow, NameRowRepository, NameUser, RepositoryError,
-    StorageConnection, StoreRowRepository, trim_spaces,
+    StorageConnection, StoreRowRepository,
 };
-use util::constants::SYSTEM_NAME_CODES;
 
 #[derive(Debug, PartialEq)]
 pub enum UpsertNameError {
@@ -46,10 +45,6 @@ impl From<RepositoryError> for DeleteNameError {
     }
 }
 
-pub fn is_system_name(code: &str) -> bool {
-    SYSTEM_NAME_CODES.contains(&trim_spaces(code))
-}
-
 /// Joins the caller's transaction, so an import's earlier rows count. A new name without a
 /// `created_datetime` gets the current time.
 pub fn upsert_name(connection: &StorageConnection, row: &NameRow) -> Result<(), UpsertNameError> {
@@ -75,7 +70,7 @@ pub fn delete_name(connection: &StorageConnection, name_id: &str) -> Result<(), 
         .transaction_sync(|connection| -> Result<(), DeleteNameError> {
             let repo = NameRowRepository::new(connection);
             if let Some(saved) = repo.find_one_by_id(name_id)?
-                && is_system_name(&saved.code)
+                && saved.is_system_name()
             {
                 return Err(DeleteNameError::Protected);
             }
@@ -93,7 +88,7 @@ fn validate(
     saved: Option<&NameRow>,
     row: &NameRow,
 ) -> Result<(), UpsertNameError> {
-    if saved.is_some_and(|saved| is_system_name(&saved.code)) || is_system_name(&row.code) {
+    if saved.is_some_and(NameRow::is_system_name) || row.is_system_name() {
         return Err(UpsertNameError::Protected);
     }
     if row.code.trim().is_empty() {

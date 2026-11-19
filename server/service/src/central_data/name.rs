@@ -13,7 +13,7 @@ use super::{
 };
 use crate::{
     i64_to_u32,
-    name::upsert::{DeleteNameError, UpsertNameError, delete_name, is_system_name, upsert_name},
+    name::upsert::{DeleteNameError, UpsertNameError, delete_name, upsert_name},
 };
 use chrono::NaiveDateTime;
 use repository::{
@@ -223,6 +223,9 @@ impl SheetImport for NameSheet {
         let id = row.text(ID);
         let code = row.text(CODE);
 
+        // The id's record is checked before `find_record`, which looks among the row's type only:
+        // that way a patient or a type change is named as such, and a new id beside a code that
+        // only another type has still adds a name.
         let repo = NameRowRepository::new(connection);
         if let Some(id) = &id
             && let Some(saved) = repo.find_one_by_id(id)?
@@ -258,7 +261,8 @@ impl SheetImport for NameSheet {
             id.as_deref(),
             code.as_deref(),
             |saved| &saved.name,
-            // A patient or a deleted name doesn't make a live name's code ambiguous.
+            // A row with no id never finds a patient, and a deleted name doesn't make a live name's
+            // code ambiguous.
             |names| {
                 let names = names
                     .into_iter()
@@ -274,13 +278,8 @@ impl SheetImport for NameSheet {
             }
         };
         let saved = existing.as_ref();
-        // Found by an id and code given together.
-        if let Some(saved) = saved.filter(|saved| saved.r#type == NameRowType::Patient) {
-            errors.push(patient_error(row, saved));
-            return Err(RowFailure::Invalid(errors));
-        }
         // Here, not only in the save, as an unchanged row isn't saved.
-        if let Some(saved) = saved.filter(|saved| is_system_name(&saved.code)) {
+        if let Some(saved) = saved.filter(|saved| saved.is_system_name()) {
             errors.push(protected_error(row, &saved.name));
             return Err(RowFailure::Invalid(errors));
         }

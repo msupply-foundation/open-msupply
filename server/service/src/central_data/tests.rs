@@ -5092,9 +5092,10 @@ async fn a_name_export_searches_code_and_name() {
 async fn name_rows_add_and_update_by_code_and_type() {
     let (connection, service_provider, dir) = name_setup("central_data_name_upsert").await;
     let ctx = service_provider.basic_context().unwrap();
-    // The clinic's code as a store's adds a name.
+    // The clinic's code as a store's adds a name, though the row has an id.
     let new_store = || {
         new_name_row(&[
+            ("id", "clinic_store"),
             ("code", "CL1"),
             ("type", "store"),
             ("name", "Clinic store"),
@@ -5194,7 +5195,7 @@ async fn name_rows_add_and_update_by_code_and_type() {
     assert_eq!(
         added,
         NameRow {
-            id: added.id.clone(),
+            id: "clinic_store".to_string(),
             code: "CL1".to_string(),
             name: "Clinic store".to_string(),
             r#type: NameRowType::Store,
@@ -5499,7 +5500,8 @@ async fn a_system_name_is_not_exported_or_imported() {
     let (connection, service_provider, dir) = name_setup("central_data_name_system").await;
     let invad = find_name(&connection, "invad");
     let ctx = service_provider.basic_context().unwrap();
-    // Spaces around a system name's code don't make it another code.
+    // The server finds a system name by its exact code, so one with spaces around it is an
+    // ordinary name, exported like any other.
     NameRowRepository::new(&connection)
         .upsert_one(&NameRow {
             id: "repack".to_string(),
@@ -5512,7 +5514,7 @@ async fn a_system_name_is_not_exported_or_imported() {
     let counts = CentralDataService
         .export_counts(&ctx, &[names_containing(None)])
         .unwrap();
-    assert_eq!(counts[0].count.total, 3);
+    assert_eq!(counts[0].count.total, 4);
 
     // By code and type, then by id.
     let path = write_file(
