@@ -11,7 +11,7 @@ use super::{
 use chrono::NaiveDateTime;
 
 use diesel::{
-    dsl::{IntoBoxed, LeftJoin},
+    dsl::{IntoBoxed, LeftJoin, not},
     prelude::*,
 };
 use serde::{Deserialize, Serialize};
@@ -406,26 +406,27 @@ impl<'a> ItemRepository<'a> {
                 )
                 .group_by(store_stock_on_hand::item_id);
 
-            query =
-                match (is_visible_or_on_hand, has_stock_on_hand) {
-                    // visible items AND non-visible items with stock on hand
-                    (Some(true), _) => query.filter(
-                        item::id
-                            .eq_any(visible_item_ids.clone().into_boxed())
-                            .or(item::id.eq_any(item_ids_with_stock_on_hand.clone().into_boxed())),
-                    ),
-                    // Not handling Some(false) of is_visible_or_on_hand here - no use case for returning non-visible items
-                    // Items with stock on hand
-                    (_, Some(true)) => query
-                        .filter(item::id.eq_any(item_ids_with_stock_on_hand.clone().into_boxed())),
+            query = match (is_visible_or_on_hand, has_stock_on_hand) {
+                // visible items AND non-visible items with stock on hand
+                (Some(true), _) => query.filter(
+                    item::id
+                        .eq_any(visible_item_ids.clone().into_boxed())
+                        .or(item::id.eq_any(item_ids_with_stock_on_hand.clone().into_boxed())),
+                ),
+                // Not handling Some(false) of is_visible_or_on_hand here - no use case for returning non-visible items
+                // Items with stock on hand
+                (_, Some(true)) => {
+                    query.filter(item::id.eq_any(item_ids_with_stock_on_hand.clone().into_boxed()))
+                }
 
-                    // Items with no stock on hand
-                    (_, Some(false)) => query
-                        .filter(item::id.ne_all(item_ids_with_stock_on_hand.clone().into_boxed())),
+                // Items with no stock on hand
+                (_, Some(false)) => query.filter(not(
+                    item::id.eq_any(item_ids_with_stock_on_hand.clone().into_boxed())
+                )),
 
-                    // no stock_on_hand filters
-                    (_, _) => query,
-                };
+                // no stock_on_hand filters
+                (_, _) => query,
+            };
 
             query = match (is_visible_or_on_hand, is_visible) {
                 // visible items AND non-visible items with stock on hand
@@ -438,7 +439,9 @@ impl<'a> ItemRepository<'a> {
                 (_, Some(true)) => query.filter(item::id.eq_any(visible_item_ids.into_boxed())),
 
                 // invisible items
-                (_, Some(false)) => query.filter(item::id.ne_all(visible_item_ids.into_boxed())),
+                (_, Some(false)) => {
+                    query.filter(not(item::id.eq_any(visible_item_ids.into_boxed())))
+                }
 
                 // no visibility filters
                 (_, _) => query,
@@ -468,7 +471,7 @@ impl<'a> ItemRepository<'a> {
                 if is_program_item_filter {
                     query = query.filter(item::id.eq_any(program_item_ids));
                 } else {
-                    query = query.filter(item::id.ne_all(program_item_ids));
+                    query = query.filter(not(item::id.eq_any(program_item_ids)));
                 }
             }
 
@@ -494,7 +497,7 @@ impl<'a> ItemRepository<'a> {
                 query = if ignore_for_orders {
                     query.filter(item::id.eq_any(ignored_item_ids))
                 } else {
-                    query.filter(item::id.ne_all(ignored_item_ids))
+                    query.filter(not(item::id.eq_any(ignored_item_ids)))
                 };
             }
 
@@ -1098,6 +1101,63 @@ mod tests {
             .unwrap();
 
         assert_eq!(results.len(), 0);
+
+        // has_stock_on_hand: item 3 is the only item with stock
+        let ids = |filter: ItemFilter| -> Vec<String> {
+            ItemRepository::new(&storage_connection)
+                .query(
+                    Pagination::new(),
+                    Some(filter),
+                    None,
+                    Some("name1_store".to_string()),
+                )
+                .unwrap()
+                .into_iter()
+                .map(|r| r.item_row.id)
+                .collect()
+        };
+        assert_eq!(
+            ids(ItemFilter::new().has_stock_on_hand(true)),
+            vec!["item3"]
+        );
+        assert_eq!(
+            ids(ItemFilter::new().has_stock_on_hand(false)),
+            item_rows
+                .iter()
+                .map(|r| r.id.clone())
+                .filter(|id| id != "item3")
+                .collect::<Vec<String>>()
+        );
+    }
+
+    /// `is_program_item(false)` is the complement of `is_program_item(true)`.
+    #[actix_rt::test]
+    async fn test_item_query_filter_is_program_item() {
+        let (_, storage_connection, _, _) = test_db::setup_all(
+            "test_item_query_filter_is_program_item",
+            MockDataInserts::all(),
+        )
+        .await;
+        let ids = |filter: Option<ItemFilter>| -> Vec<String> {
+            let mut ids: Vec<String> = ItemRepository::new(&storage_connection)
+                .query(Pagination::all(), filter, None, None)
+                .unwrap()
+                .into_iter()
+                .map(|r| r.item_row.id)
+                .collect();
+            ids.sort();
+            ids
+        };
+
+        let all = ids(None);
+        let program = ids(Some(ItemFilter::new().is_program_item(true)));
+        let not_program = ids(Some(ItemFilter::new().is_program_item(false)));
+        assert!(!program.is_empty()); // Sanity check
+        assert!(!not_program.is_empty()); // Sanity check
+        assert!(program.iter().all(|id| !not_program.contains(id)));
+        let mut both = [program, not_program].concat();
+        both.sort();
+        assert_eq!(both, all);
     }
 
     #[actix_rt::test]

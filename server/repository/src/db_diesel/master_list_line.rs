@@ -10,7 +10,7 @@ use super::{
     master_list_line_row::master_list_line, master_list_row::master_list,
 };
 
-use diesel::{helper_types::IntoBoxed, prelude::*};
+use diesel::{dsl::not, helper_types::IntoBoxed, prelude::*};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct MasterListLine {
@@ -140,7 +140,7 @@ impl<'a> MasterListLineRepository<'a> {
                 query = if ignore_for_orders {
                     query.filter(master_list_line::item_id.eq_any(ignored_item_ids))
                 } else {
-                    query.filter(master_list_line::item_id.ne_all(ignored_item_ids))
+                    query.filter(not(master_list_line::item_id.eq_any(ignored_item_ids)))
                 };
             }
         }
