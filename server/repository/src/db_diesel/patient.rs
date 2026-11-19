@@ -37,6 +37,19 @@ pub fn is_unnamed_patient_id(id: &str) -> bool {
     id.starts_with(UNNAMED_PATIENT_ID_PREFIX)
 }
 
+/// The escape character for [`unnamed_patient_id_like`].
+pub(crate) const UNNAMED_PATIENT_LIKE_ESCAPE: char = '\\';
+
+/// A `LIKE` pattern matching every store's unnamed patient id, to use with
+/// `.escape(UNNAMED_PATIENT_LIKE_ESCAPE)`. The prefix's underscores are
+/// escaped, as a bare `_` would match any character.
+pub(crate) fn unnamed_patient_id_like() -> String {
+    format!(
+        "{}%",
+        UNNAMED_PATIENT_ID_PREFIX.replace('_', &format!("{UNNAMED_PATIENT_LIKE_ESCAPE}_"))
+    )
+}
+
 #[derive(Clone, Default, PartialEq, Debug, Serialize, Deserialize)]
 pub struct PatientFilter {
     pub id: Option<EqualFilter<String>>,
@@ -420,11 +433,8 @@ impl<'a> PatientRepository<'a> {
             if exclude_unnamed {
                 query = query.filter(
                     name::id
-                        .not_like(format!(
-                            "{}%",
-                            UNNAMED_PATIENT_ID_PREFIX.replace('_', "\\_")
-                        ))
-                        .escape('\\'),
+                        .not_like(unnamed_patient_id_like())
+                        .escape(UNNAMED_PATIENT_LIKE_ESCAPE),
                 );
             }
         };
