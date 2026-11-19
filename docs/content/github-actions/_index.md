@@ -50,13 +50,7 @@ TOKEN=$(gh api -X POST repos/msupply-foundation/open-msupply-internal/actions/ru
 ./svc.sh install && ./svc.sh start
 ```
 
-Nothing cleans up after these jobs, so the mac's disk grows slowly: pnpm's store keeps every dependency version a lockfile has brought in, Playwright keeps a Chromium for each version it has used, and the bundle-size check keeps one file per develop `frontend/` tree. If disk runs short, prune them:
-
-```bash
-pnpm store prune                                                # packages no project links to
-ls ~/Library/Caches/ms-playwright                               # delete the older chromium_headless_shell-* folders
-find ~/.cache/oms-ci/bundle-size -type f -mtime +30 -delete     # old base measurements and stray .tmp files
-```
+The front end check leaves its caches on the mac between jobs: pnpm's store, Playwright's browsers and the bundle-size check's base measurements (`~/.cache/oms-ci/bundle-size/`). `frontend-cache-clean.yaml` trims them every Sunday: it prunes the store, keeps only the newest Playwright browser of each kind, and deletes base measurements older than 30 days. If a front end job is running at the time it skips that week. Run it by hand with `gh workflow run frontend-cache-clean.yaml`.
 
 ## Testing a workflow before it is merged
 
