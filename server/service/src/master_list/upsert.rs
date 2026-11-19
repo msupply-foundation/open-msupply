@@ -1,4 +1,4 @@
-use crate::record_key::{KeyCase, other_with_key};
+use crate::record_key::{KeyCase, other_active_with_key, other_with_key};
 use repository::{MasterListRow, MasterListRowRepository, RepositoryError, StorageConnection};
 use util::constants::MISSING_PROGRAM;
 
@@ -50,26 +50,15 @@ fn validate(
     }
     let repo = MasterListRowRepository::new(connection);
     let saved = repo.find_one_by_id(&row.id)?;
-    // Only active lists clash, so an inactive one doesn't hold on to its name.
-    if row.is_active
-        && let Some(other_id) = other_with_key(
-            saved
-                .as_ref()
-                .filter(|saved| saved.is_active)
-                .map(|saved| saved.name.as_str()),
-            &row.id,
-            &row.name,
-            KeyCase::Exact,
-            |name| {
-                Ok(repo
-                    .find_by_trimmed_name(name)?
-                    .into_iter()
-                    .filter(|other| other.is_active)
-                    .collect())
-            },
-            |other| &other.id,
-        )?
-    {
+    if let Some(other_id) = other_active_with_key(
+        saved.as_ref(),
+        row,
+        KeyCase::Exact,
+        |name| repo.find_by_trimmed_name(name),
+        |master_list| &master_list.id,
+        |master_list| &master_list.name,
+        |master_list| master_list.is_active,
+    )? {
         return Err(UpsertMasterListError::DuplicateName { other_id });
     }
     if row.code.trim().is_empty() {

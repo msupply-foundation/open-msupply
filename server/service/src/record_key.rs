@@ -35,3 +35,27 @@ pub(crate) fn other_with_key<R>(
         .find(|other| *other != id)
         .map(str::to_string))
 }
+
+/// As [`other_with_key`], among active records only, so an inactive one doesn't hold on to its
+/// key. An inactive `record` clashes with none.
+pub(crate) fn other_active_with_key<R>(
+    saved: Option<&R>,
+    record: &R,
+    case: KeyCase,
+    find_by_key: impl FnOnce(&str) -> Result<Vec<R>, RepositoryError>,
+    id: impl Fn(&R) -> &str,
+    key: impl Fn(&R) -> &str,
+    is_active: impl Fn(&R) -> bool,
+) -> Result<Option<String>, RepositoryError> {
+    if !is_active(record) {
+        return Ok(None);
+    }
+    other_with_key(
+        saved.filter(|saved| is_active(saved)).map(&key),
+        id(record),
+        key(record),
+        case,
+        |key| Ok(find_by_key(key)?.into_iter().filter(&is_active).collect()),
+        &id,
+    )
+}

@@ -1,4 +1,4 @@
-use crate::record_key::{KeyCase, other_with_key};
+use crate::record_key::{KeyCase, other_active_with_key};
 use repository::{RepositoryError, StorageConnection, UnitRow, UnitRowRepository};
 
 #[derive(Debug, PartialEq)]
@@ -34,28 +34,17 @@ fn validate(connection: &StorageConnection, unit: &UnitRow) -> Result<(), Upsert
         return Err(UpsertUnitError::NameRequired);
     }
 
-    // Only active units clash, so an inactive one doesn't hold on to its name.
     let repo = UnitRowRepository::new(connection);
     let saved = repo.find_one_by_id(&unit.id)?;
-    if unit.is_active
-        && let Some(other_id) = other_with_key(
-            saved
-                .as_ref()
-                .filter(|saved| saved.is_active)
-                .map(|saved| saved.name.as_str()),
-            &unit.id,
-            &unit.name,
-            KeyCase::Any,
-            |name| {
-                Ok(repo
-                    .find_by_trimmed_name_any_case(name)?
-                    .into_iter()
-                    .filter(|other| other.is_active)
-                    .collect())
-            },
-            |other| &other.id,
-        )?
-    {
+    if let Some(other_id) = other_active_with_key(
+        saved.as_ref(),
+        unit,
+        KeyCase::Any,
+        |name| repo.find_by_trimmed_name_any_case(name),
+        |unit| &unit.id,
+        |unit| &unit.name,
+        |unit| unit.is_active,
+    )? {
         return Err(UpsertUnitError::DuplicateName { other_id });
     }
     Ok(())
