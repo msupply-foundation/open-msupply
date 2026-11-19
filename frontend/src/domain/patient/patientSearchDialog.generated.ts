@@ -13,7 +13,6 @@ export type PatientFindRowFragment = {
   dateOfBirth: string | null;
   isDeceased: boolean;
   address1: string | null;
-  phone: string | null;
 };
 
 export type PatientFindVariables = {
@@ -128,7 +127,7 @@ export type PatientFindResult = {
 };
 
 export const PatientFind = {
-  query: "query patientFind($storeId: String!, $filter: PatientFilterInput, $first: Int!, $offset: Int!) {\n  patients(\n    storeId: $storeId\n    filter: $filter\n    sort: [{key: name}]\n    page: {first: $first, offset: $offset}\n    countLimit: 1\n  ) {\n    __typename\n    ... on PatientConnector {\n      nodes {\n        ...PatientFindRow\n      }\n    }\n  }\n}\n\nfragment PatientFindRow on PatientNode {\n  id\n  code\n  code2\n  name\n  firstName\n  lastName\n  gender\n  dateOfBirth\n  isDeceased\n  address1\n  phone\n}",
+  query: "query patientFind($storeId: String!, $filter: PatientFilterInput, $first: Int!, $offset: Int!) {\n  patients(\n    storeId: $storeId\n    filter: $filter\n    sort: [{key: name}]\n    page: {first: $first, offset: $offset}\n    countLimit: 1\n  ) {\n    __typename\n    ... on PatientConnector {\n      nodes {\n        ...PatientFindRow\n      }\n    }\n  }\n}\n\nfragment PatientFindRow on PatientNode {\n  id\n  code\n  code2\n  name\n  firstName\n  lastName\n  gender\n  dateOfBirth\n  isDeceased\n  address1\n}",
 } as TypedDocument<PatientFindResult, PatientFindVariables>;
 
 export type RecentPrescriptionPatientsVariables = {
@@ -148,5 +147,5 @@ export type RecentPrescriptionPatientsResult = {
 };
 
 export const RecentPrescriptionPatients = {
-  query: "query recentPrescriptionPatients($storeId: String!, $first: Int!) {\n  invoices(\n    storeId: $storeId\n    sort: [{key: createdDatetime, desc: true}]\n    page: {first: $first}\n    type: [PRESCRIPTION]\n  ) {\n    __typename\n    ... on InvoiceConnector {\n      nodes {\n        id\n        patient {\n          ...PatientFindRow\n        }\n      }\n    }\n  }\n}\n\nfragment PatientFindRow on PatientNode {\n  id\n  code\n  code2\n  name\n  firstName\n  lastName\n  gender\n  dateOfBirth\n  isDeceased\n  address1\n  phone\n}",
+  query: "query recentPrescriptionPatients($storeId: String!, $first: Int!) {\n  invoices(\n    storeId: $storeId\n    sort: [{key: createdDatetime, desc: true}]\n    page: {first: $first}\n    type: [PRESCRIPTION]\n  ) {\n    __typename\n    ... on InvoiceConnector {\n      nodes {\n        id\n        patient {\n          ...PatientFindRow\n        }\n      }\n    }\n  }\n}\n\nfragment PatientFindRow on PatientNode {\n  id\n  code\n  code2\n  name\n  firstName\n  lastName\n  gender\n  dateOfBirth\n  isDeceased\n  address1\n}",
 } as TypedDocument<RecentPrescriptionPatientsResult, RecentPrescriptionPatientsVariables>;

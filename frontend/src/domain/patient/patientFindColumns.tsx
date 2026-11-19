@@ -1,9 +1,6 @@
 import { t } from '../../intl';
 import { type Column } from '../../ui/elements/table/DataTable';
-import {
-  getCellDefinition,
-  getFlagCell,
-} from '../../ui/elements/table/tableHelpers';
+import { getCellDefinition } from '../../ui/elements/table/tableHelpers';
 import { remToPx } from '../../ui/utils/rem';
 import { genderLabel } from './gender';
 import { ageFromDob } from './age';
@@ -56,16 +53,5 @@ export const patientFindColumns = <T extends PatientFindRow>(): Column<
     c: { key: 'address1' },
     header: () => t('label.address'),
     ...getCellDefinition('description'),
-  },
-  {
-    c: { key: 'phone' },
-    header: () => t('label.phone'),
-    ...getCellDefinition('phone'),
-  },
-  {
-    c: { key: 'isDeceased' },
-    header: () => t('label.deceased'),
-    ...getFlagCell(t('label.deceased')),
-    size: remToPx(5.5),
   },
 ];
