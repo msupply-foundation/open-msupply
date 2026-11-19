@@ -55,7 +55,7 @@ pub fn csv_to_excel(
         let row = row_idx as u32 + 2;
         for (col_idx, field) in record.iter().enumerate() {
             let cell = sheet.get_cell_mut((col_idx as u32 + 1, row));
-            cell.set_value(field);
+            set_cell_text(cell, field);
         }
     }
 
@@ -318,9 +318,8 @@ fn apply_data_rows(
             // If no custom columns, every column will be mapped, otherwise only custom columns
             if let Some(column_index) = index_to_column_index_map.get(&(cell_index as u32)).cloned()
             {
-                let sheet_cell = sheet
-                    .get_cell_mut((column_index, row_idx))
-                    .set_value(inner_text(cell));
+                let sheet_cell = sheet.get_cell_mut((column_index, row_idx));
+                set_cell_text(sheet_cell, inner_text(cell));
                 apply_known_styles(sheet_cell, cell);
             }
         }
@@ -512,6 +511,19 @@ fn inner_text<'a>(element_ref: ElementRef<'a>) -> &'a str {
         .unwrap_or_default()
 }
 
+/// Puts text in a cell, which the sheet stores as a number when it reads as one. Text with a
+/// leading zero, such as the item code `030063`, is a code rather than a number, so it stays
+/// text: as a number Excel would show it as `30063`.
+fn set_cell_text(cell: &mut Cell, text: &str) {
+    let digits = text.strip_prefix('-').unwrap_or(text).as_bytes();
+    let has_leading_zero = digits.len() > 1 && digits[0] == b'0' && digits[1].is_ascii_digit();
+    if has_leading_zero {
+        cell.set_value_string(text);
+    } else {
+        cell.set_value(text);
+    }
+}
+
 fn apply_known_styles(cell: &mut Cell, el: ElementRef) {
     let style = cell.get_style_mut();
 
@@ -635,6 +647,41 @@ mod report_to_excel_test {
         // Blank row before the total row
         assert_eq!(get_value("B4"), "");
         assert_eq!(get_value("B5"), "Total:");
+    }
+
+    /// An item code like `030063` is text that happens to be digits: as a number Excel would
+    /// show `30063`. Numbers, zero and decimals below one still go in as numbers.
+    #[test]
+    fn test_generate_excel_keeps_leading_zeros() {
+        let report: GeneratedReport = GeneratedReport {
+            document: r#"
+          <table>
+            <thead>
+              <tr><th>Code</th><th>Quantity</th><th>Zero</th><th>Price</th><th>Negative</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>030063</td><td>100</td><td>0</td><td>0.50</td><td>-012</td></tr>
+            </tbody>
+          </table>
+        "#
+            .to_string(),
+            header: None,
+            footer: None,
+        };
+
+        let mut book = umya_spreadsheet::new_file();
+        book.set_sheet_name(0, "test").unwrap();
+        let sheet = book.get_sheet_by_name_mut("test").unwrap();
+
+        apply_report(sheet, report, "test");
+
+        let data_type = |coord: &str| sheet.get_cell(coord).unwrap().get_data_type().to_string();
+        assert_eq!(get_value(sheet, "A2"), "030063");
+        assert_eq!(data_type("A2"), "s");
+        assert_eq!(data_type("E2"), "s");
+        assert_eq!(data_type("B2"), "n");
+        assert_eq!(data_type("C2"), "n");
+        assert_eq!(data_type("D2"), "n");
     }
 
     #[test]
