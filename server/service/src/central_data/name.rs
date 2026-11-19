@@ -446,9 +446,21 @@ impl NameSheet {
                         match user {
                             NameUser::Store => "a store, as its name",
                             NameUser::Invoice => "an invoice",
+                            NameUser::InvoiceLine =>
+                                "an invoice line, as its donor or manufacturer",
                             NameUser::Requisition => "a requisition",
                             NameUser::PurchaseOrder => "a purchase order",
+                            NameUser::PurchaseOrderLine =>
+                                "a purchase order line, as its manufacturer",
                             NameUser::StockLine => "a stock line",
+                            NameUser::StocktakeLine =>
+                                "a stocktake line, as its donor or manufacturer",
+                            NameUser::RnrForm => "an R&R form",
+                            NameUser::IndicatorValue => "an indicator value, as its customer",
+                            NameUser::ItemVariant => "an item variant, as its manufacturer",
+                            NameUser::BarcodeProposal => "a barcode, as its manufacturer",
+                            NameUser::Asset => "an asset, as its donor",
+                            NameUser::Vaccination => "a vaccination, as where it was given",
                         }
                     ),
                 )

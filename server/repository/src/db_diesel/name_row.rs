@@ -220,14 +220,24 @@ pub struct NameOmsFieldsRow {
     pub properties: Option<String>,
 }
 
-/// A kind of record that can refer to a name, so the name can't be deleted.
+/// A kind of record that shows a name, so the name can't be deleted. Joins that only describe the
+/// name, such as which stores see it, its master lists, tags, insurance and contacts, aren't here.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum NameUser {
     Store,
     Invoice,
+    InvoiceLine,
     Requisition,
     PurchaseOrder,
+    PurchaseOrderLine,
     StockLine,
+    StocktakeLine,
+    RnrForm,
+    IndicatorValue,
+    ItemVariant,
+    BarcodeProposal,
+    Asset,
+    Vaccination,
 }
 
 /// The name table alone, without the store joins `NameFilter` brings.
@@ -324,12 +334,17 @@ impl<'a> NameRowRepository<'a> {
         Ok(())
     }
 
-    /// The first kind of record found that refers to the name, through any of its links: each
-    /// table here is its link-resolving view, so a record pointing at a merged name's link counts.
+    /// The first kind of record found that shows the name, through any of its links: each table
+    /// here is its link-resolving view, so a record pointing at a merged name's link counts.
     pub fn used_by(&self, name_id: &str) -> Result<Option<NameUser>, RepositoryError> {
         use super::{
-            invoice_row::invoice, purchase_order_row::purchase_order,
-            requisition::requisition_row::requisition, stock_line_row::stock_line,
+            assets::asset_row::asset, barcode_proposal_row::barcode_proposal,
+            indicator_value_row::indicator_value, invoice_line_row::invoice_line,
+            invoice_row::invoice, item_variant::item_variant_row::item_variant,
+            purchase_order_line_row::purchase_order_line, purchase_order_row::purchase_order,
+            requisition::requisition_row::requisition, rnr_form_row::rnr_form,
+            stock_line_row::stock_line, stocktake_line_row::stocktake_line,
+            vaccination_row::vaccination,
         };
         use diesel::dsl::exists;
         let mut guard = self.connection.lock();
@@ -341,6 +356,8 @@ impl<'a> NameRowRepository<'a> {
                 }
             };
         }
+        // One column per check, each with its own index: an OR across columns resolved through
+        // separate link joins makes Postgres read the whole table.
         check!(
             NameUser::Store,
             store::table.filter(store::name_id.eq(name_id))
@@ -350,25 +367,81 @@ impl<'a> NameRowRepository<'a> {
             invoice::table.filter(invoice::name_id.eq(name_id))
         );
         check!(
+            NameUser::Invoice,
+            invoice::table.filter(invoice::default_donor_id.eq(name_id))
+        );
+        check!(
+            NameUser::InvoiceLine,
+            invoice_line::table.filter(invoice_line::donor_id.eq(name_id))
+        );
+        check!(
+            NameUser::InvoiceLine,
+            invoice_line::table.filter(invoice_line::manufacturer_id.eq(name_id))
+        );
+        check!(
             NameUser::Requisition,
             requisition::table.filter(requisition::name_id.eq(name_id))
         );
         check!(
             NameUser::PurchaseOrder,
-            purchase_order::table.filter(
-                purchase_order::supplier_name_id
-                    .eq(name_id)
-                    .or(purchase_order::donor_id.eq(name_id))
-            )
+            purchase_order::table.filter(purchase_order::supplier_name_id.eq(name_id))
+        );
+        check!(
+            NameUser::PurchaseOrder,
+            purchase_order::table.filter(purchase_order::donor_id.eq(name_id))
+        );
+        check!(
+            NameUser::PurchaseOrderLine,
+            purchase_order_line::table.filter(purchase_order_line::manufacturer_id.eq(name_id))
         );
         check!(
             NameUser::StockLine,
-            stock_line::table.filter(
-                stock_line::supplier_id
+            stock_line::table.filter(stock_line::supplier_id.eq(name_id))
+        );
+        check!(
+            NameUser::StockLine,
+            stock_line::table.filter(stock_line::donor_id.eq(name_id))
+        );
+        check!(
+            NameUser::StockLine,
+            stock_line::table.filter(stock_line::manufacturer_id.eq(name_id))
+        );
+        check!(
+            NameUser::StocktakeLine,
+            stocktake_line::table.filter(stocktake_line::donor_id.eq(name_id))
+        );
+        check!(
+            NameUser::StocktakeLine,
+            stocktake_line::table.filter(stocktake_line::manufacturer_id.eq(name_id))
+        );
+        check!(
+            NameUser::RnrForm,
+            rnr_form::table.filter(rnr_form::name_id.eq(name_id))
+        );
+        check!(
+            NameUser::IndicatorValue,
+            indicator_value::table.filter(indicator_value::customer_name_id.eq(name_id))
+        );
+        check!(
+            NameUser::ItemVariant,
+            item_variant::table.filter(item_variant::manufacturer_id.eq(name_id))
+        );
+        check!(
+            NameUser::BarcodeProposal,
+            barcode_proposal::table.filter(barcode_proposal::manufacturer_id.eq(name_id))
+        );
+        // Holds the name's id itself, not a link. A deleted asset no longer shows it.
+        check!(
+            NameUser::Asset,
+            asset::table.filter(
+                asset::donor_name_id
                     .eq(name_id)
-                    .or(stock_line::donor_id.eq(name_id))
-                    .or(stock_line::manufacturer_id.eq(name_id))
+                    .and(asset::deleted_datetime.is_null())
             )
+        );
+        check!(
+            NameUser::Vaccination,
+            vaccination::table.filter(vaccination::facility_name_id.eq(name_id))
         );
         Ok(None)
     }
@@ -639,6 +712,87 @@ mod test {
         FilterBuilder, KeyType, KeyValueStoreRepository, NameFilter, NameRepository, NameRow,
         NameRowRepository, NameRowType, mock::MockDataInserts, test_db::setup_all,
     };
+
+    // covers: OMS-REG-CDIO-01.135
+
+    // Records that show a name count; joins that only describe it, and deleted assets, don't.
+    #[actix_rt::test]
+    async fn used_by_counts_records_that_show_a_name_but_not_its_joins() {
+        use crate::{
+            AssetRow, AssetRowRepository, ItemRow, ItemRowRepository, ItemVariantRow,
+            ItemVariantRowRepository, NameStoreJoinRepository, NameStoreJoinRow, NameUser,
+            StoreRow, StoreRowRepository,
+        };
+        let (_, connection, _, _) =
+            setup_all("name_used_by_records_not_joins", MockDataInserts::none()).await;
+        let names = NameRowRepository::new(&connection);
+        for id in ["store_name", "maker", "donor", "old_donor", "visible"] {
+            names
+                .upsert_one(&NameRow {
+                    id: id.to_string(),
+                    ..Default::default()
+                })
+                .unwrap();
+        }
+        StoreRowRepository::new(&connection)
+            .upsert_one(&StoreRow {
+                id: "store".to_string(),
+                name_id: "store_name".to_string(),
+                ..Default::default()
+            })
+            .unwrap();
+        ItemRowRepository::new(&connection)
+            .upsert_one(&ItemRow {
+                id: "item".to_string(),
+                ..Default::default()
+            })
+            .unwrap();
+        ItemVariantRowRepository::new(&connection)
+            .upsert_one(&ItemVariantRow {
+                id: "variant".to_string(),
+                item_id: "item".to_string(),
+                manufacturer_id: Some("maker".to_string()),
+                ..Default::default()
+            })
+            .unwrap();
+        let assets = AssetRowRepository::new(&connection);
+        assets
+            .upsert_one(
+                &AssetRow {
+                    id: "fridge".to_string(),
+                    donor_name_id: Some("donor".to_string()),
+                    ..Default::default()
+                },
+                None,
+            )
+            .unwrap();
+        assets
+            .upsert_one(
+                &AssetRow {
+                    id: "old_fridge".to_string(),
+                    donor_name_id: Some("old_donor".to_string()),
+                    deleted_datetime: Some(Default::default()),
+                    ..Default::default()
+                },
+                None,
+            )
+            .unwrap();
+        NameStoreJoinRepository::new(&connection)
+            .upsert_one(&NameStoreJoinRow {
+                id: "join".to_string(),
+                store_id: "store".to_string(),
+                name_is_customer: true,
+                name_is_supplier: false,
+                visible: true,
+                name_id: "visible".to_string(),
+            })
+            .unwrap();
+
+        assert_eq!(names.used_by("maker").unwrap(), Some(NameUser::ItemVariant));
+        assert_eq!(names.used_by("donor").unwrap(), Some(NameUser::Asset));
+        assert_eq!(names.used_by("old_donor").unwrap(), None);
+        assert_eq!(names.used_by("visible").unwrap(), None);
+    }
 
     // A record pointing at a merged name's link still uses the name it was merged into.
     #[actix_rt::test]
