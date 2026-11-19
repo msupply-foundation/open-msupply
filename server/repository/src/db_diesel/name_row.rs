@@ -401,6 +401,10 @@ impl<'a> NameRowRepository<'a> {
             requisition::table.filter(requisition::name_id.eq(name_id))
         );
         check!(
+            NameUser::Requisition,
+            requisition::table.filter(requisition::destination_customer_id.eq(name_id))
+        );
+        check!(
             NameUser::PurchaseOrder,
             purchase_order::table.filter(purchase_order::supplier_name_id.eq(name_id))
         );
@@ -737,12 +741,19 @@ mod test {
         use crate::{
             AssetRow, AssetRowRepository, ItemRow, ItemRowRepository, ItemVariantRow,
             ItemVariantRowRepository, NameStoreJoinRepository, NameStoreJoinRow, NameUser,
-            StoreRow, StoreRowRepository,
+            RequisitionRow, RequisitionRowRepository, StoreRow, StoreRowRepository,
         };
         let (_, connection, _, _) =
             setup_all("name_used_by_records_not_joins", MockDataInserts::none()).await;
         let names = NameRowRepository::new(&connection);
-        for id in ["store_name", "maker", "donor", "old_donor", "visible"] {
+        for id in [
+            "store_name",
+            "maker",
+            "donor",
+            "old_donor",
+            "visible",
+            "end_customer",
+        ] {
             names
                 .upsert_one(&NameRow {
                     id: id.to_string(),
@@ -804,6 +815,20 @@ mod test {
             })
             .unwrap();
 
+        RequisitionRowRepository::new(&connection)
+            .upsert_one(&RequisitionRow {
+                id: "requisition".to_string(),
+                store_id: "store".to_string(),
+                name_id: "store_name".to_string(),
+                destination_customer_id: Some("end_customer".to_string()),
+                ..Default::default()
+            })
+            .unwrap();
+
+        assert_eq!(
+            names.used_by("end_customer").unwrap(),
+            Some(NameUser::Requisition)
+        );
         assert_eq!(names.used_by("maker").unwrap(), Some(NameUser::ItemVariant));
         assert_eq!(names.used_by("donor").unwrap(), Some(NameUser::Asset));
         assert_eq!(names.used_by("old_donor").unwrap(), None);

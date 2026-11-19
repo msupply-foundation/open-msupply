@@ -440,7 +440,9 @@ impl NameSheet {
                             NameUser::Invoice => "an invoice",
                             NameUser::InvoiceLine =>
                                 "an invoice line, as its donor or manufacturer",
-                            NameUser::Requisition => "a requisition",
+                            NameUser::Requisition => {
+                                "a requisition, as its other party or destination customer"
+                            }
                             NameUser::PurchaseOrder => "a purchase order",
                             NameUser::PurchaseOrderLine =>
                                 "a purchase order line, as its manufacturer",

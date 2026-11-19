@@ -31,6 +31,9 @@ impl MigrationFragment for Migrate {
                     ON item_variant (manufacturer_link_id) WHERE manufacturer_link_id IS NOT NULL;
                 CREATE INDEX index_barcode_proposal_manufacturer_link_id
                     ON barcode_proposal (manufacturer_link_id) WHERE manufacturer_link_id IS NOT NULL;
+                CREATE INDEX index_requisition_destination_customer_link_id
+                    ON requisition (destination_customer_link_id)
+                    WHERE destination_customer_link_id IS NOT NULL;
                 CREATE INDEX index_rnr_form_name_link_id ON rnr_form (name_link_id);
                 CREATE INDEX index_asset_donor_name_id
                     ON asset (donor_name_id) WHERE donor_name_id IS NOT NULL;
