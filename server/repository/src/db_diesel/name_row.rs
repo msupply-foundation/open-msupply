@@ -5,8 +5,12 @@ use super::{
     store_row::store,
 };
 use crate::{
-    ChangelogRepository, Delete, EqualFilter, NameLinkRow, NameLinkRowRepository, RowActionType,
-    item_link, name_link, repository_error::RepositoryError,
+    ChangelogRepository, DBType, Delete, EqualFilter, NameLinkRow, NameLinkRowRepository,
+    RowActionType, StringFilter,
+    diesel_macros::{apply_equal_filter, apply_string_filter, apply_string_or_filter},
+    item_link, name_link,
+    repository_error::RepositoryError,
+    trim, trim_spaces,
 };
 use crate::{ChangelogSyncType, RowOrId, SourceSiteId, Upsert};
 use chrono::{NaiveDate, NaiveDateTime};
@@ -14,6 +18,7 @@ use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
+use util::constants::SYSTEM_NAME_CODES;
 
 table! {
     #[sql_name = "name"]
@@ -215,6 +220,55 @@ pub struct NameOmsFieldsRow {
     pub properties: Option<String>,
 }
 
+/// A kind of record that can refer to a name, so the name can't be deleted.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum NameUser {
+    Store,
+    Invoice,
+    Requisition,
+    PurchaseOrder,
+    StockLine,
+}
+
+/// The name table alone, without the store joins `NameFilter` brings.
+#[derive(Clone, Default, Debug, PartialEq)]
+pub struct NameRowFilter {
+    pub code_or_name: Option<StringFilter>,
+    pub r#type: Option<EqualFilter<NameRowType>>,
+    pub is_deleted: Option<bool>,
+    /// Names whose code, without spaces around it, is one of `SYSTEM_NAME_CODES`.
+    pub is_system_name: Option<bool>,
+}
+
+type BoxedNameRowQuery = name::BoxedQuery<'static, DBType>;
+
+fn filtered(filter: NameRowFilter) -> BoxedNameRowQuery {
+    let NameRowFilter {
+        code_or_name,
+        r#type,
+        is_deleted,
+        is_system_name,
+    } = filter;
+    let mut query = name::table.into_boxed();
+    // The or filter goes before the and filters.
+    if code_or_name.is_some() {
+        apply_string_filter!(query, code_or_name.clone(), name::code);
+        apply_string_or_filter!(query, code_or_name, name::name_);
+    }
+    apply_equal_filter!(query, r#type, name::type_);
+    query = match is_deleted {
+        Some(true) => query.filter(name::deleted_datetime.is_not_null()),
+        Some(false) => query.filter(name::deleted_datetime.is_null()),
+        None => query,
+    };
+    match is_system_name {
+        // Trimmed, as a code saved with spaces around it is still that code.
+        Some(true) => query.filter(trim(name::code).eq_any(SYSTEM_NAME_CODES)),
+        Some(false) => query.filter(trim(name::code).ne_all(SYSTEM_NAME_CODES)),
+        None => query,
+    }
+}
+
 pub struct NameRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -270,6 +324,55 @@ impl<'a> NameRowRepository<'a> {
         Ok(())
     }
 
+    /// The first kind of record found that refers to the name, through any of its links: each
+    /// table here is its link-resolving view, so a record pointing at a merged name's link counts.
+    pub fn used_by(&self, name_id: &str) -> Result<Option<NameUser>, RepositoryError> {
+        use super::{
+            invoice_row::invoice, purchase_order_row::purchase_order,
+            requisition::requisition_row::requisition, stock_line_row::stock_line,
+        };
+        use diesel::dsl::exists;
+        let mut guard = self.connection.lock();
+        let connection = guard.connection();
+        macro_rules! check {
+            ($user:expr, $query:expr) => {
+                if diesel::select(exists($query)).get_result::<bool>(connection)? {
+                    return Ok(Some($user));
+                }
+            };
+        }
+        check!(
+            NameUser::Store,
+            store::table.filter(store::name_id.eq(name_id))
+        );
+        check!(
+            NameUser::Invoice,
+            invoice::table.filter(invoice::name_id.eq(name_id))
+        );
+        check!(
+            NameUser::Requisition,
+            requisition::table.filter(requisition::name_id.eq(name_id))
+        );
+        check!(
+            NameUser::PurchaseOrder,
+            purchase_order::table.filter(
+                purchase_order::supplier_name_id
+                    .eq(name_id)
+                    .or(purchase_order::donor_id.eq(name_id))
+            )
+        );
+        check!(
+            NameUser::StockLine,
+            stock_line::table.filter(
+                stock_line::supplier_id
+                    .eq(name_id)
+                    .or(stock_line::donor_id.eq(name_id))
+                    .or(stock_line::manufacturer_id.eq(name_id))
+            )
+        );
+        Ok(None)
+    }
+
     pub fn mark_deleted(&self, name_id: &str) -> Result<(), RepositoryError> {
         self._mark_deleted(name_id)?;
         let changelog = NameRow::generate_changelog(
@@ -303,6 +406,28 @@ impl<'a> NameRowRepository<'a> {
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
+    }
+
+    /// Every type, deleted names included. Letter case counts; spaces around either code don't.
+    pub fn find_by_trimmed_code(&self, code: &str) -> Result<Vec<NameRow>, RepositoryError> {
+        Ok(name::table
+            .filter(trim(name::code).eq(trim_spaces(code)))
+            .order(name::id.asc())
+            .load(self.connection.lock().connection())?)
+    }
+
+    /// Patients included, unlike `NameRepository`, which lists a store's names. Sorted by code,
+    /// then type, then id.
+    pub fn query_by_filter(&self, filter: NameRowFilter) -> Result<Vec<NameRow>, RepositoryError> {
+        Ok(filtered(filter)
+            .order((name::code.asc(), name::type_.asc(), name::id.asc()))
+            .load(self.connection.lock().connection())?)
+    }
+
+    pub fn count_by_filter(&self, filter: NameRowFilter) -> Result<i64, RepositoryError> {
+        Ok(filtered(filter)
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<NameRow>, RepositoryError> {
@@ -514,6 +639,53 @@ mod test {
         FilterBuilder, KeyType, KeyValueStoreRepository, NameFilter, NameRepository, NameRow,
         NameRowRepository, NameRowType, mock::MockDataInserts, test_db::setup_all,
     };
+
+    // A record pointing at a merged name's link still uses the name it was merged into.
+    #[actix_rt::test]
+    async fn used_by_follows_merged_links() {
+        use crate::{
+            InvoiceRow, InvoiceRowRepository, NameLinkRow, NameLinkRowRepository, NameUser,
+            StoreRow, StoreRowRepository,
+        };
+        let (_, connection, _, _) =
+            setup_all("name_used_by_follows_merged_links", MockDataInserts::none()).await;
+        let names = NameRowRepository::new(&connection);
+        for id in ["store_name", "kept", "merged"] {
+            names
+                .upsert_one(&NameRow {
+                    id: id.to_string(),
+                    ..Default::default()
+                })
+                .unwrap();
+        }
+        StoreRowRepository::new(&connection)
+            .upsert_one(&StoreRow {
+                id: "store".to_string(),
+                name_id: "store_name".to_string(),
+                ..Default::default()
+            })
+            .unwrap();
+        // The invoice is saved against the merged name's link.
+        InvoiceRowRepository::new(&connection)
+            .upsert_one(&InvoiceRow {
+                id: "invoice".to_string(),
+                name_id: "merged".to_string(),
+                store_id: "store".to_string(),
+                ..Default::default()
+            })
+            .unwrap();
+        assert_eq!(names.used_by("kept").unwrap(), None);
+
+        NameLinkRowRepository::new(&connection)
+            .upsert_one(&NameLinkRow {
+                id: "merged".to_string(),
+                name_id: "kept".to_string(),
+            })
+            .unwrap();
+        assert_eq!(names.used_by("kept").unwrap(), Some(NameUser::Invoice));
+        assert_eq!(names.used_by("merged").unwrap(), None);
+        assert_eq!(names.used_by("store_name").unwrap(), Some(NameUser::Store));
+    }
 
     // Covers the v2.01 legacy `name.properties` column. A NameRow upsert must
     // not clobber values written via `update_properties()`.
