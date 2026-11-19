@@ -1,6 +1,6 @@
 import { t } from '../../../intl';
 import { exportDate } from '../../../intl';
-import { localisedTime } from '../../../intl/formatDateTime';
+import { exportTime } from '../../../intl/formatDateTime';
 import { toCsv } from '../../../domain/reportFiles';
 // The helper is taken from its own file, not the module's index: this
 // serialiser is pure and node-tested, and the index also re-exports the
@@ -53,9 +53,11 @@ export const prescriptionsToCsv = (
     statusLabel(asPrescriptionStatus(row.status)),
     row.invoiceNumber,
     simple
-      ? `${exportDate(prescriptionDateOf(row))} ${localisedTime(prescriptionDateOf(row))}`
+      ? `${exportDate(prescriptionDateOf(row))} ${exportTime(prescriptionDateOf(row))}`
       : exportDate(prescriptionDateOf(row)),
-    ...(simple ? [medicinesGiven(row.lines?.nodes ?? [])] : []),
+    // Raw amounts, as the file's other figures are: Latin digits, unrounded
+    // and unmarked (exportDate says why).
+    ...(simple ? [medicinesGiven(row.lines?.nodes ?? [], String)] : []),
     row.theirReference,
     row.comment,
     ...cf.values(row.customFields),

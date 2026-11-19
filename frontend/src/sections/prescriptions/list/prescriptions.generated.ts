@@ -216,6 +216,7 @@ export type PrescriptionsResult = {
   lines?: {
   nodes: Array<{
   type: "STOCK_IN" | "STOCK_OUT" | "UNALLOCATED_STOCK" | "SERVICE";
+  itemId: string;
   itemName: string;
   packSize: number;
   numberOfPacks: number;
@@ -226,7 +227,7 @@ export type PrescriptionsResult = {
 };
 
 export const Prescriptions = {
-  query: "query prescriptions($storeId: String!, $filter: InvoiceFilterInput, $sort: [InvoiceSortInput!], $page: PaginationInput, $withMedicines: Boolean = false) {\n  invoices(\n    storeId: $storeId\n    filter: $filter\n    sort: $sort\n    page: $page\n    type: [PRESCRIPTION]\n  ) {\n    ... on InvoiceConnector {\n      totalCount\n      nodes {\n        id\n        invoiceNumber\n        status\n        otherPartyName\n        isForUnnamedPatient\n        colour\n        comment\n        theirReference\n        createdDatetime\n        backdatedDatetime\n        customFields\n        lines @include(if: $withMedicines) {\n          nodes {\n            type\n            itemName\n            packSize\n            numberOfPacks\n          }\n        }\n      }\n    }\n  }\n}",
+  query: "query prescriptions($storeId: String!, $filter: InvoiceFilterInput, $sort: [InvoiceSortInput!], $page: PaginationInput, $withMedicines: Boolean = false) {\n  invoices(\n    storeId: $storeId\n    filter: $filter\n    sort: $sort\n    page: $page\n    type: [PRESCRIPTION]\n  ) {\n    ... on InvoiceConnector {\n      totalCount\n      nodes {\n        id\n        invoiceNumber\n        status\n        otherPartyName\n        isForUnnamedPatient\n        colour\n        comment\n        theirReference\n        createdDatetime\n        backdatedDatetime\n        customFields\n        lines @include(if: $withMedicines) {\n          nodes {\n            type\n            itemId\n            itemName\n            packSize\n            numberOfPacks\n          }\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<PrescriptionsResult, PrescriptionsVariables>;
 
 export type DeletePrescriptionsVariables = {

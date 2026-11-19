@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { setLocale } from '../../../intl/intl';
+import { loadDateFnsLocale } from '../../../intl/formatDateTime';
 import type { CustomFieldDef } from '../../../domain/customFields';
 import { prescriptionsToCsv } from './prescriptionsToCsv';
 
@@ -114,12 +116,14 @@ describe('prescriptionsToCsv (OMS-REG-DIS-03.52 — the list columns, in file fo
             nodes: [
               {
                 type: 'STOCK_OUT',
+                itemId: 'paracetamol',
                 itemName: 'Paracetamol 500mg',
                 packSize: 10,
                 numberOfPacks: 2,
               },
               {
                 type: 'STOCK_OUT',
+                itemId: 'ors',
                 itemName: 'ORS sachet',
                 packSize: 1,
                 numberOfPacks: 2,
@@ -141,9 +145,44 @@ describe('prescriptionsToCsv (OMS-REG-DIS-03.52 — the list columns, in file fo
       'label.reference',
       'label.comment',
     ]);
-    expect(line).toContain('"Paracetamol 500mg (20), ORS sachet (2)"');
+    expect(line).toContain('"ORS sachet (2), Paracetamol 500mg (20)"');
     // The date then the time, as the column shows them.
     expect(line).toMatch(/,\S+ \d{1,2}:\d{2}( [AP]M)?,/);
+  });
+
+  // OMS-REG-DIS-12.233
+  it('writes the Dispensed and Medicines figures in Latin digits, unrounded, in every language', async () => {
+    await loadDateFnsLocale('ar');
+    setLocale('ar');
+    try {
+      const csv = prescriptionsToCsv(
+        [
+          {
+            ...row,
+            lines: {
+              nodes: [
+                {
+                  type: 'STOCK_OUT',
+                  itemId: 'syrup',
+                  itemName: 'Syrup',
+                  packSize: 2 / 3,
+                  numberOfPacks: 1,
+                },
+              ],
+            },
+          },
+        ],
+        [],
+        { withMedicines: true }
+      );
+      const line = csv.trim().split(/\r?\n/)[1];
+      expect(line).toContain('Syrup (0.666666667)');
+      expect(line).toMatch(/,\S+ [^,]*\d{1,2}:\d{2}[^,]*,/);
+      expect(line).not.toMatch(/[\u0660-\u0669\u06F0-\u06F9]/);
+      expect(line).not.toContain('*');
+    } finally {
+      setLocale('en');
+    }
   });
 
   // OMS-REG-DIS-12.221

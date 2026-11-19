@@ -87,17 +87,20 @@ import styles from './SimpleDispensing.module.css';
  */
 const SimpleDispensingPage: Component = () => {
   const params = useParams<{ storeId: string }>();
-  const recordsHref = () => `/${params.storeId}/dispensary/dispensing/records`;
+  // The store the screen opened in, read once: a store switch remounts the
+  // screen. Every request uses it, never the route's params, which are the
+  // router's and follow the address: a save still out when staff switch
+  // store must still go to the store it was dispensed in.
+  const storeOpened = untrack(() => params.storeId);
+  const recordsHref = `/${storeOpened}/dispensary/dispensing/records`;
 
   // The visit in progress, kept while staff go elsewhere (rules › Dispensing
-  // records): read once, as the screen opens, since a store switch remounts
-  // it. A new visit starts with the unnamed patient where the store says so;
-  // the preferences are in before this screen opens, since it waits for the
-  // dispensing screen.
+  // records). A new visit starts with the unnamed patient where the store
+  // says so; the preferences are in before this screen opens, since it waits
+  // for the dispensing screen.
   const visitState = untrack(() =>
-    visitFor(params.storeId, () => startsWithUnnamed(prescriptionPreferences()))
+    visitFor(storeOpened, () => startsWithUnnamed(prescriptionPreferences()))
   );
-  const storeOpened = untrack(() => params.storeId);
   onCleanup(() => leaveVisit(storeOpened, visitState));
   // Setters and accessors are stable, so taking them apart is safe.
   const {
@@ -109,6 +112,14 @@ const SimpleDispensingPage: Component = () => {
     setLines,
     searchedIds,
     setSearchedIds,
+    searchedRead,
+    setSearchedRead,
+    cardsRead,
+    setCardsRead,
+    checked,
+    setChecked,
+    dispensedCount,
+    setDispensedCount,
     notice,
     setNotice,
     dispensing,
@@ -145,23 +156,32 @@ const SimpleDispensingPage: Component = () => {
     return result.data.items.nodes;
   };
 
-  // Read again once a visit is dispensed (rules › dispensing the visit).
-  // Always in the background: the search and the list work while the cards
-  // load, so a visit may be on the screen by the time any read fails, and the
-  // app's error dialog would offer a reload that loses it. A read that fails
-  // keeps the cards as they were; with none yet, the card area says so and
-  // offers to read them again.
+  // Read again once a visit is dispensed (rules › dispensing the visit), by
+  // the kept visit's count, so a screen opened while the save was still out
+  // reads them again when it lands. Always in the background: the search and
+  // the list work while the cards load, so a visit may be on the screen by
+  // the time any read fails, and the app's error dialog would offer a reload
+  // that loses it. A read that fails keeps the cards as they were, the kept
+  // visit's last read when the screen has none of its own; with none at all,
+  // the card area says so and offers to read them again.
   const [items, { refetch: refetchItems }] = createResource<
     CardItem[] | undefined,
-    { storeId: string; ids: string[] }
+    { storeId: string; ids: string[]; dispensed: number }
   >(
     () => {
       const list = medicines();
       if (!list || list.length === 0) return false;
-      return { storeId: params.storeId, ids: list.map(m => m.itemId) };
+      return {
+        storeId: storeOpened,
+        ids: list.map(m => m.itemId),
+        dispensed: dispensedCount(),
+      };
     },
-    async ({ storeId, ids }, { value }) =>
-      (await fetchItems(storeId, ids, true)) ?? value
+    async ({ storeId, ids }, { value }) => {
+      const fetched = await fetchItems(storeId, ids, true);
+      if (fetched) setCardsRead(fetched);
+      return fetched ?? value ?? cardsRead();
+    }
   );
 
   // Read, and none came back: the first read failed (a later one keeps the
@@ -174,7 +194,9 @@ const SimpleDispensingPage: Component = () => {
   const cards = createMemo<MedicineCard[] | undefined>(
     () => {
       const list = medicines();
-      const fetched = gated(items);
+      // Until this screen's first read lands, the kept visit's last one: a
+      // list kept across a trip shows its names, prices and stock at once.
+      const fetched = gated(items) ?? cardsRead();
       if (!list || fetched === undefined) return undefined;
       return buildCards(list, fetched, prescriptionPreferences());
     },
@@ -188,27 +210,30 @@ const SimpleDispensingPage: Component = () => {
   // one never refetches the cards. Kept until the visit is dispensed.
   // Choosing one reads them all again, so a read that fails keeps what the
   // last one returned: the lines already on the list keep their name, unit,
-  // price and stock. In the background: the screen says what a failure means
-  // (searchFailed), and the app's error dialog would offer a reload that
-  // loses the visit.
-  const [searchedItems, { mutate: setSearchedItems }] = createResource<
-    CardItem[] | undefined,
-    { storeId: string; ids: string[] }
-  >(
+  // price and stock. That last read is the kept visit's, so a screen opened
+  // again shows it at once and keeps it if reading again fails. Only the read
+  // for the medicines searched now is kept: each choice is a new array, so a
+  // slower, earlier read never overwrites a later one. In the background: the
+  // screen says what a failure means (searchFailed), and the app's error
+  // dialog would offer a reload that loses the visit.
+  createResource<CardItem[] | undefined, { storeId: string; ids: string[] }>(
     () => {
       const ids = searchedIds();
-      return ids.length > 0 ? { storeId: params.storeId, ids } : false;
+      return ids.length > 0 ? { storeId: storeOpened, ids } : false;
     },
-    async ({ storeId, ids }, { value }) => {
+    async ({ storeId, ids }) => {
       const fetched = await fetchItems(storeId, ids, true);
-      if (fetched) return fetched;
-      searchFailed(ids, unreadIds(ids, value));
-      return value;
+      if (fetched) {
+        if (searchedIds() === ids) setSearchedRead(fetched);
+        return fetched;
+      }
+      searchFailed(ids, unreadIds(ids, searchedRead()));
+      return undefined;
     }
   );
   const searched = createMemo<MedicineCard[]>(
     () => {
-      const fetched = gated(searchedItems);
+      const fetched = searchedRead();
       return buildCards(
         medicinesFor(searchedIds(), []),
         fetched ?? [],
@@ -222,7 +247,7 @@ const SimpleDispensingPage: Component = () => {
   // The list's medicines as Dispense's last check found them (rules ›
   // dispensing the visit): until the visit is dispensed, the stock the screen
   // shows for them, so the cards, prices and short lines all agree with it.
-  const [checked, setChecked] = createSignal<MedicineCard[]>([]);
+  // The kept visit's, so they still agree after a trip away.
 
   const cardOf = (itemId: string) =>
     checked().find(card => card.item.id === itemId) ??
@@ -248,7 +273,7 @@ const SimpleDispensingPage: Component = () => {
   // just created: read the record so their code, date of birth and gender
   // show.
   const showDetails = async (id: string) => {
-    const full = await fetchPatientOptionById(params.storeId, id);
+    const full = await fetchPatientOptionById(storeOpened, id);
     if (full && patient()?.id === id) setPatient(full);
   };
 
@@ -325,7 +350,7 @@ const SimpleDispensingPage: Component = () => {
     const ids = listed.map(line => line.itemId);
     // Background: a failed check is the screen's to report, and the app's
     // error dialog would offer a reload that loses the visit.
-    const fetched = await fetchItems(params.storeId, ids, true);
+    const fetched = await fetchItems(storeOpened, ids, true);
     if (!fetched) return undefined;
     return buildCards(
       medicinesFor(ids, medicines() ?? []),
@@ -352,7 +377,7 @@ const SimpleDispensingPage: Component = () => {
     setSearchedIds([]);
     // The next visit reads its medicines afresh: none of this one's stock
     // stands in for them while that read is out, or after it fails.
-    setSearchedItems(undefined);
+    setSearchedRead(undefined);
     setNotice({
       severity: 'success',
       // "Unnamed patient" would read the same for every walk-in: when, not
@@ -361,7 +386,9 @@ const SimpleDispensingPage: Component = () => {
         ? t('messages.dispensed-at', { time: localisedTime(new Date()) })
         : t('messages.dispensed-to', { name: who.name }),
     });
-    void refetchItems();
+    // The cards read their stock again, on whichever screen shows the visit
+    // now: this one, or one opened while the save was out.
+    setDispensedCount(n => n + 1);
   };
 
   /**
@@ -372,7 +399,7 @@ const SimpleDispensingPage: Component = () => {
   const savedEarlier = async (id: string): Promise<boolean | undefined> => {
     const found = await graphqlFetch(
       SimpleDispensedVisit,
-      { storeId: params.storeId, id },
+      { storeId: storeOpened, id },
       { background: true }
     );
     return found.kind === 'success'
@@ -387,7 +414,7 @@ const SimpleDispensingPage: Component = () => {
     // connection failed over a visit the look finds dispensed.
     const result = await graphqlFetch(
       SimpleDispense,
-      { storeId: params.storeId, input },
+      { storeId: storeOpened, input },
       { returnGraphqlErrors: true, background: true }
     );
     if (result.kind === 'unexpectedError') return { kind: 'lost' };
@@ -425,7 +452,7 @@ const SimpleDispensingPage: Component = () => {
     // Background: a failure is this screen's to say, as Dispense's is.
     const result = await graphqlFetch(
       SimpleUnnamedPatient,
-      { storeId: params.storeId },
+      { storeId: storeOpened },
       { returnGraphqlErrors: true, background: true }
     );
     if (result.kind !== 'success')
@@ -562,7 +589,7 @@ const SimpleDispensingPage: Component = () => {
         <Header>
           <Breadcrumb crumbs={[{ label: t('dispensing') }]} />
           <WhoIsItFor
-            storeId={params.storeId}
+            storeId={storeOpened}
             patient={patient()}
             useUnnamed={prescriptionPreferences().useUnnamedPatient}
             unnamed={unnamed()}
@@ -585,7 +612,7 @@ const SimpleDispensingPage: Component = () => {
               goes with it: none of it was saved. */}
           <HeaderButtons>
             <LinkButton
-              href={recordsHref()}
+              href={recordsHref}
               variant="secondary"
               icon={<ClockIcon />}
               data-testid="dispensing-records-button"
@@ -614,7 +641,7 @@ const SimpleDispensingPage: Component = () => {
               label={t('label.search-all-medicines')}
               hideLabel
               placeholder={t('label.search-all-medicines')}
-              storeId={params.storeId}
+              storeId={storeOpened}
               // The same medicines as the line editor's search.
               includeHiddenWithStock
               width="full"

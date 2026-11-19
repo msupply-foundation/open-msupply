@@ -37,6 +37,25 @@ describe('the Simple screen’s kept visit', () => {
     expect(again.patient()?.id).toBe('p1');
   });
 
+  // OMS-REG-DIS-12.230, .231
+  it('keeps the medicines’ last reads, the last check and the count of visits dispensed', () => {
+    const first = visitFor('store-a', off);
+    const read = [{ id: 'item-1' }] as never;
+    const card = { item: { id: 'item-1' } } as never;
+    first.setLines([line]);
+    first.setCardsRead(read);
+    first.setSearchedRead(read);
+    first.setChecked([card]);
+    first.setDispensedCount(n => n + 1);
+    leaveVisit('store-a', first);
+
+    const again = visitFor('store-a', off);
+    expect(again.cardsRead()).toBe(read);
+    expect(again.searchedRead()).toBe(read);
+    expect(again.checked()).toEqual([card]);
+    expect(again.dispensedCount()).toBe(1);
+  });
+
   // OMS-REG-DIS-12.223: the unnamed patient with a list is kept too
   it('keeps the unnamed patient with its list', () => {
     const first = visitFor('store-a', off);

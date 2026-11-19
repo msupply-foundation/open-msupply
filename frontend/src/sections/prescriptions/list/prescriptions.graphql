@@ -47,6 +47,7 @@ query prescriptions(
         lines @include(if: $withMedicines) {
           nodes {
             type
+            itemId
             itemName
             packSize
             numberOfPacks

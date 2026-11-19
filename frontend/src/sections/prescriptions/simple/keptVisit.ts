@@ -10,8 +10,10 @@ import { createStore, type SetStoreFunction } from 'solid-js/store';
 import { authUser } from '../../../auth/authContext';
 import type { PatientOption } from '../../../domain/patient';
 import type {
+  CardItem,
   DispensedTo,
   ListLine,
+  MedicineCard,
   VisitRecord,
 } from './simpleDispensingLogic';
 
@@ -23,6 +25,12 @@ import type {
 // is what stops a visit being saved twice by leaving and coming back: the
 // record id and the hold after a lost reply are the visit's, not the
 // screen's.
+//
+// The medicines' last reads are kept with it, so the list a screen comes back
+// to has its names, prices and stock at once, as it had when staff left, and
+// keeps them if reading them again fails. A save that lands while staff are
+// away counts the visit as dispensed, which is what has the screen they come
+// back to read the cards again.
 //
 // In memory only: a reload starts afresh, and nothing reaches browser
 // storage (contract › Dispensing records). One per signed-in user and store;
@@ -41,6 +49,25 @@ export interface KeptVisit {
   /** Medicines chosen from the search, read like the cards. */
   searchedIds: Accessor<string[]>;
   setSearchedIds: Setter<string[]>;
+  /** The last read of the searched medicines that came back. */
+  searchedRead: Accessor<CardItem[] | undefined>;
+  setSearchedRead: Setter<CardItem[] | undefined>;
+  /** The last read of the cards' medicines that came back. */
+  cardsRead: Accessor<CardItem[] | undefined>;
+  setCardsRead: Setter<CardItem[] | undefined>;
+  /**
+   * The list's medicines as Dispense's last check found them: until the visit
+   * is dispensed, the stock and prices the screen shows for them.
+   */
+  checked: Accessor<MedicineCard[]>;
+  setChecked: Setter<MedicineCard[]>;
+  /**
+   * Visits dispensed from this store's screen. The cards read their stock
+   * again each time it goes up, even when the save landed while staff were
+   * away and the screen showing it is a new one.
+   */
+  dispensedCount: Accessor<number>;
+  setDispensedCount: Setter<number>;
   notice: Accessor<Notice | undefined>;
   setNotice: Setter<Notice | undefined>;
   /** A save in flight. */
@@ -70,6 +97,10 @@ const newVisit = (startsWithUnnamed: boolean): KeptVisit => {
   const [unnamed, setUnnamed] = createSignal(startsWithUnnamed);
   const [lines, setLines] = createStore<ListLine[]>([]);
   const [searchedIds, setSearchedIds] = createSignal<string[]>([]);
+  const [searchedRead, setSearchedRead] = createSignal<CardItem[]>();
+  const [cardsRead, setCardsRead] = createSignal<CardItem[]>();
+  const [checked, setChecked] = createSignal<MedicineCard[]>([]);
+  const [dispensedCount, setDispensedCount] = createSignal(0);
   const [notice, setNotice] = createSignal<Notice | undefined>();
   const [dispensing, setDispensing] = createSignal(false);
   const [unconfirmed, setUnconfirmed] = createSignal(false);
@@ -83,6 +114,14 @@ const newVisit = (startsWithUnnamed: boolean): KeptVisit => {
     setLines,
     searchedIds,
     setSearchedIds,
+    searchedRead,
+    setSearchedRead,
+    cardsRead,
+    setCardsRead,
+    checked,
+    setChecked,
+    dispensedCount,
+    setDispensedCount,
     notice,
     setNotice,
     dispensing,
