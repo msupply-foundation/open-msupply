@@ -82,6 +82,9 @@ const COLUMNS: &[&str] = &[
     DELETE_COLUMN,
 ];
 
+/// `supplying_store_code`'s place in `COLUMNS`, with `supplying_store_id` after it.
+const SUPPLYING_STORE_CODE_INDEX: usize = 6;
+
 /// No `PATIENT`: patients are imported on their own.
 pub(super) const TYPES: &[(&str, NameRowType)] = &[
     ("FACILITY", NameRowType::Facility),
@@ -423,14 +426,12 @@ impl SheetImport for NameSheet {
         };
 
         let mut new_cells = cells(&new, &self.references);
-        if let Some((code, id)) = &later_store {
-            // As the row gives it; an id it doesn't give isn't known yet.
-            new_cells[column_position(SUPPLYING_STORE_CODE)] = code.clone().into();
-            if id.is_some() {
-                new_cells[column_position(SUPPLYING_STORE_ID)] = id.clone().into();
-            }
-        }
         if let Some((code, id)) = later_store {
+            // As the row gives it; an id it doesn't give isn't known yet.
+            new_cells[SUPPLYING_STORE_CODE_INDEX] = code.clone().into();
+            if id.is_some() {
+                new_cells[SUPPLYING_STORE_CODE_INDEX + 1] = id.clone().into();
+            }
             self.later.push(LaterStore {
                 name_id: new.id.clone(),
                 sheet: row.sheet.to_string(),
@@ -578,13 +579,6 @@ impl NameSheet {
     }
 }
 
-fn column_position(column: &str) -> usize {
-    COLUMNS
-        .iter()
-        .position(|other| *other == column)
-        .expect("a name column")
-}
-
 /// Whether the row gives only the saved supplying store's id, as exported for a store sync hasn't
 /// brought yet.
 fn keeps_saved_store(row: &Row, saved: Option<&NameRow>) -> bool {
@@ -729,6 +723,14 @@ fn cells(name: &NameRow, references: &References) -> Vec<Value> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_supplying_store_index_finds_its_columns() {
+        assert_eq!(
+            &COLUMNS[SUPPLYING_STORE_CODE_INDEX..SUPPLYING_STORE_CODE_INDEX + 2],
+            [SUPPLYING_STORE_CODE, SUPPLYING_STORE_ID]
+        );
+    }
 
     // A type missing from TYPES would export blank and fail to import back.
     #[test]

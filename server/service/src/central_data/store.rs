@@ -143,11 +143,12 @@ impl SheetImport for StoreSheet {
         let site_id = collect(&mut errors, row.int(SITE_ID));
         let store_mode = collect(&mut errors, row.choice(STORE_MODE, MODES));
         let is_disabled = collect(&mut errors, row.bool(IS_DISABLED));
-        let name_type = collect(&mut errors, row.choice(NAME_TYPE, NAME_TYPES));
-        let name_id = collect(&mut errors, find_name(connection, row, name_type)?);
-        let name_failed = errors.iter().any(|error| {
-            [NAME_CODE, NAME_TYPE, NAME_ID].contains(&error.column.as_deref().unwrap_or_default())
-        });
+        let name_type = row.choice(NAME_TYPE, NAME_TYPES);
+        let name_id = find_name(connection, row, name_type.clone().ok().flatten())?;
+        // Then a missing name is that error, not "required".
+        let name_failed = name_type.is_err() || name_id.is_err();
+        collect(&mut errors, name_type);
+        let name_id = collect(&mut errors, name_id);
         let id = row.text(ID);
         let code = row.text(CODE);
 
