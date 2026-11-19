@@ -328,6 +328,18 @@ pub fn find_by_id_or_name<T: KeyedTable>(
     )
 }
 
+/// For a row whose name an active `noun` (`other_id`) already has.
+pub fn duplicate_name_error(row: &Row, noun: &str, other_id: &str, name: &str) -> RowError {
+    // Nouns are ASCII, so the first byte is the first letter.
+    let capitalised = format!("{}{}", noun[..1].to_uppercase(), &noun[1..]);
+    row.error(
+        "name",
+        format!(
+            "{capitalised} {other_id} is already named {name}. Give this {noun} another name, or make one of them inactive"
+        ),
+    )
+}
+
 /// A reference to another table's record, given by a code column, an id column or both. `None`
 /// when the sheet has neither column, so the saved reference is kept; `Some(None)` clears it.
 /// `narrow` picks among the records a code alone matches, as an id settles which one is meant.

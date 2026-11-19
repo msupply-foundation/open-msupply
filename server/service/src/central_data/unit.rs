@@ -3,7 +3,7 @@ use super::{
     RowOutcome, SheetImport, SheetStart,
     cells::{Row, collect, keep_or_saved},
     field_changes,
-    lookup::find_by_id_or_name,
+    lookup::{duplicate_name_error, find_by_id_or_name},
     sheet::Value,
 };
 use crate::unit::{UpsertUnitError, upsert_unit};
@@ -134,15 +134,9 @@ impl SheetImport for UnitSheet {
         if change != Change::Unchanged {
             upsert_unit(connection, &unit).map_err(|error| match error {
                 UpsertUnitError::NameRequired => row.error(NAME, "name is required").into(),
-                UpsertUnitError::DuplicateName { other_id } => row
-                    .error(
-                        NAME,
-                        format!(
-                            "Unit {other_id} is already named {}. Give this unit another name, or make one of them inactive",
-                            unit.name
-                        ),
-                    )
-                    .into(),
+                UpsertUnitError::DuplicateName { other_id } => {
+                    duplicate_name_error(row, "unit", &other_id, &unit.name).into()
+                }
                 UpsertUnitError::DatabaseError(error) => RowFailure::Database(error),
             })?;
         }

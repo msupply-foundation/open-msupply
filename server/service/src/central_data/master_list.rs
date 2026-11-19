@@ -3,7 +3,7 @@ use super::{
     SheetImport, SheetStart,
     cells::{Row, RowError, collect, keep_or_saved},
     field_changes,
-    lookup::find_by_id_or_name,
+    lookup::{duplicate_name_error, find_by_id_or_name},
     sheet::Value,
 };
 use crate::master_list::upsert::{UpsertMasterListError, upsert_master_list};
@@ -188,15 +188,9 @@ fn upsert_failure(
 ) -> RowFailure {
     match error {
         UpsertMasterListError::NameRequired => row.error(NAME, "name is required").into(),
-        UpsertMasterListError::DuplicateName { other_id } => row
-            .error(
-                NAME,
-                format!(
-                    "Master list {other_id} is already named {}. Give this master list another name, or make one of them inactive",
-                    master_list.name
-                ),
-            )
-            .into(),
+        UpsertMasterListError::DuplicateName { other_id } => {
+            duplicate_name_error(row, "master list", &other_id, &master_list.name).into()
+        }
         UpsertMasterListError::DuplicateCode { other_id } => row
             .error(CODE, format!("master list {other_id} has this code"))
             .into(),
