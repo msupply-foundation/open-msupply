@@ -39,6 +39,7 @@ pub enum UpsertStoreError {
     CodeRequired,
     DuplicateCode {
         other_id: String,
+        other_code: String,
     },
     NameNotFound,
     /// A store's name must be a `STORE` name, so never a patient's or a system name.
@@ -47,6 +48,7 @@ pub enum UpsertStoreError {
     /// A name is at most one store's.
     NameHasStore {
         other_id: String,
+        other_code: String,
     },
     SiteNotFound,
     /// See `is_own_site_store`.
@@ -87,15 +89,25 @@ fn validate(
         return Err(UpsertStoreError::CodeRequired);
     }
     let repo = StoreRowRepository::new(connection);
-    if let Some(other_id) = other_with_key(
+    // Kept, so the other store's code needs no second query.
+    let mut same_code = Vec::new();
+    let other_id = other_with_key(
         saved.map(|saved| saved.code.as_str()),
         &row.id,
         &row.code,
         KeyCase::Exact,
-        |code| repo.find_by_trimmed_code(code),
+        |code| {
+            same_code = repo.find_by_trimmed_code(code)?;
+            Ok(same_code.clone())
+        },
         |store| &store.id,
-    )? {
-        return Err(UpsertStoreError::DuplicateCode { other_id });
+    )?;
+    if let Some(other) = other_id.and_then(|id| same_code.into_iter().find(|store| store.id == id))
+    {
+        return Err(UpsertStoreError::DuplicateCode {
+            other_id: other.id,
+            other_code: other.code,
+        });
     }
     if saved.is_none_or(|saved| saved.name_id != row.name_id) {
         let name = NameRowRepository::new(connection)
@@ -111,7 +123,10 @@ fn validate(
             .find_one_by_name_id(&row.name_id)?
             .filter(|other| other.id != row.id)
         {
-            return Err(UpsertStoreError::NameHasStore { other_id: other.id });
+            return Err(UpsertStoreError::NameHasStore {
+                other_id: other.id,
+                other_code: other.code,
+            });
         }
     }
     if let Some(saved) = saved
@@ -145,4 +160,58 @@ fn is_own_site_store(
         KeyValueStoreRepository::new(connection).get_i32(KeyType::SettingsSyncSiteId)?
             == Some(store.site_id),
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use repository::{NameRow, SiteRow, mock::MockDataInserts, test_db::setup_all};
+
+    fn store(id: &str, code: &str, name_id: &str) -> StoreRow {
+        StoreRow {
+            id: id.to_string(),
+            code: code.to_string(),
+            site_id: 1,
+            name_id: name_id.to_string(),
+            ..Default::default()
+        }
+    }
+
+    #[actix_rt::test]
+    async fn a_clash_names_the_other_store_by_id_and_code() {
+        let (_, connection, _, _) = setup_all("upsert_store_clash", MockDataInserts::none()).await;
+        SiteRowRepository::new(&connection)
+            .upsert(&SiteRow {
+                id: 1,
+                ..Default::default()
+            })
+            .unwrap();
+        for (id, code) in [("main_name", "MAIN"), ("ward_name", "WARD")] {
+            NameRowRepository::new(&connection)
+                .upsert_one(&NameRow {
+                    id: id.to_string(),
+                    code: code.to_string(),
+                    name: code.to_string(),
+                    r#type: NameRowType::Store,
+                    ..Default::default()
+                })
+                .unwrap();
+        }
+        upsert_store(&connection, &store("main", "MS", "main_name")).unwrap();
+
+        assert_eq!(
+            upsert_store(&connection, &store("ward", " MS ", "ward_name")),
+            Err(UpsertStoreError::DuplicateCode {
+                other_id: "main".to_string(),
+                other_code: "MS".to_string(),
+            })
+        );
+        assert_eq!(
+            upsert_store(&connection, &store("ward", "W1", "main_name")),
+            Err(UpsertStoreError::NameHasStore {
+                other_id: "main".to_string(),
+                other_code: "MS".to_string(),
+            })
+        );
+    }
 }

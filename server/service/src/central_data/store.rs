@@ -214,7 +214,7 @@ impl SheetImport for StoreSheet {
         let change = Change::between(saved, &new, |store| !store.is_disabled);
         if change != Change::Unchanged {
             upsert_store(connection, &new)
-                .map_err(|error| upsert_failure(connection, row, &new, new_name.as_ref(), error))?;
+                .map_err(|error| upsert_failure(row, &new, new_name.as_ref(), error))?;
         }
         let fields = match saved {
             Some(saved) => {
@@ -261,7 +261,6 @@ fn find_name(
 }
 
 fn upsert_failure(
-    connection: &StorageConnection,
     row: &Row,
     store: &StoreRow,
     name: Option<&NameRow>,
@@ -282,8 +281,8 @@ fn upsert_failure(
     match error {
         UpsertStoreError::CodeRequired => row.error(CODE, "code is required").into(),
         // Unreachable here: `find_record` turns a saved code into a match or a conflict first.
-        UpsertStoreError::DuplicateCode { other_id } => row
-            .error(CODE, format!("Store {other_id} already has this code"))
+        UpsertStoreError::DuplicateCode { other_code, .. } => row
+            .error(CODE, format!("Store {other_code} already has this code"))
             .into(),
         // Not checked here: `find_name` finds it among the saved names.
         UpsertStoreError::NameNotFound => row.error(name_column, NOT_FOUND).into(),
@@ -299,17 +298,14 @@ fn upsert_failure(
                 format!("{name} is deleted, so a store can't have it"),
             )
             .into(),
-        UpsertStoreError::NameHasStore { other_id } => {
-            let other = match StoreRowRepository::new(connection).find_one_by_id(&other_id) {
-                Ok(other) => other.map_or(other_id, |other| other.code),
-                Err(error) => return RowFailure::Database(error),
-            };
-            row.error(
+        UpsertStoreError::NameHasStore { other_code, .. } => row
+            .error(
                 name_column,
-                format!("{name} is already store {other}'s name. A name can be only one store's"),
+                format!(
+                    "{name} is already store {other_code}'s name. A name can be only one store's"
+                ),
             )
-            .into()
-        }
+            .into(),
         UpsertStoreError::SiteNotFound => row
             .error(
                 SITE_ID,
