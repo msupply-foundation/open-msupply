@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "Filters": {
+      "properties": {
+        "transactionType": {
+          "description": "Transaction type",
+          "type": "string",
+          "enum": ["OUTBOUND_SHIPMENT", "INBOUND_SHIPMENT"],
+          "default": "OUTBOUND_SHIPMENT"
+        },
+        "after": {
+          "description": "From date",
+          "type": ["string", "null"],
+          "format": "date-time",
+          "default": null
+        },
+        "before": {
+          "description": "To date",
+          "type": ["string", "null"],
+          "format": "date-time",
+          "default": null
+        }
+      },
+      "required": ["transactionType"]
+    }
+  },
+  "type": "object",
+  "allOf": [
+    {
+      "$ref": "#/definitions/Filters"
+    }
+  ]
+}

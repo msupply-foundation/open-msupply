@@ -2425,6 +2425,314 @@
         }
       },
       "excel_template_buffer": null
+    },
+    {
+      "id": "transaction-lines-with-donor_3_5_0_false",
+      "name": "Transaction lines with donor",
+      "description": null,
+      "template": {
+        "index": {
+          "template": "template.html",
+          "header": null,
+          "footer": null,
+          "query": [
+            "lines"
+          ],
+          "convert_data": null,
+          "convert_data_type": "Extism"
+        },
+        "entries": {
+          "template.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<style>\n  {% include \"style.css\" %}\n</style>\n\n{% set timezone = arguments.timezone | default(value=\"UTC\") %}\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr>\n        <td>{{t(k=\"label.date\", f=\"Date\")}}</td>\n        <td>{{t(k=\"label.invoice-number\", f=\"Invoice number\")}}</td>\n        <td>{{t(k=\"label.code\", f=\"Code\")}}</td>\n        <td>{{t(k=\"label.name\", f=\"Name\")}}</td>\n        <td>{{t(k=\"report.item-code\", f=\"Item code\")}}</td>\n        <td>{{t(k=\"report.item-name\", f=\"Item name\")}}</td>\n        <td>{{t(k=\"label.unit\", f=\"Unit\")}}</td>\n        <td>{{t(k=\"label.batch\", f=\"Batch\")}}</td>\n        <td>{{t(k=\"label.expiry\", f=\"Expiry\")}}</td>\n        <td>{{t(k=\"label.pack-size\", f=\"Pack size\")}}</td>\n        <td>{{t(k=\"label.num-packs\", f=\"Number of packs\")}}</td>\n        <td>{{t(k=\"label.number-of-units\", f=\"Number of units\")}}</td>\n        <td>{{t(k=\"label.value\", f=\"Value\")}}</td>\n        <td>{{t(k=\"label.donor\", f=\"Donor\")}}</td>\n      </tr>\n    </thead>\n    <tbody>\n      {% for line in data.lines %}\n      <tr>\n        <td>{{line.confirmed_datetime | date(format=\"%d/%m/%Y\", timezone=timezone)}}</td>\n        <td class=\"number\">{{line.invoice_number}}</td>\n        <td>{{line.name_code}}</td>\n        <td>{{line.name_name}}</td>\n        <td>{{line.item_code}}</td>\n        <td class=\"item-name\">{{line.item_name}}</td>\n        <td>{{line.unit | default(value='')}}</td>\n        <td>{{line.batch | default(value='')}}</td>\n        <td>\n          {% if line.expiry_date %}\n          {{line.expiry_date | date(format=\"%d/%m/%Y\")}}\n          {% endif %}\n        </td>\n        <td class=\"number\">{{line.pack_size}}</td>\n        <td class=\"number\">{{line.number_of_packs | round(precision=2)}}</td>\n        <td class=\"number\">{{line.quantity | round(precision=2)}}</td>\n        <td class=\"number\">{{line.value | round(precision=2)}}</td>\n        <td>{{line.donor_name | default(value='')}}</td>\n      </tr>\n      {% endfor %}\n    </tbody>\n  </table>\n</div>\n"
+            }
+          },
+          "lines": {
+            "type": "SQLQuery",
+            "data": {
+              "name": "lines",
+              "query_sqlite": "-- Each line of the store's transactions of the chosen type confirmed in the\n-- date range, with its donor.\nWITH line AS (\n    SELECT\n        invoice_line.id,\n        invoice_line.item_link_id,\n        invoice_line.donor_link_id,\n        invoice_line.batch,\n        invoice_line.expiry_date,\n        invoice_line.pack_size,\n        invoice_line.number_of_packs,\n        invoice_line.number_of_packs * invoice_line.pack_size AS quantity,\n        invoice_line.total_before_tax AS value,\n        invoice.invoice_number,\n        invoice.name_link_id,\n        -- Confirmed is when the stock moved, as the ledger dates it\n        CASE\n            WHEN invoice.type = 'OUTBOUND_SHIPMENT' THEN invoice.picked_datetime\n            ELSE invoice.received_datetime\n        END AS confirmed_datetime\n    FROM invoice_line\n    JOIN invoice ON invoice.id = invoice_line.invoice_id\n    WHERE invoice.store_id = $storeId\n        AND invoice.type = $transactionType\n        AND invoice.status <> 'CANCELLED'\n        AND invoice_line.type IN ('STOCK_IN', 'STOCK_OUT')\n        AND invoice_line.number_of_packs > 0\n)\nSELECT\n    line.id,\n    line.invoice_number,\n    -- An RFC3339 instant, so the template can show it in the user's timezone\n    strftime('%Y-%m-%dT%H:%M:%SZ', line.confirmed_datetime) AS confirmed_datetime,\n    name.code AS name_code,\n    name.name AS name_name,\n    item.code AS item_code,\n    item.name AS item_name,\n    unit.name AS unit,\n    line.batch,\n    line.expiry_date,\n    line.pack_size,\n    line.number_of_packs,\n    line.quantity,\n    line.value,\n    donor.name AS donor_name\nFROM line\nJOIN item_link ON item_link.id = line.item_link_id\nJOIN item ON item.id = item_link.item_id\nLEFT JOIN unit ON unit.id = item.unit_id\nJOIN name_link ON name_link.id = line.name_link_id\nJOIN name ON name.id = name_link.name_id\nLEFT JOIN name_link donor_link ON donor_link.id = line.donor_link_id\nLEFT JOIN name donor ON donor.id = donor_link.name_id\nWHERE line.confirmed_datetime IS NOT NULL\n    AND ($after IS NULL OR datetime(line.confirmed_datetime) >= datetime($after))\n    AND ($before IS NULL OR datetime(line.confirmed_datetime) <= datetime($before))\nORDER BY line.confirmed_datetime, line.invoice_number, item.name, line.id\n",
+              "query_postgres": "-- Each line of the store's transactions of the chosen type confirmed in the\n-- date range, with its donor.\nWITH line AS (\n    SELECT\n        invoice_line.id,\n        invoice_line.item_link_id,\n        invoice_line.donor_link_id,\n        invoice_line.batch,\n        invoice_line.expiry_date,\n        invoice_line.pack_size,\n        invoice_line.number_of_packs,\n        invoice_line.number_of_packs * invoice_line.pack_size AS quantity,\n        invoice_line.total_before_tax AS value,\n        invoice.invoice_number,\n        invoice.name_link_id,\n        -- Confirmed is when the stock moved, as the ledger dates it\n        CASE\n            WHEN invoice.type = 'OUTBOUND_SHIPMENT' THEN invoice.picked_datetime\n            ELSE invoice.received_datetime\n        END AS confirmed_datetime\n    FROM invoice_line\n    JOIN invoice ON invoice.id = invoice_line.invoice_id\n    WHERE invoice.store_id = $storeId\n        AND invoice.type = $transactionType\n        AND invoice.status <> 'CANCELLED'\n        AND invoice_line.type IN ('STOCK_IN', 'STOCK_OUT')\n        AND invoice_line.number_of_packs > 0\n)\nSELECT\n    line.id,\n    line.invoice_number,\n    -- An RFC3339 instant, so the template can show it in the user's timezone\n    to_char(line.confirmed_datetime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') AS confirmed_datetime,\n    name.code AS name_code,\n    name.name AS name_name,\n    item.code AS item_code,\n    item.name AS item_name,\n    unit.name AS unit,\n    line.batch,\n    line.expiry_date,\n    line.pack_size,\n    line.number_of_packs,\n    line.quantity,\n    line.value,\n    donor.name AS donor_name\nFROM line\nJOIN item_link ON item_link.id = line.item_link_id\nJOIN item ON item.id = item_link.item_id\nLEFT JOIN unit ON unit.id = item.unit_id\nJOIN name_link ON name_link.id = line.name_link_id\nJOIN name ON name.id = name_link.name_id\nLEFT JOIN name_link donor_link ON donor_link.id = line.donor_link_id\nLEFT JOIN name donor ON donor.id = donor_link.name_id\nWHERE line.confirmed_datetime IS NOT NULL\n    AND (CAST($after AS TEXT) IS NULL OR line.confirmed_datetime >= CAST($after AS TIMESTAMPTZ) AT TIME ZONE 'UTC')\n    AND (CAST($before AS TEXT) IS NULL OR line.confirmed_datetime <= CAST($before AS TIMESTAMPTZ) AT TIME ZONE 'UTC')\nORDER BY line.confirmed_datetime, line.invoice_number, item.name, line.id\n"
+            }
+          },
+          "style.css": {
+            "type": "Resource",
+            "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 11px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  font-size: inherit;\n  font-family: inherit;\n  border-collapse: collapse;\n}\n\n.container table td {\n  padding: 4px 6px;\n  vertical-align: top;\n  border: 1px solid rgb(200, 200, 200);\n}\n\n.container table thead td {\n  font-weight: bold;\n  vertical-align: bottom;\n  background: #eee;\n}\n\n.container table .number {\n  text-align: right;\n  white-space: nowrap;\n}\n\n.container table .total {\n  font-weight: bold;\n}\n\n.container table .item-name {\n  min-width: 180px;\n}\n"
+          }
+        }
+      },
+      "context": "REPORT",
+      "sub_context": "Distribution",
+      "argument_schema_id": "for_report_transaction-lines-with-donor_3_5_0_false",
+      "comment": null,
+      "is_custom": false,
+      "version": "3.5.0",
+      "code": "transaction-lines-with-donor",
+      "form_schema": {
+        "id": "for_report_transaction-lines-with-donor_3_5_0_false",
+        "type": "reportArgument",
+        "json_schema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "definitions": {
+            "Filters": {
+              "properties": {
+                "transactionType": {
+                  "description": "Transaction type",
+                  "type": "string",
+                  "enum": [
+                    "OUTBOUND_SHIPMENT",
+                    "INBOUND_SHIPMENT"
+                  ],
+                  "default": "OUTBOUND_SHIPMENT"
+                },
+                "after": {
+                  "description": "From date",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time",
+                  "default": null
+                },
+                "before": {
+                  "description": "To date",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time",
+                  "default": null
+                }
+              },
+              "required": [
+                "transactionType"
+              ]
+            }
+          },
+          "type": "object",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Filters"
+            }
+          ]
+        },
+        "ui_schema": {
+          "type": "VerticalLayout",
+          "elements": [
+            {
+              "type": "Control",
+              "scope": "#/properties/transactionType",
+              "label": "T#report.transaction-type",
+              "options": {
+                "show": [
+                  [
+                    "OUTBOUND_SHIPMENT",
+                    "T#report.sales-to-customers"
+                  ],
+                  [
+                    "INBOUND_SHIPMENT",
+                    "T#report.purchases-from-suppliers"
+                  ]
+                ]
+              }
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/after",
+              "label": "T#label.from-date",
+              "options": {
+                "dateOnly": true,
+                "disableFuture": true,
+                "max": "#/properties/before"
+              }
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/before",
+              "label": "T#label.to-date",
+              "options": {
+                "dateOnly": true,
+                "disableFuture": true,
+                "min": "#/properties/after",
+                "dateAsEndOfDay": true
+              }
+            }
+          ]
+        }
+      },
+      "excel_template_buffer": null
+    },
+    {
+      "id": "transactions-items-by-name_3_5_0_false",
+      "name": "Items by name (crosstab)",
+      "description": null,
+      "template": {
+        "index": {
+          "template": "template.html",
+          "header": null,
+          "footer": null,
+          "query": [
+            "itemsByName"
+          ],
+          "convert_data": "Y29uc3QgZT0oZSx0KT0+ZS5uYW1lLmxvY2FsZUNvbXBhcmUodC5uYW1lKXx8ZS5jb2RlLmxvY2FsZUNvbXBhcmUodC5jb2RlKSx0PShlLHQpPT57ZS5xdWFudGl0eSs9dC5xdWFudGl0eSxlLnZhbHVlKz10LnZhbHVlfSxhPShhLG49IlFVQU5USVRZIik9Pntjb25zdCBsPW5ldyBNYXAsbz1uZXcgTWFwO2Zvcihjb25zdCBlIG9mIGEpe2wuaGFzKGUubmFtZV9pZCl8fGwuc2V0KGUubmFtZV9pZCx7aWQ6ZS5uYW1lX2lkLGNvZGU6ZS5uYW1lX2NvZGUsbmFtZTplLm5hbWVfbmFtZX0pO2xldCBhPW8uZ2V0KGUuaXRlbV9pZCk7YXx8KGE9e2NvZGU6ZS5pdGVtX2NvZGUsbmFtZTplLml0ZW1fbmFtZSx1bml0OmUudW5pdD8/IiIsY2VsbHM6bmV3IE1hcCx0b3RhbDp7cXVhbnRpdHk6MCx2YWx1ZTowfX0sby5zZXQoZS5pdGVtX2lkLGEpKTtjb25zdCBuPXtxdWFudGl0eTplLnF1YW50aXR5LHZhbHVlOmUudmFsdWV9LHU9YS5jZWxscy5nZXQoZS5uYW1lX2lkKTt1P3QodSxuKTphLmNlbGxzLnNldChlLm5hbWVfaWQsey4uLm59KSx0KGEudG90YWwsbil9Y29uc3QgdT1bLi4ubC52YWx1ZXMoKV0uc29ydChlKSxzPXUubWFwKCgpPT4oe3F1YW50aXR5OjAsdmFsdWU6MH0pKSxtPXtxdWFudGl0eTowLHZhbHVlOjB9LGk9Wy4uLm8udmFsdWVzKCldLnNvcnQoZSkubWFwKGU9Pntjb25zdCBhPXUubWFwKChhLG4pPT57Y29uc3QgbD1lLmNlbGxzLmdldChhLmlkKT8/bnVsbDtyZXR1cm4gbCYmdChzW25dLGwpLGx9KTtyZXR1cm4gdChtLGUudG90YWwpLHsuLi5lLGNlbGxzOmF9fSk7cmV0dXJue3Nob3dRdWFudGl0eToiVkFMVUUiIT09bixzaG93VmFsdWU6IlFVQU5USVRZIiE9PW4sY29sdW1uczp1LHJvd3M6aSxjb2x1bW5Ub3RhbHM6cyx0b3RhbDptfX07ZnVuY3Rpb24gbihlKXtyZXR1cm57YXJndW1lbnRzOmUuYXJndW1lbnRzLGRhdGE6YShlLmRhdGE/Lml0ZW1zQnlOYW1lPz9bXSxlLmFyZ3VtZW50cz8uc2hvdyl9fWV4cG9ydHtuIGFzIGNvbnZlcnRfZGF0YX07",
+          "convert_data_type": "BoaJs"
+        },
+        "entries": {
+          "template.html": {
+            "type": "TeraTemplate",
+            "data": {
+              "output": "Html",
+              "template": "<style>\n  {% include \"style.css\" %}\n</style>\n\n{% set quantity_label = t(k=\"label.quantity\", f=\"Quantity\") %}\n{% set value_label = t(k=\"label.value\", f=\"Value\") %}\n{% set total_label = t(k=\"label.total\", f=\"Total\") %}\n\n{# A cell's units and/or value, as the Show argument asks #}\n{% macro amount(cell, data) %}\n  {% if data.showQuantity %}<td class=\"number\">{% if cell %}{{cell.quantity | round(precision=2)}}{% endif %}</td>{% endif %}\n  {% if data.showValue %}<td class=\"number\">{% if cell %}{{cell.value | round(precision=2)}}{% endif %}</td>{% endif %}\n{% endmacro amount %}\n\n{# A heading for each of a column's cells. When both are shown the name goes in\n   each, as the Excel export keeps only one header row. #}\n{% macro heading(name, data, quantity_label, value_label) %}\n  {% if data.showQuantity and data.showValue %}\n  <td class=\"number\">{{name}} ({{quantity_label}})</td>\n  <td class=\"number\">{{name}} ({{value_label}})</td>\n  {% else %}\n  <td class=\"number\">{{name}}</td>\n  {% endif %}\n{% endmacro heading %}\n\n<div class=\"container\">\n  <table>\n    <thead>\n      <tr>\n        <td>{{t(k=\"report.item-code\", f=\"Item code\")}}</td>\n        <td>{{t(k=\"report.item-name\", f=\"Item name\")}}</td>\n        <td>{{t(k=\"label.unit\", f=\"Unit\")}}</td>\n        {% for column in data.columns %}\n        {{ self::heading(name=column.name, data=data, quantity_label=quantity_label, value_label=value_label) }}\n        {% endfor %}\n        {{ self::heading(name=total_label, data=data, quantity_label=quantity_label, value_label=value_label) }}\n      </tr>\n    </thead>\n    <tbody>\n      {% for row in data.rows %}\n      <tr>\n        <td>{{row.code}}</td>\n        <td class=\"item-name\">{{row.name}}</td>\n        <td>{{row.unit}}</td>\n        {% for cell in row.cells %}\n        {{ self::amount(cell=cell, data=data) }}\n        {% endfor %}\n        {{ self::amount(cell=row.total, data=data) }}\n      </tr>\n      {% endfor %}\n      <tr class=\"total\" excel-type=\"total-row\">\n        <td>{{total_label}}</td>\n        <td></td>\n        <td></td>\n        {% for cell in data.columnTotals %}\n        {{ self::amount(cell=cell, data=data) }}\n        {% endfor %}\n        {{ self::amount(cell=data.total, data=data) }}\n      </tr>\n    </tbody>\n  </table>\n</div>\n"
+            }
+          },
+          "itemsByName": {
+            "type": "SQLQuery",
+            "data": {
+              "name": "itemsByName",
+              "query_sqlite": "-- The units and value of each item with each other party, over the store's\n-- transactions of the chosen type confirmed in the date range. One row per item\n-- and other party; convert_data turns these into the crosstab.\nWITH line AS (\n    SELECT\n        invoice_line.item_link_id,\n        invoice_line.number_of_packs * invoice_line.pack_size AS quantity,\n        invoice_line.total_before_tax AS value,\n        invoice.name_link_id,\n        -- Confirmed is when the stock moved, as the ledger dates it\n        CASE\n            WHEN invoice.type = 'OUTBOUND_SHIPMENT' THEN invoice.picked_datetime\n            ELSE invoice.received_datetime\n        END AS confirmed_datetime\n    FROM invoice_line\n    JOIN invoice ON invoice.id = invoice_line.invoice_id\n    WHERE invoice.store_id = $storeId\n        AND invoice.type = $transactionType\n        AND invoice.status <> 'CANCELLED'\n        AND invoice_line.type IN ('STOCK_IN', 'STOCK_OUT')\n        AND invoice_line.number_of_packs > 0\n)\nSELECT\n    item.id AS item_id,\n    item.code AS item_code,\n    item.name AS item_name,\n    unit.name AS unit,\n    name.id AS name_id,\n    name.code AS name_code,\n    name.name AS name_name,\n    SUM(line.quantity) AS quantity,\n    SUM(line.value) AS value\nFROM line\nJOIN item_link ON item_link.id = line.item_link_id\nJOIN item ON item.id = item_link.item_id\nLEFT JOIN unit ON unit.id = item.unit_id\nJOIN name_link ON name_link.id = line.name_link_id\nJOIN name ON name.id = name_link.name_id\nWHERE line.confirmed_datetime IS NOT NULL\n    AND ($after IS NULL OR datetime(line.confirmed_datetime) >= datetime($after))\n    AND ($before IS NULL OR datetime(line.confirmed_datetime) <= datetime($before))\nGROUP BY item.id, item.code, item.name, unit.name, name.id, name.code, name.name\n",
+              "query_postgres": "-- The units and value of each item with each other party, over the store's\n-- transactions of the chosen type confirmed in the date range. One row per item\n-- and other party; convert_data turns these into the crosstab.\nWITH line AS (\n    SELECT\n        invoice_line.item_link_id,\n        invoice_line.number_of_packs * invoice_line.pack_size AS quantity,\n        invoice_line.total_before_tax AS value,\n        invoice.name_link_id,\n        -- Confirmed is when the stock moved, as the ledger dates it\n        CASE\n            WHEN invoice.type = 'OUTBOUND_SHIPMENT' THEN invoice.picked_datetime\n            ELSE invoice.received_datetime\n        END AS confirmed_datetime\n    FROM invoice_line\n    JOIN invoice ON invoice.id = invoice_line.invoice_id\n    WHERE invoice.store_id = $storeId\n        AND invoice.type = $transactionType\n        AND invoice.status <> 'CANCELLED'\n        AND invoice_line.type IN ('STOCK_IN', 'STOCK_OUT')\n        AND invoice_line.number_of_packs > 0\n)\nSELECT\n    item.id AS item_id,\n    item.code AS item_code,\n    item.name AS item_name,\n    unit.name AS unit,\n    name.id AS name_id,\n    name.code AS name_code,\n    name.name AS name_name,\n    SUM(line.quantity) AS quantity,\n    SUM(line.value) AS value\nFROM line\nJOIN item_link ON item_link.id = line.item_link_id\nJOIN item ON item.id = item_link.item_id\nLEFT JOIN unit ON unit.id = item.unit_id\nJOIN name_link ON name_link.id = line.name_link_id\nJOIN name ON name.id = name_link.name_id\nWHERE line.confirmed_datetime IS NOT NULL\n    AND (CAST($after AS TEXT) IS NULL OR line.confirmed_datetime >= CAST($after AS TIMESTAMPTZ) AT TIME ZONE 'UTC')\n    AND (CAST($before AS TEXT) IS NULL OR line.confirmed_datetime <= CAST($before AS TIMESTAMPTZ) AT TIME ZONE 'UTC')\nGROUP BY item.id, item.code, item.name, unit.name, name.id, name.code, name.name\n"
+            }
+          },
+          "style.css": {
+            "type": "Resource",
+            "data": "@page {\n  margin: 0;\n  size: A4 landscape;\n}\n\n.container {\n  margin: auto;\n  padding: 10px;\n  font-size: 11px;\n  font-family: \"Helvetica Neue\", \"Helvetica\", Helvetica, Arial, sans-serif;\n  color: #555;\n}\n\n.container table {\n  font-size: inherit;\n  font-family: inherit;\n  border-collapse: collapse;\n}\n\n.container table td {\n  padding: 4px 6px;\n  vertical-align: top;\n  border: 1px solid rgb(200, 200, 200);\n}\n\n.container table thead td {\n  font-weight: bold;\n  vertical-align: bottom;\n  background: #eee;\n}\n\n.container table .number {\n  text-align: right;\n  white-space: nowrap;\n}\n\n.container table .total {\n  font-weight: bold;\n}\n\n.container table .item-name {\n  min-width: 180px;\n}\n"
+          }
+        }
+      },
+      "context": "REPORT",
+      "sub_context": "Distribution",
+      "argument_schema_id": "for_report_transactions-items-by-name_3_5_0_false",
+      "comment": null,
+      "is_custom": false,
+      "version": "3.5.0",
+      "code": "transactions-items-by-name",
+      "form_schema": {
+        "id": "for_report_transactions-items-by-name_3_5_0_false",
+        "type": "reportArgument",
+        "json_schema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "definitions": {
+            "Filters": {
+              "properties": {
+                "show": {
+                  "description": "What each cell shows",
+                  "type": "string",
+                  "enum": [
+                    "QUANTITY",
+                    "VALUE",
+                    "BOTH"
+                  ],
+                  "default": "QUANTITY"
+                },
+                "transactionType": {
+                  "description": "Transaction type",
+                  "type": "string",
+                  "enum": [
+                    "OUTBOUND_SHIPMENT",
+                    "INBOUND_SHIPMENT"
+                  ],
+                  "default": "OUTBOUND_SHIPMENT"
+                },
+                "after": {
+                  "description": "From date",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time",
+                  "default": null
+                },
+                "before": {
+                  "description": "To date",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time",
+                  "default": null
+                }
+              },
+              "required": [
+                "show",
+                "transactionType"
+              ]
+            }
+          },
+          "type": "object",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Filters"
+            }
+          ]
+        },
+        "ui_schema": {
+          "type": "VerticalLayout",
+          "elements": [
+            {
+              "type": "Control",
+              "scope": "#/properties/show",
+              "label": "T#report.show",
+              "options": {
+                "show": [
+                  [
+                    "QUANTITY",
+                    "T#label.quantity"
+                  ],
+                  [
+                    "VALUE",
+                    "T#label.value"
+                  ],
+                  [
+                    "BOTH",
+                    "T#report.quantity-and-value"
+                  ]
+                ]
+              }
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/transactionType",
+              "label": "T#report.transaction-type",
+              "options": {
+                "show": [
+                  [
+                    "OUTBOUND_SHIPMENT",
+                    "T#report.sales-to-customers"
+                  ],
+                  [
+                    "INBOUND_SHIPMENT",
+                    "T#report.purchases-from-suppliers"
+                  ]
+                ]
+              }
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/after",
+              "label": "T#label.from-date",
+              "options": {
+                "dateOnly": true,
+                "disableFuture": true,
+                "max": "#/properties/before"
+              }
+            },
+            {
+              "type": "Control",
+              "scope": "#/properties/before",
+              "label": "T#label.to-date",
+              "options": {
+                "dateOnly": true,
+                "disableFuture": true,
+                "min": "#/properties/after",
+                "dateAsEndOfDay": true
+              }
+            }
+          ]
+        }
+      },
+      "excel_template_buffer": null
     }
   ]
 }

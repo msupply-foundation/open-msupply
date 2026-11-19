@@ -1,0 +1,49 @@
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "Control",
+      "scope": "#/properties/show",
+      "label": "T#report.show",
+      "options": {
+        "show": [
+          ["QUANTITY", "T#label.quantity"],
+          ["VALUE", "T#label.value"],
+          ["BOTH", "T#report.quantity-and-value"]
+        ]
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/transactionType",
+      "label": "T#report.transaction-type",
+      "options": {
+        "show": [
+          ["OUTBOUND_SHIPMENT", "T#report.sales-to-customers"],
+          ["INBOUND_SHIPMENT", "T#report.purchases-from-suppliers"]
+        ]
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/after",
+      "label": "T#label.from-date",
+      "options": {
+        "dateOnly": true,
+        "disableFuture": true,
+        "max": "#/properties/before"
+      }
+    },
+    {
+      "type": "Control",
+      "scope": "#/properties/before",
+      "label": "T#label.to-date",
+      "options": {
+        "dateOnly": true,
+        "disableFuture": true,
+        "min": "#/properties/after",
+        "dateAsEndOfDay": true
+      }
+    }
+  ]
+}
