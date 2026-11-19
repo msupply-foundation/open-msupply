@@ -23,6 +23,7 @@ pub mod lookup;
 mod master_list;
 mod name;
 pub mod sheet;
+mod store;
 mod unit;
 mod user;
 
@@ -45,6 +46,7 @@ pub enum CentralDataTable {
     LocationType,
     Currency,
     Name,
+    Store,
     User,
     Item,
     MasterList,
@@ -119,6 +121,7 @@ impl CentralDataTable {
             CentralDataTable::LocationType => "location_type",
             CentralDataTable::Currency => "currency",
             CentralDataTable::Name => "name",
+            CentralDataTable::Store => "store",
             CentralDataTable::User => "user",
             CentralDataTable::Item => "item",
             CentralDataTable::MasterList => "master_list",
@@ -132,6 +135,7 @@ static TABLES: &[&(dyn ImportTable + Sync)] = &[
     &location_type::LocationTypeTable,
     &currency::CurrencyTable,
     &name::NameTable,
+    &store::StoreTable,
     &user::UserTable,
     &item::ItemTable,
     &master_list::MasterListTable,

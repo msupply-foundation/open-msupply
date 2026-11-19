@@ -1801,6 +1801,7 @@ export enum CentralDataTableNode {
   LocationType = 'LOCATION_TYPE',
   MasterList = 'MASTER_LIST',
   Name = 'NAME',
+  Store = 'STORE',
   Unit = 'UNIT',
   User = 'USER',
 }

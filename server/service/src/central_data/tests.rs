@@ -17,9 +17,10 @@ use repository::{
     ItemRowRepository, ItemType, ItemVariantRow, ItemVariantRowRepository, KeyType,
     KeyValueStoreRepository, LanguageType, LocationTypeRow, LocationTypeRowRepository,
     MasterListRow, MasterListRowRepository, NameRow, NameRowRepository, NameRowType,
-    RequisitionLineRow, RequisitionLineRowRepository, StorageConnection, StoreRow,
-    StoreRowRepository, UnitRow, UnitRowRepository, UserAccountRow, UserAccountRowRepository,
-    UserStoreJoinRow, UserStoreJoinRowRepository, VENCategory,
+    RequisitionLineRow, RequisitionLineRowRepository, SiteRow, SiteRowRepository,
+    StorageConnection, StoreMode, StoreRow, StoreRowRepository, UnitRow, UnitRowRepository,
+    UserAccountRow, UserAccountRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
+    VENCategory,
     mock::{
         MockDataInserts, mock_draft_request_requisition_line, mock_item_a_variant_1,
         mock_outbound_shipment_a, mock_store_a,
@@ -5534,4 +5535,507 @@ async fn a_system_name_is_not_exported_or_imported() {
         vec![(2, Some("code"), protected), (3, Some("id"), protected)]
     );
     assert_eq!(find_name(&connection, "invad"), invad);
+}
+
+const STORE_HEADERS: [&str; 8] = [
+    "id",
+    "code",
+    "site_id",
+    "store_mode",
+    "is_disabled",
+    "name_code",
+    "name_type",
+    "name_id",
+];
+
+fn store_sheet(rows: Vec<Vec<Value>>) -> Vec<u8> {
+    sheet::write(vec![sheet_data("store", &STORE_HEADERS, rows)]).unwrap()
+}
+
+/// A row of `STORE_HEADERS` with the given cells; the others are blank.
+fn store_row(cells: &[(&str, &str)]) -> Vec<Value> {
+    STORE_HEADERS
+        .iter()
+        .map(
+            |header| match cells.iter().find(|(column, _)| column == header) {
+                Some((_, cell)) if !cell.is_empty() => Value::Text(cell.to_string()),
+                _ => Value::Empty,
+            },
+        )
+        .collect()
+}
+
+/// On site 1, after `cells`, unless they say otherwise.
+fn new_store_row(cells: &[(&'static str, &'static str)]) -> Vec<Value> {
+    let defaults = [
+        ("site_id", "1"),
+        ("store_mode", "STORE"),
+        ("is_disabled", "FALSE"),
+    ];
+    let defaults: Vec<_> = defaults
+        .into_iter()
+        .filter(|(column, _)| !cells.iter().any(|(given, _)| given == column))
+        .collect();
+    store_row(&[cells, &defaults].concat())
+}
+
+fn find_store(connection: &StorageConnection, id: &str) -> Option<StoreRow> {
+    StoreRowRepository::new(connection)
+        .find_one_by_id(id)
+        .unwrap()
+}
+
+fn store_by_code(connection: &StorageConnection, code: &str) -> StoreRow {
+    StoreRowRepository::new(connection)
+        .find_by_trimmed_code(code)
+        .unwrap()
+        .remove(0)
+}
+
+fn stores_containing(contains: Option<&str>, is_active: Option<bool>) -> ExportTable {
+    ExportTable {
+        table: CentralDataTable::Store,
+        filter: ExportFilter {
+            contains: contains.map(str::to_string),
+            is_active,
+        },
+    }
+}
+
+/// `name_setup`, with site 1, a store-type name WARD without a store, and a logo on Main store,
+/// which is on site 0, a site the server doesn't have.
+async fn store_setup(name: &str) -> (StorageConnection, ServiceProvider, TempDir) {
+    let (connection, service_provider, dir) = name_setup(name).await;
+    SiteRowRepository::new(&connection)
+        .upsert(&SiteRow {
+            id: 1,
+            code: "S1".to_string(),
+            name: "Site 1".to_string(),
+            ..Default::default()
+        })
+        .unwrap();
+    NameRowRepository::new(&connection)
+        .upsert_one(&NameRow {
+            id: "ward_name".to_string(),
+            code: "WARD".to_string(),
+            name: "Ward".to_string(),
+            r#type: NameRowType::Store,
+            ..Default::default()
+        })
+        .unwrap();
+    StoreRowRepository::new(&connection)
+        .update_logo("store_main", Some("aGVsbG8="))
+        .unwrap();
+    (connection, service_provider, dir)
+}
+
+// covers: OMS-REG-CDIO-01.10, .11, .22, .65, .142
+
+#[actix_rt::test]
+async fn stores_export_then_import_makes_no_changes() {
+    let (connection, service_provider, dir) = store_setup("central_data_store_round_trip").await;
+    let ctx = service_provider.basic_context().unwrap();
+    StoreRowRepository::new(&connection)
+        .upsert_one(&StoreRow {
+            created_date: NaiveDate::from_ymd_opt(2024, 3, 1),
+            store_mode: StoreMode::Dispensary,
+            is_disabled: true,
+            ..find_store(&connection, "store_main").unwrap()
+        })
+        .unwrap();
+    let before = find_store(&connection, "store_main");
+
+    let bytes = CentralDataService
+        .export(&ctx, &[stores_containing(None, None)])
+        .unwrap();
+    let path = write_file(dir.path(), bytes);
+    let Ok(sheets) = sheet::read(&path, MAX_IMPORT_ROWS) else {
+        panic!("the export reads back")
+    };
+    let sheet = &sheets[0];
+    let cell = |column: &str| {
+        let position = sheet.headers.iter().position(|h| h == column).unwrap();
+        sheet.rows[0].cells[position].clone()
+    };
+    assert_eq!(
+        [
+            "site_id",
+            "store_mode",
+            "is_disabled",
+            "name_code",
+            "name_type",
+            "name_id",
+            "created_date",
+            "name_name"
+        ]
+        .map(cell),
+        [
+            "0",
+            "DISPENSARY",
+            "true",
+            "MAIN",
+            "STORE",
+            "main_store_name",
+            "2024-03-01",
+            "Main store"
+        ]
+    );
+    assert!(!sheet.headers.contains(&"logo".to_string()));
+
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].unchanged, 1);
+    assert_eq!(summary.changes, vec![]);
+    assert_eq!(find_store(&connection, "store_main"), before);
+}
+
+// covers: OMS-REG-CDIO-01.46, .142
+
+#[actix_rt::test]
+async fn a_store_export_searches_name_and_code_and_filters_by_status() {
+    let (connection, service_provider, _) = store_setup("central_data_store_filter").await;
+    let ctx = service_provider.basic_context().unwrap();
+    StoreRowRepository::new(&connection)
+        .upsert_one(&StoreRow {
+            id: "ward".to_string(),
+            code: "W1".to_string(),
+            name_id: "ward_name".to_string(),
+            is_disabled: true,
+            ..Default::default()
+        })
+        .unwrap();
+    let count = |contains: Option<&str>, is_active: Option<bool>| {
+        CentralDataService
+            .export_counts(&ctx, &[stores_containing(contains, is_active)])
+            .unwrap()[0]
+            .count
+    };
+
+    assert_eq!(
+        count(None, None),
+        RecordCount {
+            matching: 2,
+            total: 2
+        }
+    );
+    assert_eq!(count(Some(" main "), None).matching, 1);
+    assert_eq!(count(Some("w1"), None).matching, 1);
+    assert_eq!(count(None, Some(true)).matching, 1);
+    assert_eq!(count(Some("ward"), Some(true)).matching, 0);
+}
+
+// covers: OMS-REG-CDIO-01.12, .37, .138, .141, .142
+
+#[actix_rt::test]
+async fn store_rows_add_and_update_by_code() {
+    let (connection, service_provider, dir) = store_setup("central_data_store_upsert").await;
+    let ctx = service_provider.basic_context().unwrap();
+
+    let path = write_file(
+        dir.path(),
+        store_sheet(vec![
+            new_store_row(&[
+                ("code", "W1"),
+                ("name_code", "WARD"),
+                ("name_type", "STORE"),
+            ]),
+            // No id: found by code. Blank cells keep the saved values.
+            store_row(&[("code", "MS"), ("store_mode", "dispensary")]),
+            store_row(&[("code", "NEW")]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (4, Some("site_id"), "site_id is required for a new store"),
+            (
+                4,
+                Some("store_mode"),
+                "store_mode is required for a new store"
+            ),
+            (
+                4,
+                Some("is_disabled"),
+                "is_disabled is required for a new store"
+            ),
+            (
+                4,
+                Some("name_code"),
+                "name_code is required for a new store"
+            ),
+        ]
+    );
+
+    let path = write_file(
+        dir.path(),
+        store_sheet(vec![
+            new_store_row(&[
+                ("code", "W1"),
+                ("name_code", "WARD"),
+                ("name_type", "STORE"),
+            ]),
+            store_row(&[("code", "MS"), ("store_mode", "dispensary")]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(
+        (summary.tables[0].inserted, summary.tables[0].updated),
+        (1, 1)
+    );
+    assert_eq!(summary.changes[0].record, "Ward (W1)");
+    assert_eq!(
+        summary.changes[1].fields,
+        vec![FieldChange {
+            column: "store_mode",
+            from: "STORE".to_string(),
+            to: "DISPENSARY".to_string(),
+        }]
+    );
+    let ward = store_by_code(&connection, "W1");
+    assert_eq!(
+        (ward.name_id.as_str(), ward.site_id, ward.created_date),
+        ("ward_name", 1, Some(today()))
+    );
+    let main = find_store(&connection, "store_main").unwrap();
+    assert_eq!(main.store_mode, StoreMode::Dispensary);
+    // No column: the logo is left as it is.
+    assert_eq!(
+        StoreRowRepository::new(&connection)
+            .find_logo_by_id("store_main")
+            .unwrap()
+            .unwrap()
+            .logo
+            .as_deref(),
+        Some("aGVsbG8=")
+    );
+
+    // Disabling is a delete, enabling an update.
+    let path = write_file(
+        dir.path(),
+        store_sheet(vec![
+            store_row(&[("code", "W1"), ("is_disabled", "TRUE")]),
+            store_row(&[("code", "MS"), ("is_disabled", "FALSE")]),
+        ]),
+    );
+    StoreRowRepository::new(&connection)
+        .upsert_one(&StoreRow {
+            is_disabled: true,
+            ..main
+        })
+        .unwrap();
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(
+        summary
+            .changes
+            .iter()
+            .map(|change| change.change)
+            .collect::<Vec<_>>(),
+        [Change::Deleted, Change::Updated]
+    );
+    assert!(store_by_code(&connection, "W1").is_disabled);
+}
+
+// covers: OMS-REG-CDIO-01.24, .139
+
+#[actix_rt::test]
+async fn a_store_finds_its_name_by_code_and_type_or_by_id() {
+    let (connection, service_provider, dir) = store_setup("central_data_store_name").await;
+    let ctx = service_provider.basic_context().unwrap();
+    // WARD as a facility's code too, so the code alone is ambiguous.
+    NameRowRepository::new(&connection)
+        .upsert_one(&NameRow {
+            id: "ward_facility".to_string(),
+            code: "WARD".to_string(),
+            name: "Ward clinic".to_string(),
+            r#type: NameRowType::Facility,
+            ..Default::default()
+        })
+        .unwrap();
+
+    let path = write_file(
+        dir.path(),
+        store_sheet(vec![
+            new_store_row(&[("code", "A"), ("name_code", "NOPE"), ("name_type", "STORE")]),
+            new_store_row(&[("code", "B"), ("name_id", "clinic"), ("name_type", "STORE")]),
+            new_store_row(&[
+                ("code", "C"),
+                ("name_code", "CL2"),
+                ("name_type", "FACILITY"),
+            ]),
+            new_store_row(&[("code", "D"), ("name_code", "MAIN"), ("name_type", "STORE")]),
+            new_store_row(&[("code", "E"), ("name_code", "WARD")]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (2, Some("name_code"), "referenced record not found"),
+            (
+                3,
+                Some("name_type"),
+                "Central clinic (CL1) has type FACILITY, not STORE"
+            ),
+            (
+                4,
+                Some("name_code"),
+                "Closed clinic (CL2) is deleted, so a store can't have it"
+            ),
+            (
+                5,
+                Some("name_code"),
+                "Main store (MAIN) is already store MS's name. A name can be only one store's"
+            ),
+            (
+                6,
+                Some("name_code"),
+                "ambiguous reference, please provide id instead"
+            ),
+        ]
+    );
+
+    // By id alone, or by code and type.
+    let path = write_file(
+        dir.path(),
+        store_sheet(vec![
+            new_store_row(&[("code", "F"), ("name_id", "ward_facility")]),
+            new_store_row(&[("code", "G"), ("name_code", "WARD"), ("name_type", "store")]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(store_by_code(&connection, "F").name_id, "ward_facility");
+    assert_eq!(store_by_code(&connection, "G").name_id, "ward_name");
+}
+
+// covers: OMS-REG-CDIO-01.23, .39, .140
+
+#[actix_rt::test]
+async fn a_store_code_is_not_taken_and_its_site_must_be_on_the_server() {
+    let (connection, service_provider, dir) = store_setup("central_data_store_code_site").await;
+    let ctx = service_provider.basic_context().unwrap();
+
+    let path = write_file(
+        dir.path(),
+        store_sheet(vec![
+            new_store_row(&[("id", "new"), ("code", "MS"), ("name_code", "WARD")]),
+            new_store_row(&[("code", "W1"), ("name_code", "WARD"), ("site_id", "99")]),
+            store_row(&[("code", "MS"), ("site_id", "99")]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                2,
+                Some("code"),
+                "code and id conflict: MS has code MS and id store_main, but this row has code MS and id new"
+            ),
+            (3, Some("site_id"), "Site 99 isn't on this server"),
+            (4, Some("site_id"), "Site 99 isn't on this server"),
+        ]
+    );
+
+    // Main store is on site 0, which the server doesn't have, and stays editable.
+    let path = write_file(
+        dir.path(),
+        store_sheet(vec![store_row(&[
+            ("code", "MS"),
+            ("site_id", "0"),
+            ("store_mode", "DISPENSARY"),
+        ])]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(
+        find_store(&connection, "store_main").unwrap().store_mode,
+        StoreMode::Dispensary
+    );
+}
+
+// covers: OMS-REG-CDIO-01.144
+
+#[actix_rt::test]
+async fn a_store_on_the_servers_own_site_cannot_be_moved_or_disabled() {
+    let (connection, service_provider, dir) = store_setup("central_data_store_own_site").await;
+    let ctx = service_provider.basic_context().unwrap();
+    // This server is site 2, with its own store; Main store is on site 0.
+    SiteRowRepository::new(&connection)
+        .upsert(&SiteRow {
+            id: 2,
+            code: "S2".to_string(),
+            name: "Central".to_string(),
+            ..Default::default()
+        })
+        .unwrap();
+    KeyValueStoreRepository::new(&connection)
+        .set_i32(KeyType::SettingsSyncSiteId, Some(2))
+        .unwrap();
+    StoreRowRepository::new(&connection)
+        .upsert_one(&StoreRow {
+            id: "central".to_string(),
+            code: "CENTRAL".to_string(),
+            site_id: 2,
+            name_id: "ward_name".to_string(),
+            ..Default::default()
+        })
+        .unwrap();
+
+    let path = write_file(
+        dir.path(),
+        store_sheet(vec![
+            store_row(&[("code", "CENTRAL"), ("site_id", "1")]),
+            store_row(&[("code", "CENTRAL"), ("is_disabled", "TRUE")]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                2,
+                Some("site_id"),
+                "Store CENTRAL is on this server's site, where its users log in, so import can't move it to another site"
+            ),
+            (
+                3,
+                Some("is_disabled"),
+                "Store CENTRAL is on this server's site, where its users log in, so import can't disable it"
+            ),
+        ]
+    );
+
+    // Its other columns change; a store on another site can be moved and disabled.
+    let path = write_file(
+        dir.path(),
+        store_sheet(vec![
+            store_row(&[("code", "CENTRAL"), ("store_mode", "DISPENSARY")]),
+            store_row(&[("code", "MS"), ("site_id", "1"), ("is_disabled", "TRUE")]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    let central = find_store(&connection, "central").unwrap();
+    assert_eq!(
+        (central.site_id, central.is_disabled, central.store_mode),
+        (2, false, StoreMode::Dispensary)
+    );
+    let main = find_store(&connection, "store_main").unwrap();
+    assert_eq!((main.site_id, main.is_disabled), (1, true));
 }

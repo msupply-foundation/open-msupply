@@ -1,0 +1,364 @@
+use super::{
+    CentralDataTable, Change, ExportFilter, ImportTable, RecordCount, RowFailure, RowOutcome,
+    SheetImport, SheetStart,
+    cells::{Row, RowError, choice_cell, collect, keep_or_saved},
+    field_changes,
+    lookup::{NOT_FOUND, NamesOfType, active_first, find_record, find_reference},
+    name::{TYPES as NAME_TYPES, type_label},
+    name_with_code,
+    sheet::Value,
+};
+use crate::store::{UpsertStoreError, upsert_store};
+use chrono::NaiveDate;
+use repository::{
+    NameRow, NameRowRepository, NameRowType, Pagination, RepositoryError, Sort, StorageConnection,
+    Store, StoreMode, StoreRepository, StoreRow, StoreRowRepository, StoreSortField,
+};
+use util::uuid::uuid;
+
+const ID: &str = "id";
+const CODE: &str = "code";
+const SITE_ID: &str = "site_id";
+const STORE_MODE: &str = "store_mode";
+const IS_DISABLED: &str = "is_disabled";
+const NAME_CODE: &str = "name_code";
+const NAME_TYPE: &str = "name_type";
+const NAME_ID: &str = "name_id";
+const CREATED_DATE: &str = "created_date";
+const NAME_NAME: &str = "name_name";
+
+// No `logo`: a base64 image is longer than the 32,767 characters an Excel cell holds, so it
+// couldn't round-trip. Import leaves it as saved.
+const COLUMNS: &[&str] = &[
+    ID,
+    CODE,
+    SITE_ID,
+    STORE_MODE,
+    IS_DISABLED,
+    NAME_CODE,
+    NAME_TYPE,
+    NAME_ID,
+];
+
+const MODES: &[(&str, StoreMode)] = &[
+    ("STORE", StoreMode::Store),
+    ("DISPENSARY", StoreMode::Dispensary),
+];
+
+/// Matched by `id`, else `code`. A blank cell keeps the value, as every column is required. The
+/// store's name is found by `name_code` with `name_type`, or by `name_id`. Disabling a store is
+/// its delete.
+pub(super) struct StoreTable;
+
+impl ImportTable for StoreTable {
+    fn table(&self) -> CentralDataTable {
+        CentralDataTable::Store
+    }
+
+    fn columns(&self) -> &'static [&'static str] {
+        COLUMNS
+    }
+
+    fn text_columns(&self) -> &'static [&'static str] {
+        &[ID, CODE, NAME_CODE, NAME_ID, CREATED_DATE, NAME_NAME]
+    }
+
+    fn export_only_columns(&self) -> &'static [&'static str] {
+        &[CREATED_DATE, NAME_NAME]
+    }
+
+    fn export(
+        &self,
+        connection: &StorageConnection,
+        filter: &ExportFilter,
+    ) -> Result<Vec<Vec<Value>>, RepositoryError> {
+        Ok(stores(connection)?
+            .into_iter()
+            .filter(|store| matches(filter, store))
+            .map(
+                |Store {
+                     store_row,
+                     name_row,
+                 }| {
+                    let mut row = cells(&store_row, Some(&name_row));
+                    // Text, so Excel keeps it as written rather than in its own date format.
+                    row.push(store_row.created_date.map(|date| date.to_string()).into());
+                    row.push(name_row.name.into());
+                    row
+                },
+            )
+            .collect())
+    }
+
+    fn count(
+        &self,
+        connection: &StorageConnection,
+        filter: &ExportFilter,
+    ) -> Result<RecordCount, RepositoryError> {
+        Ok(RecordCount::in_memory(&stores(connection)?, |store| {
+            matches(filter, store)
+        }))
+    }
+
+    fn start_sheet(
+        &self,
+        _connection: &StorageConnection,
+        start: SheetStart,
+    ) -> Result<Box<dyn SheetImport>, RepositoryError> {
+        Ok(Box::new(StoreSheet { today: start.today }))
+    }
+}
+
+/// Few enough to filter in memory. Each with its name.
+fn stores(connection: &StorageConnection) -> Result<Vec<Store>, RepositoryError> {
+    StoreRepository::new(connection).query(
+        Pagination::all(),
+        None,
+        Some(Sort {
+            key: StoreSortField::Code,
+            desc: Some(false),
+        }),
+    )
+}
+
+fn matches(filter: &ExportFilter, store: &Store) -> bool {
+    filter.matches(
+        &[&store.name_row.name, &store.store_row.code],
+        Some(!store.store_row.is_disabled),
+    )
+}
+
+struct StoreSheet {
+    /// A new store's `created_date`.
+    today: NaiveDate,
+}
+
+impl SheetImport for StoreSheet {
+    fn import_row(
+        &mut self,
+        connection: &StorageConnection,
+        row: &Row,
+    ) -> Result<RowOutcome, RowFailure> {
+        let mut errors = Vec::new();
+        let site_id = collect(&mut errors, row.int(SITE_ID));
+        let store_mode = collect(&mut errors, row.choice(STORE_MODE, MODES));
+        let is_disabled = collect(&mut errors, row.bool(IS_DISABLED));
+        let name_type = collect(&mut errors, row.choice(NAME_TYPE, NAME_TYPES));
+        let name_id = collect(&mut errors, find_name(connection, row, name_type)?);
+        let name_failed = errors.iter().any(|error| {
+            [NAME_CODE, NAME_TYPE, NAME_ID].contains(&error.column.as_deref().unwrap_or_default())
+        });
+        let id = row.text(ID);
+        let code = row.text(CODE);
+
+        // Without its record, the row's other checks would treat it as a new store.
+        let existing = match find_record(
+            &StoreRowRepository::new(connection),
+            row,
+            CODE,
+            id.as_deref(),
+            code.as_deref(),
+            |saved| &saved.code,
+            std::convert::identity,
+        )? {
+            Ok(existing) => existing,
+            Err(e) => {
+                errors.push(e);
+                return Err(RowFailure::Invalid(errors));
+            }
+        };
+        let saved = existing.as_ref();
+
+        let code = keep_or_saved(code, saved.map(|store| store.code.as_str()));
+        let site_id = site_id.or(saved.map(|store| store.site_id));
+        let store_mode = store_mode.or(saved.map(|store| store.store_mode.clone()));
+        let is_disabled = is_disabled.or(saved.map(|store| store.is_disabled));
+        // Both name cells blank keep the saved name: a store always has one.
+        let name_id = name_id
+            .flatten()
+            .or(saved.map(|store| store.name_id.clone()));
+        row.require_for_new(
+            &mut errors,
+            "store",
+            &[
+                (CODE, code.is_none()),
+                (SITE_ID, site_id.is_none()),
+                (STORE_MODE, store_mode.is_none()),
+                (IS_DISABLED, is_disabled.is_none()),
+                (NAME_CODE, name_id.is_none() && !name_failed),
+            ],
+        );
+        if !errors.is_empty() {
+            return Err(RowFailure::Invalid(errors));
+        }
+
+        let new = StoreRow {
+            id: saved
+                .map(|store| store.id.clone())
+                .or(id)
+                .unwrap_or_else(uuid),
+            code: code.unwrap_or_default(),
+            site_id: site_id.unwrap_or_default(),
+            store_mode: store_mode.unwrap_or_default(),
+            // Export-only: set on a new store.
+            created_date: match saved {
+                Some(saved) => saved.created_date,
+                None => Some(self.today),
+            },
+            is_disabled: is_disabled.unwrap_or_default(),
+            name_id: name_id.unwrap_or_default(),
+        };
+
+        let names = NameRowRepository::new(connection);
+        let new_name = names.find_one_by_id(&new.name_id)?;
+        let change = Change::between(saved, &new, |store| !store.is_disabled);
+        if change != Change::Unchanged {
+            upsert_store(connection, &new)
+                .map_err(|error| upsert_failure(connection, row, &new, new_name.as_ref(), error))?;
+        }
+        let fields = match saved {
+            Some(saved) => {
+                let saved_name = if saved.name_id == new.name_id {
+                    new_name.clone()
+                } else {
+                    names.find_one_by_id(&saved.name_id)?
+                };
+                field_changes(
+                    COLUMNS,
+                    cells(saved, saved_name.as_ref()),
+                    cells(&new, new_name.as_ref()),
+                )
+            }
+            None => Vec::new(),
+        };
+        Ok(RowOutcome {
+            record: name_with_code(
+                new_name.as_ref().map_or("", |name| name.name.as_str()),
+                &new.code,
+            ),
+            record_id: new.id,
+            change,
+            fields,
+        })
+    }
+}
+
+/// As `find_reference`. `name_code` finds the name within `r#type`, and a name `name_id` finds
+/// must be of that type too.
+fn find_name(
+    connection: &StorageConnection,
+    row: &Row,
+    r#type: Option<NameRowType>,
+) -> Result<Result<Option<Option<String>>, RowError>, RepositoryError> {
+    let names = NamesOfType {
+        repo: NameRowRepository::new(connection),
+        r#type: r#type.clone(),
+    };
+    let found = find_reference(&names, row, NAME_CODE, NAME_ID, |names| {
+        let names = names
+            .into_iter()
+            .filter(|name| name.r#type != NameRowType::Patient)
+            .collect();
+        active_first(names, |name| name.deleted_datetime.is_none())
+    })?;
+    // `NamesOfType` finds an id among every type.
+    if let (Ok(Some(Some(id))), Some(r#type)) = (&found, &r#type)
+        && let Some(name) = names.repo.find_one_by_id(id)?
+        && name.r#type != *r#type
+    {
+        return Ok(Err(row.error(
+            NAME_TYPE,
+            format!(
+                "{} has type {}, not {}",
+                name_with_code(&name.name, &name.code),
+                type_label(&name.r#type),
+                type_label(r#type)
+            ),
+        )));
+    }
+    Ok(found)
+}
+
+fn upsert_failure(
+    connection: &StorageConnection,
+    row: &Row,
+    store: &StoreRow,
+    name: Option<&NameRow>,
+    error: UpsertStoreError,
+) -> RowFailure {
+    let name_column = if row.text(NAME_CODE).is_some() {
+        NAME_CODE
+    } else {
+        NAME_ID
+    };
+    let name = name.map_or_else(
+        || store.name_id.clone(),
+        |name| name_with_code(&name.name, &name.code),
+    );
+    match error {
+        UpsertStoreError::CodeRequired => row.error(CODE, "code is required").into(),
+        // Unreachable here: `find_record` turns a saved code into a match or a conflict first.
+        UpsertStoreError::DuplicateCode { other_id } => row
+            .error(CODE, format!("Store {other_id} already has this code"))
+            .into(),
+        // Not checked here: `find_name` finds it among the saved names.
+        UpsertStoreError::NameNotFound => row.error(name_column, NOT_FOUND).into(),
+        UpsertStoreError::NameDeleted => row
+            .error(
+                name_column,
+                format!("{name} is deleted, so a store can't have it"),
+            )
+            .into(),
+        UpsertStoreError::NameHasStore { other_id } => {
+            let other = match StoreRowRepository::new(connection).find_one_by_id(&other_id) {
+                Ok(other) => other.map_or(other_id, |other| other.code),
+                Err(error) => return RowFailure::Database(error),
+            };
+            row.error(
+                name_column,
+                format!("{name} is already store {other}'s name. A name can be only one store's"),
+            )
+            .into()
+        }
+        UpsertStoreError::SiteNotFound => row
+            .error(
+                SITE_ID,
+                format!("Site {} isn't on this server", store.site_id),
+            )
+            .into(),
+        UpsertStoreError::MovesOwnSiteStore => row
+            .error(
+                SITE_ID,
+                format!(
+                    "Store {} is on this server's site, where its users log in, so import can't move it to another site",
+                    store.code
+                ),
+            )
+            .into(),
+        UpsertStoreError::DisablesOwnSiteStore => row
+            .error(
+                IS_DISABLED,
+                format!(
+                    "Store {} is on this server's site, where its users log in, so import can't disable it",
+                    store.code
+                ),
+            )
+            .into(),
+        UpsertStoreError::DatabaseError(error) => RowFailure::Database(error),
+    }
+}
+
+/// One per column, as the export writes them and the preview shows them. The export adds
+/// `created_date` and `name_name`.
+fn cells(store: &StoreRow, name: Option<&NameRow>) -> Vec<Value> {
+    vec![
+        store.id.clone().into(),
+        store.code.clone().into(),
+        store.site_id.into(),
+        choice_cell(MODES, &store.store_mode),
+        store.is_disabled.into(),
+        name.map(|name| name.code.clone()).into(),
+        name.map_or(Value::Empty, |name| choice_cell(NAME_TYPES, &name.r#type)),
+        store.name_id.clone().into(),
+    ]
+}

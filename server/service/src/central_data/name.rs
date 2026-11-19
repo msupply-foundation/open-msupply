@@ -83,7 +83,7 @@ const COLUMNS: &[&str] = &[
 ];
 
 /// No `PATIENT`: patients are imported on their own.
-const TYPES: &[(&str, NameRowType)] = &[
+pub(super) const TYPES: &[(&str, NameRowType)] = &[
     ("FACILITY", NameRowType::Facility),
     ("BUILD", NameRowType::Build),
     ("INVAD", NameRowType::Invad),
@@ -529,7 +529,7 @@ fn upsert_failure(row: &Row, name: &NameRow, error: UpsertNameError) -> RowFailu
     }
 }
 
-fn type_label(r#type: &NameRowType) -> String {
+pub(super) fn type_label(r#type: &NameRowType) -> String {
     match choice_cell(TYPES, r#type) {
         Value::Text(label) => label,
         _ => format!("{:?}", r#type).to_uppercase(),
