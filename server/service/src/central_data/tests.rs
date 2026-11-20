@@ -7073,7 +7073,7 @@ fn permission_sheet(rows: Vec<Vec<Value>>) -> Vec<u8> {
     sheet::write(vec![permission_sheet_data(rows)]).unwrap()
 }
 
-/// A row of `PERMISSION_HEADERS` with the given cells; the others are blank.
+/// Other cells blank.
 fn permission_row(cells: &[(&str, &str)]) -> Vec<Value> {
     PERMISSION_HEADERS
         .iter()
@@ -7104,7 +7104,7 @@ fn add_permission(
         .unwrap();
 }
 
-/// Each of the user's permissions, as (id, store id, permission, context id), in id order.
+/// (id, store id, permission, context id), in id order.
 fn permissions_of(
     connection: &StorageConnection,
     user_id: &str,
@@ -7129,7 +7129,7 @@ fn permissions_of(
     permissions
 }
 
-/// The stores the user can log in to, as (store id, default).
+/// (store id, default).
 fn store_joins_of(connection: &StorageConnection, user_id: &str) -> Vec<(String, bool)> {
     let mut joins: Vec<_> = UserStoreJoinRowRepository::new(connection)
         .find_many_by_user_id(user_id)
@@ -7151,10 +7151,9 @@ fn permissions_containing(contains: Option<&str>) -> ExportTable {
     }
 }
 
-/// `user_setup`, with store MS, the Immunisation program and the patient context, which has no
-/// master list. Anna can log in to MS and has store access, stocktake reading and documents in
-/// both contexts there; Ben has reports. Anna also has a permission this server doesn't know,
-/// and deleted Carl and the setup admin each have one.
+/// `user_setup`, plus store MS, the Immunisation program and the patient context (no master
+/// list). On MS: Anna has store access, stocktake and documents in both contexts, plus an unknown
+/// permission; Ben, deleted Carl and the setup admin each have one.
 async fn permission_setup(name: &str) -> (StorageConnection, ServiceProvider, TempDir) {
     let (connection, service_provider, dir, _) = user_setup(name).await;
     NameRowRepository::new(&connection)
@@ -7271,8 +7270,7 @@ async fn user_permissions_export_then_import_makes_no_changes() {
         sheet.headers,
         [PERMISSION_HEADERS.as_slice(), &["store_name"]].concat()
     );
-    // Not the unknown permission, deleted Carl's, the setup admin's or the importer's, who has
-    // no user row. By username, store code, permission, then context name.
+    // Not the unknown permission, Carl's, the setup admin's or the importer's (no user row).
     let rows: Vec<&[String]> = sheet.rows.iter().map(|row| row.cells.as_slice()).collect();
     let row = |id, username, permission, context_name, context_id| {
         [
@@ -7399,7 +7397,6 @@ async fn user_permission_rows_add_and_delete_by_user_store_permission_and_contex
                 ("store_code", "MS"),
                 ("permission", "report"),
             ]),
-            // No id: found by its user, store, permission and context.
             permission_row(&[
                 ("username", "ANNA"),
                 ("store_code", "MS"),
@@ -7411,7 +7408,7 @@ async fn user_permission_rows_add_and_delete_by_user_store_permission_and_contex
                 ("permission", "DOCUMENT_QUERY"),
                 ("context_name", "Immunisation"),
             ]),
-            // Ben can log in to MS from now on.
+            // Ben can now log in to MS.
             permission_row(&[
                 ("username", "ben"),
                 ("store_code", "MS"),
@@ -7450,7 +7447,7 @@ async fn user_permission_rows_add_and_delete_by_user_store_permission_and_contex
             ("anna: STORE_ACCESS in store MS", Change::Deleted),
         ]
     );
-    // A new permission without a context gets the id sync and login give it.
+    // Without a context, the id sync and login give it.
     let report_id =
         UserPermissionRow::deterministic_id("anna", Some("store_ms"), &PermissionType::Report);
     let ids: Vec<String> = permissions_of(&connection, "anna")
@@ -7470,7 +7467,7 @@ async fn user_permission_rows_add_and_delete_by_user_store_permission_and_contex
         store_joins_of(&connection, "anna"),
         [(mock_store_a().id, true)]
     );
-    // MS is Ben's first store, so his default one.
+    // Ben's first store, so his default.
     assert_eq!(
         store_joins_of(&connection, "ben"),
         [("store_ms".to_string(), true)]
@@ -7489,16 +7486,16 @@ async fn a_user_permission_finds_its_references_and_cannot_change_them() {
     let path = write_file(
         dir.path(),
         permission_sheet(vec![
-            // By ids alone, and the patient context, which has no master list, by id.
+            // By ids, and the patient context by id.
             permission_row(&[
                 ("user_id", "anna"),
                 ("store_id", "store_ms"),
                 ("permission", "DOCUMENT_QUERY"),
                 ("context_id", "Patient"),
             ]),
-            // A blank store keeps the saved one, as every permission has one.
+            // Blank store keeps the saved one.
             permission_row(&[("id", "anna_stocktake"), ("username", "anna")]),
-            // A DELETE row's blank context cells aren't compared, though its record has one.
+            // A DELETE row's blank context isn't compared.
             permission_row(&[
                 ("id", "anna_documents"),
                 ("username", "anna"),
@@ -7536,7 +7533,7 @@ async fn a_user_permission_finds_its_references_and_cannot_change_them() {
                 ("store_code", "MS"),
                 ("permission", "STOCKTAKE_QUERY"),
             ]),
-            // A new id beside a saved permission is a copied row with one column edited.
+            // A new id beside a saved key.
             permission_row(&[
                 ("id", "copy"),
                 ("username", "anna"),
@@ -7601,7 +7598,7 @@ async fn a_user_permission_row_cannot_touch_a_protected_or_deleted_user_or_lock_
         PermissionType::EditCentralData,
         None,
     );
-    // MS is Anna's only store on this site; store a is on another.
+    // MS is Anna's only store on this site.
     KeyValueStoreRepository::new(&connection)
         .set_i32(KeyType::SettingsSyncSiteId, Some(0))
         .unwrap();
@@ -7737,7 +7734,7 @@ async fn a_user_permission_finds_a_user_the_user_sheet_adds() {
         ("store_code", "MS"),
         ("permission", "STORE_ACCESS"),
     ])]);
-    // The permission sheet first: sheets run in table order.
+    // Sheets run in table order, not file order.
     let path = write_file(dir.path(), sheet::write(vec![permissions, users]).unwrap());
     let summary = CentralDataService
         .import(&ctx, &path, &no_sessions(), today())

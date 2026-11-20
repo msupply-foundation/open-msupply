@@ -213,7 +213,8 @@ where
         self.by_id.get(id)
     }
 
-    fn with_key(&self, key: &str) -> Vec<R> {
+    /// In id order.
+    pub fn with_key(&self, key: &str) -> Vec<R> {
         self.by_key
             .get(&Self::fold(key))
             .into_iter()
@@ -289,7 +290,6 @@ impl KeyedTable for InMemory<CurrencyRow> {
     }
 }
 
-/// Looked up by username, in any letter case, as `UserAccountRowRepository` finds them.
 impl KeyedTable for InMemory<UserAccountRow> {
     type Record = UserAccountRow;
     const ANY_CASE: bool = true;
@@ -356,6 +356,74 @@ pub fn record_conflict(
     format!(
         "{column} and id conflict: {record} has {column} {saved_key} and id {saved_id}, but this row has {column} {key} and id {id}"
     )
+}
+
+/// A row's reference that differs from its record's, in a lookup key. On the code column if the
+/// row fills it, else the id column; each is (column, saved value).
+pub fn reference_conflict(
+    row: &Row,
+    code: (&str, &str),
+    reference_id: (&str, &str),
+    record: &str,
+    record_id: &str,
+    id: &str,
+) -> RowError {
+    let (column, saved) = if row.reference_column(code.0, reference_id.0) == code.0 {
+        code
+    } else {
+        reference_id
+    };
+    row.error(
+        column,
+        record_conflict(
+            column,
+            record,
+            saved,
+            record_id,
+            &row.text(column).unwrap_or_default(),
+            id,
+        ),
+    )
+}
+
+/// How `find_by_id_or_composite_key` found the record it passes to `check`.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Found {
+    /// The row's key MUST match.
+    ById,
+    /// By key, beside an id no record has: a copied row with one column edited.
+    NewIdBesideKey,
+}
+
+/// The saved record a row changes: by `id`, else among `by_key`, the records its key finds.
+/// `Ok(None)` adds one. A record not found by id within `by_key` goes to `check`, which returns
+/// its conflict or `None` to take it.
+pub fn find_by_id_or_composite_key<R>(
+    row: &Row,
+    id: Option<&str>,
+    mut by_key: Vec<R>,
+    record_id: impl Fn(&R) -> &str,
+    find_by_id: impl FnOnce(&str) -> Result<Option<R>, RepositoryError>,
+    check: impl FnOnce(&R, Found, &str) -> Result<Option<RowError>, RepositoryError>,
+) -> Result<Result<Option<R>, RowError>, RepositoryError> {
+    by_key.sort_by(|a, b| record_id(a).cmp(record_id(b)));
+    let Some(id) = id else {
+        return Ok(pick_one(by_key).map_err(|e| row.error("id", e.message(""))));
+    };
+    if let Some(position) = by_key.iter().position(|record| record_id(record) == id) {
+        return Ok(Ok(Some(by_key.swap_remove(position))));
+    }
+    let (saved, found) = match find_by_id(id)? {
+        Some(saved) => (saved, Found::ById),
+        None => match by_key.into_iter().next() {
+            Some(saved) => (saved, Found::NewIdBesideKey),
+            None => return Ok(Ok(None)),
+        },
+    };
+    Ok(match check(&saved, found, id)? {
+        Some(error) => Err(error),
+        None => Ok(Some(saved)),
+    })
 }
 
 /// The saved record a row changes, by id, else by its lookup key in `column`. `Ok(None)` for a

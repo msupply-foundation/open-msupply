@@ -19,9 +19,7 @@ pub struct UserPermissionFilter {
     pub store_id: Option<EqualFilter<String>>,
     pub permission: Option<EqualFilter<PermissionType>>,
     pub has_context: Option<bool>,
-    /// Whether the user is deleted.
     pub user_is_deleted: Option<bool>,
-    /// The user's username or the store's code.
     pub username_or_store_code: Option<StringFilter>,
 }
 
@@ -112,9 +110,7 @@ fn create_filtered_query(filter: Option<UserPermissionFilter>) -> BoxedUserPermi
             username_or_store_code,
         } = f;
 
-        // (username OR store code). MUST be applied FIRST: or_filter ORs against the query's
-        // entire existing where clause, so this pair only groups as (username OR store code)
-        // while the clause is still empty; every later filter then ANDs onto it.
+        // First: or_filter ORs with the whole where clause, so it only groups while that's empty.
         if let Some(text) = username_or_store_code {
             let mut users = user_account::table.into_boxed::<DBType>();
             apply_string_filter!(users, Some(text.clone()), user_account::username);

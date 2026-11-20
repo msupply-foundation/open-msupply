@@ -4,7 +4,8 @@ use super::{
     cells::{Row, RowError, collect},
     delete::{DELETE_COLUMN, already_deleted, check_delete, is_delete},
     lookup::{
-        InMemory, KeyedTable, NOT_FOUND, active_first, find_reference, pick_one, record_conflict,
+        Found, InMemory, KeyedTable, NOT_FOUND, active_first, find_by_id_or_composite_key,
+        find_reference, record_conflict, reference_conflict,
     },
     sheet::Value,
 };
@@ -20,7 +21,7 @@ use repository::{
     ContextRowRepository, EqualFilter, MasterListRowRepository, Pagination, PermissionType,
     RepositoryError, StorageConnection, StoreRepository, StoreRow, StoreRowRepository,
     StringFilter, UserAccountRow, UserAccountRowRepository, UserPermissionFilter,
-    UserPermissionRepository, UserPermissionRow, UserPermissionRowRepository, trim_spaces,
+    UserPermissionRepository, UserPermissionRow, UserPermissionRowRepository,
 };
 use std::{collections::HashMap, sync::LazyLock};
 
@@ -46,7 +47,7 @@ const COLUMNS: &[&str] = &[
     DELETE_COLUMN,
 ];
 
-/// Every permission the server checks, as the database writes it.
+/// Known permissions, as the database writes them.
 static LABELS: LazyLock<Vec<(String, PermissionType)>> = LazyLock::new(|| {
     PermissionType::known_iter()
         .map(|permission| (permission.as_ref().to_string(), permission))
@@ -60,11 +61,8 @@ static PERMISSIONS: LazyLock<Vec<(&'static str, PermissionType)>> = LazyLock::ne
         .collect()
 });
 
-/// The permissions each user has on each store, some within a program, the context. Matched by
-/// `id`, else by its user, store, permission and context together. They are the whole record and
-/// never change: a row adds a record, leaves one as it is or deletes it.
-/// A protected or deleted user's permissions, and permissions this server doesn't know, are
-/// neither exported nor imported.
+/// Matched by `id`, else by user, store, permission and context, which are the whole record, so a
+/// row adds, keeps or deletes one. Protected or deleted users' and unknown permissions are skipped.
 pub(super) struct UserPermissionTable;
 
 impl ImportTable for UserPermissionTable {
@@ -99,7 +97,7 @@ impl ImportTable for UserPermissionTable {
         connection: &StorageConnection,
         filter: &ExportFilter,
     ) -> Result<Vec<Vec<Value>>, RepositoryError> {
-        // One query: the export has already checked the row count against the import cap.
+        // One query: the export has already checked the row cap.
         let permissions = UserPermissionRepository::new(connection)
             .query_by_filter(permission_filter(connection, Some(filter))?)?;
         let records = References::read(connection, &permissions)?;
@@ -146,11 +144,11 @@ impl ImportTable for UserPermissionTable {
         connection: &StorageConnection,
         start: SheetStart,
     ) -> Result<Box<dyn SheetImport>, RepositoryError> {
-        // After the user and store sheets, so the users and stores they add are found.
+        // Runs after the user and store sheets, so their new records are found.
         Ok(Box::new(UserPermissionSheet {
             users: InMemory::new(UserAccountRowRepository::new(connection).find_all()?),
             stores: InMemory::new(StoreRowRepository::new(connection).all()?),
-            contexts: Contexts::read(connection)?,
+            contexts: read_contexts(connection)?,
             protected: protected_user_ids(connection)?,
             importer: start.user_id.to_string(),
         }))
@@ -158,18 +156,15 @@ impl ImportTable for UserPermissionTable {
 }
 
 struct UserPermissionSheet {
-    /// Read once, so rows don't each query them: they're far fewer than the permissions, and none
-    /// change while this sheet runs.
+    /// Read once: far fewer than permissions, and unchanged while this sheet runs.
     users: InMemory<UserAccountRow>,
     stores: InMemory<StoreRow>,
-    contexts: Contexts,
+    contexts: InMemory<Context>,
     protected: Vec<String>,
-    /// The user running the import, who can't take away their own last server-admin permission.
     importer: String,
 }
 
-/// A reference cell pair: `None` when the sheet has neither column, `Some(None)` when both cells
-/// are blank.
+/// `None`: neither column in the sheet. `Some(None)`: both cells blank.
 type Reference = Option<Option<String>>;
 
 impl SheetImport for UserPermissionSheet {
@@ -180,7 +175,7 @@ impl SheetImport for UserPermissionSheet {
     ) -> Result<RowOutcome, RowFailure> {
         let mut errors = Vec::new();
         let delete = collect(&mut errors, is_delete(row));
-        // Looked up for a `DELETE` row too, so a missing reference stops the import.
+        // For a `DELETE` row too, so a missing reference stops the import.
         let user_id = find_reference(&self.users, row, USERNAME, USER_ID, |users| {
             active_first(users, |user| user.deleted_datetime.is_none())
         })?;
@@ -206,7 +201,6 @@ impl SheetImport for UserPermissionSheet {
             context_id,
         };
         let id = row.text(ID);
-        // Without its record, the row's other checks would treat it as a new permission.
         let existing = self.find_permission(connection, row, id.as_deref(), &key, delete)??;
         if let Some(user_id) = existing
             .as_ref()
@@ -251,15 +245,12 @@ impl SheetImport for UserPermissionSheet {
             context_id: key.context_id.flatten(),
         };
         new.id = id.unwrap_or_else(|| new_user_permission_id(&new));
-        // Found by `find_reference`, so always here.
         let Some(user) = self.users.get(&new.user_id) else {
             return Err(row
                 .error(row.reference_column(USERNAME, USER_ID), NOT_FOUND)
                 .into());
         };
-        // `find_reference` found the store and context, `PERMISSIONS` holds only permissions the
-        // server checks, `find_permission` found no record with the key, and protected users are
-        // refused above, so the save needn't read them again.
+        // References, permission, key and protection are checked above.
         add_checked_user_permission(connection, &new, user)
             .map_err(|error| upsert_failure(row, &new, Some(user), error))?;
         Ok(RowOutcome {
@@ -271,8 +262,7 @@ impl SheetImport for UserPermissionSheet {
     }
 }
 
-/// What a row gives of a permission's lookup key. `None` where the sheet has no such column, or a
-/// required cell is blank.
+/// `None` where the sheet has no such column, or a required cell is blank.
 struct Key {
     user_id: Option<String>,
     store_id: Reference,
@@ -281,8 +271,7 @@ struct Key {
 }
 
 impl Key {
-    /// The record the key gives, when it gives enough to find one: a missing context column
-    /// means none.
+    /// `None` without enough to look one up. A missing context column means none.
     fn record(&self) -> Option<UserPermissionRow> {
         Some(UserPermissionRow {
             id: String::new(),
@@ -295,16 +284,14 @@ impl Key {
 }
 
 impl UserPermissionSheet {
-    /// The user's username, else their id.
+    /// Else the id.
     fn username<'a>(&'a self, user_id: &'a str) -> &'a str {
         self.users
             .get(user_id)
             .map_or(user_id, |user| user.username.as_str())
     }
 
-    /// The saved permission a row finds: by id, else by its user, store, permission and context
-    /// together. `Ok(None)` for a row that adds one. With an id, the row's key MUST be its
-    /// record's, though a `DELETE` row's blank cells aren't compared.
+    /// With an id the row's key MUST match, but a `DELETE` row's blank cells aren't compared.
     fn find_permission(
         &self,
         connection: &StorageConnection,
@@ -317,49 +304,51 @@ impl UserPermissionSheet {
             Some(record) => find_user_permission(connection, &record)?,
             None => Vec::new(),
         };
-        let Some(id) = id else {
-            return Ok(pick_one(by_key).map_err(|e| row.error(ID, e.message(""))));
-        };
-        let Some(saved) = UserPermissionRowRepository::new(connection).find_one_by_id(id)? else {
-            // A new id beside a saved key is a copied row with one column edited.
-            return Ok(match by_key.first() {
-                Some(saved) => Err(self.conflict(row, saved, id, PERMISSION)),
-                None => Ok(None),
-            });
-        };
-        // A blank context is none, except on a `DELETE` row, which may leave it blank. A blank
-        // store keeps the saved one, as every permission has one.
+        // Blank context is none, except on a `DELETE` row. Blank store keeps the saved one.
         let differs = |given: &Reference, saved: &Option<String>, blank_keeps: bool| match given {
             None => false,
             Some(None) if blank_keeps => false,
             Some(given) => given != saved,
         };
-        let column = if key
-            .user_id
-            .as_ref()
-            .is_some_and(|user| *user != saved.user_id)
-        {
-            Some(USERNAME)
-        } else if differs(&key.store_id, &saved.store_id, true) {
-            Some(STORE_CODE)
-        } else if key
-            .permission
-            .as_ref()
-            .is_some_and(|permission| *permission != saved.permission)
-        {
-            Some(PERMISSION)
-        } else if differs(&key.context_id, &saved.context_id, delete) {
-            Some(CONTEXT_NAME)
-        } else {
-            None
-        };
-        Ok(match column {
-            Some(column) => Err(self.conflict(row, &saved, id, column)),
-            None => Ok(Some(saved)),
-        })
+        find_by_id_or_composite_key(
+            row,
+            id,
+            by_key,
+            |permission| &permission.id,
+            |id| UserPermissionRowRepository::new(connection).find_one_by_id(id),
+            |saved, found, id| {
+                let column = match found {
+                    Found::NewIdBesideKey => Some(PERMISSION),
+                    Found::ById
+                        if key
+                            .user_id
+                            .as_ref()
+                            .is_some_and(|user| *user != saved.user_id) =>
+                    {
+                        Some(USERNAME)
+                    }
+                    Found::ById if differs(&key.store_id, &saved.store_id, true) => {
+                        Some(STORE_CODE)
+                    }
+                    Found::ById
+                        if key
+                            .permission
+                            .as_ref()
+                            .is_some_and(|permission| *permission != saved.permission) =>
+                    {
+                        Some(PERMISSION)
+                    }
+                    Found::ById if differs(&key.context_id, &saved.context_id, delete) => {
+                        Some(CONTEXT_NAME)
+                    }
+                    Found::ById => None,
+                };
+                Ok(column.map(|column| self.conflict(row, saved, id, column)))
+            },
+        )
     }
 
-    /// On `key_column`, or the id column beside it when the row fills only that.
+    /// On `key_column`, or its id column when the row fills only that.
     fn conflict(
         &self,
         row: &Row,
@@ -367,38 +356,47 @@ impl UserPermissionSheet {
         id: &str,
         key_column: &str,
     ) -> RowError {
-        let user = self.users.get(&saved.user_id);
-        let store = saved.store_id.as_deref().and_then(|id| self.stores.get(id));
-        let context = saved
-            .context_id
-            .as_deref()
-            .and_then(|id| self.contexts.get(id));
-        let (column, saved_key) = match key_column {
-            USERNAME => match row.reference_column(USERNAME, USER_ID) {
-                USERNAME => (USERNAME, user.map(|user| user.username.clone())),
-                _ => (USER_ID, Some(saved.user_id.clone())),
-            },
-            STORE_CODE => match row.reference_column(STORE_CODE, STORE_ID) {
-                STORE_CODE => (STORE_CODE, store.map(|store| store.code.clone())),
-                _ => (STORE_ID, saved.store_id.clone()),
-            },
-            CONTEXT_NAME => match row.reference_column(CONTEXT_NAME, CONTEXT_ID) {
-                CONTEXT_NAME => (CONTEXT_NAME, context.map(|context| context.name.clone())),
-                _ => (CONTEXT_ID, saved.context_id.clone()),
-            },
-            _ => (PERMISSION, Some(saved.permission.as_ref().to_string())),
+        let record = self.record(saved);
+        let conflict = |code, reference_id| {
+            reference_conflict(row, code, reference_id, &record, &saved.id, id)
         };
-        row.error(
-            column,
-            record_conflict(
-                column,
-                &self.record(saved),
-                &saved_key.unwrap_or_default(),
-                &saved.id,
-                &row.text(column).unwrap_or_default(),
-                id,
+        let saved_store = saved.store_id.as_deref().unwrap_or_default();
+        let saved_context = saved.context_id.as_deref().unwrap_or_default();
+        match key_column {
+            USERNAME => conflict(
+                (USERNAME, self.username(&saved.user_id)),
+                (USER_ID, &saved.user_id),
             ),
-        )
+            STORE_CODE => conflict(
+                (
+                    STORE_CODE,
+                    self.stores
+                        .get(saved_store)
+                        .map_or("", |store| store.code.as_str()),
+                ),
+                (STORE_ID, saved_store),
+            ),
+            CONTEXT_NAME => conflict(
+                (
+                    CONTEXT_NAME,
+                    self.contexts
+                        .get(saved_context)
+                        .map_or("", |context| context.name.as_str()),
+                ),
+                (CONTEXT_ID, saved_context),
+            ),
+            _ => row.error(
+                PERMISSION,
+                record_conflict(
+                    PERMISSION,
+                    &record,
+                    saved.permission.as_ref(),
+                    &saved.id,
+                    &row.text(PERMISSION).unwrap_or_default(),
+                    id,
+                ),
+            ),
+        }
     }
 
     fn delete(
@@ -425,13 +423,12 @@ impl UserPermissionSheet {
             Vec::new(),
         )?;
 
-        // `import_row` refused a protected user's, and `find_permission` read it.
         delete_checked_user_permission(connection, &self.importer, &saved).map_err(|error| {
             match error {
                 DeleteUserPermissionError::LocksOutSelf => row
                     .error(DELETE_COLUMN, locks_out_message(&saved.permission))
                     .into(),
-                // Unreachable here: `import_row` refuses a protected user first.
+                // Unreachable: refused in `import_row`.
                 DeleteUserPermissionError::Protected => {
                     protected_error(row, self.username(&saved.user_id)).into()
                 }
@@ -446,8 +443,7 @@ impl UserPermissionSheet {
         })
     }
 
-    /// How the preview and messages name a permission: `anna: STOCKTAKE_QUERY in store MS`, with
-    /// its context's name after the permission when it has one.
+    /// `anna: DOCUMENT_QUERY for Immunisation in store MS`.
     fn record(&self, permission: &UserPermissionRow) -> String {
         record(
             permission,
@@ -489,7 +485,6 @@ fn record(
     record
 }
 
-/// For a `DELETE` row that would lock the user running the import out.
 fn locks_out_message(permission: &PermissionType) -> &'static str {
     match permission {
         PermissionType::StoreAccess => {
@@ -507,7 +502,7 @@ fn locks_out_message(permission: &PermissionType) -> &'static str {
     }
 }
 
-/// On the column the row found the user by, or its id when it gave neither.
+/// On the column the row found the user by, else `id`.
 fn protected_error(row: &Row, username: &str) -> RowError {
     let column = if row.text(USERNAME).is_some() || row.text(USER_ID).is_some() {
         row.reference_column(USERNAME, USER_ID)
@@ -538,7 +533,7 @@ fn upsert_failure(
                 format!("{username} is deleted, so they can't be given a permission"),
             )
             .into(),
-        // Not checked here: `find_reference` finds them among the saved records.
+        // Unreachable: found by `find_reference`.
         UpsertUserPermissionError::UserNotFound => row.error(user_column, NOT_FOUND).into(),
         UpsertUserPermissionError::StoreNotFound => row
             .error(row.reference_column(STORE_CODE, STORE_ID), NOT_FOUND)
@@ -546,9 +541,7 @@ fn upsert_failure(
         UpsertUserPermissionError::ContextNotFound => row
             .error(row.reference_column(CONTEXT_NAME, CONTEXT_ID), NOT_FOUND)
             .into(),
-        // Unreachable here: `import_row` refuses a protected user and a missing store first,
-        // `PERMISSIONS` holds only known permissions, and `find_permission` turns a saved key into
-        // a match or a conflict.
+        // Unreachable: checked in `import_row` and `find_permission`.
         UpsertUserPermissionError::StoreRequired => row
             .error(
                 STORE_CODE,
@@ -569,8 +562,7 @@ fn upsert_failure(
     }
 }
 
-/// A permission's context: a program, named by its master list, or one with no master list, such
-/// as the patient context, found only by id.
+/// A program, named by its master list, or a context without one, such as the patient context.
 #[derive(Clone)]
 struct Context {
     id: String,
@@ -579,44 +571,34 @@ struct Context {
     is_active: bool,
 }
 
-/// Every context, read once: there's one per program.
-struct Contexts {
-    by_id: HashMap<String, Context>,
-}
-
-impl Contexts {
-    fn read(connection: &StorageConnection) -> Result<Self, RepositoryError> {
-        let contexts = ContextRowRepository::new(connection).all()?;
-        let ids: Vec<String> = contexts.iter().map(|context| context.id.clone()).collect();
-        let master_lists: HashMap<String, _> = MasterListRowRepository::new(connection)
-            .find_many_by_id(&ids)?
-            .into_iter()
-            .map(|master_list| (master_list.id.clone(), master_list))
-            .collect();
-        let by_id = contexts
+/// Few: one per program.
+fn read_contexts(connection: &StorageConnection) -> Result<InMemory<Context>, RepositoryError> {
+    let contexts = ContextRowRepository::new(connection).all()?;
+    let ids: Vec<String> = contexts.iter().map(|context| context.id.clone()).collect();
+    let master_lists: HashMap<String, _> = MasterListRowRepository::new(connection)
+        .find_many_by_id(&ids)?
+        .into_iter()
+        .map(|master_list| (master_list.id.clone(), master_list))
+        .collect();
+    Ok(InMemory::new(
+        contexts
             .into_iter()
             .map(|context| {
                 let master_list = master_lists.get(&context.id);
-                let context = Context {
+                Context {
                     name: master_list
                         .map(|master_list| master_list.name.clone())
                         .unwrap_or_default(),
                     is_active: master_list.is_none_or(|master_list| master_list.is_active),
                     id: context.id,
-                };
-                (context.id.clone(), context)
+                }
             })
-            .collect();
-        Ok(Contexts { by_id })
-    }
-
-    fn get(&self, id: &str) -> Option<&Context> {
-        self.by_id.get(id)
-    }
+            .collect(),
+    ))
 }
 
-/// Looked up by its master list's name, as a master list reference is.
-impl KeyedTable for Contexts {
+/// By master list name; a context without one is found only by id.
+impl KeyedTable for InMemory<Context> {
     type Record = Context;
     fn id(context: &Context) -> &str {
         &context.id
@@ -628,21 +610,13 @@ impl KeyedTable for Contexts {
         Ok(self.get(id).cloned())
     }
     fn find_by_key(&self, name: &str) -> Result<Vec<Context>, RepositoryError> {
-        let name = trim_spaces(name);
-        let mut found: Vec<Context> = self
-            .by_id
-            .values()
-            .filter(|context| !context.name.is_empty() && trim_spaces(&context.name) == name)
-            .cloned()
-            .collect();
-        found.sort_by(|a, b| a.id.cmp(&b.id));
+        let mut found = self.with_key(name);
+        found.retain(|context| !context.name.is_empty());
         Ok(found)
     }
 }
 
-/// Neither a protected or deleted user's, nor one the server doesn't check. Permissions can be
-/// many, so they're filtered and counted in SQL; with `filter`, its search matches the username
-/// or the store's code.
+/// Exportable permissions, in SQL as they can be many. `filter` searches username or store code.
 fn permission_filter(
     connection: &StorageConnection,
     filter: Option<&ExportFilter>,
@@ -665,12 +639,12 @@ fn permission_filter(
     Ok(permission_filter)
 }
 
-/// The records the exported permissions refer to, to write beside them.
+/// What exported permissions refer to.
 struct References {
     users: HashMap<String, UserAccountRow>,
     /// With the name of the store's name.
     stores: HashMap<String, (StoreRow, String)>,
-    contexts: Contexts,
+    contexts: InMemory<Context>,
 }
 
 impl References {
@@ -703,7 +677,7 @@ impl References {
         Ok(References {
             users,
             stores,
-            contexts: Contexts::read(connection)?,
+            contexts: read_contexts(connection)?,
         })
     }
 
@@ -722,7 +696,7 @@ impl References {
     }
 }
 
-/// One per column, as the export writes them. The export adds `store_name`.
+/// One per column. The export adds `store_name`.
 fn cells(
     permission: &UserPermissionRow,
     user: Option<&UserAccountRow>,

@@ -16,11 +16,11 @@ pub enum UpsertUserPermissionError {
     Protected,
     StoreNotFound,
     ContextNotFound,
-    /// Every permission is on a store, server admin included.
+    /// `store_id` is NOT NULL in the database.
     StoreRequired,
-    /// A permission this server doesn't know, so nothing would check it.
+    /// Nothing would check it.
     UnknownPermission,
-    /// Another record already gives the user the permission on the store, in the context.
+    /// Same user, store, permission and context.
     DuplicatePermission {
         other_id: String,
     },
@@ -37,9 +37,8 @@ impl From<RepositoryError> for UpsertUserPermissionError {
 pub enum DeleteUserPermissionError {
     /// See `protected_user_ids`.
     Protected,
-    /// The user deleting would lock themselves out: it's their last server-admin or central-data
-    /// edit permission, which the screens and the import that give it back need, or their access
-    /// to their last store on this site, so they couldn't log in.
+    /// The deleting user's last server-admin or central-data edit permission, or last store on
+    /// this site.
     LocksOutSelf,
     DatabaseError(RepositoryError),
 }
@@ -50,8 +49,7 @@ impl From<RepositoryError> for DeleteUserPermissionError {
     }
 }
 
-/// The id a new permission gets: the one sync and login give a permission without a context, so
-/// they find it rather than add another; else a new one.
+/// Without a context, the id sync and login give it, so they find it rather than add another.
 pub fn new_user_permission_id(row: &UserPermissionRow) -> String {
     match row.context_id {
         None => UserPermissionRow::deterministic_id(
@@ -63,8 +61,8 @@ pub fn new_user_permission_id(row: &UserPermissionRow) -> String {
     }
 }
 
-/// Gives a user a permission on a store. Store access also lets them log in to the store, as sync
-/// gives it. Joins the caller's transaction, so an import's earlier rows count.
+/// Store access also adds the user's store join, so they can log in. Joins the caller's
+/// transaction.
 pub fn upsert_user_permission(
     connection: &StorageConnection,
     row: &UserPermissionRow,
@@ -80,10 +78,8 @@ pub fn upsert_user_permission(
         .map_err(|error| error.to_inner_error())
 }
 
-/// As `upsert_user_permission`, for a new permission whose caller has already found its user,
-/// store and context, refused a protected user and a permission the server doesn't check, and
-/// found no record with its user, store, permission and context, as an import does from what it
-/// has read. `user` is the saved user, for the one check left.
+/// As `upsert_user_permission`, for a new permission whose references, protection and key the
+/// caller has checked. Only checks `user` isn't deleted.
 pub fn add_checked_user_permission(
     connection: &StorageConnection,
     row: &UserPermissionRow,
@@ -113,8 +109,8 @@ fn check_user(user: &UserAccountRow) -> Result<(), UpsertUserPermissionError> {
     Ok(())
 }
 
-/// Takes a permission away. Taking store access away also stops the user logging in to the store,
-/// as sync does. `deleting_user_id` is the user doing it.
+/// Taking store access away also removes the store join. `deleting_user_id` can't lock themselves
+/// out.
 pub fn delete_user_permission(
     connection: &StorageConnection,
     deleting_user_id: &str,
@@ -134,8 +130,7 @@ pub fn delete_user_permission(
         .map_err(|error| error.to_inner_error())
 }
 
-/// As `delete_user_permission`, for a caller that has already read `saved` and refused a
-/// protected user's, as an import does.
+/// As `delete_user_permission`, for a caller that read `saved` and refused protected users.
 pub fn delete_checked_user_permission(
     connection: &StorageConnection,
     deleting_user_id: &str,
@@ -143,8 +138,7 @@ pub fn delete_checked_user_permission(
 ) -> Result<(), DeleteUserPermissionError> {
     connection
         .transaction_sync(|connection| -> Result<(), DeleteUserPermissionError> {
-            // Checked before anything is deleted: inside an import's transaction an error here
-            // doesn't roll back what this call wrote.
+            // Before deleting: inside an import's transaction an error doesn't roll back.
             let removes_store = removes_store(connection, saved)?;
             if saved.user_id == deleting_user_id && locks_out(connection, saved, removes_store)? {
                 return Err(DeleteUserPermissionError::LocksOutSelf);
@@ -163,7 +157,7 @@ pub fn delete_checked_user_permission(
         .map_err(|error| error.to_inner_error())
 }
 
-/// The saved records that give `row`'s user its permission on its store in its context.
+/// Records with `row`'s user, store, permission and context.
 pub fn find_user_permission(
     connection: &StorageConnection,
     row: &UserPermissionRow,
@@ -180,8 +174,7 @@ pub fn find_user_permission(
     Ok(found)
 }
 
-/// Only what the save changes is checked, so a saved permission that no longer passes, such as
-/// one of a deleted user, stays as it is.
+/// Checks only what changes, so a saved permission that no longer passes stays editable.
 fn validate(
     connection: &StorageConnection,
     saved: Option<&UserPermissionRow>,
@@ -234,7 +227,7 @@ fn validate(
     Ok(())
 }
 
-/// How many records give the user `permission`, on `store_id` or on any store.
+/// On `store_id`, or any store.
 fn count_permission(
     connection: &StorageConnection,
     user_id: &str,
@@ -250,9 +243,7 @@ fn count_permission(
     UserPermissionRepository::new(connection).count(Some(filter))
 }
 
-/// Whether deleting `saved` takes the store away from its user. Records that share a user, store
-/// and permission, as legacy mSupply can send them, each grant access, so the user keeps the store
-/// until the last one goes.
+/// Duplicates, as legacy mSupply sends, each grant access: only the last removes the store.
 fn removes_store(
     connection: &StorageConnection,
     saved: &UserPermissionRow,
@@ -269,8 +260,7 @@ fn removes_store(
         )? <= 1)
 }
 
-/// Whether deleting `saved` leaves its user unable to give it back or to log in. Server admin and
-/// central-data edit are checked on any store, so only the last record of each counts.
+/// Server admin and central-data edit count on any store.
 fn locks_out(
     connection: &StorageConnection,
     saved: &UserPermissionRow,
@@ -281,7 +271,7 @@ fn locks_out(
             Ok(count_permission(connection, &saved.user_id, None, saved.permission.clone())? <= 1)
         }
         PermissionType::StoreAccess if removes_store => {
-            // As login checks it: a store of the user's on this site.
+            // As login checks it.
             let Some(site_id) =
                 KeyValueStoreRepository::new(connection).get_i32(KeyType::SettingsSyncSiteId)?
             else {
@@ -302,7 +292,7 @@ fn locks_out(
     }
 }
 
-/// So the user can log in to the store. A user's first store is their default one.
+/// The user's first store is their default.
 fn add_store_join(
     connection: &StorageConnection,
     user_id: &str,
@@ -463,7 +453,7 @@ mod tests {
         let connection = setup("user_permission_store_access").await;
         let access = permission("access", "anna", PermissionType::StoreAccess);
         upsert_user_permission(&connection, &access).unwrap();
-        // Her first store, so her default one; given again, it adds no second join.
+        // First store, so default; adding it again makes no second join.
         assert_eq!(joins(&connection, "anna"), [("store".to_string(), true)]);
         UserPermissionRowRepository::new(&connection)
             .delete("access")
@@ -496,7 +486,7 @@ mod tests {
             &permission("access", "anna", PermissionType::StoreAccess),
         )
         .unwrap();
-        // A duplicate, as legacy mSupply can send it; the save service would refuse it.
+        // A duplicate, as legacy mSupply sends; the save service refuses one.
         UserPermissionRowRepository::new(&connection)
             .upsert_one(&permission(
                 "duplicate",
@@ -575,7 +565,7 @@ mod tests {
         ] {
             upsert_user_permission(&connection, &access(id, store_id)).unwrap();
         }
-        // A duplicate, as legacy mSupply can send it, keeps the store.
+        // A duplicate keeps the store.
         UserPermissionRowRepository::new(&connection)
             .upsert_one(&access("on_second_again", "second"))
             .unwrap();
