@@ -20,8 +20,9 @@
  *        user can still drag the column narrower OR wider than this.
  *      • `maxSize` = an OPTIONAL hard growth cap (rare — most columns
  *        omit it so they stay freely draggable; keep it only for
- *        genuinely fixed things like the comment icon or short codes).
- *        A per-key `maxSize: null` drops the kind's cap for that one key.
+ *        genuinely fixed content like the comment icon, never on a column
+ *        of text people need to read). A per-key `maxSize: null` drops the
+ *        kind's cap for that one key.
  *      All values are REM (converted to px for TanStack, which sizes in
  *      px). For a one-off tweak in one table, override size/maxSize
  *      inline on that column def instead of changing the shared value.
@@ -57,12 +58,11 @@ export const KIND_WIDTH: Record<CellKind, { size: number; maxSize?: number }> =
   {
     text: { size: 18.75 },
     shortText: { size: 8 },
-    // ~9 chars. A real cap for a column that holds only a code — but a batch
-    // column that also renders a WORD outgrows it and then can't be dragged at
-    // all, so such a column drops the cap at its call site (the outbound detail
-    // table's Batch renders "Placeholder"; `locationCode` does the same via
-    // `maxSize: null`). Widen the cap here only with every code column in mind.
-    code: { size: 5, maxSize: 7 },
+    // ~9 chars by default, and NO cap (#1890): real codes run longer (12-char
+    // item codes, 14-digit barcodes), and a column sitting at a cap can't be
+    // dragged wider at all — the #601 trap, hit four times before the cap went.
+    // A long value still ellipsises at the table's --table-cell-max-grow.
+    code: { size: 5 },
     // No maxSize on numbers/percentages/dates: `size` is a good default and the
     // user should be free to drag them as wide as they like (Carl 2026-07-24).
     number: { size: 4.5 },
@@ -160,21 +160,14 @@ export const CELL_DEF = {
   code2: { kind: 'code' },
   batch: { kind: 'code' },
   // Header "Supplier code" — two words, so the HEADER is the constraint, not
-  // the code: at the kind's 5rem the label broke mid-word, and its 7rem cap
-  // would then stop a user widening it to read a long code (the reason
-  // `locationCode` below carries its own size and no cap, #601). Same shape,
-  // same numbers.
-  supplierCode: { kind: 'code', size: 8.5, maxSize: null },
-  // Header "Location"; the value is a location CODE. NO cap, for the reason
-  // `locationCode` below gives (#601): the kind's 7rem cap sits half a rem
-  // above this default, so the column was effectively undraggable — nobody
-  // could widen it to read a long code, or to put a longer translated header
-  // on one line.
-  location: { kind: 'code', size: 6.5, maxSize: null },
+  // the code: at the kind's 5rem the label broke mid-word. Same shape, same
+  // numbers as `locationCode` below.
+  supplierCode: { kind: 'code', size: 8.5 },
+  // Header "Location"; the value is a location CODE.
+  location: { kind: 'code', size: 6.5 },
   // Header "Location code" is the binding constraint here, not the value — it
-  // needs more room than a bare "Location", and the kind's 7rem growth cap
-  // would stop a user widening it to fit on one line (#601). Own size, NO cap.
-  locationCode: { kind: 'code', size: 8.5, maxSize: null }, // measured: 127px
+  // needs more room than a bare "Location".
+  locationCode: { kind: 'code', size: 8.5 }, // measured: 127px
   // Number — size widened where the header label is the binding constraint.
   packSize: { kind: 'number', size: 5 }, // "Pack size"
   // Headed "Received pack size" — three words where `packSize` has two, and the

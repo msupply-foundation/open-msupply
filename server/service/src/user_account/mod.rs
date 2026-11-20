@@ -1,3 +1,5 @@
+pub mod upsert;
+
 use repository::{
     EqualFilter, KeyType, KeyValueStoreRepository, RepositoryError, StorageConnection,
     TransactionError, User, UserAccountRow, UserAccountRowRepository, UserFilter,
@@ -20,6 +22,10 @@ pub type UserAccount = UserAccountRow;
 
 #[derive(Debug)]
 pub enum CreateUserAccountError {
+    UsernameRequired,
+    /// Starts or ends with a space, so it couldn't log in.
+    UsernamePadded,
+    /// Another user has the username in some letter case, active or not.
     UserNameExist,
     PasswordHashError(BcryptError),
     DatabaseError(RepositoryError),
@@ -28,6 +34,17 @@ pub enum CreateUserAccountError {
 impl From<RepositoryError> for CreateUserAccountError {
     fn from(err: RepositoryError) -> Self {
         CreateUserAccountError::DatabaseError(err)
+    }
+}
+
+impl From<upsert::UsernameError> for CreateUserAccountError {
+    fn from(error: upsert::UsernameError) -> Self {
+        match error {
+            upsert::UsernameError::Required => CreateUserAccountError::UsernameRequired,
+            upsert::UsernameError::Padded => CreateUserAccountError::UsernamePadded,
+            upsert::UsernameError::Duplicate { .. } => CreateUserAccountError::UserNameExist,
+            upsert::UsernameError::DatabaseError(error) => error.into(),
+        }
     }
 }
 
@@ -199,32 +216,30 @@ impl<'a> UserAccountService<'a> {
         hashed_password
     }
 
+    /// Whether `password` is the one `hashed_password` was made from. A failed check, such as a
+    /// hash bcrypt can't read, counts as a different password.
+    pub fn password_matches(password: &str, hashed_password: &str) -> bool {
+        !hashed_password.is_empty() && verify(password, hashed_password).unwrap_or(false)
+    }
+
     pub fn create_user(
         &self,
         user: CreateUserAccount,
     ) -> Result<UserAccount, CreateUserAccountError> {
         self.connection
             .transaction_sync(|con| {
-                let repo = UserAccountRowRepository::new(con);
-                if (repo
-                    .find_one_by_user_name(&user.username)
-                    .map_err(CreateUserAccountError::DatabaseError)?)
-                .is_some()
-                {
-                    return Err(CreateUserAccountError::UserNameExist);
-                }
-
-                let hashed_password = UserAccountService::hash_password(&user.password)
-                    .map_err(CreateUserAccountError::PasswordHashError)?;
-
-                let row = UserAccountRow {
+                let mut row = UserAccountRow {
                     id: uuid(),
                     username: user.username,
-                    hashed_password,
                     email: user.email,
                     ..UserAccountRow::default()
                 };
-                repo.insert_one(&row)?;
+                // Before hashing, which is slow.
+                upsert::validate(con, None, &row)?;
+
+                row.hashed_password = UserAccountService::hash_password(&user.password)
+                    .map_err(CreateUserAccountError::PasswordHashError)?;
+                UserAccountRowRepository::new(con).insert_one(&row)?;
                 Ok(row)
             })
             .map_err(
@@ -303,6 +318,35 @@ mod user_account_test {
     use crate::service_provider::ServiceProvider;
 
     use super::*;
+
+    #[actix_rt::test]
+    async fn a_new_user_cannot_take_any_users_username_in_any_case() {
+        let (_, connection, _, _) =
+            setup_all("create_user_duplicate_username", MockDataInserts::none()).await;
+        // Inactive, with no password: login can't find it, but it holds the name.
+        UserAccountRowRepository::new(&connection)
+            .insert_one(&UserAccountRow {
+                id: "old".to_string(),
+                username: "Anna".to_string(),
+                is_active: false,
+                ..Default::default()
+            })
+            .unwrap();
+        let service = UserAccountService::new(&connection);
+        let create = |username: &str| {
+            service.create_user(CreateUserAccount {
+                username: username.to_string(),
+                password: "pass".to_string(),
+                email: None,
+            })
+        };
+
+        assert_matches!(create(" "), Err(CreateUserAccountError::UsernameRequired));
+        assert_matches!(create("Ben "), Err(CreateUserAccountError::UsernamePadded));
+        assert_matches!(create("anna"), Err(CreateUserAccountError::UserNameExist));
+        assert_matches!(create("Anna"), Err(CreateUserAccountError::UserNameExist));
+        create("Ben").unwrap();
+    }
 
     #[actix_rt::test]
     async fn test_user_auth() {
@@ -474,6 +518,7 @@ mod user_account_test {
             // upsert_user's change detection.
             last_successful_sync: Some(chrono::Utc::now().naive_utc()),
             is_active: true,
+            deleted_datetime: None,
         }
     }
 

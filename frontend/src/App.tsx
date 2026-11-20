@@ -65,6 +65,7 @@ import { manageReportsRoutes } from './sections/manage-reports';
 import { reportsRoutes } from './sections/reports';
 import { settingsRoutes } from './sections/settings';
 import { sitesRoutes } from './sections/sites';
+import { centralDataRoutes } from './sections/central-data';
 import { helpRoutes, helpDocumentsRoutes } from './sections/help';
 import { globalPreferencesRoutes } from './sections/global-preferences';
 import { customFieldsRoutes } from './sections/custom-fields';
@@ -136,6 +137,7 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   reports: reportsRoutes,
   settings: settingsRoutes,
   'manage/sites': sitesRoutes,
+  'manage/central-data': centralDataRoutes,
   'manage/global-preferences': globalPreferencesRoutes,
   help: helpRoutes,
   'manage/campaigns': campaignsRoutes,

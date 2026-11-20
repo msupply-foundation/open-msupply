@@ -7,6 +7,7 @@ import { Button } from '../../../ui/elements/buttons/Button';
 import { CancelButton } from '../../../ui/elements/buttons/StandardButtons';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
+import { createLocalPagination } from '../../../ui/elements/table/createLocalPagination';
 import {
   CommentHeader,
   getCellDefinition,
@@ -59,14 +60,15 @@ export const LinkPurchaseOrderModal: Component<
   // from selectedIds without enableSelection.
   const [selectedId, setSelectedId] = createSignal<string>();
 
-  const [offset, setOffset] = createSignal(0);
-  const [pageSize, setPageSize] = createSignal(initialPageSize());
-  const page = () => props.orders.slice(offset(), offset() + pageSize());
+  const page = createLocalPagination(() => props.orders, {
+    pageSize: initialPageSize(),
+    onPageSizeChange: rememberPageSize,
+  });
 
   // A narrowed set starts from its first page, and a selection the new set
   // may no longer hold is dropped rather than acted on unseen.
   const onFilterChange = (filter: LinkPurchaseOrderFilter) => {
-    setOffset(0);
+    page.reset();
     setSelectedId(undefined);
     props.onFilterChange(filter);
   };
@@ -159,7 +161,7 @@ export const LinkPurchaseOrderModal: Component<
       </Alert>
       <DataTable
         columns={columns()}
-        rows={page()}
+        rows={page.rows()}
         rowKey={r => r.id}
         loading={props.loading}
         showFullScreen={false}
@@ -176,17 +178,7 @@ export const LinkPurchaseOrderModal: Component<
         selectedIds={selectedId() ? [selectedId()!] : []}
         // Clicking anywhere on the row (or Enter on it) selects that order.
         onRowClick={row => setSelectedId(row.id)}
-        pagination={{
-          offset: offset(),
-          pageSize: pageSize(),
-          total: props.orders.length,
-          onOffsetChange: setOffset,
-          onPageSizeChange: size => {
-            rememberPageSize(size);
-            setPageSize(size);
-            setOffset(0);
-          },
-        }}
+        pagination={page.pagination()}
       />
     </Dialog>
   );

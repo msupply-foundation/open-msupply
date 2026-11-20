@@ -5,8 +5,12 @@ use super::{
     store_row::store,
 };
 use crate::{
-    ChangelogRepository, Delete, EqualFilter, NameLinkRow, NameLinkRowRepository, RowActionType,
-    item_link, name_link, repository_error::RepositoryError,
+    ChangelogRepository, DBType, Delete, EqualFilter, NameLinkRow, NameLinkRowRepository,
+    RowActionType, StringFilter,
+    diesel_macros::{apply_equal_filter, apply_string_filter, apply_string_or_filter},
+    item_link, name_link,
+    repository_error::RepositoryError,
+    trim, trim_spaces,
 };
 use crate::{ChangelogSyncType, RowOrId, SourceSiteId, Upsert};
 use chrono::{NaiveDate, NaiveDateTime};
@@ -14,6 +18,7 @@ use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
+use util::constants::SYSTEM_NAME_CODES;
 
 table! {
     #[sql_name = "name"]
@@ -215,6 +220,84 @@ pub struct NameOmsFieldsRow {
     pub properties: Option<String>,
 }
 
+/// A record that shows a name, so the name can't be deleted. Joins that only describe the name
+/// (store visibility, master lists, tags, insurance, contacts) aren't here.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum NameUser {
+    Store,
+    Invoice,
+    InvoiceLine,
+    Requisition,
+    PurchaseOrder,
+    PurchaseOrderLine,
+    StockLine,
+    StocktakeLine,
+    RnrForm,
+    IndicatorValue,
+    ItemVariant,
+    BarcodeProposal,
+    Asset,
+    Vaccination,
+}
+
+impl NameRow {
+    /// The server finds its system names by exact code, so a padded code is an ordinary name.
+    pub fn is_system_name(&self) -> bool {
+        SYSTEM_NAME_CODES.contains(&self.code.as_str())
+    }
+}
+
+/// `NameRow::is_system_name` in SQL.
+pub(crate) fn system_name_filter<QS>(
+    is_system_name: bool,
+) -> Box<dyn BoxableExpression<QS, DBType, SqlType = diesel::sql_types::Bool>>
+where
+    name::code: SelectableExpression<QS>,
+{
+    if is_system_name {
+        Box::new(name::code.eq_any(SYSTEM_NAME_CODES))
+    } else {
+        Box::new(name::code.ne_all(SYSTEM_NAME_CODES))
+    }
+}
+
+/// The name table alone, without the store joins `NameFilter` brings.
+#[derive(Clone, Default, Debug, PartialEq)]
+pub struct NameRowFilter {
+    pub code_or_name: Option<StringFilter>,
+    pub r#type: Option<EqualFilter<NameRowType>>,
+    pub is_deleted: Option<bool>,
+    /// As `NameRow::is_system_name`.
+    pub is_system_name: Option<bool>,
+}
+
+type BoxedNameRowQuery = name::BoxedQuery<'static, DBType>;
+
+fn filtered(filter: NameRowFilter) -> BoxedNameRowQuery {
+    let NameRowFilter {
+        code_or_name,
+        r#type,
+        is_deleted,
+        is_system_name,
+    } = filter;
+    let mut query = name::table.into_boxed();
+    // The or filter goes before the and filters.
+    if code_or_name.is_some() {
+        apply_string_filter!(query, code_or_name.clone(), name::code);
+        apply_string_or_filter!(query, code_or_name, name::name_);
+    }
+    apply_equal_filter!(query, r#type, name::type_);
+    query = match is_deleted {
+        Some(true) => query.filter(name::deleted_datetime.is_not_null()),
+        Some(false) => query.filter(name::deleted_datetime.is_null()),
+        None => query,
+    };
+    match is_system_name {
+        Some(is_system_name) => query.filter(system_name_filter(is_system_name)),
+        None => query,
+    }
+}
+
 pub struct NameRowRepository<'a> {
     connection: &'a StorageConnection,
 }
@@ -270,6 +353,125 @@ impl<'a> NameRowRepository<'a> {
         Ok(())
     }
 
+    /// The first kind of record found that shows the name. Queries the link-resolving views, so a
+    /// merged name's records count.
+    pub fn used_by(&self, name_id: &str) -> Result<Option<NameUser>, RepositoryError> {
+        use super::{
+            assets::asset_row::asset, barcode_proposal_row::barcode_proposal,
+            indicator_value_row::indicator_value, invoice_line_row::invoice_line,
+            invoice_row::invoice, item_variant::item_variant_row::item_variant,
+            purchase_order_line_row::purchase_order_line, purchase_order_row::purchase_order,
+            requisition::requisition_row::requisition, rnr_form_row::rnr_form,
+            stock_line_row::stock_line, stocktake_line_row::stocktake_line,
+            vaccination_row::vaccination,
+        };
+        use diesel::dsl::exists;
+        let mut guard = self.connection.lock();
+        let connection = guard.connection();
+        macro_rules! check {
+            ($user:expr, $query:expr) => {
+                if diesel::select(exists($query)).get_result::<bool>(connection)? {
+                    return Ok(Some($user));
+                }
+            };
+        }
+        // One column per check: an OR across link-joined columns makes Postgres scan the table.
+        check!(
+            NameUser::Store,
+            store::table.filter(store::name_id.eq(name_id))
+        );
+        check!(
+            NameUser::Invoice,
+            invoice::table.filter(invoice::name_id.eq(name_id))
+        );
+        check!(
+            NameUser::Invoice,
+            invoice::table.filter(invoice::default_donor_id.eq(name_id))
+        );
+        check!(
+            NameUser::InvoiceLine,
+            invoice_line::table.filter(invoice_line::donor_id.eq(name_id))
+        );
+        check!(
+            NameUser::InvoiceLine,
+            invoice_line::table.filter(invoice_line::manufacturer_id.eq(name_id))
+        );
+        check!(
+            NameUser::Requisition,
+            requisition::table.filter(requisition::name_id.eq(name_id))
+        );
+        check!(
+            NameUser::Requisition,
+            requisition::table.filter(requisition::destination_customer_id.eq(name_id))
+        );
+        check!(
+            NameUser::PurchaseOrder,
+            purchase_order::table.filter(purchase_order::supplier_name_id.eq(name_id))
+        );
+        check!(
+            NameUser::PurchaseOrder,
+            purchase_order::table.filter(purchase_order::donor_id.eq(name_id))
+        );
+        check!(
+            NameUser::PurchaseOrderLine,
+            purchase_order_line::table.filter(purchase_order_line::manufacturer_id.eq(name_id))
+        );
+        check!(
+            NameUser::StockLine,
+            stock_line::table.filter(stock_line::supplier_id.eq(name_id))
+        );
+        check!(
+            NameUser::StockLine,
+            stock_line::table.filter(stock_line::donor_id.eq(name_id))
+        );
+        check!(
+            NameUser::StockLine,
+            stock_line::table.filter(stock_line::manufacturer_id.eq(name_id))
+        );
+        check!(
+            NameUser::StocktakeLine,
+            stocktake_line::table.filter(stocktake_line::donor_id.eq(name_id))
+        );
+        check!(
+            NameUser::StocktakeLine,
+            stocktake_line::table.filter(stocktake_line::manufacturer_id.eq(name_id))
+        );
+        check!(
+            NameUser::RnrForm,
+            rnr_form::table.filter(rnr_form::name_id.eq(name_id))
+        );
+        check!(
+            NameUser::IndicatorValue,
+            indicator_value::table.filter(indicator_value::customer_name_id.eq(name_id))
+        );
+        check!(
+            NameUser::ItemVariant,
+            item_variant::table.filter(item_variant::manufacturer_id.eq(name_id))
+        );
+        check!(
+            NameUser::BarcodeProposal,
+            barcode_proposal::table.filter(barcode_proposal::manufacturer_id.eq(name_id))
+        );
+        // `donor_name_id` holds a name link id and has no view. A deleted asset doesn't count.
+        check!(
+            NameUser::Asset,
+            asset::table.filter(
+                asset::donor_name_id
+                    .eq_any(
+                        name_link::table
+                            .filter(name_link::name_id.eq(name_id))
+                            .select(name_link::id.nullable())
+                    )
+                    .and(asset::deleted_datetime.is_null())
+            )
+        );
+        check!(
+            NameUser::Vaccination,
+            vaccination::table.filter(vaccination::facility_name_id.eq(name_id))
+        );
+        Ok(None)
+    }
+
     pub fn mark_deleted(&self, name_id: &str) -> Result<(), RepositoryError> {
         self._mark_deleted(name_id)?;
         let changelog = NameRow::generate_changelog(
@@ -303,6 +505,27 @@ impl<'a> NameRowRepository<'a> {
             .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
+    }
+
+    /// Every type, deleted names included. Letter case counts; spaces around either code don't.
+    pub fn find_by_trimmed_code(&self, code: &str) -> Result<Vec<NameRow>, RepositoryError> {
+        Ok(name::table
+            .filter(trim(name::code).eq(trim_spaces(code)))
+            .order(name::id.asc())
+            .load(self.connection.lock().connection())?)
+    }
+
+    /// Unlike `NameRepository`, not scoped to a store, and patients included.
+    pub fn query_by_filter(&self, filter: NameRowFilter) -> Result<Vec<NameRow>, RepositoryError> {
+        Ok(filtered(filter)
+            .order((name::code.asc(), name::type_.asc(), name::id.asc()))
+            .load(self.connection.lock().connection())?)
+    }
+
+    pub fn count_by_filter(&self, filter: NameRowFilter) -> Result<i64, RepositoryError> {
+        Ok(filtered(filter)
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<NameRow>, RepositoryError> {
@@ -514,6 +737,173 @@ mod test {
         FilterBuilder, KeyType, KeyValueStoreRepository, NameFilter, NameRepository, NameRow,
         NameRowRepository, NameRowType, mock::MockDataInserts, test_db::setup_all,
     };
+
+    // covers: OMS-REG-CDIO-01.135
+
+    #[actix_rt::test]
+    async fn used_by_counts_records_that_show_a_name_but_not_its_joins() {
+        use crate::{
+            AssetRow, AssetRowRepository, ItemRow, ItemRowRepository, ItemVariantRow,
+            ItemVariantRowRepository, NameStoreJoinRepository, NameStoreJoinRow, NameUser,
+            RequisitionRow, RequisitionRowRepository, StoreRow, StoreRowRepository,
+        };
+        let (_, connection, _, _) =
+            setup_all("name_used_by_records_not_joins", MockDataInserts::none()).await;
+        let names = NameRowRepository::new(&connection);
+        for id in [
+            "store_name",
+            "maker",
+            "donor",
+            "old_donor",
+            "visible",
+            "end_customer",
+        ] {
+            names
+                .upsert_one(&NameRow {
+                    id: id.to_string(),
+                    ..Default::default()
+                })
+                .unwrap();
+        }
+        StoreRowRepository::new(&connection)
+            .upsert_one(&StoreRow {
+                id: "store".to_string(),
+                name_id: "store_name".to_string(),
+                ..Default::default()
+            })
+            .unwrap();
+        ItemRowRepository::new(&connection)
+            .upsert_one(&ItemRow {
+                id: "item".to_string(),
+                ..Default::default()
+            })
+            .unwrap();
+        ItemVariantRowRepository::new(&connection)
+            .upsert_one(&ItemVariantRow {
+                id: "variant".to_string(),
+                item_id: "item".to_string(),
+                manufacturer_id: Some("maker".to_string()),
+                ..Default::default()
+            })
+            .unwrap();
+        let assets = AssetRowRepository::new(&connection);
+        assets
+            .upsert_one(
+                &AssetRow {
+                    id: "fridge".to_string(),
+                    donor_name_id: Some("donor".to_string()),
+                    ..Default::default()
+                },
+                None,
+            )
+            .unwrap();
+        assets
+            .upsert_one(
+                &AssetRow {
+                    id: "old_fridge".to_string(),
+                    donor_name_id: Some("old_donor".to_string()),
+                    deleted_datetime: Some(Default::default()),
+                    ..Default::default()
+                },
+                None,
+            )
+            .unwrap();
+        NameStoreJoinRepository::new(&connection)
+            .upsert_one(&NameStoreJoinRow {
+                id: "join".to_string(),
+                store_id: "store".to_string(),
+                name_is_customer: true,
+                name_is_supplier: false,
+                visible: true,
+                name_id: "visible".to_string(),
+            })
+            .unwrap();
+
+        RequisitionRowRepository::new(&connection)
+            .upsert_one(&RequisitionRow {
+                id: "requisition".to_string(),
+                store_id: "store".to_string(),
+                name_id: "store_name".to_string(),
+                destination_customer_id: Some("end_customer".to_string()),
+                ..Default::default()
+            })
+            .unwrap();
+
+        assert_eq!(
+            names.used_by("end_customer").unwrap(),
+            Some(NameUser::Requisition)
+        );
+        assert_eq!(names.used_by("maker").unwrap(), Some(NameUser::ItemVariant));
+        assert_eq!(names.used_by("donor").unwrap(), Some(NameUser::Asset));
+        assert_eq!(names.used_by("old_donor").unwrap(), None);
+        assert_eq!(names.used_by("visible").unwrap(), None);
+    }
+
+    #[actix_rt::test]
+    async fn used_by_follows_merged_links() {
+        use crate::{
+            AssetRow, AssetRowRepository, InvoiceRow, InvoiceRowRepository, NameLinkRow,
+            NameLinkRowRepository, NameUser, StoreRow, StoreRowRepository,
+        };
+        let (_, connection, _, _) =
+            setup_all("name_used_by_follows_merged_links", MockDataInserts::none()).await;
+        let names = NameRowRepository::new(&connection);
+        for id in ["store_name", "kept", "merged", "donor_kept", "donor_merged"] {
+            names
+                .upsert_one(&NameRow {
+                    id: id.to_string(),
+                    ..Default::default()
+                })
+                .unwrap();
+        }
+        StoreRowRepository::new(&connection)
+            .upsert_one(&StoreRow {
+                id: "store".to_string(),
+                name_id: "store_name".to_string(),
+                ..Default::default()
+            })
+            .unwrap();
+        // The invoice is saved against the merged name's link.
+        InvoiceRowRepository::new(&connection)
+            .upsert_one(&InvoiceRow {
+                id: "invoice".to_string(),
+                name_id: "merged".to_string(),
+                store_id: "store".to_string(),
+                ..Default::default()
+            })
+            .unwrap();
+        assert_eq!(names.used_by("kept").unwrap(), None);
+
+        NameLinkRowRepository::new(&connection)
+            .upsert_one(&NameLinkRow {
+                id: "merged".to_string(),
+                name_id: "kept".to_string(),
+            })
+            .unwrap();
+        assert_eq!(names.used_by("kept").unwrap(), Some(NameUser::Invoice));
+        assert_eq!(names.used_by("merged").unwrap(), None);
+        assert_eq!(names.used_by("store_name").unwrap(), Some(NameUser::Store));
+
+        // An asset holds its donor's link id directly, with no view to resolve it.
+        AssetRowRepository::new(&connection)
+            .upsert_one(
+                &AssetRow {
+                    id: "fridge".to_string(),
+                    donor_name_id: Some("donor_merged".to_string()),
+                    ..Default::default()
+                },
+                None,
+            )
+            .unwrap();
+        NameLinkRowRepository::new(&connection)
+            .upsert_one(&NameLinkRow {
+                id: "donor_merged".to_string(),
+                name_id: "donor_kept".to_string(),
+            })
+            .unwrap();
+        assert_eq!(names.used_by("donor_kept").unwrap(), Some(NameUser::Asset));
+        assert_eq!(names.used_by("donor_merged").unwrap(), None);
+    }
 
     // Covers the v2.01 legacy `name.properties` column. A NameRow upsert must
     // not clobber values written via `update_properties()`.

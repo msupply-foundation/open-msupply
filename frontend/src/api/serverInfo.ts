@@ -1,6 +1,10 @@
 import { createSignal } from 'solid-js';
 import { graphqlFetch } from './graphql';
-import { IsCentralServer, ServerVersion } from './initialisation.generated';
+import {
+  IsCentralServer,
+  IsCentralStandalone,
+  ServerVersion,
+} from './initialisation.generated';
 
 // Server role for the phase-visibility matrix (spec/sync-modal/rules.md
 // § phase visibility). Fetched once per startup pass — unauthenticated, so it
@@ -11,6 +15,13 @@ import { IsCentralServer, ServerVersion } from './initialisation.generated';
 const [isCentralServer, setIsCentralServer] = createSignal(false);
 
 export { isCentralServer };
+
+// Whether a central server is standalone (keeps central data itself, with no
+// legacy mSupply). Read the same way; false until known, which hides what it
+// gates — the safe direction.
+const [isCentralStandalone, setIsCentralStandalone] = createSignal(false);
+
+export { isCentralStandalone };
 
 // The server's version for the pre-session footers (spec/startup/rules.md
 // § App version): undefined until known, and a failed fetch leaves it so —
@@ -50,10 +61,13 @@ export const serverVersionDiffers = (): boolean =>
   !versionsMatch(APP_VERSION, serverVersion());
 
 export const fetchServerInfo = async (): Promise<void> => {
-  const [role, version] = await Promise.all([
+  const [role, standalone, version] = await Promise.all([
     graphqlFetch(IsCentralServer, {}, { background: true }),
+    graphqlFetch(IsCentralStandalone, {}, { background: true }),
     graphqlFetch(ServerVersion, {}, { background: true }),
   ]);
   if (role.kind === 'success') setIsCentralServer(role.data.isCentralServer);
+  if (standalone.kind === 'success')
+    setIsCentralStandalone(standalone.data.isCentralStandalone);
   if (version.kind === 'success') setServerVersion(version.data.serverVersion);
 };

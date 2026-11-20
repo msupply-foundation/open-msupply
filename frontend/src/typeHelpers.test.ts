@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { sameFetchedValue } from './typeHelpers';
+import { sameFetchedValue, shallowEqual } from './typeHelpers';
 
 /*
  * The explicit dedup for a publisher that rebuilds its value on every load
@@ -18,5 +18,20 @@ describe('sameFetchedValue', () => {
     expect(sameFetchedValue({ a: 1 }, { a: 1, b: null })).toBe(false);
     expect(sameFetchedValue(undefined, undefined)).toBe(true);
     expect(sameFetchedValue(undefined, { a: 1 })).toBe(false);
+  });
+});
+
+describe('shallowEqual', () => {
+  it('compares item by item, in order', () => {
+    expect(shallowEqual([1, 'a'], [1, 'a'])).toBe(true);
+    expect(shallowEqual([1, 'a'], ['a', 1])).toBe(false);
+  });
+
+  it('treats null, undefined and [] as three different values', () => {
+    expect(shallowEqual(null, null)).toBe(true);
+    expect(shallowEqual(undefined, undefined)).toBe(true);
+    expect(shallowEqual(null, undefined)).toBe(false);
+    expect(shallowEqual(null, [])).toBe(false);
+    expect(shallowEqual(undefined, [])).toBe(false);
   });
 });

@@ -38,6 +38,16 @@
   cursor: not-allowed;
 }
 
+/* Not dimmed like a disabled zone, so the spinner reads clearly. */
+.zone[data-loading] {
+  cursor: progress;
+}
+
+.zone[data-loading]:hover {
+  border-color: var(--secondary-main);
+  background: color-mix(in srgb, var(--secondary-main) 7%, transparent);
+}
+
 /* The native input is the real control; kept in the DOM but visually removed. */
 .hiddenInput {
   position: absolute;
@@ -54,6 +64,11 @@
 .icon {
   width: 2.25rem;
   height: 2.25rem;
+  color: var(--secondary-main);
+}
+
+.busy {
+  display: flex;
   color: var(--secondary-main);
 }
 
@@ -94,6 +109,10 @@
 
 .browse:disabled {
   cursor: not-allowed;
+}
+
+.browse[aria-busy] {
+  cursor: progress;
 }
 
 @media (pointer: coarse) {

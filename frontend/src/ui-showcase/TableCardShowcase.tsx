@@ -60,6 +60,7 @@ import {
   type AnatomyNode,
 } from './common';
 import type { PageMetadata } from './metadata';
+import { createLocalPagination } from '../ui/elements/table/createLocalPagination';
 
 /*
  * The Table & Card anatomy page (Layout Elements) — the interactive companion
@@ -498,8 +499,6 @@ const WorkingTable = () => {
     desc: false,
   });
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
-  const [offset, setOffset] = createSignal(0);
-  const [pageSize, setPageSize] = createSignal(10);
   const [filter, setFilter] = createSignal<DemoFilter>({});
   const { config, setConfig } = createViewConfig('table');
   // Reset is offered only when the user has overridden a column (visibility /
@@ -512,7 +511,7 @@ const WorkingTable = () => {
   // offset may be past the end of the narrowed result set.
   const onFilterChange = (next: DemoFilter) => {
     setFilter(next);
-    setOffset(0);
+    page.reset();
   };
 
   // Client-side stand-in for the server's WHERE: search matches code OR name;
@@ -547,10 +546,15 @@ const WorkingTable = () => {
       return desc ? -cmp : cmp;
     });
   });
-  const rows = () => sorted().slice(offset(), offset() + pageSize());
+  // Pages the FILTERED set, so the page total tracks the active filter.
+  // Changeable page size, with nowhere to keep the choice.
+  const page = createLocalPagination(sorted, {
+    pageSize: 10,
+    onPageSizeChange: () => {},
+  });
   const onSort = (key: SortKey, desc: boolean) => {
     setSort({ key, desc });
-    setOffset(0);
+    page.reset();
   };
 
   const columns = (): Column<StockLine, SortKey>[] => [
@@ -607,7 +611,7 @@ const WorkingTable = () => {
   return (
     <DataTable
       columns={columns()}
-      rows={rows()}
+      rows={page.rows()}
       rowKey={r => r.id}
       // Filters live in the table's own toolbar (ui-standards § tables →
       // filtering); the page owns the filter state, like a real list.
@@ -632,18 +636,7 @@ const WorkingTable = () => {
       setConfig={setConfig}
       configIsDefault={configIsDefault()}
       emptyMessage="No items"
-      pagination={{
-        offset: offset(),
-        pageSize: pageSize(),
-        // The pager counts the FILTERED set, so the page total tracks the
-        // active filter.
-        total: filtered().length,
-        onOffsetChange: setOffset,
-        onPageSizeChange: size => {
-          setPageSize(size);
-          setOffset(0);
-        },
-      }}
+      pagination={page.pagination()}
     />
   );
 };
