@@ -98,21 +98,14 @@ fn validate(
         return Err(UpsertStoreError::CodeRequired);
     }
     let repo = StoreRowRepository::new(connection);
-    // Kept, so the other store's code needs no second query.
-    let mut same_code = Vec::new();
-    let other_id = other_with_key(
+    if let Some(other) = other_with_key(
         saved.map(|saved| saved.code.as_str()),
         &row.id,
         &row.code,
         KeyCase::Exact,
-        |code| {
-            same_code = repo.find_by_trimmed_code(code)?;
-            Ok(same_code.clone())
-        },
+        |code| repo.find_by_trimmed_code(code),
         |store| &store.id,
-    )?;
-    if let Some(other) = other_id.and_then(|id| same_code.into_iter().find(|store| store.id == id))
-    {
+    )? {
         return Err(UpsertStoreError::DuplicateCode {
             other_id: other.id,
             other_code: other.code,

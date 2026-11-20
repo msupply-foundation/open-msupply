@@ -71,7 +71,9 @@ fn save(
         KeyCase::Exact,
         |code| repo.find_by_trimmed_code_without_legacy_record(code),
         |other| &other.id,
-    )? {
+    )?
+    .map(|other| other.id)
+    {
         return Err(UpsertItemError::DuplicateCode { other_id });
     }
     match saved {

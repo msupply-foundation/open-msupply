@@ -9,8 +9,8 @@ pub(crate) enum KeyCase {
     Any,
 }
 
-/// The id of another record with `key`. Only a save that brings in the clash is checked, so
-/// existing duplicates stay editable.
+/// Another record with `key`. Only a save that brings in the clash is checked, so existing
+/// duplicates stay editable.
 pub(crate) fn other_with_key<R>(
     saved_key: Option<&str>,
     id: &str,
@@ -18,7 +18,7 @@ pub(crate) fn other_with_key<R>(
     case: KeyCase,
     find_by_key: impl FnOnce(&str) -> Result<Vec<R>, RepositoryError>,
     record_id: impl Fn(&R) -> &str,
-) -> Result<Option<String>, RepositoryError> {
+) -> Result<Option<R>, RepositoryError> {
     let fold = |key: &str| {
         let key = trim_spaces(key);
         match case {
@@ -30,14 +30,12 @@ pub(crate) fn other_with_key<R>(
         return Ok(None);
     }
     Ok(find_by_key(key)?
-        .iter()
-        .map(&record_id)
-        .find(|other| *other != id)
-        .map(str::to_string))
+        .into_iter()
+        .find(|other| record_id(other) != id))
 }
 
-/// As [`other_with_key`], among active records only, so an inactive one doesn't hold on to its
-/// key. An inactive `record` clashes with none.
+/// The id of the record [`other_with_key`] finds, among active records only, so an inactive one
+/// doesn't hold on to its key. An inactive `record` clashes with none.
 pub(crate) fn other_active_with_key<R>(
     saved: Option<&R>,
     record: &R,
@@ -50,12 +48,13 @@ pub(crate) fn other_active_with_key<R>(
     if !is_active(record) {
         return Ok(None);
     }
-    other_with_key(
+    Ok(other_with_key(
         saved.filter(|saved| is_active(saved)).map(&key),
         id(record),
         key(record),
         case,
         |key| Ok(find_by_key(key)?.into_iter().filter(&is_active).collect()),
         &id,
-    )
+    )?
+    .map(|other| id(&other).to_string()))
 }
