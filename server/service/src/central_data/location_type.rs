@@ -2,7 +2,7 @@ use super::{
     CentralDataTable, Change, ExportFilter, FieldChange, ImportTable, RecordCount, RowFailure,
     RowOutcome, SheetImport, SheetStart,
     cells::{Row, RowError, collect, keep_or_saved},
-    delete::{DELETE_COLUMN, already_deleted, check_unchanged, is_delete},
+    delete::{DELETE_COLUMN, already_deleted, check_delete, is_delete},
     field_changes,
     lookup::find_record,
     name_with_code,
@@ -172,24 +172,13 @@ fn delete_row(
     connection: &StorageConnection,
     row: &Row,
     existing: Option<LocationTypeRow>,
-    mut errors: Vec<RowError>,
+    errors: Vec<RowError>,
 ) -> Result<RowOutcome, RowFailure> {
     // Already gone: nothing to delete, so the row changes nothing.
     let Some(saved) = existing else {
         return already_deleted(row, CODE, errors);
     };
-    let saved_cells: Vec<_> = COLUMNS
-        .iter()
-        .copied()
-        .zip(cells(&saved))
-        .filter(|(column, _)| *column != DELETE_COLUMN)
-        .collect();
-    if let Err(e) = check_unchanged(row, &saved_cells) {
-        errors.push(e);
-    }
-    if !errors.is_empty() {
-        return Err(RowFailure::Invalid(errors));
-    }
+    check_delete(row, COLUMNS, cells(&saved), errors)?;
 
     delete_location_type(connection, &saved.id).map_err(|error| match error {
         DeleteLocationTypeError::InUse(user) => row

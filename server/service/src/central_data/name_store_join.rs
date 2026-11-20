@@ -2,7 +2,7 @@ use super::{
     Added, CentralDataTable, Change, ExportFilter, ImportTable, RecordCount, RowFailure,
     RowOutcome, SheetImport, SheetStart,
     cells::{Row, RowError, choice_cell, collect},
-    delete::{DELETE_COLUMN, already_deleted, check_unchanged, is_delete},
+    delete::{DELETE_COLUMN, already_deleted, check_delete, is_delete},
     field_changes,
     lookup::{
         InMemory, NOT_FOUND, NamesOfType, active_first, find_reference, pick_one, record_conflict,
@@ -386,25 +386,14 @@ impl NameStoreJoinSheet {
         row: &Row,
         existing: Option<NameStoreJoinRow>,
         found_name: Option<NameRow>,
-        mut errors: Vec<RowError>,
+        errors: Vec<RowError>,
     ) -> Result<RowOutcome, RowFailure> {
         let Some(saved) = existing else {
             return already_deleted(row, NAME_CODE, errors);
         };
         let name = name_with_id(connection, found_name, &saved.name_id)?.unwrap_or_default();
         let store = self.stores.get(&saved.store_id);
-        let saved_cells: Vec<_> = COLUMNS
-            .iter()
-            .copied()
-            .zip(cells(&saved, &name, store))
-            .filter(|(column, _)| *column != DELETE_COLUMN)
-            .collect();
-        if let Err(e) = check_unchanged(row, &saved_cells) {
-            errors.push(e);
-        }
-        if !errors.is_empty() {
-            return Err(RowFailure::Invalid(errors));
-        }
+        check_delete(row, COLUMNS, cells(&saved, &name, store), errors)?;
 
         delete_name_store_join(connection, &saved.id)?;
         Ok(RowOutcome {

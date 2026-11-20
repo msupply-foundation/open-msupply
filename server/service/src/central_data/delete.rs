@@ -44,6 +44,30 @@ pub(crate) fn already_deleted(
     })
 }
 
+/// Before a `DELETE` row deletes its record: the row may repeat `saved`, the record's cells in
+/// `columns` order, but not change them. `errors` are the row's others; with any, the row fails.
+pub(crate) fn check_delete(
+    row: &Row,
+    columns: &[&str],
+    saved: Vec<Value>,
+    mut errors: Vec<RowError>,
+) -> Result<(), RowFailure> {
+    let saved: Vec<_> = columns
+        .iter()
+        .copied()
+        .zip(saved)
+        .filter(|(column, _)| *column != DELETE_COLUMN)
+        .collect();
+    if let Err(e) = check_unchanged(row, &saved) {
+        errors.push(e);
+    }
+    if errors.is_empty() {
+        Ok(())
+    } else {
+        Err(RowFailure::Invalid(errors))
+    }
+}
+
 /// A `DELETE` row may repeat `saved` (as exported) but not change it. Columns not in `saved` and
 /// blank cells aren't checked.
 pub fn check_unchanged(row: &Row, saved: &[(&str, Value)]) -> Result<(), RowError> {

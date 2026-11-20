@@ -2,7 +2,7 @@ use super::{
     CentralDataTable, Change, ExportFilter, ImportTable, RecordCount, RowFailure, RowOutcome,
     SheetImport, SheetStart,
     cells::{Row, RowError, choice_cell, collect, keep_or_saved},
-    delete::{DELETE, DELETE_COLUMN, already_deleted, check_unchanged, is_delete},
+    delete::{DELETE, DELETE_COLUMN, already_deleted, check_delete, is_delete},
     field_changes,
     lookup::{
         InMemory, LookupError, NOT_FOUND, NamesOfType, active_first, find_record, find_reference,
@@ -507,24 +507,13 @@ impl NameSheet {
         connection: &StorageConnection,
         row: &Row,
         existing: Option<NameRow>,
-        mut errors: Vec<RowError>,
+        errors: Vec<RowError>,
     ) -> Result<RowOutcome, RowFailure> {
         // Already deleted, as an exported deleted name is: unchanged.
         let Some(saved) = existing.filter(|saved| saved.deleted_datetime.is_none()) else {
             return already_deleted(row, CODE, errors);
         };
-        let saved_cells: Vec<_> = COLUMNS
-            .iter()
-            .copied()
-            .zip(cells(&saved, &self.references))
-            .filter(|(column, _)| *column != DELETE_COLUMN)
-            .collect();
-        if let Err(e) = check_unchanged(row, &saved_cells) {
-            errors.push(e);
-        }
-        if !errors.is_empty() {
-            return Err(RowFailure::Invalid(errors));
-        }
+        check_delete(row, COLUMNS, cells(&saved, &self.references), errors)?;
 
         let record = name_with_code(&saved.name, &saved.code);
         delete_name(connection, &saved.id).map_err(|error| match error {

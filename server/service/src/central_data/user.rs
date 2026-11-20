@@ -2,7 +2,7 @@ use super::{
     CentralDataTable, Change, EndSessions, ExportFilter, ImportTable, RecordCount, RowFailure,
     RowOutcome, SheetImport, SheetStart,
     cells::{Row, RowError, choice_cell, collect},
-    delete::{DELETE, DELETE_COLUMN, already_deleted, check_unchanged, is_delete},
+    delete::{DELETE, DELETE_COLUMN, already_deleted, check_delete, is_delete},
     field_changes,
     lookup::find_record,
     sheet::{Sheet, Value},
@@ -354,24 +354,13 @@ impl UserSheet {
         connection: &StorageConnection,
         row: &Row,
         existing: Option<UserAccountRow>,
-        mut errors: Vec<RowError>,
+        errors: Vec<RowError>,
     ) -> Result<RowOutcome, RowFailure> {
         // Already gone: nothing to delete, so the row changes nothing.
         let Some(saved) = existing.filter(|saved| saved.deleted_datetime.is_none()) else {
             return already_deleted(row, USERNAME, errors);
         };
-        let saved_cells: Vec<_> = COLUMNS
-            .iter()
-            .copied()
-            .zip(cells(&saved, Value::Empty))
-            .filter(|(column, _)| *column != DELETE_COLUMN)
-            .collect();
-        if let Err(e) = check_unchanged(row, &saved_cells) {
-            errors.push(e);
-        }
-        if !errors.is_empty() {
-            return Err(RowFailure::Invalid(errors));
-        }
+        check_delete(row, COLUMNS, cells(&saved, Value::Empty), errors)?;
 
         delete_user(connection, &self.importer, &saved.id).map_err(|error| match error {
             DeleteUserError::DeletingSelf => row
