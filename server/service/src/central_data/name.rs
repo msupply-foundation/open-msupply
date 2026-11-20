@@ -297,25 +297,20 @@ impl SheetImport for NameSheet {
         } else {
             let code = row.text(SUPPLYING_STORE_CODE);
             let id = row.text(SUPPLYING_STORE_ID);
-            match lookup_reference(
+            match find_supplying_store(
                 &self.references.stores,
-                id.as_deref(),
+                row.sheet,
+                row.number,
                 code.as_deref(),
-                std::convert::identity,
+                id.as_deref(),
             )? {
                 Ok(store_id) => Some(store_id),
-                Err(e) if e.error == LookupError::NotFound && !delete => {
+                Err((true, _)) if !delete => {
                     later_store = Some((code, id));
                     None
                 }
-                Err(e) => {
-                    errors.push(e.to_row_error(
-                        row.sheet,
-                        row.number,
-                        SUPPLYING_STORE_CODE,
-                        SUPPLYING_STORE_ID,
-                        code.as_deref(),
-                    ));
+                Err((_, error)) => {
+                    errors.push(error);
                     None
                 }
             }
@@ -469,21 +464,16 @@ impl NameSheet {
         let names = NameRowRepository::new(connection);
         let mut errors = Vec::new();
         for later in self.later.drain(..) {
-            let store_id = match lookup_reference(
+            let store_id = match find_supplying_store(
                 &stores,
-                later.id.as_deref(),
+                &later.sheet,
+                later.row,
                 later.code.as_deref(),
-                std::convert::identity,
+                later.id.as_deref(),
             )? {
                 Ok(store_id) => store_id,
-                Err(e) => {
-                    errors.push(e.to_row_error(
-                        &later.sheet,
-                        later.row,
-                        SUPPLYING_STORE_CODE,
-                        SUPPLYING_STORE_ID,
-                        later.code.as_deref(),
-                    ));
+                Err((_, error)) => {
+                    errors.push(error);
                     continue;
                 }
             };
@@ -575,6 +565,25 @@ impl NameSheet {
             fields: Vec::new(),
         })
     }
+}
+
+/// The supplying store a row's `code` and `id` find among `stores`. Failing, the error on that row,
+/// after whether the store just isn't found, as a later sheet may add it.
+fn find_supplying_store(
+    stores: &InMemory<StoreRow>,
+    sheet: &str,
+    row: u32,
+    code: Option<&str>,
+    id: Option<&str>,
+) -> Result<Result<Option<String>, (bool, RowError)>, RepositoryError> {
+    Ok(
+        lookup_reference(stores, id, code, std::convert::identity)?.map_err(|error| {
+            (
+                error.error == LookupError::NotFound,
+                error.to_row_error(sheet, row, SUPPLYING_STORE_CODE, SUPPLYING_STORE_ID, code),
+            )
+        }),
+    )
 }
 
 /// Whether the row gives only the saved supplying store's id, as exported for a store sync hasn't
