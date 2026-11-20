@@ -13,6 +13,10 @@ use crate::{
 };
 use chrono::NaiveDate;
 use repository::{
+    ContextRow, ContextRowRepository, PermissionType, UserPermissionRow,
+    UserPermissionRowRepository,
+};
+use repository::{
     CurrencyRow, CurrencyRowRepository, EqualFilter, InvoiceRow, InvoiceRowRepository, ItemRow,
     ItemRowRepository, ItemType, ItemVariantRow, ItemVariantRowRepository, KeyType,
     KeyValueStoreRepository, LanguageType, LocationTypeRow, LocationTypeRowRepository,
@@ -27,7 +31,6 @@ use repository::{
     },
     test_db::setup_all,
 };
-use repository::{PermissionType, UserPermissionRow, UserPermissionRowRepository};
 use std::{
     path::{Path, PathBuf},
     sync::{Arc, RwLock},
@@ -7046,4 +7049,671 @@ async fn another_servers_join_for_a_new_stores_own_name_takes_the_place_of_the_o
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.changes, vec![]);
+}
+
+// User permissions
+
+const PERMISSION_HEADERS: [&str; 9] = [
+    "id",
+    "username",
+    "user_id",
+    "store_code",
+    "store_id",
+    "permission",
+    "context_name",
+    "context_id",
+    "delete",
+];
+
+fn permission_sheet_data(rows: Vec<Vec<Value>>) -> SheetData {
+    sheet_data("user_permission", &PERMISSION_HEADERS, rows)
+}
+
+fn permission_sheet(rows: Vec<Vec<Value>>) -> Vec<u8> {
+    sheet::write(vec![permission_sheet_data(rows)]).unwrap()
+}
+
+/// A row of `PERMISSION_HEADERS` with the given cells; the others are blank.
+fn permission_row(cells: &[(&str, &str)]) -> Vec<Value> {
+    PERMISSION_HEADERS
+        .iter()
+        .map(
+            |header| match cells.iter().find(|(column, _)| column == header) {
+                Some((_, cell)) if !cell.is_empty() => Value::Text(cell.to_string()),
+                _ => Value::Empty,
+            },
+        )
+        .collect()
+}
+
+fn add_permission(
+    connection: &StorageConnection,
+    id: &str,
+    user_id: &str,
+    permission: PermissionType,
+    context_id: Option<&str>,
+) {
+    UserPermissionRowRepository::new(connection)
+        .upsert_one(&UserPermissionRow {
+            id: id.to_string(),
+            user_id: user_id.to_string(),
+            store_id: Some("store_ms".to_string()),
+            permission,
+            context_id: context_id.map(str::to_string),
+        })
+        .unwrap();
+}
+
+/// Each of the user's permissions, as (id, store id, permission, context id), in id order.
+fn permissions_of(
+    connection: &StorageConnection,
+    user_id: &str,
+) -> Vec<(String, String, PermissionType, Option<String>)> {
+    let mut permissions: Vec<_> = repository::UserPermissionRepository::new(connection)
+        .query_by_filter(
+            repository::UserPermissionFilter::new()
+                .user_id(EqualFilter::equal_to(user_id.to_string())),
+        )
+        .unwrap()
+        .into_iter()
+        .map(|p| {
+            (
+                p.id,
+                p.store_id.unwrap_or_default(),
+                p.permission,
+                p.context_id,
+            )
+        })
+        .collect();
+    permissions.sort_by(|a, b| a.0.cmp(&b.0));
+    permissions
+}
+
+/// The stores the user can log in to, as (store id, default).
+fn store_joins_of(connection: &StorageConnection, user_id: &str) -> Vec<(String, bool)> {
+    let mut joins: Vec<_> = UserStoreJoinRowRepository::new(connection)
+        .find_many_by_user_id(user_id)
+        .unwrap()
+        .into_iter()
+        .map(|join| (join.store_id, join.is_default))
+        .collect();
+    joins.sort();
+    joins
+}
+
+fn permissions_containing(contains: Option<&str>) -> ExportTable {
+    ExportTable {
+        table: CentralDataTable::UserPermission,
+        filter: ExportFilter {
+            contains: contains.map(str::to_string),
+            ..Default::default()
+        },
+    }
+}
+
+/// `user_setup`, with store MS, the Immunisation program and the patient context, which has no
+/// master list. Anna can log in to MS and has store access, stocktake reading and documents in
+/// both contexts there; Ben has reports. Anna also has a permission this server doesn't know,
+/// and deleted Carl and the setup admin each have one.
+async fn permission_setup(name: &str) -> (StorageConnection, ServiceProvider, TempDir) {
+    let (connection, service_provider, dir, _) = user_setup(name).await;
+    NameRowRepository::new(&connection)
+        .upsert_one(&NameRow {
+            id: "ms_name".to_string(),
+            code: "MS".to_string(),
+            name: "Main store".to_string(),
+            r#type: NameRowType::Store,
+            ..Default::default()
+        })
+        .unwrap();
+    StoreRowRepository::new(&connection)
+        .upsert_one(&StoreRow {
+            id: "store_ms".to_string(),
+            code: "MS".to_string(),
+            name_id: "ms_name".to_string(),
+            ..Default::default()
+        })
+        .unwrap();
+    MasterListRowRepository::new(&connection)
+        .upsert_one(&MasterListRow {
+            id: "immunisation".to_string(),
+            name: "Immunisation".to_string(),
+            is_active: true,
+            ..Default::default()
+        })
+        .unwrap();
+    for (id, name) in [("immunisation", "Immunisation"), ("Patient", "Patient")] {
+        ContextRowRepository::new(&connection)
+            .upsert_one(&ContextRow {
+                id: id.to_string(),
+                name: name.to_string(),
+            })
+            .unwrap();
+    }
+    let users = UserAccountRowRepository::new(&connection);
+    for (id, deleted) in [("carl", true), ("admin", false)] {
+        users
+            .upsert_one(&UserAccountRow {
+                id: id.to_string(),
+                username: id.to_string(),
+                deleted_datetime: deleted.then(|| datetime(2026, 1, 1)).flatten(),
+                ..Default::default()
+            })
+            .unwrap();
+    }
+    KeyValueStoreRepository::new(&connection)
+        .set_string(
+            KeyType::StandaloneCentralAdminUserId,
+            Some("admin".to_string()),
+        )
+        .unwrap();
+    UserStoreJoinRowRepository::new(&connection)
+        .upsert_one(&UserStoreJoinRow {
+            id: "anna_store_ms".to_string(),
+            user_id: "anna".to_string(),
+            store_id: "store_ms".to_string(),
+            is_default: false,
+        })
+        .unwrap();
+    for (id, user_id, permission, context_id) in [
+        ("anna_access", "anna", PermissionType::StoreAccess, None),
+        (
+            "anna_stocktake",
+            "anna",
+            PermissionType::StocktakeQuery,
+            None,
+        ),
+        (
+            "anna_documents",
+            "anna",
+            PermissionType::DocumentQuery,
+            Some("immunisation"),
+        ),
+        (
+            "anna_patients",
+            "anna",
+            PermissionType::DocumentQuery,
+            Some("Patient"),
+        ),
+        (
+            "anna_future",
+            "anna",
+            PermissionType::Unknown("FUTURE".to_string()),
+            None,
+        ),
+        ("ben_report", "ben", PermissionType::Report, None),
+        ("carl_report", "carl", PermissionType::Report, None),
+        ("admin_report", "admin", PermissionType::Report, None),
+    ] {
+        add_permission(&connection, id, user_id, permission, context_id);
+    }
+    (connection, service_provider, dir)
+}
+
+// covers: OMS-REG-CDIO-01.10, .11, .152
+
+#[actix_rt::test]
+async fn user_permissions_export_then_import_makes_no_changes() {
+    let (connection, service_provider, dir) =
+        permission_setup("central_data_permission_round_trip").await;
+    let ctx = as_user(&service_provider, IMPORTER);
+    let before = permissions_of(&connection, "anna");
+
+    let bytes = CentralDataService
+        .export(&ctx, &[permissions_containing(None)])
+        .unwrap();
+    let path = write_file(dir.path(), bytes);
+    let Ok(sheets) = sheet::read(&path, MAX_IMPORT_ROWS) else {
+        panic!("the export reads back")
+    };
+    let sheet = &sheets[0];
+    assert_eq!(
+        sheet.headers,
+        [PERMISSION_HEADERS.as_slice(), &["store_name"]].concat()
+    );
+    // Not the unknown permission, deleted Carl's, the setup admin's or the importer's, who has
+    // no user row. By username, store code, permission, then context name.
+    let rows: Vec<&[String]> = sheet.rows.iter().map(|row| row.cells.as_slice()).collect();
+    let row = |id, username, permission, context_name, context_id| {
+        [
+            id,
+            username,
+            username,
+            "MS",
+            "store_ms",
+            permission,
+            context_name,
+            context_id,
+            "",
+            "Main store",
+        ]
+        .map(String::from)
+    };
+    assert_eq!(
+        rows,
+        [
+            row("anna_patients", "anna", "DOCUMENT_QUERY", "", "Patient"),
+            row(
+                "anna_documents",
+                "anna",
+                "DOCUMENT_QUERY",
+                "Immunisation",
+                "immunisation"
+            ),
+            row("anna_stocktake", "anna", "STOCKTAKE_QUERY", "", ""),
+            row("anna_access", "anna", "STORE_ACCESS", "", ""),
+            row("ben_report", "ben", "REPORT", "", ""),
+        ]
+    );
+
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].unchanged, 5);
+    assert_eq!(summary.changes, vec![]);
+    assert_eq!(permissions_of(&connection, "anna"), before);
+}
+
+// covers: OMS-REG-CDIO-01.46, .153
+
+#[actix_rt::test]
+async fn a_user_permission_export_searches_username_and_store_code() {
+    let (_, service_provider, _) = permission_setup("central_data_permission_filter").await;
+    let ctx = as_user(&service_provider, IMPORTER);
+    let count = |contains: Option<&str>| {
+        CentralDataService
+            .export_counts(&ctx, &[permissions_containing(contains)])
+            .unwrap()[0]
+            .count
+    };
+
+    assert_eq!(
+        count(None),
+        RecordCount {
+            matching: 5,
+            total: 5
+        }
+    );
+    assert_eq!(count(Some(" ANNA ")).matching, 4);
+    assert_eq!(count(Some("ben")).matching, 1);
+    assert_eq!(count(Some("ms")).matching, 5);
+    // Not the store's name or the permission.
+    assert_eq!(count(Some("Main")).matching, 0);
+    assert_eq!(count(Some("REPORT")).matching, 0);
+}
+
+// covers: OMS-REG-CDIO-01.12, .25, .36, .154, .155
+
+#[actix_rt::test]
+async fn user_permission_rows_add_and_delete_by_user_store_permission_and_context() {
+    let (connection, service_provider, dir) =
+        permission_setup("central_data_permission_upsert").await;
+    let ctx = as_user(&service_provider, IMPORTER);
+
+    let path = write_file(
+        dir.path(),
+        permission_sheet(vec![
+            permission_row(&[("username", "anna")]),
+            permission_row(&[("store_code", "MS"), ("permission", "REPORT")]),
+            permission_row(&[
+                ("username", "anna"),
+                ("store_code", "MS"),
+                ("permission", "STOCKTAKE_QUERY"),
+                ("delete", "x"),
+            ]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                2,
+                Some("store_code"),
+                "store_code is required for a new user permission"
+            ),
+            (
+                2,
+                Some("permission"),
+                "permission is required for a new user permission"
+            ),
+            (
+                3,
+                Some("username"),
+                "username is required for a new user permission"
+            ),
+            (
+                4,
+                Some("delete"),
+                "\"x\" is not valid. Type DELETE to delete this row, or leave it blank"
+            ),
+        ]
+    );
+
+    let path = write_file(
+        dir.path(),
+        permission_sheet(vec![
+            permission_row(&[
+                ("username", "anna"),
+                ("store_code", "MS"),
+                ("permission", "report"),
+            ]),
+            // No id: found by its user, store, permission and context.
+            permission_row(&[
+                ("username", "ANNA"),
+                ("store_code", "MS"),
+                ("permission", "STOCKTAKE_QUERY"),
+            ]),
+            permission_row(&[
+                ("username", "anna"),
+                ("store_code", "MS"),
+                ("permission", "DOCUMENT_QUERY"),
+                ("context_name", "Immunisation"),
+            ]),
+            // Ben can log in to MS from now on.
+            permission_row(&[
+                ("username", "ben"),
+                ("store_code", "MS"),
+                ("permission", "STORE_ACCESS"),
+            ]),
+            // And Anna no longer can.
+            permission_row(&[("id", "anna_access"), ("delete", "DELETE")]),
+            // Already gone: unchanged.
+            permission_row(&[("id", "gone"), ("delete", "DELETE")]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(
+        summary.tables,
+        vec![TableChanges {
+            table: CentralDataTable::UserPermission,
+            inserted: 2,
+            updated: 0,
+            deleted: 1,
+            unchanged: 3,
+            error_count: 0,
+        }]
+    );
+    assert_eq!(
+        summary
+            .changes
+            .iter()
+            .map(|change| (change.record.as_str(), change.change))
+            .collect::<Vec<_>>(),
+        [
+            ("anna: REPORT in store MS", Change::Inserted),
+            ("ben: STORE_ACCESS in store MS", Change::Inserted),
+            ("anna: STORE_ACCESS in store MS", Change::Deleted),
+        ]
+    );
+    // A new permission without a context gets the id sync and login give it.
+    let report_id =
+        UserPermissionRow::deterministic_id("anna", Some("store_ms"), &PermissionType::Report);
+    let ids: Vec<String> = permissions_of(&connection, "anna")
+        .into_iter()
+        .map(|(id, ..)| id)
+        .collect();
+    let mut expected = vec![
+        "anna_documents".to_string(),
+        "anna_future".to_string(),
+        "anna_patients".to_string(),
+        "anna_stocktake".to_string(),
+        report_id,
+    ];
+    expected.sort();
+    assert_eq!(ids, expected);
+    assert_eq!(
+        store_joins_of(&connection, "anna"),
+        [(mock_store_a().id, true)]
+    );
+    // MS is Ben's first store, so his default one.
+    assert_eq!(
+        store_joins_of(&connection, "ben"),
+        [("store_ms".to_string(), true)]
+    );
+}
+
+// covers: OMS-REG-CDIO-01.23, .24, .156
+
+#[actix_rt::test]
+async fn a_user_permission_finds_its_references_and_cannot_change_them() {
+    let (connection, service_provider, dir) =
+        permission_setup("central_data_permission_references").await;
+    let ctx = as_user(&service_provider, IMPORTER);
+    let before = permissions_of(&connection, "anna");
+
+    let path = write_file(
+        dir.path(),
+        permission_sheet(vec![
+            // By ids alone, and the patient context, which has no master list, by id.
+            permission_row(&[
+                ("user_id", "anna"),
+                ("store_id", "store_ms"),
+                ("permission", "DOCUMENT_QUERY"),
+                ("context_id", "Patient"),
+            ]),
+            // A blank store keeps the saved one, as every permission has one.
+            permission_row(&[("id", "anna_stocktake"), ("username", "anna")]),
+            // A DELETE row's blank cells aren't compared.
+            permission_row(&[("id", "gone"), ("delete", "DELETE")]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].unchanged, 3);
+
+    let path = write_file(
+        dir.path(),
+        permission_sheet(vec![
+            permission_row(&[
+                ("username", "anna"),
+                ("store_code", "MS"),
+                ("permission", "DOCUMENT_QUERY"),
+                ("context_name", "Immunisation"),
+                ("context_id", "Patient"),
+            ]),
+            permission_row(&[
+                ("id", "anna_stocktake"),
+                ("username", "ben"),
+                ("store_code", "MS"),
+                ("permission", "STOCKTAKE_QUERY"),
+            ]),
+            // A new id beside a saved permission is a copied row with one column edited.
+            permission_row(&[
+                ("id", "copy"),
+                ("username", "anna"),
+                ("store_code", "MS"),
+                ("permission", "STOCKTAKE_QUERY"),
+            ]),
+            // A blank context is none.
+            permission_row(&[
+                ("id", "anna_documents"),
+                ("username", "anna"),
+                ("permission", "DOCUMENT_QUERY"),
+                ("context_name", ""),
+            ]),
+            permission_row(&[
+                ("username", "anna"),
+                ("store_code", "XX"),
+                ("permission", "REPORT"),
+            ]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                2,
+                Some("context_name"),
+                "code and id conflict: Immunisation resolves to immunisation but id column contains Patient"
+            ),
+            (
+                3,
+                Some("username"),
+                "username and id conflict: anna: STOCKTAKE_QUERY in store MS has username anna and id anna_stocktake, but this row has username ben and id anna_stocktake"
+            ),
+            (
+                4,
+                Some("permission"),
+                "permission and id conflict: anna: STOCKTAKE_QUERY in store MS has permission STOCKTAKE_QUERY and id anna_stocktake, but this row has permission STOCKTAKE_QUERY and id copy"
+            ),
+            (
+                5,
+                Some("context_id"),
+                "context_id and id conflict: anna: DOCUMENT_QUERY for Immunisation in store MS has context_id immunisation and id anna_documents, but this row has context_id  and id anna_documents"
+            ),
+            (6, Some("store_code"), "referenced record not found"),
+        ]
+    );
+    assert_eq!(permissions_of(&connection, "anna"), before);
+}
+
+// covers: OMS-REG-CDIO-01.157
+
+#[actix_rt::test]
+async fn a_user_permission_row_cannot_touch_a_protected_or_deleted_user_or_your_last_server_admin()
+{
+    let (connection, service_provider, dir) =
+        permission_setup("central_data_permission_protected").await;
+    grant_server_admin(&connection, "anna");
+    let ctx = as_user(&service_provider, "anna");
+
+    let path = write_file(
+        dir.path(),
+        permission_sheet(vec![
+            permission_row(&[
+                ("username", "admin"),
+                ("store_code", "MS"),
+                ("permission", "STOCKTAKE_QUERY"),
+            ]),
+            permission_row(&[("id", "admin_report"), ("delete", "DELETE")]),
+            permission_row(&[
+                ("username", "carl"),
+                ("store_code", "MS"),
+                ("permission", "STOCKTAKE_QUERY"),
+            ]),
+            permission_row(&[("id", "anna_server_admin"), ("delete", "DELETE")]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                2,
+                Some("username"),
+                "admin is protected, as the server needs it, so import can't change their permissions"
+            ),
+            (
+                3,
+                Some("id"),
+                "admin is protected, as the server needs it, so import can't change their permissions"
+            ),
+            (
+                4,
+                Some("username"),
+                "carl is deleted, so they can't be given a permission"
+            ),
+            (
+                5,
+                Some("delete"),
+                "This is your last server-admin permission. You can't take it away, or you couldn't give it back"
+            ),
+        ]
+    );
+    assert_eq!(permissions_of(&connection, "admin").len(), 1);
+    assert!(
+        permissions_of(&connection, "anna")
+            .iter()
+            .any(|(id, ..)| id == "anna_server_admin")
+    );
+}
+
+// covers: OMS-REG-CDIO-01.158
+
+#[actix_rt::test]
+async fn only_a_server_admin_can_import_or_export_user_permissions() {
+    let (connection, service_provider, dir) =
+        permission_setup("central_data_permission_admin_only").await;
+    let ctx = as_user(&service_provider, "anna");
+    assert!(matches!(
+        CentralDataService.export(&ctx, &[permissions_containing(None)]),
+        Err(ExportError::ServerAdminOnly)
+    ));
+    assert!(matches!(
+        CentralDataService.export_counts(&ctx, &[permissions_containing(None)]),
+        Err(ExportError::ServerAdminOnly)
+    ));
+
+    // Anna would give herself server admin.
+    let path = write_file(
+        dir.path(),
+        permission_sheet(vec![permission_row(&[
+            ("username", "anna"),
+            ("store_code", "MS"),
+            ("permission", "SERVER_ADMIN"),
+        ])]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    let errors: Vec<_> = summary
+        .errors
+        .iter()
+        .map(|error| (error.sheet.as_str(), error.row, error.message.as_str()))
+        .collect();
+    assert_eq!(
+        errors,
+        [(
+            "user_permission",
+            None,
+            "Only a server admin can import this sheet"
+        )]
+    );
+    assert!(
+        !permissions_of(&connection, "anna")
+            .iter()
+            .any(|(_, _, permission, _)| *permission == PermissionType::ServerAdmin)
+    );
+}
+
+// covers: OMS-REG-CDIO-01.159
+
+#[actix_rt::test]
+async fn a_user_permission_finds_a_user_the_user_sheet_adds() {
+    let (connection, service_provider, dir) =
+        permission_setup("central_data_permission_new_user").await;
+    let ctx = as_user(&service_provider, IMPORTER);
+    let users = sheet_data(
+        "user",
+        &USER_HEADERS,
+        vec![user_row("", "dina", &[(2, "secret"), (4, "ENGLISH")])],
+    );
+    let permissions = permission_sheet_data(vec![permission_row(&[
+        ("username", "dina"),
+        ("store_code", "MS"),
+        ("permission", "STORE_ACCESS"),
+    ])]);
+    // The permission sheet first: sheets run in table order.
+    let path = write_file(dir.path(), sheet::write(vec![permissions, users]).unwrap());
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    let dina = UserAccountRowRepository::new(&connection)
+        .find_by_trimmed_username_any_case("dina")
+        .unwrap()
+        .remove(0);
+    assert_eq!(
+        store_joins_of(&connection, &dina.id),
+        [("store_ms".to_string(), true)]
+    );
+    assert_eq!(permissions_of(&connection, &dina.id).len(), 1);
 }

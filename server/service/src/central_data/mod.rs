@@ -29,6 +29,7 @@ pub mod sheet;
 mod store;
 mod unit;
 mod user;
+mod user_permission;
 
 #[cfg(test)]
 mod tests;
@@ -54,6 +55,7 @@ pub enum CentralDataTable {
     Item,
     MasterList,
     NameStoreJoin,
+    UserPermission,
 }
 
 /// Empty exports every record.
@@ -116,7 +118,10 @@ pub struct ExportCount {
 
 impl CentralDataTable {
     pub fn server_admin_only(self) -> bool {
-        matches!(self, CentralDataTable::User)
+        matches!(
+            self,
+            CentralDataTable::User | CentralDataTable::UserPermission
+        )
     }
 
     pub fn sheet_name(&self) -> &'static str {
@@ -130,6 +135,7 @@ impl CentralDataTable {
             CentralDataTable::Item => "item",
             CentralDataTable::MasterList => "master_list",
             CentralDataTable::NameStoreJoin => "name_store_join",
+            CentralDataTable::UserPermission => "user_permission",
         }
     }
 }
@@ -145,6 +151,7 @@ static TABLES: &[&(dyn ImportTable + Sync)] = &[
     &item::ItemTable,
     &master_list::MasterListTable,
     &name_store_join::NameStoreJoinTable,
+    &user_permission::UserPermissionTable,
 ];
 
 pub(crate) trait ImportTable {
