@@ -88,6 +88,13 @@ export const TABLES: {
     searchKey: 'label.code-or-name-contains',
     hasStatus: true,
   },
+  {
+    value: 'NAME_STORE_JOIN',
+    labelKey: 'label.names-in-stores',
+    sheet: 'name_store_join',
+    searchKey: 'label.code-contains',
+    hasStatus: false,
+  },
 ];
 
 /** `undefined` for a table this screen doesn't know yet. */

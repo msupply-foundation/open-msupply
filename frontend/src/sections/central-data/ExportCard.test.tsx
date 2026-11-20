@@ -345,6 +345,22 @@ describe('ExportCard', () => {
     });
   });
 
+  it('gives names in stores a code search and no Status filter (OMS-REG-CDIO-01.46, .145)', async () => {
+    open();
+    expect(
+      shown.fields['central-data-export-name_store_join-search']!.placeholder
+    ).toBe('label.code-contains');
+    expect(
+      shown.selects['central-data-export-name_store_join-status']
+    ).toBeUndefined();
+
+    shown.checkboxes['central-data-export-name_store_join']!.onChange(true);
+    await settle();
+    expect(countRequests().at(-1)).toEqual({
+      tables: [{ table: 'NAME_STORE_JOIN', contains: null, isActive: null }],
+    });
+  });
+
   it('counts again after typing in Search pauses, and at once for Status (OMS-REG-CDIO-01.47)', async () => {
     open();
     await tickUnits();
