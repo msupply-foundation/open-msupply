@@ -209,7 +209,7 @@ impl SheetImport for NameStoreJoinSheet {
             }
         };
         if delete {
-            return self.delete(connection, row, existing, errors);
+            return self.delete(connection, row, existing, found_name, errors);
         }
         // Found by store and name beside a new id: the join a store this import adds got for its
         // own name. The row's takes its place, so a whole export imports into another server.
@@ -251,7 +251,7 @@ impl SheetImport for NameStoreJoinSheet {
         };
 
         // The same for the saved join: a row never changes its store or name.
-        let name = names.find_one_by_id(&new.name_id)?;
+        let name = name_with_id(connection, found_name, &new.name_id)?;
         let store = self.stores.get(&new.store_id);
         let change = Change::between_upserts(saved, &new);
         if let Some(replaced) = &replaced {
@@ -385,14 +385,13 @@ impl NameStoreJoinSheet {
         connection: &StorageConnection,
         row: &Row,
         existing: Option<NameStoreJoinRow>,
+        found_name: Option<NameRow>,
         mut errors: Vec<RowError>,
     ) -> Result<RowOutcome, RowFailure> {
         let Some(saved) = existing else {
             return already_deleted(row, NAME_CODE, errors);
         };
-        let name = NameRowRepository::new(connection)
-            .find_one_by_id(&saved.name_id)?
-            .unwrap_or_default();
+        let name = name_with_id(connection, found_name, &saved.name_id)?.unwrap_or_default();
         let store = self.stores.get(&saved.store_id);
         let saved_cells: Vec<_> = COLUMNS
             .iter()
@@ -436,6 +435,19 @@ fn find_name(
             .collect();
         active_first(names, |name| name.deleted_datetime.is_none())
     })
+}
+
+/// `found`, the name the row's cells found, when it's the one with `id`, as it is unless the row
+/// leaves its name blank; else read.
+fn name_with_id(
+    connection: &StorageConnection,
+    found: Option<NameRow>,
+    id: &str,
+) -> Result<Option<NameRow>, RepositoryError> {
+    match found.filter(|name| name.id == id) {
+        Some(name) => Ok(Some(name)),
+        None => NameRowRepository::new(connection).find_one_by_id(id),
+    }
 }
 
 /// A patient or a system name the row found by id, or a name whose type isn't the row's.
