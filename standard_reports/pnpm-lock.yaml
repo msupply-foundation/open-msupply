@@ -326,22 +326,6 @@ importers:
         specifier: ^5.0.1
         version: 5.1.4(webpack@5.111.1)
 
-  transaction-items-by-name/latest/convert_data_js:
-    dependencies:
-      ts-loader:
-        specifier: ^9.5.2
-        version: 9.6.2(typescript@5.0.2)(webpack@5.111.1)
-      typescript:
-        specifier: 5.0.2
-        version: 5.0.2
-    devDependencies:
-      webpack:
-        specifier: ^5.88.1
-        version: 5.111.1(@swc/core@1.16.13)(webpack-cli@5.1.4)
-      webpack-cli:
-        specifier: ^5.0.1
-        version: 5.1.4(webpack@5.111.1)
-
 packages:
 
   '@adobe/css-tools@4.5.0':
