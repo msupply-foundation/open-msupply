@@ -1,6 +1,6 @@
 use super::{
-    CentralDataTable, Change, ExportFilter, ImportTable, RecordCount, RowFailure, RowOutcome,
-    SheetImport, SheetStart,
+    Added, CentralDataTable, Change, ExportFilter, ImportTable, RecordCount, RowFailure,
+    RowOutcome, SheetImport, SheetStart,
     cells::{Row, RowError, choice_cell, collect},
     delete::{DELETE_COLUMN, already_deleted, check_unchanged, is_delete},
     field_changes,
@@ -20,7 +20,7 @@ use repository::{
     NameStoreJoinRepository, NameStoreJoinRow, Pagination, RepositoryError, StorageConnection,
     StoreRepository, StoreRow, StoreRowRepository, StringFilter,
 };
-use std::collections::HashMap;
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 use util::uuid::uuid;
 
 const ID: &str = "id";
@@ -47,8 +47,9 @@ const COLUMNS: &[&str] = &[
 ];
 
 /// The names each store sees. Matched by `id`, else by its store and name together, a pair that
-/// never changes: a row that gives another store or name for a saved id is a conflict. Patients'
-/// and system names' joins are neither exported nor imported.
+/// never changes: a row that gives another store or name for a saved id is a conflict, except
+/// over the join a store this import adds gets for its own name. Patients' and system names'
+/// joins are neither exported nor imported.
 pub(super) struct NameStoreJoinTable;
 
 impl ImportTable for NameStoreJoinTable {
@@ -142,11 +143,12 @@ impl ImportTable for NameStoreJoinTable {
     fn start_sheet(
         &self,
         connection: &StorageConnection,
-        _start: SheetStart,
+        start: SheetStart,
     ) -> Result<Box<dyn SheetImport>, RepositoryError> {
         // After the store sheet, so the stores it adds are found.
         Ok(Box::new(NameStoreJoinSheet {
             stores: InMemory::new(StoreRowRepository::new(connection).all()?),
+            added: start.added,
         }))
     }
 }
@@ -154,6 +156,7 @@ impl ImportTable for NameStoreJoinTable {
 struct NameStoreJoinSheet {
     /// Read once: they're few, and none change while this sheet runs.
     stores: InMemory<StoreRow>,
+    added: Rc<RefCell<Added>>,
 }
 
 impl SheetImport for NameStoreJoinSheet {
@@ -208,6 +211,12 @@ impl SheetImport for NameStoreJoinSheet {
         if delete {
             return self.delete(connection, row, existing, errors);
         }
+        // Found by store and name beside a new id: the join a store this import adds got for its
+        // own name. The row's takes its place, so a whole export imports into another server.
+        let (existing, replaced) = match existing {
+            Some(saved) if id.as_deref().is_some_and(|id| id != saved.id) => (None, Some(saved)),
+            existing => (existing, None),
+        };
         let saved = existing.as_ref();
 
         let store_id = store_id.or(saved.map(|join| join.store_id.clone()));
@@ -245,6 +254,9 @@ impl SheetImport for NameStoreJoinSheet {
         let name = names.find_one_by_id(&new.name_id)?;
         let store = self.stores.get(&new.store_id);
         let change = Change::between_upserts(saved, &new);
+        if let Some(replaced) = &replaced {
+            delete_name_store_join(connection, &replaced.id)?;
+        }
         if change != Change::Unchanged {
             upsert_name_store_join(connection, &new)
                 .map_err(|error| upsert_failure(row, &new, name.as_ref(), store, error))?;
@@ -269,7 +281,7 @@ impl SheetImport for NameStoreJoinSheet {
 
 impl NameStoreJoinSheet {
     /// The saved join a row changes: by id, else by its store and name together. `Ok(None)` for a
-    /// row that adds one.
+    /// row that adds one. Beside a new id, only the own-name join of a store this import adds.
     fn find_join(
         &self,
         connection: &StorageConnection,
@@ -311,10 +323,20 @@ impl NameStoreJoinSheet {
             }
             // A new id beside a saved store and name is a copied row with one column edited.
             None => match by_key.first() {
+                Some(saved) if self.added_own_name(saved) => Ok(Some(saved.clone())),
                 Some(saved) => Err(self.conflict(connection, row, saved, id, false)?),
                 None => Ok(None),
             },
         })
+    }
+
+    /// The join `upsert_store` gave a store this import adds, for the store's own name.
+    fn added_own_name(&self, join: &NameStoreJoinRow) -> bool {
+        self.added.borrow().stores.contains(&join.store_id)
+            && self
+                .stores
+                .get(&join.store_id)
+                .is_some_and(|store| store.name_id == join.name_id)
     }
 
     /// On the store's columns when `on_store`, else the name's, whichever the row fills.

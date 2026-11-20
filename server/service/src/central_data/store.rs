@@ -1,6 +1,6 @@
 use super::{
-    CentralDataTable, Change, ExportFilter, ImportTable, RecordCount, RowFailure, RowOutcome,
-    SheetImport, SheetStart,
+    Added, CentralDataTable, Change, ExportFilter, ImportTable, RecordCount, RowFailure,
+    RowOutcome, SheetImport, SheetStart,
     cells::{Row, RowError, choice_cell, collect, keep_or_saved},
     field_changes,
     lookup::{NOT_FOUND, NamesOfType, active_first, find_record, find_reference},
@@ -14,6 +14,7 @@ use repository::{
     NameRow, NameRowRepository, NameRowType, Pagination, RepositoryError, Sort, StorageConnection,
     Store, StoreMode, StoreRepository, StoreRow, StoreRowRepository, StoreSortField,
 };
+use std::{cell::RefCell, rc::Rc};
 use util::uuid::uuid;
 
 const ID: &str = "id";
@@ -105,7 +106,10 @@ impl ImportTable for StoreTable {
         _connection: &StorageConnection,
         start: SheetStart,
     ) -> Result<Box<dyn SheetImport>, RepositoryError> {
-        Ok(Box::new(StoreSheet { today: start.today }))
+        Ok(Box::new(StoreSheet {
+            today: start.today,
+            added: start.added,
+        }))
     }
 }
 
@@ -131,6 +135,7 @@ fn matches(filter: &ExportFilter, store: &Store) -> bool {
 struct StoreSheet {
     /// A new store's `created_date`.
     today: NaiveDate,
+    added: Rc<RefCell<Added>>,
 }
 
 impl SheetImport for StoreSheet {
@@ -216,6 +221,9 @@ impl SheetImport for StoreSheet {
         if change != Change::Unchanged {
             upsert_store(connection, &new)
                 .map_err(|error| upsert_failure(row, &new, new_name.as_ref(), error))?;
+            if saved.is_none() {
+                self.added.borrow_mut().stores.insert(new.id.clone());
+            }
         }
         let fields = match saved {
             Some(saved) => {

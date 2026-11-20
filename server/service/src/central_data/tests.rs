@@ -6944,3 +6944,106 @@ async fn a_name_store_join_finds_a_store_the_store_sheet_adds_and_a_missing_refe
     );
     assert_eq!(joins_of(&connection, "store_main"), before);
 }
+
+// covers: OMS-REG-CDIO-01.151
+
+#[actix_rt::test]
+async fn another_servers_join_for_a_new_stores_own_name_takes_the_place_of_the_one_it_got() {
+    let (connection, service_provider, dir) = join_setup("central_data_join_own_name").await;
+    let ctx = service_provider.basic_context().unwrap();
+
+    // As exported from another server: the store and its own-name join keep that server's ids.
+    let path = write_file(
+        dir.path(),
+        sheet::write(vec![
+            sheet_data(
+                "store",
+                &STORE_HEADERS,
+                vec![new_store_row(&[
+                    ("id", "ward"),
+                    ("code", "W1"),
+                    ("name_code", "WARD"),
+                    ("name_type", "STORE"),
+                ])],
+            ),
+            join_sheet_data(vec![
+                join_row(&[
+                    ("id", "ward_own"),
+                    ("store_code", "W1"),
+                    ("name_code", "WARD"),
+                    ("name_type", "STORE"),
+                    ("name_is_customer", "FALSE"),
+                    ("name_is_supplier", "TRUE"),
+                ]),
+                // A saved store's own-name join under another id is still a conflict.
+                join_row(&[
+                    ("id", "copied"),
+                    ("store_code", "MS"),
+                    ("name_code", "MAIN"),
+                    ("name_type", "STORE"),
+                ]),
+            ]),
+        ])
+        .unwrap(),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(
+            3,
+            Some("name_code"),
+            "name_code and id conflict: Main store (MAIN) in store MS has name_code MAIN and id join_own, but this row has name_code MAIN and id copied"
+        )]
+    );
+
+    let path = write_file(
+        dir.path(),
+        sheet::write(vec![
+            sheet_data(
+                "store",
+                &STORE_HEADERS,
+                vec![new_store_row(&[
+                    ("id", "ward"),
+                    ("code", "W1"),
+                    ("name_code", "WARD"),
+                    ("name_type", "STORE"),
+                ])],
+            ),
+            join_sheet_data(vec![join_row(&[
+                ("id", "ward_own"),
+                ("store_code", "W1"),
+                ("name_code", "WARD"),
+                ("name_type", "STORE"),
+                ("name_is_customer", "FALSE"),
+                ("name_is_supplier", "TRUE"),
+            ])]),
+        ])
+        .unwrap(),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(
+        summary
+            .changes
+            .iter()
+            .map(|change| (change.sheet.as_str(), change.change))
+            .collect::<Vec<_>>(),
+        [
+            ("store", Change::Inserted),
+            ("name_store_join", Change::Inserted)
+        ]
+    );
+    assert_eq!(
+        joins_of(&connection, "ward"),
+        [("ward_own".to_string(), "ward_name".to_string(), false, true)]
+    );
+
+    // Imported again, it's unchanged.
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.changes, vec![]);
+}

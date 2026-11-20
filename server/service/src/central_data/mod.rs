@@ -7,8 +7,10 @@ use chrono::NaiveDate;
 use repository::{RepositoryError, StorageConnection};
 use std::{
     any::Any,
-    collections::HashMap,
+    cell::RefCell,
+    collections::{HashMap, HashSet},
     path::Path,
+    rc::Rc,
     sync::{Arc, PoisonError, RwLock},
 };
 use umya_spreadsheet::helper::coordinate::string_from_column_index;
@@ -198,6 +200,16 @@ pub(crate) struct SheetStart<'a> {
     pub today: NaiveDate,
     /// The tables whose sheets run after this one in the file, for a reference one may add.
     pub sheets_after: Vec<CentralDataTable>,
+    /// Shared by every sheet of the import.
+    pub added: Rc<RefCell<Added>>,
+}
+
+/// Records an earlier sheet adds, for a later sheet that must tell them from records saved
+/// before the import.
+#[derive(Default)]
+pub(crate) struct Added {
+    /// Each sees its own name through a join `upsert_store` makes, with an id of its own.
+    pub stores: HashSet<String>,
 }
 
 /// Each row sees the writes of the rows before it.
@@ -645,12 +657,14 @@ fn run_sheets(
         .connection
         .transaction_sync_etc(
             |connection| {
+                let added = Rc::new(RefCell::new(Added::default()));
                 let start = |table: CentralDataTable| SheetStart {
                     user_id: &ctx.user_id,
                     commit,
                     prepared: prepared.remove(&table),
                     today,
                     sheets_after: Vec::new(),
+                    added: added.clone(),
                 };
                 let summary = import_sheets(connection, start, sheets, &refused, errors_listed)?;
                 if commit && summary.error_count == 0 {
