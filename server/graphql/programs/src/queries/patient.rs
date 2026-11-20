@@ -89,8 +89,12 @@ pub fn patients(
                     &condition.custom_field_conditions(),
                 )?;
             }
+            let is_visible = filter.is_visible;
             let mut filter = PatientFilter::from(filter);
             filter.dynamic_filter = dynamic_filter;
+            if let Some(is_visible) = is_visible {
+                filter = filter.visible_in_store(&store_id, is_visible);
+            }
             Ok(filter)
         })
         .transpose()?;

@@ -1,7 +1,8 @@
 use super::cells::{Row, RowError};
 use repository::{
     CurrencyRow, CurrencyRowRepository, ItemRow, ItemRowRepository, LocationTypeRow,
-    LocationTypeRowRepository, RepositoryError, UnitRow, UnitRowRepository, UserAccountRow,
+    LocationTypeRowRepository, MasterListRow, MasterListRowRepository, NameRow, NameRowRepository,
+    NameRowType, RepositoryError, StoreRow, UnitRow, UnitRowRepository, UserAccountRow,
     UserAccountRowRepository, trim_spaces,
 };
 use std::collections::HashMap;
@@ -88,6 +89,23 @@ impl KeyedTable for ItemRowRepository<'_> {
     }
 }
 
+/// Looked up by name, as legacy master lists often have no code.
+impl KeyedTable for MasterListRowRepository<'_> {
+    type Record = MasterListRow;
+    fn id(master_list: &MasterListRow) -> &str {
+        &master_list.id
+    }
+    fn key(master_list: &MasterListRow) -> &str {
+        &master_list.name
+    }
+    fn find_by_id(&self, id: &str) -> Result<Option<MasterListRow>, RepositoryError> {
+        self.find_one_by_id(id)
+    }
+    fn find_by_key(&self, name: &str) -> Result<Vec<MasterListRow>, RepositoryError> {
+        self.find_by_trimmed_name(name)
+    }
+}
+
 /// Looked up by username, in any letter case, as login matches it. Deleted users are found too,
 /// so a row can restore one.
 impl KeyedTable for UserAccountRowRepository<'_> {
@@ -104,6 +122,33 @@ impl KeyedTable for UserAccountRowRepository<'_> {
     }
     fn find_by_key(&self, username: &str) -> Result<Vec<UserAccountRow>, RepositoryError> {
         self.find_by_trimmed_username_any_case(username)
+    }
+}
+
+/// Looked up by code within `r#type`, as a code can belong to a name of each type; with no type,
+/// among every type. Deleted names are found too, so a row can restore one.
+pub struct NamesOfType<'a> {
+    pub repo: NameRowRepository<'a>,
+    pub r#type: Option<NameRowType>,
+}
+
+impl KeyedTable for NamesOfType<'_> {
+    type Record = NameRow;
+    fn id(name: &NameRow) -> &str {
+        &name.id
+    }
+    fn key(name: &NameRow) -> &str {
+        &name.code
+    }
+    fn find_by_id(&self, id: &str) -> Result<Option<NameRow>, RepositoryError> {
+        self.repo.find_one_by_id(id)
+    }
+    fn find_by_key(&self, code: &str) -> Result<Vec<NameRow>, RepositoryError> {
+        let mut names = self.repo.find_by_trimmed_code(code)?;
+        if let Some(r#type) = &self.r#type {
+            names.retain(|name| name.r#type == *r#type);
+        }
+        Ok(names)
     }
 }
 
@@ -190,6 +235,39 @@ impl KeyedTable for InMemory<LocationTypeRow> {
         Ok(self.get(id).cloned())
     }
     fn find_by_key(&self, code: &str) -> Result<Vec<LocationTypeRow>, RepositoryError> {
+        Ok(self.with_key(code))
+    }
+}
+
+/// Looked up by code.
+impl KeyedTable for InMemory<StoreRow> {
+    type Record = StoreRow;
+    fn id(store: &StoreRow) -> &str {
+        &store.id
+    }
+    fn key(store: &StoreRow) -> &str {
+        &store.code
+    }
+    fn find_by_id(&self, id: &str) -> Result<Option<StoreRow>, RepositoryError> {
+        Ok(self.get(id).cloned())
+    }
+    fn find_by_key(&self, code: &str) -> Result<Vec<StoreRow>, RepositoryError> {
+        Ok(self.with_key(code))
+    }
+}
+
+impl KeyedTable for InMemory<CurrencyRow> {
+    type Record = CurrencyRow;
+    fn id(currency: &CurrencyRow) -> &str {
+        CurrencyRowRepository::id(currency)
+    }
+    fn key(currency: &CurrencyRow) -> &str {
+        CurrencyRowRepository::key(currency)
+    }
+    fn find_by_id(&self, id: &str) -> Result<Option<CurrencyRow>, RepositoryError> {
+        Ok(self.get(id).cloned())
+    }
+    fn find_by_key(&self, code: &str) -> Result<Vec<CurrencyRow>, RepositoryError> {
         Ok(self.with_key(code))
     }
 }
@@ -287,6 +365,40 @@ pub fn find_record<T: KeyedTable>(
         },
         None => pick_one(narrow(by_key)).map_err(|e| row.error(column, e.message(key))),
     })
+}
+
+/// The saved record a row changes, by id, else by its name in `column`, for tables keyed by
+/// name. With an id the name isn't checked: a different name renames the record. An inactive
+/// record doesn't make an active one's name ambiguous.
+pub fn find_by_id_or_name<T: KeyedTable>(
+    table: &T,
+    row: &Row,
+    column: &str,
+    id: Option<&str>,
+    name: Option<&str>,
+    is_active: impl Fn(&T::Record) -> bool,
+) -> Result<Result<Option<T::Record>, RowError>, RepositoryError> {
+    find_record(
+        table,
+        row,
+        column,
+        id,
+        name.filter(|_| id.is_none()),
+        T::key,
+        |records| active_first(records, &is_active),
+    )
+}
+
+/// For a row whose name an active `noun` (`other_id`) already has.
+pub fn duplicate_name_error(row: &Row, noun: &str, other_id: &str, name: &str) -> RowError {
+    // Nouns are ASCII, so the first byte is the first letter.
+    let capitalised = format!("{}{}", noun[..1].to_uppercase(), &noun[1..]);
+    row.error(
+        "name",
+        format!(
+            "{capitalised} {other_id} is already named {name}. Give this {noun} another name, or make one of them inactive"
+        ),
+    )
 }
 
 /// A reference to another table's record, given by a code column, an id column or both. `None`

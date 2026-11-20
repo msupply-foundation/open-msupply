@@ -1,4 +1,5 @@
-use repository::{RepositoryError, StorageConnection, UnitRow, UnitRowRepository, trim_spaces};
+use crate::record_key::{KeyCase, other_active_with_key};
+use repository::{RepositoryError, StorageConnection, UnitRow, UnitRowRepository};
 
 #[derive(Debug, PartialEq)]
 pub enum UpsertUnitError {
@@ -33,27 +34,20 @@ fn validate(connection: &StorageConnection, unit: &UnitRow) -> Result<(), Upsert
         return Err(UpsertUnitError::NameRequired);
     }
 
-    // Only a save that brings in the clash is refused, so existing duplicates stay editable.
-    // Names match in any letter case, as lookups do.
     let repo = UnitRowRepository::new(connection);
-    let folded = |name: &str| trim_spaces(name).to_lowercase();
-    let brings_in_clash = unit.is_active
-        && repo
-            .find_one_by_id(&unit.id)?
-            .is_none_or(|saved| !saved.is_active || folded(&saved.name) != folded(&unit.name));
-    if !brings_in_clash {
-        return Ok(());
+    let saved = repo.find_one_by_id(&unit.id)?;
+    if let Some(other_id) = other_active_with_key(
+        saved.as_ref(),
+        unit,
+        KeyCase::Any,
+        |name| repo.find_by_trimmed_name_any_case(name),
+        |unit| &unit.id,
+        |unit| &unit.name,
+        |unit| unit.is_active,
+    )? {
+        return Err(UpsertUnitError::DuplicateName { other_id });
     }
-    match repo
-        .find_by_trimmed_name_any_case(&unit.name)?
-        .into_iter()
-        .find(|other| other.is_active && other.id != unit.id)
-    {
-        Some(other) => Err(UpsertUnitError::DuplicateName {
-            other_id: other.id.clone(),
-        }),
-        None => Ok(()),
-    }
+    Ok(())
 }
 
 #[cfg(test)]

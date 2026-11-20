@@ -1,8 +1,11 @@
-use crate::{ListError, ListResult, get_pagination_or_default, i64_to_u32};
+use crate::{
+    ListError, ListResult, get_pagination_or_default, i64_to_u32,
+    record_key::{KeyCase, other_with_key},
+};
 use repository::{
     LocationType, LocationTypeFilter, LocationTypeRepository, LocationTypeRow,
     LocationTypeRowRepository, LocationTypeSort, LocationTypeUser, PaginationOption,
-    RepositoryError, StorageConnection, StorageConnectionManager, trim_spaces,
+    RepositoryError, StorageConnection, StorageConnectionManager,
 };
 
 pub fn get_location_types(
@@ -97,23 +100,18 @@ fn validate(
     if row.max_temperature < row.min_temperature {
         return Err(UpsertLocationTypeError::MaxBelowMin);
     }
-    // Only a save that brings in the clash is refused, so existing duplicates stay editable.
     // Trimmed on purpose; sync's `code_is_taken` is exact.
     let repo = LocationTypeRowRepository::new(connection);
-    let brings_in_clash = repo
-        .find_one_by_id(&row.id)?
-        .is_none_or(|saved| trim_spaces(&saved.code) != trim_spaces(&row.code));
-    if !brings_in_clash {
-        return Ok(());
-    }
-    match repo
-        .find_by_trimmed_code(&row.code)?
-        .into_iter()
-        .find(|other| other.id != row.id)
-    {
-        Some(other) => Err(UpsertLocationTypeError::DuplicateCode {
-            other_id: other.id.clone(),
-        }),
+    let saved = repo.find_one_by_id(&row.id)?;
+    match other_with_key(
+        saved.as_ref().map(|saved| saved.code.as_str()),
+        &row.id,
+        &row.code,
+        KeyCase::Exact,
+        |code| repo.find_by_trimmed_code(code),
+        |other| &other.id,
+    )? {
+        Some(other_id) => Err(UpsertLocationTypeError::DuplicateCode { other_id }),
         None => Ok(()),
     }
 }

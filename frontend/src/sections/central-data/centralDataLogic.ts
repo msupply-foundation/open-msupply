@@ -54,6 +54,13 @@ export const TABLES: {
     hasStatus: true,
   },
   {
+    value: 'NAME',
+    labelKey: 'label.names',
+    sheet: 'name',
+    searchKey: 'label.code-or-name-contains',
+    hasStatus: false,
+  },
+  {
     value: 'USER',
     labelKey: 'label.users',
     sheet: 'user',
@@ -64,6 +71,13 @@ export const TABLES: {
     value: 'ITEM',
     labelKey: 'items',
     sheet: 'item',
+    searchKey: 'label.code-or-name-contains',
+    hasStatus: true,
+  },
+  {
+    value: 'MASTER_LIST',
+    labelKey: 'label.master-lists',
+    sheet: 'master_list',
     searchKey: 'label.code-or-name-contains',
     hasStatus: true,
   },

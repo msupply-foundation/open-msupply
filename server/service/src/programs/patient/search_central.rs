@@ -25,9 +25,10 @@ use crate::{
         api::{InteractiveError, SyncApiV7, patient_search},
         patient_lookup::pull_and_integrate_patient_data,
     },
+    validate::check_patient_exists,
 };
 
-use super::PatientSearch;
+use super::{PatientSearch, patient_updated::activate_patient_name_store_join};
 
 /// Searching other facilities' patients on the central server.
 #[derive(Default)]
@@ -247,6 +248,25 @@ pub async fn link_patient_to_store(
     store_id: &str,
     name_id: &str,
 ) -> Result<NameStoreJoin, CentralPatientRequestError> {
+    // A patient of another store already on this server (any patient on the
+    // central server, or one of this site's own on a remote) has their records
+    // here: add them to the store directly, as central does when a remote asks
+    // for one. The join syncs on like any other, and central needn't be
+    // reachable.
+    if check_patient_exists(&context.connection, name_id)?.is_some() {
+        let id = context
+            .connection
+            .transaction_sync(|connection| {
+                activate_patient_name_store_join(connection, store_id, name_id, None)
+            })
+            .map_err(|error| error.to_inner_error())?;
+        return Ok(NameStoreJoin {
+            id,
+            name_id: name_id.to_string(),
+            store_id: store_id.to_string(),
+        });
+    }
+
     if is_v7_remote(context)? {
         return link_patient_to_store_v7(service_provider, store_id, name_id).await;
     }
@@ -496,6 +516,94 @@ mod test {
             date_of_birth: Some(date(1984, 3, 14)),
             ..Default::default()
         }));
+    }
+
+    // OMS-REG-DIS-01.84: on central, choosing another store's patient adds
+    // them to this store there and then, without asking legacy mSupply
+    #[actix_rt::test]
+    async fn central_links_a_patient_it_holds_to_the_store_locally() {
+        links_a_patient_already_here_locally(
+            "central_links_a_patient_it_holds_to_the_store_locally",
+            true,
+        )
+        .await;
+    }
+
+    // OMS-REG-DIS-01.85: on a remote site, choosing this site's own patient
+    // at another store needs no central server
+    #[actix_rt::test]
+    async fn remote_links_its_own_patient_to_the_store_locally() {
+        links_a_patient_already_here_locally(
+            "remote_links_its_own_patient_to_the_store_locally",
+            false,
+        )
+        .await;
+    }
+
+    async fn links_a_patient_already_here_locally(db_name: &str, is_central: bool) {
+        use repository::{
+            EqualFilter, NameRow, NameRowRepository, NameRowType, NameStoreJoinFilter,
+            NameStoreJoinRepository, NameStoreJoinRow, PatientRepository,
+            mock::{MockDataInserts, mock_store_a},
+            test_db::setup_all,
+        };
+
+        use super::link_patient_to_store;
+        use crate::{service_provider::ServiceProvider, sync::test_util_set_is_central_server};
+
+        let (_, connection, connection_manager, _) =
+            setup_all(db_name, MockDataInserts::none().names().stores()).await;
+        for id in ["new_here", "hidden_here"] {
+            NameRowRepository::new(&connection)
+                .upsert_one(&NameRow {
+                    id: id.to_string(),
+                    name: id.to_string(),
+                    r#type: NameRowType::Patient,
+                    ..Default::default()
+                })
+                .unwrap();
+        }
+        let store_id = mock_store_a().id;
+        NameStoreJoinRepository::new(&connection)
+            .upsert_one(&NameStoreJoinRow {
+                id: "hidden_join".to_string(),
+                name_id: "hidden_here".to_string(),
+                store_id: store_id.clone(),
+                visible: false,
+                ..Default::default()
+            })
+            .unwrap();
+
+        test_util_set_is_central_server(is_central);
+        // No sync settings, so asking another server would fail
+        let service_provider = ServiceProvider::new(connection_manager);
+        let ctx = service_provider.basic_context().unwrap();
+
+        let added = link_patient_to_store(&service_provider, &ctx, &store_id, "new_here")
+            .await
+            .unwrap();
+        assert_eq!(added.name_id, "new_here");
+        // A hidden join is shown again, not duplicated
+        let shown = link_patient_to_store(&service_provider, &ctx, &store_id, "hidden_here")
+            .await
+            .unwrap();
+        assert_eq!(shown.id, "hidden_join");
+        let joins = NameStoreJoinRepository::new(&connection)
+            .query_by_filter(
+                NameStoreJoinFilter::new()
+                    .name_id(EqualFilter::equal_to("hidden_here".to_string())),
+            )
+            .unwrap();
+        assert_eq!(joins.len(), 1);
+
+        let mut visible_here: Vec<String> = PatientRepository::new(&connection)
+            .query_by_filter(PatientFilter::new().visible_in_store(&store_id, true), None)
+            .unwrap()
+            .into_iter()
+            .map(|patient| patient.id)
+            .collect();
+        visible_here.sort();
+        assert_eq!(visible_here, ["hidden_here", "new_here"]);
     }
 
     // Central turning a search away for now reads as no answer, so the user

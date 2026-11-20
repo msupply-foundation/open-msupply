@@ -57,7 +57,7 @@ import {
   InfoIcon,
   PauseIcon,
 } from '../../../../ui/icons';
-import { RowStatusBadges, uncapped } from '../RowStatusBadges';
+import { RowStatusBadges } from '../RowStatusBadges';
 import { StatusBadge } from '@/ui/elements/feedback/StatusBadge';
 import {
   DraftStockOutLines,
@@ -1403,15 +1403,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       // The meta rides as getCellDefinition's second argument, NOT a sibling
       // `meta:` key — the spread returns its own `meta` and would overwrite one
       // declared beside it (which is exactly how this card lost its header).
-      // Cap-less (the shared `uncapped` — the chips fill the code preset's
-      // 7rem cap and pin the column, the #601 trap the detail table hit too).
-      ...uncapped(
-        getCellDefinition('batch', {
-          headerPosition: 'primary',
-          showLabel: true,
-          hideFromColumnSettings: true,
-        })
-      ),
+      ...getCellDefinition('batch', {
+        headerPosition: 'primary',
+        showLabel: true,
+        hideFromColumnSettings: true,
+      }),
       // Room for the batch value AND its status chips by default; still
       // user-resizable in both directions (no cap).
       size: remToPx(13),

@@ -300,6 +300,37 @@ describe('ExportCard', () => {
     });
   });
 
+  it('gives master lists a code or name search and a Status filter (OMS-REG-CDIO-01.46)', async () => {
+    open();
+    expect(
+      shown.fields['central-data-export-master_list-search']!.placeholder
+    ).toBe('label.code-or-name-contains');
+
+    shown.checkboxes['central-data-export-master_list']!.onChange(true);
+    await settle();
+    shown.selects['central-data-export-master_list-status']!.onValueChange(
+      'INACTIVE'
+    );
+    await settle();
+    expect(countRequests().at(-1)).toEqual({
+      tables: [{ table: 'MASTER_LIST', contains: null, isActive: false }],
+    });
+  });
+
+  it('gives names a code or name search and no Status filter (OMS-REG-CDIO-01.46)', async () => {
+    open();
+    expect(shown.fields['central-data-export-name-search']!.placeholder).toBe(
+      'label.code-or-name-contains'
+    );
+    expect(shown.selects['central-data-export-name-status']).toBeUndefined();
+
+    shown.checkboxes['central-data-export-name']!.onChange(true);
+    await settle();
+    expect(countRequests().at(-1)).toEqual({
+      tables: [{ table: 'NAME', contains: null, isActive: null }],
+    });
+  });
+
   it('counts again after typing in Search pauses, and at once for Status (OMS-REG-CDIO-01.47)', async () => {
     open();
     await tickUnits();

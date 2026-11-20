@@ -85,6 +85,7 @@ pub mod programs;
 pub mod purchase_order;
 pub mod purchase_order_line;
 pub mod reason_option;
+pub(crate) mod record_key;
 pub mod repack;
 pub mod report;
 pub mod requisition;
