@@ -289,6 +289,24 @@ impl KeyedTable for InMemory<CurrencyRow> {
     }
 }
 
+/// Looked up by username, in any letter case, as `UserAccountRowRepository` finds them.
+impl KeyedTable for InMemory<UserAccountRow> {
+    type Record = UserAccountRow;
+    const ANY_CASE: bool = true;
+    fn id(user: &UserAccountRow) -> &str {
+        UserAccountRowRepository::id(user)
+    }
+    fn key(user: &UserAccountRow) -> &str {
+        UserAccountRowRepository::key(user)
+    }
+    fn find_by_id(&self, id: &str) -> Result<Option<UserAccountRow>, RepositoryError> {
+        Ok(self.get(id).cloned())
+    }
+    fn find_by_key(&self, username: &str) -> Result<Vec<UserAccountRow>, RepositoryError> {
+        Ok(self.with_key(username))
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub enum LookupError {
     NotFound,

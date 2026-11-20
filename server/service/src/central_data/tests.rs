@@ -7498,13 +7498,27 @@ async fn a_user_permission_finds_its_references_and_cannot_change_them() {
             ]),
             // A blank store keeps the saved one, as every permission has one.
             permission_row(&[("id", "anna_stocktake"), ("username", "anna")]),
-            // A DELETE row's blank cells aren't compared.
-            permission_row(&[("id", "gone"), ("delete", "DELETE")]),
+            // A DELETE row's blank context cells aren't compared, though its record has one.
+            permission_row(&[
+                ("id", "anna_documents"),
+                ("username", "anna"),
+                ("permission", "DOCUMENT_QUERY"),
+                ("context_name", ""),
+                ("context_id", ""),
+                ("delete", "DELETE"),
+            ]),
         ]),
     );
     let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
     assert_eq!(summary.errors, vec![]);
-    assert_eq!(summary.tables[0].unchanged, 3);
+    assert_eq!(
+        (summary.tables[0].unchanged, summary.tables[0].deleted),
+        (2, 1)
+    );
+    assert_eq!(
+        summary.changes[0].record,
+        "anna: DOCUMENT_QUERY for Immunisation in store MS"
+    );
 
     let path = write_file(
         dir.path(),

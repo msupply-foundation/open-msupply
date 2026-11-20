@@ -1,9 +1,10 @@
 use crate::user_account::upsert::protected_user_ids;
 use repository::{
     ContextRowRepository, EqualFilter, KeyType, KeyValueStoreRepository, PermissionType,
-    RepositoryError, StorageConnection, StoreRowRepository, UserAccountRowRepository, UserFilter,
-    UserPermissionFilter, UserPermissionRepository, UserPermissionRow, UserPermissionRowRepository,
-    UserRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
+    RepositoryError, StorageConnection, StoreRowRepository, UserAccountRow,
+    UserAccountRowRepository, UserFilter, UserPermissionFilter, UserPermissionRepository,
+    UserPermissionRow, UserPermissionRowRepository, UserRepository, UserStoreJoinRow,
+    UserStoreJoinRowRepository,
 };
 use util::uuid::uuid;
 
@@ -73,15 +74,43 @@ pub fn upsert_user_permission(
             let repo = UserPermissionRowRepository::new(connection);
             let saved = repo.find_one_by_id(&row.id)?;
             validate(connection, saved.as_ref(), row)?;
-            repo.upsert_one(row)?;
-            if row.permission == PermissionType::StoreAccess
-                && let Some(store_id) = &row.store_id
-            {
-                add_store_join(connection, &row.user_id, store_id)?;
-            }
+            save(connection, row)?;
             Ok(())
         })
         .map_err(|error| error.to_inner_error())
+}
+
+/// As `upsert_user_permission`, for a new permission whose caller has already found its user,
+/// store and context, refused a protected user and a permission the server doesn't check, and
+/// found no record with its user, store, permission and context, as an import does from what it
+/// has read. `user` is the saved user, for the one check left.
+pub fn add_checked_user_permission(
+    connection: &StorageConnection,
+    row: &UserPermissionRow,
+    user: &UserAccountRow,
+) -> Result<(), UpsertUserPermissionError> {
+    check_user(user)?;
+    connection
+        .transaction_sync(|connection| save(connection, row))
+        .map_err(|error| error.to_inner_error())?;
+    Ok(())
+}
+
+fn save(connection: &StorageConnection, row: &UserPermissionRow) -> Result<(), RepositoryError> {
+    UserPermissionRowRepository::new(connection).upsert_one(row)?;
+    if row.permission == PermissionType::StoreAccess
+        && let Some(store_id) = &row.store_id
+    {
+        add_store_join(connection, &row.user_id, store_id)?;
+    }
+    Ok(())
+}
+
+fn check_user(user: &UserAccountRow) -> Result<(), UpsertUserPermissionError> {
+    if user.deleted_datetime.is_some() {
+        return Err(UpsertUserPermissionError::UserDeleted);
+    }
+    Ok(())
 }
 
 /// Takes a permission away. Taking store access away also stops the user logging in to the store,
@@ -100,13 +129,27 @@ pub fn delete_user_permission(
             if protected_user_ids(connection)?.contains(&saved.user_id) {
                 return Err(DeleteUserPermissionError::Protected);
             }
+            delete_checked_user_permission(connection, deleting_user_id, &saved)
+        })
+        .map_err(|error| error.to_inner_error())
+}
+
+/// As `delete_user_permission`, for a caller that has already read `saved` and refused a
+/// protected user's, as an import does.
+pub fn delete_checked_user_permission(
+    connection: &StorageConnection,
+    deleting_user_id: &str,
+    saved: &UserPermissionRow,
+) -> Result<(), DeleteUserPermissionError> {
+    connection
+        .transaction_sync(|connection| -> Result<(), DeleteUserPermissionError> {
             // Checked before anything is deleted: inside an import's transaction an error here
             // doesn't roll back what this call wrote.
-            let removes_store = removes_store(connection, &saved)?;
-            if saved.user_id == deleting_user_id && locks_out(connection, &saved, removes_store)? {
+            let removes_store = removes_store(connection, saved)?;
+            if saved.user_id == deleting_user_id && locks_out(connection, saved, removes_store)? {
                 return Err(DeleteUserPermissionError::LocksOutSelf);
             }
-            repo.delete(id)?;
+            UserPermissionRowRepository::new(connection).delete(&saved.id)?;
             if removes_store && let Some(store_id) = &saved.store_id {
                 let joins = UserStoreJoinRowRepository::new(connection);
                 for join in joins.find_many_by_user_id(&saved.user_id)? {
@@ -159,9 +202,7 @@ fn validate(
         let user = UserAccountRowRepository::new(connection)
             .find_one_by_id(&row.user_id)?
             .ok_or(UpsertUserPermissionError::UserNotFound)?;
-        if user.deleted_datetime.is_some() {
-            return Err(UpsertUserPermissionError::UserDeleted);
-        }
+        check_user(&user)?;
     }
     if permission_changes && matches!(row.permission, PermissionType::Unknown(_)) {
         return Err(UpsertUserPermissionError::UnknownPermission);
