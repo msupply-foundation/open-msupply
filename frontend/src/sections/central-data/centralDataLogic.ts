@@ -95,6 +95,13 @@ export const TABLES: {
     searchKey: 'label.code-contains',
     hasStatus: false,
   },
+  {
+    value: 'USER_PERMISSION',
+    labelKey: 'label.user-permissions',
+    sheet: 'user_permission',
+    searchKey: 'label.username-or-store-code-contains',
+    hasStatus: false,
+  },
 ];
 
 /** `undefined` for a table this screen doesn't know yet. */
