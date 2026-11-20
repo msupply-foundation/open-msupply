@@ -2493,6 +2493,8 @@ async fn a_home_currency_an_invoice_uses_stays_the_home_currency() {
         Some("is_home_currency"),
         "USD is used by an invoice as the home currency, so it must stay the home currency"
     )));
+    // Row 2's error is found after the sheet's last row, and takes it out of the count.
+    assert_eq!(summary.tables[0].updated, 0);
     assert_eq!(find_currency(&connection, "usd"), Some(usd()));
     assert_eq!(find_currency(&connection, "nzd"), Some(nzd()));
 
@@ -6222,6 +6224,90 @@ async fn a_name_finds_a_supplying_store_the_store_sheet_adds() {
     // Counted against the name sheet, though found after the store sheet ran.
     assert_eq!(summary.tables[0].table, CentralDataTable::Name);
     assert_eq!(summary.tables[0].error_count, 3);
+    // A row with errors writes nothing, so CL8 isn't counted or listed as added.
+    assert_eq!(
+        (summary.tables[0].inserted, summary.tables[0].deleted),
+        (0, 0)
+    );
+    assert!(summary.changes.iter().all(|change| change.sheet != "name"));
+}
+
+// covers: OMS-REG-CDIO-01.143
+
+#[actix_rt::test]
+async fn without_a_store_sheet_a_missing_supplying_store_is_an_error_at_once() {
+    let (_, service_provider, dir) = store_setup("central_data_name_no_store_sheet").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let path = write_file(
+        dir.path(),
+        name_sheet(vec![
+            new_name_row(&[
+                ("code", "CL8"),
+                ("type", "FACILITY"),
+                ("name", "Gone clinic"),
+                ("supplying_store_code", "GONE"),
+            ]),
+            new_name_row(&[("code", "CL7"), ("type", "FACILITY"), ("name", "Clinic")]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(
+            2,
+            Some("supplying_store_code"),
+            "referenced record not found"
+        )]
+    );
+    // Only CL7 is added.
+    assert_eq!(summary.tables[0].inserted, 1);
+    assert_eq!(
+        summary
+            .changes
+            .iter()
+            .map(|change| change.row)
+            .collect::<Vec<_>>(),
+        [3]
+    );
+}
+
+// covers: OMS-REG-CDIO-01.15, .143
+
+#[actix_rt::test]
+async fn an_error_found_after_the_store_sheet_is_listed_in_row_order_past_the_cap() {
+    let (_, service_provider, dir) = store_setup("central_data_later_error_listed").await;
+    let ctx = service_provider.basic_context().unwrap();
+    // Row 2's store is looked for after the store sheet; rows 3 on each have an error at once.
+    let mut names = vec![new_name_row(&[
+        ("code", "CL8"),
+        ("type", "FACILITY"),
+        ("name", "Gone clinic"),
+        ("supplying_store_code", "GONE"),
+    ])];
+    for i in 0..MAX_ROWS_LISTED + 20 {
+        let mut row = new_name_row(&[("type", "FACILITY"), ("name", "Clinic")]);
+        row[1] = Value::Text(format!("C{i}"));
+        row[4] = Value::Text("maybe".to_string());
+        names.push(row);
+    }
+    let bytes = sheet::write(vec![
+        sheet_data("name", &NAME_HEADERS, names),
+        sheet_data(
+            "store",
+            &STORE_HEADERS,
+            vec![new_store_row(&[("code", "W1"), ("name_code", "WARD")])],
+        ),
+    ])
+    .unwrap();
+    let path = write_file(dir.path(), bytes);
+
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(summary.error_count as usize, MAX_ROWS_LISTED + 21);
+    assert_eq!(summary.errors.len(), MAX_ROWS_LISTED);
+    assert_eq!(
+        (summary.errors[0].row, summary.errors[0].column.as_deref()),
+        (Some(2), Some("supplying_store_code"))
+    );
 }
 
 // covers: OMS-REG-CDIO-01.144

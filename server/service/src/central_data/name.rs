@@ -171,10 +171,11 @@ impl ImportTable for NameTable {
     fn start_sheet(
         &self,
         connection: &StorageConnection,
-        _start: SheetStart,
+        start: SheetStart,
     ) -> Result<Box<dyn SheetImport>, RepositoryError> {
         Ok(Box::new(NameSheet {
             references: References::load(connection)?,
+            store_sheet_follows: start.sheets_after.contains(&CentralDataTable::Store),
             later: Vec::new(),
         }))
     }
@@ -182,6 +183,8 @@ impl ImportTable for NameTable {
 
 struct NameSheet {
     references: References,
+    /// Whether the file's store sheet runs after this one, and may add a supplying store.
+    store_sheet_follows: bool,
     later: Vec<LaterStore>,
 }
 
@@ -288,7 +291,7 @@ impl SheetImport for NameSheet {
         }
 
         // Looked up for a `DELETE` row too, so a missing reference stops the import. One that
-        // isn't saved may be on the store sheet, except a `DELETE` row's.
+        // isn't saved may be on a store sheet that follows, except a `DELETE` row's.
         let mut later_store = None;
         let supplying_store_id = if keeps_saved_store(row, saved)
             || !(row.has(SUPPLYING_STORE_CODE) || row.has(SUPPLYING_STORE_ID))
@@ -305,7 +308,7 @@ impl SheetImport for NameSheet {
                 id.as_deref(),
             )? {
                 Ok(store_id) => Some(store_id),
-                Err((true, _)) if !delete => {
+                Err((true, _)) if !delete && self.store_sheet_follows => {
                     later_store = Some((code, id));
                     None
                 }

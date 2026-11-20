@@ -192,6 +192,8 @@ pub(crate) struct SheetStart<'a> {
     pub prepared: Option<Box<dyn Any>>,
     /// The importing user's date, for a date the server sets, such as when a currency changed.
     pub today: NaiveDate,
+    /// The tables whose sheets run after this one in the file, for a reference one may add.
+    pub sheets_after: Vec<CentralDataTable>,
 }
 
 /// Each row sees the writes of the rows before it.
@@ -353,7 +355,7 @@ pub struct ImportSummary {
     pub tables: Vec<TableChanges>,
     /// The first `MAX_ROWS_LISTED`, in sheet order.
     pub changes: Vec<RowChange>,
-    /// The first `errors_listed`, heading errors first.
+    /// The first `errors_listed`: heading errors, then row errors in table order, then row order.
     pub errors: Vec<RowError>,
     /// Every row error. With any, nothing was applied.
     pub error_count: u32,
@@ -374,12 +376,42 @@ impl ImportSummary {
         }
     }
 
+    /// Kept until `import_sheets` sorts them and keeps the first `errors_listed`, as a sheet can
+    /// find a row's error after later rows' errors.
     fn add_errors(&mut self, errors: impl IntoIterator<Item = RowError>) {
         for error in errors {
             self.error_count += 1;
-            if self.errors.len() < self.errors_listed {
-                self.errors.push(error);
-            }
+            self.errors.push(error);
+        }
+    }
+
+    /// A row with errors writes nothing, so a row that `finish_sheet` or `finish_file` finds an
+    /// error on no longer counts as the change it was counted as.
+    fn uncount(
+        &mut self,
+        counted: &mut HashMap<(String, u32), Change>,
+        sheet_order: &HashMap<String, usize>,
+        errors: &[RowError],
+    ) {
+        for error in errors {
+            let Some(row) = error.row else {
+                continue;
+            };
+            let (Some(change), Some(&position)) = (
+                counted.remove(&(error.sheet.clone(), row)),
+                sheet_order.get(&error.sheet),
+            ) else {
+                continue;
+            };
+            let table = &mut self.tables[position];
+            *match change {
+                Change::Inserted => &mut table.inserted,
+                Change::Updated | Change::Restored => &mut table.updated,
+                Change::Deleted => &mut table.deleted,
+                Change::Unchanged => &mut table.unchanged,
+            } -= 1;
+            self.changes
+                .retain(|listed| !(listed.sheet == error.sheet && listed.row == row));
         }
     }
 }
@@ -614,6 +646,7 @@ fn run_sheets(
                     commit,
                     prepared: prepared.remove(&table),
                     today,
+                    sheets_after: Vec::new(),
                 };
                 let summary = import_sheets(connection, start, sheets, &refused, errors_listed)?;
                 if commit && summary.error_count == 0 {
@@ -716,12 +749,20 @@ fn import_sheets<'a>(
         ));
     }
 
-    let heading_errors_listed = summary.errors.len();
+    let before_rows = summary.errors.len();
+    // A sheet's place here is its table's place in `summary.tables`.
     let sheet_order: HashMap<String, usize> = table_sheets
         .iter()
         .enumerate()
         .map(|(position, (_, sheet, _, _))| (sheet.name.clone(), position))
         .collect();
+    let running: Vec<CentralDataTable> = table_sheets
+        .iter()
+        .filter(|(_, _, _, is_refused)| !is_refused)
+        .map(|(table, ..)| table.table())
+        .collect();
+    // (sheet, row) → what the row was counted as, for `uncount`.
+    let mut counted: HashMap<(String, u32), Change> = HashMap::new();
     // Each sheet that ran, with its place in `summary.tables`, for `finish_file`.
     let mut finishing = Vec::new();
     for (table, sheet, heading_errors, is_refused) in table_sheets {
@@ -742,7 +783,14 @@ fn import_sheets<'a>(
             summary.tables.push(changes);
             continue;
         }
-        let mut rows = table.start_sheet(connection, start(table.table()))?;
+        let mut sheet_start = start(table.table());
+        sheet_start.sheets_after = running
+            .iter()
+            .skip_while(|running| **running != table.table())
+            .skip(1)
+            .copied()
+            .collect();
+        let mut rows = table.start_sheet(connection, sheet_start)?;
         // Record id → first row that changes it.
         let mut seen: HashMap<String, u32> = HashMap::new();
         for sheet_row in &sheet.rows {
@@ -762,6 +810,7 @@ fn import_sheets<'a>(
                 Change::Deleted => &mut changes.deleted,
                 Change::Unchanged => {
                     changes.unchanged += 1;
+                    counted.insert((sheet.name.clone(), row.number), Change::Unchanged);
                     continue;
                 }
             };
@@ -776,6 +825,7 @@ fn import_sheets<'a>(
                 continue;
             }
             *count += 1;
+            counted.insert((sheet.name.clone(), row.number), outcome.change);
             if summary.changes.len() < MAX_ROWS_LISTED {
                 summary.changes.push(RowChange {
                     sheet: sheet.name.clone(),
@@ -786,25 +836,31 @@ fn import_sheets<'a>(
                 });
             }
         }
-        summary.add_errors(rows.finish_sheet(connection, &sheet.name)?);
+        let errors = rows.finish_sheet(connection, &sheet.name)?;
         summary.sessions_to_end.extend(rows.sessions_to_end());
         changes.error_count = heading_errors + (summary.error_count - row_errors_before);
+        changes.error_count += errors.len() as u32;
         finishing.push((summary.tables.len(), rows));
         summary.tables.push(changes);
+        summary.uncount(&mut counted, &sheet_order, &errors);
+        summary.add_errors(errors);
     }
     for (position, mut rows) in finishing {
         let errors = rows.finish_file(connection)?;
         summary.tables[position].error_count += errors.len() as u32;
+        summary.uncount(&mut counted, &sheet_order, &errors);
         summary.add_errors(errors);
     }
-    // `finish_file` errors come last, so the row errors are put back in sheet then row order. A
-    // sheet's error with no row stays after its rows.
-    summary.errors[heading_errors_listed..].sort_by_key(|error| {
+    // `finish_sheet` and `finish_file` find errors after later rows', so the row errors are put
+    // back in table then row order before the list is cut. A sheet's error with no row stays
+    // after its rows.
+    summary.errors[before_rows..].sort_by_key(|error| {
         (
             sheet_order.get(&error.sheet).copied(),
             error.row.unwrap_or(u32::MAX),
         )
     });
+    summary.errors.truncate(summary.errors_listed);
     Ok(summary)
 }
 
