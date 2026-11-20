@@ -149,6 +149,7 @@ export type OutboundShipmentsVariables = {
     notEqualAll?: Array<string> | null;
   } | null;
     isProgramInvoice?: boolean | null;
+    isForUnnamedPatient?: boolean | null;
     purchaseOrderId?: {
     equalTo?: string | null;
     equalAny?: Array<string> | null;

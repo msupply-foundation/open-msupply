@@ -65,9 +65,8 @@ export const siteColumns = (): Column<SiteRow, SiteSortKey>[] => [
     header: () => t('label.hardware-id'),
     ...getCellDefinition<SiteRow>('code', { mono: true }),
     // A device fingerprint is a long identifier — wider than the code preset's
-    // cap, and not draggable past it without this.
+    // default.
     size: 220,
-    maxSize: undefined,
   },
   {
     c: { key: 'syncVersion' },

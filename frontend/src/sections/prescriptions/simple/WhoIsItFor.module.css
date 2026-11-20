@@ -1,4 +1,35 @@
 /*
+ * Step 1's control (WhoIsItFor.tsx): the Unnamed patient button before the
+ * picker, or, once the unnamed patient is chosen, it and Change. One line
+ * where the slot holds it; the picker takes the room left.
+ */
+.choose {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.picker {
+  flex: 1 1 12rem;
+  min-inline-size: 0;
+}
+
+/* The unnamed patient, chosen: a field-sized box, tinted and dashed, so it
+   reads as a choice made, not a registered patient. */
+.unnamed {
+  display: inline-flex;
+  flex: 1 1 auto;
+  align-items: center;
+  min-block-size: var(--input-height);
+  padding-inline: var(--space-3);
+  border: 1px dashed var(--input-border);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+  font-weight: var(--weight-semibold);
+}
+
+/*
  * The chosen patient's facts (WhoIsItFor.tsx). Their size and tone come from
  * the HeaderField's detail slot; this only runs them together as one line,
  * wrapping between facts rather than inside one.

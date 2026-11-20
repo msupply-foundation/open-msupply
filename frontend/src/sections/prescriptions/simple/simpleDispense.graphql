@@ -51,3 +51,13 @@ query simpleDispensedVisit($storeId: String!, $id: String!) {
     }
   }
 }
+
+# The store's unnamed patient (rules › the unnamed patient): the server
+# creates it the first time and returns the same record after. Asked for once
+# Dispense is pressed for a visit to it, before the check.
+mutation simpleUnnamedPatient($storeId: String!) {
+  getOrCreateUnnamedPatient(storeId: $storeId) {
+    id
+    name
+  }
+}

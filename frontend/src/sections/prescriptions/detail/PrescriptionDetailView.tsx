@@ -647,14 +647,18 @@ const PrescriptionDetailView: Component = () => {
                       setReportOpen(true);
                     }}
                   />
-                  <Button
-                    variant="secondary"
-                    icon={<InfoIcon />}
-                    data-testid="history-button"
-                    onClick={() => setHistoryOpen(true)}
-                  >
-                    {t('button.history')}
-                  </Button>
+                  {/* The unnamed patient's recently dispensed items would be
+                      every walk-in's (rules › the unnamed patient). */}
+                  <Show when={!node().patient?.isUnnamed}>
+                    <Button
+                      variant="secondary"
+                      icon={<InfoIcon />}
+                      data-testid="history-button"
+                      onClick={() => setHistoryOpen(true)}
+                    >
+                      {t('button.history')}
+                    </Button>
+                  </Show>
                   <Show when={!sidePanelOpen()}>
                     <Button
                       variant="secondary"

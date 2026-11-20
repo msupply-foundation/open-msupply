@@ -11,6 +11,7 @@ import {
   prescriptionDateOf,
   statusLabel,
 } from '../prescriptionStatus';
+import { shownPatientName } from '../patientName';
 import type { PrescriptionsResult } from './prescriptions.generated';
 
 type PrescriptionRow = PrescriptionsResult['invoices']['nodes'][number];
@@ -39,7 +40,7 @@ export const prescriptionsToCsv = (
     ...cf.fields,
   ];
   const data = rows.map(row => [
-    row.otherPartyName,
+    shownPatientName(row.otherPartyName, row.isForUnnamedPatient),
     statusLabel(asPrescriptionStatus(row.status)),
     row.invoiceNumber,
     exportDate(prescriptionDateOf(row)),

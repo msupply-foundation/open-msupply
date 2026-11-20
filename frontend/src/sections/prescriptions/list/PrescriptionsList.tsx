@@ -62,6 +62,7 @@ import {
   type CustomFieldFilterState,
 } from '../../../domain/customFields';
 import { filterFields, type PrescriptionFilter } from './listFilters';
+import { shownPatientName } from '../patientName';
 import { CreatePrescriptionModal } from './CreatePrescriptionModal';
 import {
   DeletePrescriptionsAction,
@@ -245,7 +246,9 @@ const PrescriptionsList: Component = () => {
                 onSelect={colour => void saveColour(row, colour)}
               />
             </Show>
-            <span>{row.otherPartyName}</span>
+            <span>
+              {shownPatientName(row.otherPartyName, row.isForUnnamedPatient)}
+            </span>
           </HStack>
         );
       },

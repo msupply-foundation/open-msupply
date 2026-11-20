@@ -125,3 +125,18 @@ export type SimpleDispensedVisitResult = {
 export const SimpleDispensedVisit = {
   query: "query simpleDispensedVisit($storeId: String!, $id: String!) {\n  invoice(storeId: $storeId, id: $id, type: PRESCRIPTION) {\n    __typename\n    ... on InvoiceNode {\n      id\n      status\n    }\n    ... on NodeError {\n      error {\n        __typename\n      }\n    }\n  }\n}",
 } as TypedDocument<SimpleDispensedVisitResult, SimpleDispensedVisitVariables>;
+
+export type SimpleUnnamedPatientVariables = {
+  storeId: string;
+};
+
+export type SimpleUnnamedPatientResult = {
+  getOrCreateUnnamedPatient: {
+  id: string;
+  name: string;
+};
+};
+
+export const SimpleUnnamedPatient = {
+  query: "mutation simpleUnnamedPatient($storeId: String!) {\n  getOrCreateUnnamedPatient(storeId: $storeId) {\n    id\n    name\n  }\n}",
+} as TypedDocument<SimpleUnnamedPatientResult, SimpleUnnamedPatientVariables>;

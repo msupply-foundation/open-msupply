@@ -7,6 +7,7 @@ const row = {
   invoiceNumber: 2,
   status: 'VERIFIED' as const,
   otherPartyName: 'Malfoy, Draco',
+  isForUnnamedPatient: false,
   colour: null,
   comment: 'a comment',
   theirReference: 'ref-1',
@@ -91,6 +92,16 @@ describe('prescriptionsToCsv (OMS-REG-DIS-03.52 — the list columns, in file fo
     // The option id resolves to its NAME, as the on-screen column shows it.
     // (sliced from the end — the patient name cell carries a quoted comma)
     expect(line.split(',').slice(-2)).toEqual(['Acute', 'Outpatient']);
+  });
+
+  // OMS-REG-DIS-12.212: its saved name is English on every site.
+  it("names the unnamed patient's records by the translated label", () => {
+    const csv = prescriptionsToCsv([
+      { ...row, otherPartyName: 'Unnamed patient', isForUnnamedPatient: true },
+    ]);
+    const line = csv.trim().split(/\r?\n/)[1];
+    expect(line.startsWith('label.unnamed-patient,')).toBe(true);
+    expect(line).not.toContain('Unnamed patient');
   });
 
   it('leaves the columns off entirely when the scope configures none', () => {

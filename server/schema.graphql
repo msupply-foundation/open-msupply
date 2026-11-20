@@ -5235,6 +5235,11 @@ input InvoiceFilterInput {
 	requisitionId: EqualFilterStringInput
 	linkedInvoiceId: EqualFilterStringInput
 	isProgramInvoice: Boolean
+	"""
+	Whether the other party is a store's unnamed patient: false leaves
+	its dispensing records out, as the patient search's recent patients do
+	"""
+	isForUnnamedPatient: Boolean
 	purchaseOrderId: EqualFilterStringInput
 	prescriptionRequestId: EqualFilterStringInput
 	purchaseOrderNumber: EqualFilterBigNumberInput
@@ -5417,6 +5422,12 @@ type InvoiceNode {
 	id: String!
 	otherPartyName: String!
 	otherPartyId: String!
+	"""
+	Whether the invoice is for a store's unnamed patient, so a list can show
+	its translated label without loading each row's patient
+	(spec/prescriptions rules › the unnamed patient)
+	"""
+	isForUnnamedPatient: Boolean!
 	"""
 	User that last edited invoice, if user is not found in system default unknown user is returned
 	Null is returned for transfers, where inbound has not been edited yet
@@ -6502,6 +6513,12 @@ type Mutations {
 	"""
 	insertPatient(storeId: String!, input: InsertPatientInput!): InsertPatientResponse!
 	"""
+	The store's unnamed patient, the one record its walk-in visits are
+	dispensed to: created on the first call, the same record after.
+	Refused where the store's "Use the unnamed patient" is off.
+	"""
+	getOrCreateUnnamedPatient(storeId: String!): PatientNode!
+	"""
 	Updates a new patient (without document data)
 	"""
 	updatePatient(storeId: String!, input: UpdatePatientInput!): UpdatePatientResponse!
@@ -7035,6 +7052,11 @@ type PatientNode {
 	id: String!
 	name: String!
 	code: String!
+	"""
+	Whether this is a store's unnamed patient, the one record its walk-in
+	visits are dispensed to. Search never returns it.
+	"""
+	isUnnamed: Boolean!
 	code2: String
 	firstName: String
 	lastName: String
