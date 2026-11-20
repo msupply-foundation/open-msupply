@@ -7,9 +7,10 @@ export interface DetailCardProps {
    * `dir="auto"`, so a title in another script than the screen's keeps its own
    * reading order (a plugin's configuration label, say, still untranslated in
    * the operator's locale). The heading is shrink-to-fit in the header's flex
-   * row, so its own direction does not re-align the card.
+   * row, so its own direction does not re-align the card. Optional: without
+   * a title, meta or actions there is no header.
    */
-  title: string;
+  title?: string;
   /** Header-end actions (e.g. Edit/Delete IconButtons). */
   actions?: JSX.Element;
   /** The card body — arbitrary content (DetailSection/DetailRow, tables,
@@ -49,8 +50,9 @@ export interface DetailCardProps {
 }
 
 /*
- * DetailCard — a titled card with header actions, for when several records of
- * the same kind are stacked as cards rather than one page being the whole
+ * DetailCard — a card with header actions, titled unless a page-level tab
+ * already names it, for when several records of the same kind are stacked as
+ * cards rather than one page being the whole
  * detail view (spec/ui-standards/components.md § Detail views). Extends the
  * DetailContainer/DetailSection/DetailRow/RecordNameHeader family with the one
  * shape it doesn't cover: a miniature detail view per record, each with its
@@ -74,19 +76,25 @@ export const DetailCard = (props: DetailCardProps): JSX.Element => {
       data-layout={props.layout ?? 'stacked'}
       data-testid={props.testId}
     >
-      <div class={styles.header}>
-        <div class={styles.heading}>
-          <h2 class={styles.title} dir="auto">
-            {props.title}
-          </h2>
-          <Show when={meta()}>
-            <div class={styles.meta}>{meta()}</div>
+      <Show when={props.title || meta() || actions()}>
+        <div class={styles.header}>
+          <Show when={props.title || meta()}>
+            <div class={styles.heading}>
+              <Show when={props.title}>
+                <h2 class={styles.title} dir="auto">
+                  {props.title}
+                </h2>
+              </Show>
+              <Show when={meta()}>
+                <div class={styles.meta}>{meta()}</div>
+              </Show>
+            </div>
+          </Show>
+          <Show when={actions()}>
+            <div class={styles.actions}>{actions()}</div>
           </Show>
         </div>
-        <Show when={actions()}>
-          <div class={styles.actions}>{actions()}</div>
-        </Show>
-      </div>
+      </Show>
       <div class={styles.body}>{props.children}</div>
     </section>
   );

@@ -1636,6 +1636,195 @@ export type CannotReverseInvoiceStatus = UpdateErrorInterface &
     description: Scalars['String']['output'];
   };
 
+export type CentralDataCannotReadFile = CentralDataImportErrorInterface & {
+  __typename: 'CentralDataCannotReadFile';
+  description: Scalars['String']['output'];
+};
+
+export enum CentralDataChangeNode {
+  Deleted = 'DELETED',
+  Inserted = 'INSERTED',
+  /** Counted as updated. */
+  Restored = 'RESTORED',
+  Unchanged = 'UNCHANGED',
+  Updated = 'UPDATED',
+}
+
+export type CentralDataErrorsFileResponse =
+  | CentralDataExportNode
+  | CentralDataImportError;
+
+export type CentralDataExportCountNode = {
+  __typename: 'CentralDataExportCountNode';
+  matching: Scalars['Int']['output'];
+  table: CentralDataTableNode;
+  total: Scalars['Int']['output'];
+};
+
+export type CentralDataExportCountsNode = {
+  __typename: 'CentralDataExportCountsNode';
+  /** Across all tables, as for an import. */
+  maxRows: Scalars['Int']['output'];
+  tables: Array<CentralDataExportCountNode>;
+};
+
+export type CentralDataExportError = {
+  __typename: 'CentralDataExportError';
+  error: CentralDataExportErrorInterface;
+};
+
+export type CentralDataExportErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type CentralDataExportNode = {
+  __typename: 'CentralDataExportNode';
+  fileId: Scalars['String']['output'];
+};
+
+export type CentralDataExportResponse =
+  | CentralDataExportError
+  | CentralDataExportNode;
+
+export type CentralDataExportTableInput = {
+  /** Any letter case. */
+  contains?: InputMaybe<Scalars['String']['input']>;
+  /** Ignored by a table with no active flag. */
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
+  table: CentralDataTableNode;
+};
+
+export type CentralDataFieldChangeNode = {
+  __typename: 'CentralDataFieldChangeNode';
+  column: Scalars['String']['output'];
+  from: Scalars['String']['output'];
+  to: Scalars['String']['output'];
+};
+
+export type CentralDataImportError = {
+  __typename: 'CentralDataImportError';
+  error: CentralDataImportErrorInterface;
+};
+
+export type CentralDataImportErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type CentralDataImportNode = {
+  __typename: 'CentralDataImportNode';
+  /** The first 100; `tables` counts them all. */
+  changes: Array<CentralDataRowChangeNode>;
+  /** With any, nothing was applied. */
+  errorCount: Scalars['Int']['output'];
+  /** The first 100. */
+  errors: Array<CentralDataRowErrorNode>;
+  tables: Array<CentralDataTableChangesNode>;
+};
+
+export type CentralDataImportResponse =
+  | CentralDataImportError
+  | CentralDataImportNode;
+
+export type CentralDataMutations = {
+  __typename: 'CentralDataMutations';
+  /** The upload with each row's errors in an `error` column, as a file id for /files. */
+  errorsFile: CentralDataErrorsFileResponse;
+  /** Returns a file id for /files. Refused over the import cap. */
+  export: CentralDataExportResponse;
+  /** Applies nothing if any row has an error. */
+  import: CentralDataImportResponse;
+};
+
+export type CentralDataMutationsErrorsFileArgs = {
+  fileId: Scalars['String']['input'];
+};
+
+export type CentralDataMutationsExportArgs = {
+  tables: Array<CentralDataExportTableInput>;
+};
+
+export type CentralDataMutationsImportArgs = {
+  fileId: Scalars['String']['input'];
+  today?: InputMaybe<Scalars['NaiveDate']['input']>;
+};
+
+export type CentralDataQueries = {
+  __typename: 'CentralDataQueries';
+  exportCounts: CentralDataExportCountsNode;
+  /** Writes nothing. */
+  importPreview: CentralDataImportResponse;
+};
+
+export type CentralDataQueriesExportCountsArgs = {
+  tables: Array<CentralDataExportTableInput>;
+};
+
+export type CentralDataQueriesImportPreviewArgs = {
+  fileId: Scalars['String']['input'];
+};
+
+export type CentralDataRowChangeNode = {
+  __typename: 'CentralDataRowChangeNode';
+  change: CentralDataChangeNode;
+  /** For an update, the columns that change. */
+  fields: Array<CentralDataFieldChangeNode>;
+  /** E.g. the unit's name. */
+  record: Scalars['String']['output'];
+  /** As Excel shows it. */
+  row: Scalars['Int']['output'];
+  sheet: Scalars['String']['output'];
+};
+
+export type CentralDataRowErrorNode = {
+  __typename: 'CentralDataRowErrorNode';
+  column?: Maybe<Scalars['String']['output']>;
+  message: Scalars['String']['output'];
+  /** As Excel shows it. Null on a sheet name, which has no row. */
+  row?: Maybe<Scalars['Int']['output']>;
+  sheet: Scalars['String']['output'];
+};
+
+export type CentralDataTableChangesNode = {
+  __typename: 'CentralDataTableChangesNode';
+  deleted: Scalars['Int']['output'];
+  /** Heading errors included. */
+  errorCount: Scalars['Int']['output'];
+  inserted: Scalars['Int']['output'];
+  table: CentralDataTableNode;
+  unchanged: Scalars['Int']['output'];
+  updated: Scalars['Int']['output'];
+};
+
+export enum CentralDataTableNode {
+  Currency = 'CURRENCY',
+  Item = 'ITEM',
+  LocationType = 'LOCATION_TYPE',
+  MasterList = 'MASTER_LIST',
+  Name = 'NAME',
+  Unit = 'UNIT',
+  User = 'USER',
+}
+
+export type CentralDataTooManyCells = CentralDataImportErrorInterface & {
+  __typename: 'CentralDataTooManyCells';
+  cellCount: Scalars['Int']['output'];
+  description: Scalars['String']['output'];
+  maxCells: Scalars['Int']['output'];
+};
+
+export type CentralDataTooManyRows = CentralDataExportErrorInterface &
+  CentralDataImportErrorInterface & {
+    __typename: 'CentralDataTooManyRows';
+    description: Scalars['String']['output'];
+    maxRows: Scalars['Int']['output'];
+    rowCount: Scalars['Int']['output'];
+  };
+
+export type CentralDataUploadExpired = CentralDataImportErrorInterface & {
+  __typename: 'CentralDataUploadExpired';
+  description: Scalars['String']['output'];
+};
+
 export type CentralGeneralMutations = {
   __typename: 'CentralGeneralMutations';
   configureNameProperties: ConfigureNamePropertiesResponse;
@@ -1789,6 +1978,7 @@ export type CentralServerMutationNode = {
   barcode: BarcodeMutations;
   bundledItem: BundledItemMutations;
   campaign: CampaignMutations;
+  centralData: CentralDataMutations;
   customField: CustomFieldMutations;
   demographic: DemographicMutations;
   general: CentralGeneralMutations;
@@ -1809,6 +1999,7 @@ export type CentralServerNoAnswer = CentralPatientSearchErrorInterface & {
 
 export type CentralServerQueryNode = {
   __typename: 'CentralServerQueryNode';
+  centralData: CentralDataQueries;
   customField: CustomFieldConfigQueries;
   plugin: CentralPluginQueries;
   site: CentralSiteQueries;
@@ -8375,6 +8566,13 @@ export type PatientFilterInput = {
   gender?: InputMaybe<EqualFilterGenderType>;
   id?: InputMaybe<EqualFilterStringInput>;
   identifier?: InputMaybe<StringFilterInput>;
+  /**
+   * Only patients visible in the queried store (it has a visible
+   * name_store_join for them), or with false only those that aren't.
+   * Unset, patients are returned whichever store they belong to. Read by
+   * the `patients` query only.
+   */
+  isVisible?: InputMaybe<Scalars['Boolean']['input']>;
   lastName?: InputMaybe<StringFilterInput>;
   name?: InputMaybe<StringFilterInput>;
   nextOfKinName?: InputMaybe<StringFilterInput>;

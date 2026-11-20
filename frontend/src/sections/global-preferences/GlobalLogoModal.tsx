@@ -9,7 +9,10 @@ import {
 } from '@/ui/elements/buttons/StandardButtons';
 import { Button } from '@/ui/elements/buttons/Button';
 import { UploadZone } from '@/ui/elements/inputs/UploadZone';
-import type { RejectionReason } from '@/ui/elements/inputs/uploadFiles';
+import {
+  tooLargeMessage,
+  type RejectionReason,
+} from '@/ui/elements/inputs/uploadFiles';
 import { Text } from '@/ui/elements/typography/Text';
 import { Stack } from '@/ui/layout/Stack/Stack';
 import { TrashIcon } from '@/ui/icons';
@@ -59,10 +62,7 @@ export const GlobalLogoModal: Component<{
   const refuse = (filename: string, reason: RejectionReason) =>
     setNotice(
       reason === 'size'
-        ? t('error.file-exceeds-size-limit', {
-            filename,
-            maxSize: LOGO_MAX_SIZE_LABEL,
-          })
+        ? tooLargeMessage(filename, MAX_LOGO_FILE_BYTES)
         : t('error.file-type-not-supported', { filename })
     );
 

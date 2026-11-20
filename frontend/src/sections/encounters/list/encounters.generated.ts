@@ -168,6 +168,7 @@ export type EncounterListVariables = {
     startsWith?: string | null;
   } | null;
     dynamicFilter?: unknown | null;
+    isVisible?: boolean | null;
   } | null;
     programEnrolment?: {
     patientId?: {

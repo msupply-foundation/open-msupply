@@ -1,6 +1,6 @@
 use crate::{
-    ChangelogSyncType, ChangelogTableName, Delete, RowActionType, SourceSiteId, Upsert,
-    db_diesel::changelog::ChangelogRepository,
+    ChangelogSyncType, ChangelogTableName, DBType, Delete, RowActionType, SourceSiteId, Upsert,
+    db_diesel::changelog::ChangelogRepository, trim, trim_spaces,
 };
 
 use super::{
@@ -179,9 +179,107 @@ impl<'a> ItemRowRepository<'a> {
         Ok(())
     }
 
-    pub async fn find_all(&mut self) -> Result<Vec<ItemRow>, RepositoryError> {
+    pub fn find_all(&self) -> Result<Vec<ItemRow>, RepositoryError> {
         let result = item.load(self.connection.lock().connection());
         Ok(result?)
+    }
+
+    pub fn find_one_by_id_without_legacy_record(
+        &self,
+        item_id: &str,
+    ) -> Result<Option<ItemRow>, RepositoryError> {
+        Ok(self
+            .without_legacy_record(item.filter(id.eq(item_id)).into_boxed())?
+            .pop())
+    }
+
+    /// Letter case counts; spaces around either code don't.
+    pub fn find_by_trimmed_code_without_legacy_record(
+        &self,
+        item_code: &str,
+    ) -> Result<Vec<ItemRow>, RepositoryError> {
+        self.without_legacy_record(
+            item.filter(trim(code).eq(trim_spaces(item_code)))
+                .order(id.asc())
+                .into_boxed(),
+        )
+    }
+
+    /// `query`'s items with `legacy_record` empty, without reading the legacy JSON.
+    fn without_legacy_record(
+        &self,
+        query: item::BoxedQuery<'_, DBType>,
+    ) -> Result<Vec<ItemRow>, RepositoryError> {
+        let result = query
+            .select((
+                id,
+                name,
+                code,
+                unit_id,
+                strength,
+                ven_category,
+                default_pack_size,
+                type_,
+                "".into_sql::<diesel::sql_types::Text>(),
+                is_active,
+                is_vaccine,
+                vaccine_doses,
+                restricted_location_type_id,
+                volume_per_pack,
+                universal_code,
+                custom_fields,
+            ))
+            .load::<ItemRow>(self.connection.lock().connection())?;
+        Ok(result)
+    }
+
+    /// Updates a saved item, leaving its `legacy_record` as it is. Every field is named, so a new
+    /// one doesn't compile until it's written here or left out on purpose. Bound under other names,
+    /// as the columns' names are taken.
+    pub fn update_keeping_legacy_record(&self, row: &ItemRow) -> Result<(), RepositoryError> {
+        let ItemRow {
+            id: row_id,
+            name: row_name,
+            code: row_code,
+            unit_id: row_unit_id,
+            strength: row_strength,
+            ven_category: row_ven_category,
+            default_pack_size: row_default_pack_size,
+            r#type: row_type,
+            legacy_record: _,
+            is_active: row_is_active,
+            is_vaccine: row_is_vaccine,
+            vaccine_doses: row_vaccine_doses,
+            restricted_location_type_id: row_restricted_location_type_id,
+            volume_per_pack: row_volume_per_pack,
+            universal_code: row_universal_code,
+            custom_fields: row_custom_fields,
+        } = row;
+        diesel::update(item.find(row_id))
+            .set((
+                name.eq(row_name),
+                code.eq(row_code),
+                unit_id.eq(row_unit_id),
+                strength.eq(row_strength),
+                ven_category.eq(row_ven_category),
+                default_pack_size.eq(row_default_pack_size),
+                type_.eq(row_type),
+                is_active.eq(row_is_active),
+                is_vaccine.eq(row_is_vaccine),
+                vaccine_doses.eq(row_vaccine_doses),
+                restricted_location_type_id.eq(row_restricted_location_type_id),
+                volume_per_pack.eq(row_volume_per_pack),
+                universal_code.eq(row_universal_code),
+                custom_fields.eq(row_custom_fields),
+            ))
+            .execute(self.connection.lock().connection())?;
+        let changelog = ItemRow::generate_changelog(
+            row_id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
     pub fn find_one_by_code(&self, item_code: &str) -> Result<Option<ItemRow>, RepositoryError> {

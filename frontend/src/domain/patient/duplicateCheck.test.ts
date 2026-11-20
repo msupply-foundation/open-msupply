@@ -13,15 +13,21 @@ let central = false;
 vi.mock('../../api/serverInfo', () => ({ isCentralServer: () => central }));
 
 const findPatients = vi.fn();
-const findCentralPatients = vi.fn();
+const findOtherFacilityPatients = vi.fn();
 vi.mock('./patientFind', async importOriginal => ({
   ...(await importOriginal<typeof import('./patientFind')>()),
   findPatients: (...args: unknown[]) => findPatients(...args),
-  findCentralPatients: (...args: unknown[]) => findCentralPatients(...args),
+  findOtherFacilityPatients: (...args: unknown[]) =>
+    findOtherFacilityPatients(...args),
 }));
 
 import { createDuplicateCheck, type DuplicateTerms } from './duplicateCheck';
-import type { CentralFind, FindResult, PatientFindRow } from './patientFind';
+import type {
+  CentralFind,
+  FindResult,
+  OtherFacilityOptions,
+  PatientFindRow,
+} from './patientFind';
 
 let dispose: (() => void) | undefined;
 afterEach(() => {
@@ -29,7 +35,7 @@ afterEach(() => {
   dispose = undefined;
   central = false;
   findPatients.mockReset();
-  findCentralPatients.mockReset();
+  findOtherFacilityPatients.mockReset();
 });
 
 const row = (
@@ -106,17 +112,21 @@ describe('OMS-REG-DIS-01.62 — the check runs once both names have two letters'
 
   it('searches both names, with no ID, here and at other facilities', async () => {
     findPatients.mockResolvedValue(here([]));
-    findCentralPatients.mockResolvedValue(ok([]));
+    findOtherFacilityPatients.mockResolvedValue(ok([]));
     const { check } = mount({ firstName: 'Jo', lastName: 'Smith' });
     await check.run();
     const nameTerms = { firstName: 'Jo', lastName: 'Smith', id: '' };
     expect(findPatients).toHaveBeenCalledWith('store', nameTerms);
-    expect(findCentralPatients).toHaveBeenCalledWith('store', nameTerms);
+    expect(findOtherFacilityPatients).toHaveBeenCalledWith(
+      'store',
+      nameTerms,
+      expect.anything()
+    );
   });
 
   it('goes back off when a name drops below two letters', async () => {
     findPatients.mockResolvedValue(here([row('a')]));
-    findCentralPatients.mockResolvedValue(ok([]));
+    findOtherFacilityPatients.mockResolvedValue(ok([]));
     const { check, setTerms } = mount({ firstName: 'Jo', lastName: 'Smith' });
     await check.run();
     expect(check.state().status).toBe('done');
@@ -129,7 +139,7 @@ describe('OMS-REG-DIS-01.62 — the check runs once both names have two letters'
 describe('OMS-REG-DIS-01.62 — leaving a field re-checks only when what it checks changed', () => {
   it('does not run again for the same names with other case or accents', async () => {
     findPatients.mockResolvedValue(here([]));
-    findCentralPatients.mockResolvedValue(ok([]));
+    findOtherFacilityPatients.mockResolvedValue(ok([]));
     const { check, setTerms } = mount({
       firstName: 'Élodie',
       lastName: 'Ismaël',
@@ -142,7 +152,7 @@ describe('OMS-REG-DIS-01.62 — leaving a field re-checks only when what it chec
 
   it('does not run again for another date in the same birth year', async () => {
     findPatients.mockResolvedValue(here([]));
-    findCentralPatients.mockResolvedValue(ok([]));
+    findOtherFacilityPatients.mockResolvedValue(ok([]));
     const { check, setTerms } = mount({
       firstName: 'Jo',
       lastName: 'Smith',
@@ -156,7 +166,7 @@ describe('OMS-REG-DIS-01.62 — leaving a field re-checks only when what it chec
 
   it('runs again when the birth year or Code 2 changes', async () => {
     findPatients.mockResolvedValue(here([]));
-    findCentralPatients.mockResolvedValue(ok([]));
+    findOtherFacilityPatients.mockResolvedValue(ok([]));
     const { check, setTerms } = mount({
       firstName: 'Jo',
       lastName: 'Smith',
@@ -175,7 +185,7 @@ describe('OMS-REG-DIS-01.62 — leaving a field re-checks only when what it chec
 
   it('runs again for the same key when forced (Retry)', async () => {
     findPatients.mockResolvedValue(here([]));
-    findCentralPatients.mockResolvedValue(ok([]));
+    findOtherFacilityPatients.mockResolvedValue(ok([]));
     const { check } = mount({ firstName: 'Jo', lastName: 'Smith' });
     await check.run();
     await check.retry();
@@ -188,7 +198,7 @@ describe('OMS-REG-DIS-01.72 / .63 — this store answers first, other facilities
     const local = deferred<FindResult>();
     const remote = deferred<CentralFind>();
     findPatients.mockReturnValue(local.promise);
-    findCentralPatients.mockReturnValue(remote.promise);
+    findOtherFacilityPatients.mockReturnValue(remote.promise);
     const { check } = mount({ firstName: 'Jo', lastName: 'Smith' });
 
     const running = check.run();
@@ -212,18 +222,75 @@ describe('OMS-REG-DIS-01.72 / .63 — this store answers first, other facilities
 
   it('marks other facilities failed when central is out of reach, keeping this store’s', async () => {
     findPatients.mockResolvedValue(here([row('a')]));
-    findCentralPatients.mockResolvedValue({ kind: 'unreachable' });
+    findOtherFacilityPatients.mockResolvedValue({ kind: 'unreachable' });
     const { check } = mount({ firstName: 'Jo', lastName: 'Smith' });
     await check.run();
     expect(done(check)?.central).toBe('failed');
     expect(done(check)?.matches.map(m => m.id)).toEqual(['a']);
   });
 
+  // OMS-REG-DIS-01.85
+  it("lists this site's patients at other stores while central is still checked", async () => {
+    findPatients.mockResolvedValue(here([row('a')]));
+    const remote = deferred<CentralFind>();
+    findOtherFacilityPatients.mockImplementation(
+      (_store: string, _terms: unknown, options: OtherFacilityOptions) => {
+        options.onSite?.({ rows: [row('s1')], more: false });
+        return remote.promise;
+      }
+    );
+    const { check } = mount({ firstName: 'Jo', lastName: 'Smith' });
+    const running = check.run();
+    await vi.waitFor(() => expect(done(check)?.central).toBe('pending'));
+    expect(done(check)?.matches.map(m => [m.id, m.where])).toEqual([
+      ['a', 'here'],
+      ['s1', 'elsewhere'],
+    ]);
+    remote.resolve(ok([row('c1'), row('s1')]));
+    await running;
+    expect(done(check)?.central).toBe('done');
+    expect(done(check)?.matches.map(m => m.id)).toEqual(['a', 'c1', 's1']);
+  });
+
+  // OMS-REG-DIS-01.85
+  it("still counts this site's patients at other stores when central is out of reach", async () => {
+    findPatients.mockResolvedValue(here([row('a')]));
+    findOtherFacilityPatients.mockResolvedValue({
+      kind: 'slow',
+      site: { rows: [row('s1')], more: false },
+    });
+    const { check } = mount({ firstName: 'Jo', lastName: 'Smith' });
+    await check.run();
+    expect(done(check)?.central).toBe('failed');
+    expect(done(check)?.matches.map(m => [m.id, m.where])).toEqual([
+      ['a', 'here'],
+      ['s1', 'elsewhere'],
+    ]);
+  });
+
+  it("keeps this site's patients at other stores when the central request fails outright", async () => {
+    findPatients.mockResolvedValue(here([]));
+    findOtherFacilityPatients.mockImplementation(
+      async (
+        _store: string,
+        _terms: unknown,
+        options: OtherFacilityOptions
+      ) => {
+        options.onSite?.({ rows: [row('s1')], more: false });
+        return { kind: 'failed' };
+      }
+    );
+    const { check } = mount({ firstName: 'Jo', lastName: 'Smith' });
+    await check.run();
+    expect(done(check)?.central).toBe('failed');
+    expect(done(check)?.matches.map(m => m.id)).toEqual(['s1']);
+  });
+
   // The failure itself is reported globally; the footer mustn't then claim
   // there are no existing patients.
   it('marks other facilities failed when the central request fails outright', async () => {
     findPatients.mockResolvedValue(here([]));
-    findCentralPatients.mockResolvedValue({ kind: 'failed' });
+    findOtherFacilityPatients.mockResolvedValue({ kind: 'failed' });
     const { check } = mount({ firstName: 'Jo', lastName: 'Smith' });
     await check.run();
     expect(done(check)).toEqual({
@@ -236,7 +303,7 @@ describe('OMS-REG-DIS-01.72 / .63 — this store answers first, other facilities
 
   it('fails, rather than finding no one, when this store’s request fails', async () => {
     findPatients.mockResolvedValue(undefined);
-    findCentralPatients.mockResolvedValue(ok([]));
+    findOtherFacilityPatients.mockResolvedValue(ok([]));
     const { check } = mount({ firstName: 'Jo', lastName: 'Smith' });
     await check.run();
     expect(check.state()).toEqual({ status: 'failed' });
@@ -252,7 +319,7 @@ describe('OMS-REG-DIS-01.72 / .63 — this store answers first, other facilities
 
   it('checks again on Retry after this store failed', async () => {
     findPatients.mockResolvedValueOnce(undefined);
-    findCentralPatients.mockResolvedValue(ok([]));
+    findOtherFacilityPatients.mockResolvedValue(ok([]));
     const { check } = mount({ firstName: 'Jo', lastName: 'Smith' });
     await check.run();
     findPatients.mockResolvedValueOnce(here([row('a')]));
@@ -264,7 +331,7 @@ describe('OMS-REG-DIS-01.72 / .63 — this store answers first, other facilities
 describe('the count past the first page', () => {
   it('says there are more when this store has more than a page', async () => {
     findPatients.mockResolvedValue({ rows: [row('a')], more: true });
-    findCentralPatients.mockResolvedValue(ok([]));
+    findOtherFacilityPatients.mockResolvedValue(ok([]));
     const { check } = mount({ firstName: 'Jo', lastName: 'Smith' });
     await check.run();
     expect(done(check)?.more).toBe(true);
@@ -272,7 +339,7 @@ describe('the count past the first page', () => {
 
   it('says there are more when other facilities have more than a page', async () => {
     findPatients.mockResolvedValue(here([]));
-    findCentralPatients.mockResolvedValue({
+    findOtherFacilityPatients.mockResolvedValue({
       kind: 'ok',
       rows: [row('c1')],
       more: true,
@@ -283,15 +350,19 @@ describe('the count past the first page', () => {
   });
 });
 
-describe('OMS-REG-DIS-01.57 — on the central server, other facilities are never asked', () => {
-  it('answers from this store alone, done', async () => {
+describe('OMS-REG-DIS-01.84 — on the central server, other facilities are checked too', () => {
+  it('asks for other facilities as on a remote site', async () => {
     central = true;
     findPatients.mockResolvedValue(here([row('a')]));
+    findOtherFacilityPatients.mockResolvedValue(ok([row('b')]));
     const { check } = mount({ firstName: 'Jo', lastName: 'Smith' });
     await check.run();
-    expect(findCentralPatients).not.toHaveBeenCalled();
+    expect(findOtherFacilityPatients).toHaveBeenCalledOnce();
     expect(done(check)?.central).toBe('done');
-    expect(done(check)?.matches.map(m => m.id)).toEqual(['a']);
+    expect(done(check)?.matches.map(m => [m.id, m.where])).toEqual([
+      ['a', 'here'],
+      ['b', 'elsewhere'],
+    ]);
   });
 });
 
@@ -304,7 +375,7 @@ describe('OMS-REG-DIS-01.64 / .76 — likely matches first and marked (Code 2 st
         row('both', { dateOfBirth: '1984-01-01', code2: ' N-1 ' }),
       ])
     );
-    findCentralPatients.mockResolvedValue(
+    findOtherFacilityPatients.mockResolvedValue(
       ok([row('id-elsewhere', { code2: 'n-1' })])
     );
     const { check } = mount({
@@ -326,7 +397,7 @@ describe('OMS-REG-DIS-01.64 / .76 — likely matches first and marked (Code 2 st
     findPatients.mockResolvedValue(
       here([row('a', { dateOfBirth: '1984-01-01', code2: '' })])
     );
-    findCentralPatients.mockResolvedValue(ok([]));
+    findOtherFacilityPatients.mockResolvedValue(ok([]));
     const { check } = mount({ firstName: 'Jo', lastName: 'Smith' });
     await check.run();
     expect(done(check)?.matches[0].likely).toEqual([]);
@@ -337,7 +408,7 @@ describe('a reply for a check that has been superseded is dropped', () => {
   it('drops this store’s reply when the check was reset meanwhile', async () => {
     const local = deferred<FindResult>();
     findPatients.mockReturnValue(local.promise);
-    findCentralPatients.mockResolvedValue(ok([]));
+    findOtherFacilityPatients.mockResolvedValue(ok([]));
     const { check } = mount({ firstName: 'Jo', lastName: 'Smith' });
     const running = check.run();
     check.reset();
@@ -349,7 +420,7 @@ describe('a reply for a check that has been superseded is dropped', () => {
   it('drops central’s reply when the check was reset meanwhile', async () => {
     const remote = deferred<CentralFind>();
     findPatients.mockResolvedValue(here([]));
-    findCentralPatients.mockReturnValue(remote.promise);
+    findOtherFacilityPatients.mockReturnValue(remote.promise);
     const { check } = mount({ firstName: 'Jo', lastName: 'Smith' });
     const running = check.run();
     await vi.waitFor(() => expect(done(check)?.central).toBe('pending'));
@@ -365,7 +436,7 @@ describe('a reply for a check that has been superseded is dropped', () => {
     findPatients
       .mockReturnValueOnce(firstLocal.promise)
       .mockResolvedValueOnce(here([row('new')]));
-    findCentralPatients
+    findOtherFacilityPatients
       .mockReturnValueOnce(firstRemote.promise)
       .mockResolvedValueOnce(ok([]));
     const { check, setTerms } = mount({ firstName: 'Jo', lastName: 'Smith' });
@@ -380,7 +451,7 @@ describe('a reply for a check that has been superseded is dropped', () => {
 
   it('runs again after a reset, even for the same names', async () => {
     findPatients.mockResolvedValue(here([]));
-    findCentralPatients.mockResolvedValue(ok([]));
+    findOtherFacilityPatients.mockResolvedValue(ok([]));
     const { check } = mount({ firstName: 'Jo', lastName: 'Smith' });
     await check.run();
     check.reset();

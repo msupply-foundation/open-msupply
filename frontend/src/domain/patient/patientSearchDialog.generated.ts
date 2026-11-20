@@ -113,6 +113,7 @@ export type PatientFindVariables = {
     startsWith?: string | null;
   } | null;
     dynamicFilter?: unknown | null;
+    isVisible?: boolean | null;
   } | null;
   first: number;
   offset: number;

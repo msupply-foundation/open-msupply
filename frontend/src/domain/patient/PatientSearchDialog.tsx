@@ -1,6 +1,5 @@
 import { createEffect, createSignal, on, Show, type JSX } from 'solid-js';
 import { createStore } from 'solid-js/store';
-import { isCentralServer } from '../../api/serverInfo';
 import { hasPermission } from '../../store/storeContext';
 import { t, localeDateFormat } from '../../intl';
 import { Dialog } from '../../ui/elements/feedback/Dialog';
@@ -24,7 +23,7 @@ import { parseDobSearch } from './dobSearch';
 import { linkPatientToStore } from './patientResource';
 import {
   FIND_LIMIT,
-  findCentralPatients,
+  findOtherFacilityPatients,
   findPatients,
   fold,
   hasTerms,
@@ -64,7 +63,8 @@ type LocalState =
   | ({ kind: 'done' } & Page);
 
 // Other facilities: searched automatically when nothing matches here, else on
-// request. They're the central server, which can be slow or out of reach.
+// request. On a remote site they're the central server, which can be slow or
+// out of reach; on the central server they're its own other patients.
 // `unreachable` with `skipped`: not asked, as it was out of reach moments ago;
 // `slow`: it was reached but didn't answer in time, which pauses it the same.
 type CentralState =
@@ -170,14 +170,32 @@ export const PatientSearchDialog = (
   // back. A link can be abandoned — the patient stays linked, unchosen.
   const holdsClose = () => !!props.busy || choosing();
 
-  const searchOtherFacilities = async (forTerms: FindTerms, offset = 0) => {
+  // `skipCentral`: central was out of reach moments ago, so only this site's
+  // own patients at other stores are asked for, and the pause runs on.
+  const searchOtherFacilities = async (
+    forTerms: FindTerms,
+    offset = 0,
+    skipCentral = false
+  ) => {
     const token = ++centralToken;
     setCentral({ kind: 'searching', previous: pageOf(central()) });
-    const outcome = await findCentralPatients(props.storeId, forTerms, offset);
+    const outcome = await findOtherFacilityPatients(props.storeId, forTerms, {
+      offset,
+      skipCentral,
+      // This site's own patients at other stores show at once, the section
+      // still loading while central is asked (none: the rows it replaces stay)
+      onSite: site => {
+        if (token !== centralToken || central().kind !== 'searching') return;
+        if (site.rows.length === 0) return;
+        setCentral({ kind: 'searching', previous: { ...site, offset } });
+      },
+    });
     if (token !== centralToken) return;
     const down = outcome.kind === 'unreachable' || outcome.kind === 'slow';
-    centralDownAt = down ? Date.now() : 0;
-    centralSlow = outcome.kind === 'slow';
+    if (!skipCentral) {
+      centralDownAt = down ? Date.now() : 0;
+      centralSlow = outcome.kind === 'slow';
+    }
     if (outcome.kind === 'ok')
       setCentral({
         kind: 'done',
@@ -188,7 +206,12 @@ export const PatientSearchDialog = (
     else if (down)
       setCentral({
         kind: 'unreachable',
-        previous: pageOf(central()),
+        // This site's own patients at other stores, for this search; the
+        // rows last shown only when this site couldn't say either
+        previous: outcome.site
+          ? { ...outcome.site, offset }
+          : pageOf(central()),
+        skipped: skipCentral,
         slow: centralSlow,
       });
     else setCentral({ kind: 'idle' });
@@ -226,15 +249,14 @@ export const PatientSearchDialog = (
     if (token !== searchToken) return;
     const rows = result?.rows ?? [];
     setLocal({ kind: 'done', rows, offset: 0, more: result?.more ?? false });
-    if (rows.length > 0 || isCentralServer()) setCentral({ kind: 'idle' });
+    if (rows.length > 0) setCentral({ kind: 'idle' });
     if (fromEnter) {
       const match = exactIdMatch(rows, forTerms.id);
       if (match) return void choose(match);
     }
-    if (rows.length === 0 && !isCentralServer()) {
-      if (Date.now() - centralDownAt < CENTRAL_PAUSE_MS)
-        setCentral({ kind: 'unreachable', skipped: true, slow: centralSlow });
-      else void searchOtherFacilities(forTerms);
+    if (rows.length === 0) {
+      const paused = Date.now() - centralDownAt < CENTRAL_PAUSE_MS;
+      void searchOtherFacilities(forTerms, 0, paused);
     }
   };
 
@@ -367,20 +389,19 @@ export const PatientSearchDialog = (
     if (c.kind !== 'unreachable') return '';
     if (c.slow)
       return c.skipped
-        ? t('messages.other-facilities-skipped-slow')
+        ? t('messages.other-stores-skipped-slow')
         : t('messages.central-slow');
     return c.skipped
-      ? t('messages.other-facilities-skipped')
+      ? t('messages.other-stores-skipped')
       : t('messages.failed-to-reach-central');
   };
   const skippedCentral = () => {
     const c = central();
     return c.kind === 'unreachable' && c.skipped === true;
   };
-  // The central server already holds every patient; elsewhere the link is
-  // offered once there are matches here (none here searches automatically).
+  // Offered once there are matches here (none here searches automatically).
   const offerOtherFacilities = () =>
-    !isCentralServer() && localRows().length > 0 && central().kind === 'idle';
+    localRows().length > 0 && central().kind === 'idle';
   // Paged with no total (counting a broad match on a big register is the
   // slow part): the standard pager's Previous · page · Next.
   // Changing page scrolls back to the table's top: the dialog body scrolls,
@@ -414,7 +435,8 @@ export const PatientSearchDialog = (
           onOffsetChange: (offset: number) => {
             toTopOf(centralSection);
             const s = searched();
-            if (s) void searchOtherFacilities(s, offset);
+            // In the minute's pause, the pages are this site's alone
+            if (s) void searchOtherFacilities(s, offset, skippedCentral());
           },
         }
       : undefined;
@@ -642,7 +664,7 @@ export const PatientSearchDialog = (
                       if (s) void searchOtherFacilities(s);
                     }}
                   >
-                    {t('button.search-other-facilities')}
+                    {t('button.search-other-stores')}
                   </Button>
                 ) : undefined
               }
@@ -658,7 +680,7 @@ export const PatientSearchDialog = (
             ref={centralSection}
             data-testid="other-facilities-results"
           >
-            <Text variant="subtitle">{t('heading.at-other-facilities')}</Text>
+            <Text variant="subtitle">{t('heading.at-other-stores')}</Text>
             <Show when={central().kind === 'unreachable'}>
               <Alert severity="warning" testId="central-search-error">
                 <HStack gap="md" align="center" wrap>
@@ -674,7 +696,7 @@ export const PatientSearchDialog = (
                     }}
                   >
                     {skippedCentral()
-                      ? t('button.search-other-facilities')
+                      ? t('button.search-other-stores')
                       : t('button.retry')}
                   </Button>
                 </HStack>
@@ -699,7 +721,7 @@ export const PatientSearchDialog = (
               emptyMessage={
                 central().kind === 'unreachable'
                   ? t('messages.nothing-here')
-                  : t('messages.no-matches-at-other-facilities')
+                  : t('messages.no-matches-at-other-stores')
               }
             />
           </Stack>

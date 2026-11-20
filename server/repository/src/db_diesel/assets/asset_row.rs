@@ -1,6 +1,6 @@
 use super::asset_row::asset::dsl::*;
 use crate::asset_log_row::latest_asset_log;
-use crate::db_diesel::store_row::store;
+use crate::db_diesel::{name_link_row::name_link, store_row::store};
 use crate::{
     ChangelogRepository, ChangelogSyncType, Delete, RepositoryError, RowActionType, SourceSiteId,
     StorageConnection, Upsert,
@@ -36,6 +36,8 @@ table! {
 
 joinable!(asset -> store (store_id));
 allow_tables_to_appear_in_same_query!(latest_asset_log, asset, store);
+// `donor_name_id` is a name link id.
+allow_tables_to_appear_in_same_query!(asset, name_link);
 
 #[derive(
     Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default, Serialize, Deserialize,

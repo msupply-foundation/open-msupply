@@ -241,7 +241,7 @@ describe('fillableBatches', () => {
     expect(batches.map(b => b.id)).toEqual(['later']);
   });
 
-  it('leaves out a batch whose VVM status is unusable', () => {
+  it('OMS-REG-DIS-12.198: leaves out a batch whose VVM status is unusable', () => {
     const batches = fillableBatches(
       item('a', [
         batch('unusable', { vvmStatus: { unusable: true, priority: 3 } }),
@@ -253,7 +253,7 @@ describe('fillableBatches', () => {
     expect(batches.map(b => b.id)).toEqual(['usable']);
   });
 
-  it('under sort by VVM status then expiry, takes the better VVM status first', () => {
+  it('OMS-REG-DIS-12.196: under sort by VVM status then expiry, takes the better VVM status first', () => {
     const batches = fillableBatches(
       item('a', [
         batch('sooner-worse', {

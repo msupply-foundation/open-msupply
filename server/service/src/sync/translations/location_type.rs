@@ -64,7 +64,7 @@ impl SyncTranslation for LocationTypeTranslation {
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
-        None // Not editable in OMS
+        None // Not pushed to legacy; editable only on a standalone central
     }
 
     fn try_translate_from_upsert_sync_record(
