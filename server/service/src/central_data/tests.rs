@@ -17,10 +17,10 @@ use repository::{
     ItemRowRepository, ItemType, ItemVariantRow, ItemVariantRowRepository, KeyType,
     KeyValueStoreRepository, LanguageType, LocationTypeRow, LocationTypeRowRepository,
     MasterListRow, MasterListRowRepository, NameRow, NameRowRepository, NameRowType,
-    NameStoreJoinFilter, NameStoreJoinRepository, RequisitionLineRow, RequisitionLineRowRepository,
-    SiteRow, SiteRowRepository, StorageConnection, StoreMode, StoreRow, StoreRowRepository,
-    UnitRow, UnitRowRepository, UserAccountRow, UserAccountRowRepository, UserStoreJoinRow,
-    UserStoreJoinRowRepository, VENCategory,
+    NameStoreJoinFilter, NameStoreJoinRepository, NameStoreJoinRow, RequisitionLineRow,
+    RequisitionLineRowRepository, SiteRow, SiteRowRepository, StorageConnection, StoreMode,
+    StoreRow, StoreRowRepository, UnitRow, UnitRowRepository, UserAccountRow,
+    UserAccountRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository, VENCategory,
     mock::{
         MockDataInserts, mock_draft_request_requisition_line, mock_item_a_variant_1,
         mock_outbound_shipment_a, mock_store_a,
@@ -6354,4 +6354,593 @@ async fn a_store_on_the_servers_own_site_can_be_moved_and_disabled() {
     assert_eq!(summary.changes[0].change, Change::Deleted);
     let central = find_store(&connection, "central").unwrap();
     assert_eq!((central.site_id, central.is_disabled), (1, true));
+}
+
+const JOIN_HEADERS: [&str; 9] = [
+    "id",
+    "store_code",
+    "store_id",
+    "name_code",
+    "name_type",
+    "name_id",
+    "name_is_customer",
+    "name_is_supplier",
+    "delete",
+];
+
+fn join_sheet_data(rows: Vec<Vec<Value>>) -> SheetData {
+    sheet_data("name_store_join", &JOIN_HEADERS, rows)
+}
+
+fn join_sheet(rows: Vec<Vec<Value>>) -> Vec<u8> {
+    sheet::write(vec![join_sheet_data(rows)]).unwrap()
+}
+
+/// A row of `JOIN_HEADERS` with the given cells; the others are blank.
+fn join_row(cells: &[(&str, &str)]) -> Vec<Value> {
+    JOIN_HEADERS
+        .iter()
+        .map(
+            |header| match cells.iter().find(|(column, _)| column == header) {
+                Some((_, cell)) if !cell.is_empty() => Value::Text(cell.to_string()),
+                _ => Value::Empty,
+            },
+        )
+        .collect()
+}
+
+fn add_join(connection: &StorageConnection, id: &str, store_id: &str, name_id: &str) {
+    NameStoreJoinRepository::new(connection)
+        .upsert_one(&NameStoreJoinRow {
+            id: id.to_string(),
+            store_id: store_id.to_string(),
+            name_id: name_id.to_string(),
+            name_is_customer: true,
+            name_is_supplier: false,
+            visible: true,
+        })
+        .unwrap();
+}
+
+/// Each of the store's joins, as (id, name id, customer, supplier), in id order.
+fn joins_of(connection: &StorageConnection, store_id: &str) -> Vec<(String, String, bool, bool)> {
+    let mut joins: Vec<_> = NameStoreJoinRepository::new(connection)
+        .query_by_filter(NameStoreJoinFilter {
+            store_id: Some(EqualFilter::equal_to(store_id.to_string())),
+            ..Default::default()
+        })
+        .unwrap()
+        .into_iter()
+        .map(|join| {
+            let join = join.name_store_join;
+            (
+                join.id,
+                join.name_id,
+                join.name_is_customer,
+                join.name_is_supplier,
+            )
+        })
+        .collect();
+    joins.sort();
+    joins
+}
+
+fn joins_containing(contains: Option<&str>) -> ExportTable {
+    ExportTable {
+        table: CentralDataTable::NameStoreJoin,
+        filter: ExportFilter {
+            contains: contains.map(str::to_string),
+            ..Default::default()
+        },
+    }
+}
+
+/// `store_setup`, with Main store seeing its own name, the clinic, the deleted clinic, the patient
+/// and the system name `invad`.
+async fn join_setup(name: &str) -> (StorageConnection, ServiceProvider, TempDir) {
+    let (connection, service_provider, dir) = store_setup(name).await;
+    for (id, name_id) in [
+        ("join_own", "main_store_name"),
+        ("join_clinic", "clinic"),
+        ("join_closed", "closed"),
+        ("join_patient", "patient"),
+        ("join_invad", "invad"),
+    ] {
+        add_join(&connection, id, "store_main", name_id);
+    }
+    (connection, service_provider, dir)
+}
+
+// covers: OMS-REG-CDIO-01.10, .11, .145
+
+#[actix_rt::test]
+async fn name_store_joins_export_then_import_makes_no_changes() {
+    let (connection, service_provider, dir) = join_setup("central_data_join_round_trip").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let before = joins_of(&connection, "store_main");
+
+    let bytes = CentralDataService
+        .export(&ctx, &[joins_containing(None)])
+        .unwrap();
+    let path = write_file(dir.path(), bytes);
+    let Ok(sheets) = sheet::read(&path, MAX_IMPORT_ROWS) else {
+        panic!("the export reads back")
+    };
+    let sheet = &sheets[0];
+    assert_eq!(
+        sheet.headers,
+        [JOIN_HEADERS.as_slice(), &["store_name", "name_name"]].concat()
+    );
+    // Neither the patient's join nor the system name's; the deleted name's is.
+    let rows: Vec<&[String]> = sheet.rows.iter().map(|row| row.cells.as_slice()).collect();
+    assert_eq!(
+        rows,
+        [
+            [
+                "join_clinic",
+                "MS",
+                "store_main",
+                "CL1",
+                "FACILITY",
+                "clinic",
+                "true",
+                "false",
+                "",
+                "Main store",
+                "Central clinic"
+            ],
+            [
+                "join_closed",
+                "MS",
+                "store_main",
+                "CL2",
+                "FACILITY",
+                "closed",
+                "true",
+                "false",
+                "",
+                "Main store",
+                "Closed clinic"
+            ],
+            [
+                "join_own",
+                "MS",
+                "store_main",
+                "MAIN",
+                "STORE",
+                "main_store_name",
+                "true",
+                "false",
+                "",
+                "Main store",
+                "Main store"
+            ],
+        ]
+    );
+
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].unchanged, 3);
+    assert_eq!(summary.changes, vec![]);
+    assert_eq!(joins_of(&connection, "store_main"), before);
+}
+
+// covers: OMS-REG-CDIO-01.46, .145
+
+#[actix_rt::test]
+async fn a_name_store_join_export_searches_name_and_store_code() {
+    let (connection, service_provider, _) = join_setup("central_data_join_filter").await;
+    let ctx = service_provider.basic_context().unwrap();
+    StoreRowRepository::new(&connection)
+        .upsert_one(&StoreRow {
+            id: "ward".to_string(),
+            code: "W1".to_string(),
+            name_id: "ward_name".to_string(),
+            ..Default::default()
+        })
+        .unwrap();
+    add_join(&connection, "join_ward", "ward", "clinic");
+    let count = |contains: Option<&str>| {
+        CentralDataService
+            .export_counts(&ctx, &[joins_containing(contains)])
+            .unwrap()[0]
+            .count
+    };
+
+    assert_eq!(
+        count(None),
+        RecordCount {
+            matching: 4,
+            total: 4
+        }
+    );
+    assert_eq!(count(Some(" cl1 ")).matching, 2);
+    assert_eq!(count(Some("w1")).matching, 1);
+    assert_eq!(count(Some("ms")).matching, 3);
+    // Not the name's name.
+    assert_eq!(count(Some("clinic")).matching, 0);
+}
+
+// covers: OMS-REG-CDIO-01.12, .25, .26, .36, .55, .146, .147
+
+#[actix_rt::test]
+async fn name_store_join_rows_add_update_and_delete_by_store_and_name() {
+    let (connection, service_provider, dir) = join_setup("central_data_join_upsert").await;
+    let ctx = service_provider.basic_context().unwrap();
+
+    let path = write_file(
+        dir.path(),
+        join_sheet(vec![
+            join_row(&[("store_code", "MS"), ("name_code", "WARD")]),
+            join_row(&[("name_code", "WARD"), ("name_is_customer", "TRUE")]),
+            join_row(&[
+                ("store_code", "MS"),
+                ("name_code", "CL1"),
+                ("delete", "Delete"),
+            ]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                2,
+                Some("name_is_customer"),
+                "name_is_customer is required for a new name store join"
+            ),
+            (
+                2,
+                Some("name_is_supplier"),
+                "name_is_supplier is required for a new name store join"
+            ),
+            (
+                3,
+                Some("store_code"),
+                "store_code is required for a new name store join"
+            ),
+            (
+                3,
+                Some("name_is_supplier"),
+                "name_is_supplier is required for a new name store join"
+            ),
+            (
+                4,
+                Some("delete"),
+                "\"Delete\" is not valid. Type DELETE to delete this row, or leave it blank"
+            ),
+        ]
+    );
+
+    let path = write_file(
+        dir.path(),
+        join_sheet(vec![
+            // WARD is a store's name; a blank type looks among every type but patients.
+            join_row(&[
+                ("store_code", "MS"),
+                ("name_code", "WARD"),
+                ("name_is_customer", "FALSE"),
+                ("name_is_supplier", "TRUE"),
+            ]),
+            // No id: found by its store and name. A blank cell keeps the saved value.
+            join_row(&[
+                ("store_code", "MS"),
+                ("name_code", "CL1"),
+                ("name_type", "facility"),
+                ("name_is_supplier", "TRUE"),
+            ]),
+            join_row(&[
+                ("id", "join_closed"),
+                ("store_code", "MS"),
+                ("name_code", "CL2"),
+                ("name_is_customer", "TRUE"),
+                ("delete", "DELETE"),
+            ]),
+            // Already gone: unchanged.
+            join_row(&[("id", "gone"), ("delete", "DELETE")]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(
+        summary.tables,
+        vec![TableChanges {
+            table: CentralDataTable::NameStoreJoin,
+            inserted: 1,
+            updated: 1,
+            deleted: 1,
+            unchanged: 1,
+            error_count: 0,
+        }]
+    );
+    assert_eq!(
+        summary
+            .changes
+            .iter()
+            .map(|change| (change.record.as_str(), change.change))
+            .collect::<Vec<_>>(),
+        [
+            ("Ward (WARD) in store MS", Change::Inserted),
+            ("Central clinic (CL1) in store MS", Change::Updated),
+            ("Closed clinic (CL2) in store MS", Change::Deleted),
+        ]
+    );
+    assert_eq!(
+        summary.changes[1].fields,
+        vec![FieldChange {
+            column: "name_is_supplier",
+            from: "FALSE".to_string(),
+            to: "TRUE".to_string(),
+        }]
+    );
+    let joins = joins_of(&connection, "store_main");
+    let mut names: Vec<_> = joins
+        .iter()
+        .map(|(_, name_id, customer, supplier)| (name_id.as_str(), *customer, *supplier))
+        .collect();
+    names.sort();
+    assert_eq!(
+        names,
+        [
+            ("clinic", true, true),
+            ("invad", true, false),
+            ("main_store_name", true, false),
+            ("patient", true, false),
+            ("ward_name", false, true),
+        ]
+    );
+
+    // A DELETE row may keep the saved values, but not change them.
+    let path = write_file(
+        dir.path(),
+        join_sheet(vec![join_row(&[
+            ("store_code", "MS"),
+            ("name_code", "CL1"),
+            ("name_is_supplier", "FALSE"),
+            ("delete", "DELETE"),
+        ])]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(
+            2,
+            Some("delete"),
+            "A row marked DELETE can't also change name_is_supplier. Clear it or put back the saved value"
+        )]
+    );
+}
+
+// covers: OMS-REG-CDIO-01.24, .148
+
+#[actix_rt::test]
+async fn a_name_store_join_finds_its_store_and_name_by_code_or_id() {
+    let (connection, service_provider, dir) = join_setup("central_data_join_references").await;
+    let ctx = service_provider.basic_context().unwrap();
+    // CL1 is a store's code too, so a code with no type is ambiguous.
+    NameRowRepository::new(&connection)
+        .upsert_one(&NameRow {
+            id: "cl1_store".to_string(),
+            code: "CL1".to_string(),
+            name: "Clinic store".to_string(),
+            r#type: NameRowType::Store,
+            ..Default::default()
+        })
+        .unwrap();
+    let new = |cells: &[(&'static str, &'static str)]| {
+        join_row(
+            &[
+                cells,
+                &[("name_is_customer", "TRUE"), ("name_is_supplier", "FALSE")],
+            ]
+            .concat(),
+        )
+    };
+
+    let path = write_file(
+        dir.path(),
+        join_sheet(vec![
+            new(&[("store_code", "NOPE"), ("name_code", "WARD")]),
+            new(&[("store_code", "MS"), ("name_code", "CL1")]),
+            new(&[("store_code", "MS"), ("name_id", "patient")]),
+            new(&[("store_code", "MS"), ("name_id", "invad")]),
+            // A code alone never finds a system name.
+            new(&[("store_code", "MS"), ("name_code", "invad")]),
+            new(&[
+                ("store_code", "MS"),
+                ("name_id", "cl1_store"),
+                ("name_type", "FACILITY"),
+            ]),
+            new(&[
+                ("store_id", "store_main"),
+                ("name_code", "CL2"),
+                ("name_type", "FACILITY"),
+            ]),
+            // The id settles the ambiguous code.
+            new(&[
+                ("store_id", "store_main"),
+                ("name_code", "CL1"),
+                ("name_id", "cl1_store"),
+            ]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (2, Some("store_code"), "referenced record not found"),
+            (
+                3,
+                Some("name_code"),
+                "ambiguous reference, please provide id instead"
+            ),
+            (
+                4,
+                Some("name_id"),
+                "Moreau, Anna (P001) is a patient. Which stores see a patient isn't imported"
+            ),
+            (
+                5,
+                Some("name_id"),
+                "Inventory adjustments (invad) is a system name, as the server needs it, so import can't change which stores see it"
+            ),
+            (6, Some("name_code"), "referenced record not found"),
+            (
+                7,
+                Some("name_type"),
+                "Clinic store (CL1) is of type STORE, not FACILITY"
+            ),
+        ]
+    );
+    // The deleted clinic's join is saved, so a new one is the service's check.
+    NameStoreJoinRepository::new(&connection)
+        .delete("join_closed")
+        .unwrap();
+    let path = write_file(
+        dir.path(),
+        join_sheet(vec![new(&[
+            ("store_code", "MS"),
+            ("name_code", "CL2"),
+            ("name_type", "FACILITY"),
+        ])]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(
+            2,
+            Some("name_code"),
+            "Closed clinic (CL2) is deleted, so a store can't be given it"
+        )]
+    );
+}
+
+// covers: OMS-REG-CDIO-01.24, .39, .149
+
+#[actix_rt::test]
+async fn a_name_store_join_row_cannot_change_its_store_or_name() {
+    let (connection, service_provider, dir) = join_setup("central_data_join_conflict").await;
+    let ctx = service_provider.basic_context().unwrap();
+    // Two joins for one store and name, as legacy data can have.
+    add_join(&connection, "join_clinic_2", "store_main", "clinic");
+
+    let path = write_file(
+        dir.path(),
+        join_sheet(vec![
+            join_row(&[
+                ("id", "join_own"),
+                ("name_code", "WARD"),
+                ("name_type", "STORE"),
+            ]),
+            join_row(&[
+                ("id", "copied"),
+                ("store_code", "MS"),
+                ("name_code", "MAIN"),
+                ("name_type", "STORE"),
+            ]),
+            join_row(&[("store_code", "MS"), ("name_code", "CL1")]),
+            // The id settles it.
+            join_row(&[
+                ("id", "join_clinic_2"),
+                ("store_code", "MS"),
+                ("name_code", "CL1"),
+                ("name_is_supplier", "TRUE"),
+            ]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                2,
+                Some("name_code"),
+                "name_code and id conflict: Main store (MAIN) in store MS has name_code MAIN and id join_own, but this row has name_code WARD and id join_own"
+            ),
+            (
+                3,
+                Some("name_code"),
+                "name_code and id conflict: Main store (MAIN) in store MS has name_code MAIN and id join_own, but this row has name_code MAIN and id copied"
+            ),
+            (
+                4,
+                Some("id"),
+                "ambiguous reference, please provide id instead"
+            ),
+        ]
+    );
+    assert_eq!(summary.tables[0].updated, 1);
+}
+
+// covers: OMS-REG-CDIO-01.150
+
+#[actix_rt::test]
+async fn a_name_store_join_finds_a_store_the_store_sheet_adds_and_a_missing_reference_stops_a_delete()
+ {
+    let (connection, service_provider, dir) = join_setup("central_data_join_later_store").await;
+    let ctx = service_provider.basic_context().unwrap();
+
+    let path = write_file(
+        dir.path(),
+        sheet::write(vec![
+            sheet_data(
+                "store",
+                &STORE_HEADERS,
+                vec![new_store_row(&[
+                    ("code", "W1"),
+                    ("name_code", "WARD"),
+                    ("name_type", "STORE"),
+                ])],
+            ),
+            join_sheet_data(vec![join_row(&[
+                ("store_code", "W1"),
+                ("name_code", "CL1"),
+                ("name_is_customer", "TRUE"),
+                ("name_is_supplier", "FALSE"),
+            ])]),
+        ])
+        .unwrap(),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    let ward = store_by_code(&connection, "W1");
+    let mut names: Vec<_> = joins_of(&connection, &ward.id)
+        .into_iter()
+        .map(|(_, name_id, _, _)| name_id)
+        .collect();
+    names.sort();
+    // With its own name, which a new store sees.
+    assert_eq!(names, ["clinic", "ward_name"]);
+
+    // A DELETE row whose store isn't found stops the whole import.
+    let before = joins_of(&connection, "store_main");
+    let path = write_file(
+        dir.path(),
+        join_sheet(vec![
+            join_row(&[
+                ("store_code", "MS"),
+                ("name_code", "CL1"),
+                ("delete", "DELETE"),
+            ]),
+            join_row(&[
+                ("store_code", "NOPE"),
+                ("name_code", "CL1"),
+                ("delete", "DELETE"),
+            ]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(3, Some("store_code"), "referenced record not found")]
+    );
+    assert_eq!(joins_of(&connection, "store_main"), before);
 }

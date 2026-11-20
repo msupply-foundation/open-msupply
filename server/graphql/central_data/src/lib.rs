@@ -300,6 +300,7 @@ pub enum CentralDataTableNode {
     User,
     Item,
     MasterList,
+    NameStoreJoin,
 }
 
 #[derive(InputObject)]

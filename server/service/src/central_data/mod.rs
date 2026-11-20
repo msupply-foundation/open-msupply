@@ -22,6 +22,7 @@ mod location_type;
 pub mod lookup;
 mod master_list;
 mod name;
+mod name_store_join;
 pub mod sheet;
 mod store;
 mod unit;
@@ -50,6 +51,7 @@ pub enum CentralDataTable {
     User,
     Item,
     MasterList,
+    NameStoreJoin,
 }
 
 /// Empty exports every record.
@@ -125,6 +127,7 @@ impl CentralDataTable {
             CentralDataTable::User => "user",
             CentralDataTable::Item => "item",
             CentralDataTable::MasterList => "master_list",
+            CentralDataTable::NameStoreJoin => "name_store_join",
         }
     }
 }
@@ -139,6 +142,7 @@ static TABLES: &[&(dyn ImportTable + Sync)] = &[
     &user::UserTable,
     &item::ItemTable,
     &master_list::MasterListTable,
+    &name_store_join::NameStoreJoinTable,
 ];
 
 pub(crate) trait ImportTable {

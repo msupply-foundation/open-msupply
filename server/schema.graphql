@@ -1473,6 +1473,7 @@ enum CentralDataTableNode {
 	USER
 	ITEM
 	MASTER_LIST
+	NAME_STORE_JOIN
 }
 
 type CentralDataTooManyCells implements CentralDataImportErrorInterface {
