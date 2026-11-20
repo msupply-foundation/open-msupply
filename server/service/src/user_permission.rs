@@ -1,8 +1,9 @@
 use crate::user_account::upsert::protected_user_ids;
 use repository::{
-    ContextRowRepository, EqualFilter, PermissionType, RepositoryError, StorageConnection,
-    StoreRowRepository, UserAccountRowRepository, UserPermissionFilter, UserPermissionRepository,
-    UserPermissionRow, UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
+    ContextRowRepository, EqualFilter, KeyType, KeyValueStoreRepository, PermissionType,
+    RepositoryError, StorageConnection, StoreRowRepository, UserAccountRowRepository, UserFilter,
+    UserPermissionFilter, UserPermissionRepository, UserPermissionRow, UserPermissionRowRepository,
+    UserRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
 };
 use util::uuid::uuid;
 
@@ -35,8 +36,9 @@ impl From<RepositoryError> for UpsertUserPermissionError {
 pub enum DeleteUserPermissionError {
     /// See `protected_user_ids`.
     Protected,
-    /// The user deleting would lose their last server-admin permission, and with it the screens
-    /// that give it back.
+    /// The user deleting would lock themselves out: it's their last server-admin or central-data
+    /// edit permission, which the screens and the import that give it back need, or their access
+    /// to their last store on this site, so they couldn't log in.
     LocksOutSelf,
     DatabaseError(RepositoryError),
 }
@@ -98,24 +100,14 @@ pub fn delete_user_permission(
             if protected_user_ids(connection)?.contains(&saved.user_id) {
                 return Err(DeleteUserPermissionError::Protected);
             }
-            if saved.user_id == deleting_user_id
-                && saved.permission == PermissionType::ServerAdmin
-                && server_admin_permissions(connection, deleting_user_id)? <= 1
-            {
+            // Checked before anything is deleted: inside an import's transaction an error here
+            // doesn't roll back what this call wrote.
+            let removes_store = removes_store(connection, &saved)?;
+            if saved.user_id == deleting_user_id && locks_out(connection, &saved, removes_store)? {
                 return Err(DeleteUserPermissionError::LocksOutSelf);
             }
             repo.delete(id)?;
-            // Records that share a user, store and permission, as legacy mSupply can send them,
-            // each grant access, so the user keeps the store until the last one goes.
-            if saved.permission == PermissionType::StoreAccess
-                && let Some(store_id) = &saved.store_id
-                && UserPermissionRepository::new(connection).count(Some(
-                    UserPermissionFilter::new()
-                        .user_id(EqualFilter::equal_to(saved.user_id.clone()))
-                        .store_id(EqualFilter::equal_to(store_id.clone()))
-                        .permission(EqualFilter::equal_to(PermissionType::StoreAccess)),
-                ))? == 0
-            {
+            if removes_store && let Some(store_id) = &saved.store_id {
                 let joins = UserStoreJoinRowRepository::new(connection);
                 for join in joins.find_many_by_user_id(&saved.user_id)? {
                     if join.store_id == *store_id {
@@ -201,15 +193,72 @@ fn validate(
     Ok(())
 }
 
-fn server_admin_permissions(
+/// How many records give the user `permission`, on `store_id` or on any store.
+fn count_permission(
     connection: &StorageConnection,
     user_id: &str,
+    store_id: Option<&str>,
+    permission: PermissionType,
 ) -> Result<i64, RepositoryError> {
-    UserPermissionRepository::new(connection).count(Some(
-        UserPermissionFilter::new()
-            .user_id(EqualFilter::equal_to(user_id.to_string()))
-            .permission(EqualFilter::equal_to(PermissionType::ServerAdmin)),
-    ))
+    let mut filter = UserPermissionFilter::new()
+        .user_id(EqualFilter::equal_to(user_id.to_string()))
+        .permission(EqualFilter::equal_to(permission));
+    if let Some(store_id) = store_id {
+        filter = filter.store_id(EqualFilter::equal_to(store_id.to_string()));
+    }
+    UserPermissionRepository::new(connection).count(Some(filter))
+}
+
+/// Whether deleting `saved` takes the store away from its user. Records that share a user, store
+/// and permission, as legacy mSupply can send them, each grant access, so the user keeps the store
+/// until the last one goes.
+fn removes_store(
+    connection: &StorageConnection,
+    saved: &UserPermissionRow,
+) -> Result<bool, RepositoryError> {
+    let Some(store_id) = saved.store_id.as_deref() else {
+        return Ok(false);
+    };
+    Ok(saved.permission == PermissionType::StoreAccess
+        && count_permission(
+            connection,
+            &saved.user_id,
+            Some(store_id),
+            PermissionType::StoreAccess,
+        )? <= 1)
+}
+
+/// Whether deleting `saved` leaves its user unable to give it back or to log in. Server admin and
+/// central-data edit are checked on any store, so only the last record of each counts.
+fn locks_out(
+    connection: &StorageConnection,
+    saved: &UserPermissionRow,
+    removes_store: bool,
+) -> Result<bool, RepositoryError> {
+    match saved.permission {
+        PermissionType::ServerAdmin | PermissionType::EditCentralData => {
+            Ok(count_permission(connection, &saved.user_id, None, saved.permission.clone())? <= 1)
+        }
+        PermissionType::StoreAccess if removes_store => {
+            // As login checks it: a store of the user's on this site.
+            let Some(site_id) =
+                KeyValueStoreRepository::new(connection).get_i32(KeyType::SettingsSyncSiteId)?
+            else {
+                return Ok(false);
+            };
+            let user = UserRepository::new(connection).query_one(
+                UserFilter::new()
+                    .id(EqualFilter::equal_to(saved.user_id.clone()))
+                    .site_id(EqualFilter::equal_to(site_id)),
+            )?;
+            Ok(!user.is_some_and(|user| {
+                user.stores
+                    .iter()
+                    .any(|store| Some(&store.store_row.id) != saved.store_id.as_ref())
+            }))
+        }
+        _ => Ok(false),
+    }
 }
 
 /// So the user can log in to the store. A user's first store is their default one.
@@ -422,23 +471,27 @@ mod tests {
     }
 
     #[actix_rt::test]
-    async fn a_user_cannot_take_away_their_own_last_server_admin_permission() {
+    async fn a_user_cannot_take_away_their_own_last_server_admin_or_central_data_permission() {
         let connection = setup("user_permission_last_server_admin").await;
         let repo = UserPermissionRowRepository::new(&connection);
-        for id in ["first", "second"] {
-            repo.upsert_one(&UserPermissionRow {
-                context_id: (id == "second").then(|| "program".to_string()),
-                ..permission(id, "anna", PermissionType::ServerAdmin)
-            })
-            .unwrap();
+        for permission_type in [PermissionType::ServerAdmin, PermissionType::EditCentralData] {
+            // Checked on any store, so a record in a context counts too.
+            for id in ["first", "second"] {
+                repo.upsert_one(&UserPermissionRow {
+                    context_id: (id == "second").then(|| "program".to_string()),
+                    ..permission(id, "anna", permission_type.clone())
+                })
+                .unwrap();
+            }
+            delete_user_permission(&connection, "anna", "first").unwrap();
+            assert_eq!(
+                delete_user_permission(&connection, "anna", "second"),
+                Err(DeleteUserPermissionError::LocksOutSelf),
+                "{permission_type:?}"
+            );
+            // Another user can.
+            delete_user_permission(&connection, "someone", "second").unwrap();
         }
-        delete_user_permission(&connection, "anna", "first").unwrap();
-        assert_eq!(
-            delete_user_permission(&connection, "anna", "second"),
-            Err(DeleteUserPermissionError::LocksOutSelf)
-        );
-        // Another user can.
-        delete_user_permission(&connection, "someone", "second").unwrap();
 
         repo.upsert_one(&permission(
             "admins",
@@ -450,6 +503,52 @@ mod tests {
             delete_user_permission(&connection, "anna", "admins"),
             Err(DeleteUserPermissionError::Protected)
         );
+    }
+
+    #[actix_rt::test]
+    async fn a_user_cannot_take_away_their_access_to_their_last_store_on_this_site() {
+        let connection = setup("user_permission_last_store").await;
+        KeyValueStoreRepository::new(&connection)
+            .set_i32(KeyType::SettingsSyncSiteId, Some(1))
+            .unwrap();
+        let stores = StoreRowRepository::new(&connection);
+        // `store` is on site 0, another site.
+        for (id, site_id) in [("first", 1), ("second", 1)] {
+            stores
+                .upsert_one(&StoreRow {
+                    id: id.to_string(),
+                    name_id: "name_store_a".to_string(),
+                    site_id,
+                    ..Default::default()
+                })
+                .unwrap();
+        }
+        let access = |id: &str, store_id: &str| UserPermissionRow {
+            store_id: Some(store_id.to_string()),
+            ..permission(id, "anna", PermissionType::StoreAccess)
+        };
+        for (id, store_id) in [
+            ("on_first", "first"),
+            ("on_second", "second"),
+            ("off_site", "store"),
+        ] {
+            upsert_user_permission(&connection, &access(id, store_id)).unwrap();
+        }
+        // A duplicate, as legacy mSupply can send it, keeps the store.
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&access("on_second_again", "second"))
+            .unwrap();
+
+        delete_user_permission(&connection, "anna", "on_first").unwrap();
+        delete_user_permission(&connection, "anna", "on_second_again").unwrap();
+        // Her last store on this site, though she has one on another.
+        assert_eq!(
+            delete_user_permission(&connection, "anna", "on_second"),
+            Err(DeleteUserPermissionError::LocksOutSelf)
+        );
+        assert!(joins(&connection, "anna").contains(&("second".to_string(), false)));
+        // Another user can.
+        delete_user_permission(&connection, "someone", "on_second").unwrap();
     }
 
     #[test]

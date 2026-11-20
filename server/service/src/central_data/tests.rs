@@ -7576,11 +7576,21 @@ async fn a_user_permission_finds_its_references_and_cannot_change_them() {
 // covers: OMS-REG-CDIO-01.157
 
 #[actix_rt::test]
-async fn a_user_permission_row_cannot_touch_a_protected_or_deleted_user_or_your_last_server_admin()
-{
+async fn a_user_permission_row_cannot_touch_a_protected_or_deleted_user_or_lock_you_out() {
     let (connection, service_provider, dir) =
         permission_setup("central_data_permission_protected").await;
     grant_server_admin(&connection, "anna");
+    add_permission(
+        &connection,
+        "anna_edit",
+        "anna",
+        PermissionType::EditCentralData,
+        None,
+    );
+    // MS is Anna's only store on this site; store a is on another.
+    KeyValueStoreRepository::new(&connection)
+        .set_i32(KeyType::SettingsSyncSiteId, Some(0))
+        .unwrap();
     let ctx = as_user(&service_provider, "anna");
 
     let path = write_file(
@@ -7598,6 +7608,8 @@ async fn a_user_permission_row_cannot_touch_a_protected_or_deleted_user_or_your_
                 ("permission", "STOCKTAKE_QUERY"),
             ]),
             permission_row(&[("id", "anna_server_admin"), ("delete", "DELETE")]),
+            permission_row(&[("id", "anna_edit"), ("delete", "DELETE")]),
+            permission_row(&[("id", "anna_access"), ("delete", "DELETE")]),
         ]),
     );
     let summary = CentralDataService
@@ -7625,6 +7637,16 @@ async fn a_user_permission_row_cannot_touch_a_protected_or_deleted_user_or_your_
                 5,
                 Some("delete"),
                 "This is your last server-admin permission. You can't take it away, or you couldn't give it back"
+            ),
+            (
+                6,
+                Some("delete"),
+                "This is your last central-data edit permission. You can't take it away, or you couldn't import again to give it back"
+            ),
+            (
+                7,
+                Some("delete"),
+                "This is your access to your last store on this server. You can't take it away, or you couldn't log in again"
             ),
         ]
     );

@@ -412,11 +412,7 @@ impl UserPermissionSheet {
         delete_user_permission(connection, &self.importer, &saved.id).map_err(
             |error| match error {
                 DeleteUserPermissionError::LocksOutSelf => row
-                    .error(
-                        DELETE_COLUMN,
-                        "This is your last server-admin permission. You can't take it away, \
-                         or you couldn't give it back",
-                    )
+                    .error(DELETE_COLUMN, locks_out_message(&saved.permission))
                     .into(),
                 // Unreachable here: `import_row` refuses a protected user first.
                 DeleteUserPermissionError::Protected => protected_error(
@@ -477,6 +473,24 @@ fn record(
         record.push_str(&format!(" in store {code}"));
     }
     record
+}
+
+/// For a `DELETE` row that would lock the user running the import out.
+fn locks_out_message(permission: &PermissionType) -> &'static str {
+    match permission {
+        PermissionType::StoreAccess => {
+            "This is your access to your last store on this server. You can't take it away, or \
+             you couldn't log in again"
+        }
+        PermissionType::EditCentralData => {
+            "This is your last central-data edit permission. You can't take it away, or you \
+             couldn't import again to give it back"
+        }
+        _ => {
+            "This is your last server-admin permission. You can't take it away, or you couldn't \
+             give it back"
+        }
+    }
 }
 
 /// On the column the row found the user by, or its id when it gave neither.
