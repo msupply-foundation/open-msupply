@@ -29,7 +29,7 @@ describe('the Simple screen’s kept visit', () => {
     const first = visitFor('store-a', off);
     first.setLines([line]);
     first.setPatient({ id: 'p1', name: 'Malfoy, Draco' } as never);
-    leaveVisit('store-a', first);
+    leaveVisit(first);
 
     const again = visitFor('store-a', off);
     expect(again).toBe(first);
@@ -47,7 +47,7 @@ describe('the Simple screen’s kept visit', () => {
     first.setSearchedRead(read);
     first.setChecked([card]);
     first.setDispensedCount(n => n + 1);
-    leaveVisit('store-a', first);
+    leaveVisit(first);
 
     const again = visitFor('store-a', off);
     expect(again.cardsRead()).toBe(read);
@@ -61,7 +61,7 @@ describe('the Simple screen’s kept visit', () => {
     const first = visitFor('store-a', off);
     first.setUnnamed(true);
     first.setLines([line]);
-    leaveVisit('store-a', first);
+    leaveVisit(first);
     expect(visitFor('store-a', off).unnamed()).toBe(true);
   });
 
@@ -69,7 +69,7 @@ describe('the Simple screen’s kept visit', () => {
   it('keeps nothing when left with an empty list and no registered patient', () => {
     const first = visitFor('store-a', off);
     first.setUnnamed(true);
-    leaveVisit('store-a', first);
+    leaveVisit(first);
 
     const again = visitFor('store-a', off);
     expect(again).not.toBe(first);
@@ -79,7 +79,7 @@ describe('the Simple screen’s kept visit', () => {
   it('keeps a registered patient chosen with nothing on the list yet', () => {
     const first = visitFor('store-a', off);
     first.setPatient({ id: 'p1', name: 'Malfoy, Draco' } as never);
-    leaveVisit('store-a', first);
+    leaveVisit(first);
     expect(visitFor('store-a', off)).toBe(first);
   });
 
@@ -89,7 +89,7 @@ describe('the Simple screen’s kept visit', () => {
     first.setLines([line]);
     first.setDispensing(true);
     first.record.current = { id: 'visit-1' };
-    leaveVisit('store-a', first);
+    leaveVisit(first);
 
     // The save lands after the screen closed: the visit is ready for the next
     // person, and the screen opening again shows that, not the old list.
@@ -108,7 +108,7 @@ describe('the Simple screen’s kept visit', () => {
     const first = visitFor('store-a', off);
     first.record.current = { id: 'visit-1' };
     first.setUnconfirmed(true);
-    leaveVisit('store-a', first);
+    leaveVisit(first);
     expect(visitFor('store-a', off).record.current?.id).toBe('visit-1');
   });
 
@@ -130,6 +130,22 @@ describe('the Simple screen’s kept visit', () => {
     mine.setLines([line]);
     auth.setUser({ userId: 'u2' });
     expect(visitFor('store-a', off).lines).toHaveLength(0);
+  });
+
+  // OMS-REG-DIS-12.228
+  it('drops an empty visit by the user it was made for, even when another user has signed in by the time the screen closes', () => {
+    const first = visitFor('store-a', off);
+    first.setUnnamed(true);
+    first.setNotice({ severity: 'success', text: 'Dispensed at 10:00' });
+    // Another user signs in at the re-login modal; the screen then closes.
+    auth.setUser({ userId: 'u2' });
+    leaveVisit(first);
+
+    auth.setUser({ userId: 'u1' });
+    const again = visitFor('store-a', off);
+    expect(again).not.toBe(first);
+    expect(again.notice()).toBeUndefined();
+    expect(again.unnamed()).toBe(false);
   });
 
   // OMS-REG-DIS-12.227

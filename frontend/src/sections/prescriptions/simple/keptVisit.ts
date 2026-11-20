@@ -39,6 +39,12 @@ import type {
 export type Notice = { severity: 'success' | 'error'; text: string };
 
 export interface KeptVisit {
+  /**
+   * The user and store it was made for. Leaving drops it by this key, not
+   * one worked out again then: another user may have signed in by the time
+   * the screen closes.
+   */
+  key: string;
   patient: Accessor<PatientOption | null>;
   setPatient: Setter<PatientOption | null>;
   unnamed: Accessor<boolean>;
@@ -92,7 +98,7 @@ export interface KeptVisit {
   unnamedPatient?: DispensedTo;
 }
 
-const newVisit = (startsWithUnnamed: boolean): KeptVisit => {
+const newVisit = (key: string, startsWithUnnamed: boolean): KeptVisit => {
   const [patient, setPatient] = createSignal<PatientOption | null>(null);
   const [unnamed, setUnnamed] = createSignal(startsWithUnnamed);
   const [lines, setLines] = createStore<ListLine[]>([]);
@@ -106,6 +112,7 @@ const newVisit = (startsWithUnnamed: boolean): KeptVisit => {
   const [unconfirmed, setUnconfirmed] = createSignal(false);
   const [looking, setLooking] = createSignal(false);
   return {
+    key,
     patient,
     setPatient,
     unnamed,
@@ -166,7 +173,7 @@ export const visitFor = (
   const key = keyOf(storeId);
   let visit = kept.get(key);
   if (!visit) {
-    visit = newVisit(startsWithUnnamed());
+    visit = newVisit(key, startsWithUnnamed());
     kept.set(key, visit);
   }
   return visit;
@@ -186,9 +193,9 @@ export const worthKeeping = (visit: KeptVisit): boolean =>
  * patient chosen and no save out is dropped, so the screen next starts as a
  * new visit does; anything else is kept for the way back.
  */
-export const leaveVisit = (storeId: string, visit: KeptVisit): void => {
-  const key = keyOf(storeId);
-  if (!worthKeeping(visit) && kept.get(key) === visit) kept.delete(key);
+export const leaveVisit = (visit: KeptVisit): void => {
+  if (!worthKeeping(visit) && kept.get(visit.key) === visit)
+    kept.delete(visit.key);
 };
 
 /** Tests only: start every store afresh. */

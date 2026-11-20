@@ -101,7 +101,7 @@ const SimpleDispensingPage: Component = () => {
   const visitState = untrack(() =>
     visitFor(storeOpened, () => startsWithUnnamed(prescriptionPreferences()))
   );
-  onCleanup(() => leaveVisit(storeOpened, visitState));
+  onCleanup(() => leaveVisit(visitState));
   // Setters and accessors are stable, so taking them apart is safe.
   const {
     patient,
@@ -179,7 +179,10 @@ const SimpleDispensingPage: Component = () => {
     },
     async ({ storeId, ids }, { value }) => {
       const fetched = await fetchItems(storeId, ids, true);
-      if (fetched) setCardsRead(fetched);
+      if (fetched) {
+        setCardsRead(fetched);
+        dropCheckFromBefore();
+      }
       return fetched ?? value ?? cardsRead();
     }
   );
@@ -225,6 +228,7 @@ const SimpleDispensingPage: Component = () => {
       const fetched = await fetchItems(storeId, ids, true);
       if (fetched) {
         if (searchedIds() === ids) setSearchedRead(fetched);
+        dropCheckFromBefore();
         return fetched;
       }
       searchFailed(ids, unreadIds(ids, searchedRead()));
@@ -247,7 +251,16 @@ const SimpleDispensingPage: Component = () => {
   // The list's medicines as Dispense's last check found them (rules ›
   // dispensing the visit): until the visit is dispensed, the stock the screen
   // shows for them, so the cards, prices and short lines all agree with it.
-  // The kept visit's, so they still agree after a trip away.
+  // The kept visit's, so they still agree after a trip away. But only until
+  // this screen's own first read lands: stock may have come or gone while
+  // staff were away, and that read is newer than a check made before they
+  // left. A check made on this screen is newer still, so it stays.
+  const checkFromBefore = untrack(checked);
+  // Called from the reads above, which only land once this has run.
+  function dropCheckFromBefore(): void {
+    if (checkFromBefore.length > 0 && checked() === checkFromBefore)
+      setChecked([]);
+  }
 
   const cardOf = (itemId: string) =>
     checked().find(card => card.item.id === itemId) ??
@@ -343,9 +356,24 @@ const SimpleDispensingPage: Component = () => {
   // the list once it lands.
   const locked = () => dispensing() || unconfirmed() || looking();
 
+  // What a Dispense or a Clear works by, taken as it is pressed: the store's
+  // dispensing settings, its common medicines and its currency's smallest
+  // unit. A save still out when staff switch store goes on after this screen
+  // has closed, and by then the store context is the other store's (or its
+  // defaults while it loads). The visit is checked, saved and finished by its
+  // own store's settings: which batches it takes, how its prices compare, and
+  // whether the unnamed patient stays chosen.
+  const settingsNow = () => ({
+    prefs: prescriptionPreferences(),
+    medicines: medicines() ?? [],
+    priceDecimals: getCurrencyInfo(homeCurrency(), locale()).decimals,
+  });
+  type Settings = ReturnType<typeof settingsNow>;
+
   /** The list's medicines as the stock stands now. */
   const freshCards = async (
-    listed: readonly ListLine[]
+    listed: readonly ListLine[],
+    settings: Settings
   ): Promise<MedicineCard[] | undefined> => {
     const ids = listed.map(line => line.itemId);
     // Background: a failed check is the screen's to report, and the app's
@@ -353,9 +381,9 @@ const SimpleDispensingPage: Component = () => {
     const fetched = await fetchItems(storeOpened, ids, true);
     if (!fetched) return undefined;
     return buildCards(
-      medicinesFor(ids, medicines() ?? []),
+      medicinesFor(ids, settings.medicines),
       fetched,
-      prescriptionPreferences()
+      settings.prefs
     );
   };
 
@@ -365,7 +393,7 @@ const SimpleDispensingPage: Component = () => {
   };
 
   /** The visit is saved: ready the screen for the next person. */
-  const finished = (who: DispensedTo): void => {
+  const finished = (who: DispensedTo, settings: Settings): void => {
     visit.current = undefined;
     setUnconfirmed(false);
     setChecked([]);
@@ -373,7 +401,7 @@ const SimpleDispensingPage: Component = () => {
     setPatient(null);
     // The unnamed patient stays chosen after a visit to it (rules › the
     // unnamed patient).
-    setUnnamed(unnamedAfterDispense(who, prescriptionPreferences()));
+    setUnnamed(unnamedAfterDispense(who, settings.prefs));
     setSearchedIds([]);
     // The next visit reads its medicines afresh: none of this one's stock
     // stands in for them while that read is out, or after it fails.
@@ -444,10 +472,13 @@ const SimpleDispensingPage: Component = () => {
    * when nobody is chosen; `failed` when the unnamed patient couldn't be
    * had, and nothing has been saved.
    */
-  const dispensedTo = async (): Promise<
+  const dispensedTo = async (
+    settings: Settings
+  ): Promise<
     DispensedTo | { failed: true; missing?: string[] } | undefined
   > => {
-    if (!unnamed()) return patient() ?? undefined;
+    if (!unnamedStillChosen(unnamedPicked(), settings.prefs))
+      return patient() ?? undefined;
     if (visitState.unnamedPatient) return visitState.unnamedPatient;
     // Background: a failure is this screen's to say, as Dispense's is.
     const result = await graphqlFetch(
@@ -471,8 +502,8 @@ const SimpleDispensingPage: Component = () => {
   };
 
   /** Check the list against the stock now; save it if it is all there. */
-  const checkAndSave = async (): Promise<void> => {
-    const who = await dispensedTo();
+  const checkAndSave = async (settings: Settings): Promise<void> => {
+    const who = await dispensedTo(settings);
     if (!who) return;
     if ('failed' in who) {
       if (who.missing) reportPermissionDenied(who.missing);
@@ -485,14 +516,14 @@ const SimpleDispensingPage: Component = () => {
     const listed = lines.map(line => ({ ...line }));
     const end = await dispenseVisit(visit, who, listed, {
       look: savedEarlier,
-      check: freshCards,
+      check: listed => freshCards(listed, settings),
       save,
       before: cardOf,
       newId: generateUUID,
       // Prices compare to the store's currency's smallest unit, as shown.
-      priceDecimals: getCurrencyInfo(homeCurrency(), locale()).decimals,
+      priceDecimals: settings.priceDecimals,
     });
-    if (end.kind === 'saved') return finished(end.patient);
+    if (end.kind === 'saved') return finished(end.patient, settings);
     if (end.kind === 'unsure') return unsure();
     // The stock as it now is becomes the screen's, so the lines' prices and
     // the total show what it costs now. A short line is left as it is, and
@@ -510,6 +541,7 @@ const SimpleDispensingPage: Component = () => {
   // this visit lost its reply and may yet have landed: then it looks first,
   // and a visit it finds saved is finished rather than cleared.
   const clear = async (): Promise<void> => {
+    const settings = settingsNow();
     const sentFor = visit.current?.sentFor;
     if (sentFor) {
       setLooking(true);
@@ -517,10 +549,12 @@ const SimpleDispensingPage: Component = () => {
         setLooking(false)
       );
       if (saved === undefined) return unsure();
-      if (saved) return finished(sentFor);
+      if (saved) return finished(sentFor, settings);
     }
     visit.current = undefined;
     update([]);
+    // Nothing is left on the list for the last check to speak for.
+    setChecked([]);
   };
 
   // Marks the lines whose price changed (rules › dispensing the visit): in
@@ -542,11 +576,12 @@ const SimpleDispensingPage: Component = () => {
     // (rules › dispensing the visit). Dispense is disabled then, so this is a
     // backstop.
     if (looking()) return;
+    const settings = settingsNow();
     setNotice(undefined);
     markRepriced([]);
     setDispensing(true);
     try {
-      await checkAndSave();
+      await checkAndSave(settings);
     } finally {
       setDispensing(false);
     }
