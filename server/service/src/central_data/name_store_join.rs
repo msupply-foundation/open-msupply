@@ -225,7 +225,7 @@ impl SheetImport for NameStoreJoinSheet {
         let is_supplier = is_supplier.or(saved.map(|join| join.name_is_supplier));
         row.require_for_new(
             &mut errors,
-            "name store join",
+            "name in a store",
             &[
                 (STORE_CODE, store_id.is_none() && !store_failed),
                 (NAME_CODE, name_id.is_none() && !name_failed),

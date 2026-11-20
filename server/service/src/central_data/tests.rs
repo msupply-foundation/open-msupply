@@ -6589,22 +6589,22 @@ async fn name_store_join_rows_add_update_and_delete_by_store_and_name() {
             (
                 2,
                 Some("name_is_customer"),
-                "name_is_customer is required for a new name store join"
+                "name_is_customer is required for a new name in a store"
             ),
             (
                 2,
                 Some("name_is_supplier"),
-                "name_is_supplier is required for a new name store join"
+                "name_is_supplier is required for a new name in a store"
             ),
             (
                 3,
                 Some("store_code"),
-                "store_code is required for a new name store join"
+                "store_code is required for a new name in a store"
             ),
             (
                 3,
                 Some("name_is_supplier"),
-                "name_is_supplier is required for a new name store join"
+                "name_is_supplier is required for a new name in a store"
             ),
             (
                 4,

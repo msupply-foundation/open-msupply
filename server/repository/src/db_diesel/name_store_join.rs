@@ -202,7 +202,9 @@ fn create_filtered_query(filter: Option<NameStoreJoinFilter>) -> BoxedQuery {
             name_or_store_code,
         } = f;
 
-        // The or filter goes before the and filters.
+        // (name code OR store code). MUST be applied FIRST: or_filter ORs against the query's
+        // entire existing where clause, so this pair only groups as (name code OR store code)
+        // while the clause is still empty; every later filter then ANDs onto it.
         if let Some(code) = name_or_store_code {
             let mut stores = store::table.into_boxed::<DBType>();
             apply_string_filter!(stores, Some(code.clone()), store::code);
