@@ -276,11 +276,7 @@ fn upsert_failure(
     name: Option<&NameRow>,
     error: UpsertStoreError,
 ) -> RowFailure {
-    let name_column = if row.text(NAME_CODE).is_some() {
-        NAME_CODE
-    } else {
-        NAME_ID
-    };
+    let name_column = row.reference_column(NAME_CODE, NAME_ID);
     let name_type = name
         .map(|name| type_label(&name.r#type))
         .unwrap_or_default();

@@ -77,6 +77,15 @@ impl<'a> Row<'a> {
         }
     }
 
+    /// The column a reference was found by: `code_column` when the row fills it, else `id_column`.
+    pub fn reference_column<'c>(&self, code_column: &'c str, id_column: &'c str) -> &'c str {
+        if self.text(code_column).is_some() {
+            code_column
+        } else {
+            id_column
+        }
+    }
+
     /// `None` when the column is missing or the cell is blank.
     pub fn text(&self, column: &str) -> Option<String> {
         self.cell(column)

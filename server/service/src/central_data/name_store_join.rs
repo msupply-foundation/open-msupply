@@ -362,10 +362,11 @@ impl NameStoreJoinSheet {
         } else {
             (NAME_CODE, NAME_ID, name.code.clone(), saved.name_id.clone())
         };
-        let (column, saved_key) = if row.text(code_column).is_some() {
-            (code_column, saved_code)
+        let column = row.reference_column(code_column, id_column);
+        let saved_key = if column == code_column {
+            saved_code
         } else {
-            (id_column, saved_id)
+            saved_id
         };
         Ok(row.error(
             column,
@@ -441,11 +442,7 @@ fn name_with_id(
 
 /// A patient or a system name the row found by id, or a name whose type isn't the row's.
 fn name_error(row: &Row, name: &NameRow, r#type: Option<&NameRowType>) -> Option<RowError> {
-    let column = if row.text(NAME_CODE).is_some() {
-        NAME_CODE
-    } else {
-        NAME_ID
-    };
+    let column = row.reference_column(NAME_CODE, NAME_ID);
     let label = name_with_code(&name.name, &name.code);
     if name.r#type == NameRowType::Patient {
         return Some(row.error(
@@ -479,19 +476,16 @@ fn upsert_failure(
     store: Option<&StoreRow>,
     error: UpsertNameStoreJoinError,
 ) -> RowFailure {
-    let found_by = |code: &'static str, id: &'static str| {
-        if row.text(code).is_some() { code } else { id }
-    };
-    let name_column = found_by(NAME_CODE, NAME_ID);
+    let name_column = row.reference_column(NAME_CODE, NAME_ID);
     let name_label = name.map_or_else(
         || join.name_id.clone(),
         |name| name_with_code(&name.name, &name.code),
     );
     match error {
         // Not checked here: `find_reference` finds them among the saved records.
-        UpsertNameStoreJoinError::StoreNotFound => {
-            row.error(found_by(STORE_CODE, STORE_ID), NOT_FOUND).into()
-        }
+        UpsertNameStoreJoinError::StoreNotFound => row
+            .error(row.reference_column(STORE_CODE, STORE_ID), NOT_FOUND)
+            .into(),
         UpsertNameStoreJoinError::NameNotFound => row.error(name_column, NOT_FOUND).into(),
         UpsertNameStoreJoinError::NameDeleted => row
             .error(
