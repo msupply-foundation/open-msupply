@@ -8,6 +8,7 @@ use super::{
         find_reference, record_conflict, reference_conflict,
     },
     sheet::Value,
+    stores_with_names,
 };
 use crate::{
     i64_to_u32,
@@ -18,10 +19,10 @@ use crate::{
     },
 };
 use repository::{
-    ContextRowRepository, EqualFilter, MasterListRowRepository, Pagination, PermissionType,
-    RepositoryError, StorageConnection, StoreRepository, StoreRow, StoreRowRepository,
-    StringFilter, UserAccountRow, UserAccountRowRepository, UserPermissionFilter,
-    UserPermissionRepository, UserPermissionRow, UserPermissionRowRepository,
+    ContextRow, ContextRowRepository, EqualFilter, PermissionType, RepositoryError,
+    StorageConnection, StoreRow, StoreRowRepository, StringFilter, UserAccountRow,
+    UserAccountRowRepository, UserPermissionFilter, UserPermissionRepository, UserPermissionRow,
+    UserPermissionRowRepository,
 };
 use std::{collections::HashMap, sync::LazyLock};
 
@@ -47,17 +48,10 @@ const COLUMNS: &[&str] = &[
     DELETE_COLUMN,
 ];
 
-/// Known permissions, as the database writes them.
-static LABELS: LazyLock<Vec<(String, PermissionType)>> = LazyLock::new(|| {
-    PermissionType::known_iter()
-        .map(|permission| (permission.as_ref().to_string(), permission))
-        .collect()
-});
-
+/// Known permissions, as the database writes them. Leaked once, for `Row::choice`'s `&str`.
 static PERMISSIONS: LazyLock<Vec<(&'static str, PermissionType)>> = LazyLock::new(|| {
-    LABELS
-        .iter()
-        .map(|(label, permission)| (label.as_str(), permission.clone()))
+    PermissionType::known_iter()
+        .map(|permission| (&*permission.as_ref().to_string().leak(), permission))
         .collect()
 });
 
@@ -159,7 +153,7 @@ struct UserPermissionSheet {
     /// Read once: far fewer than permissions, and unchanged while this sheet runs.
     users: InMemory<UserAccountRow>,
     stores: InMemory<StoreRow>,
-    contexts: InMemory<Context>,
+    contexts: InMemory<ContextRow>,
     protected: Vec<String>,
     importer: String,
 }
@@ -182,7 +176,7 @@ impl SheetImport for UserPermissionSheet {
         let store_id = find_reference(&self.stores, row, STORE_CODE, STORE_ID, |stores| stores)?;
         let context_id =
             find_reference(&self.contexts, row, CONTEXT_NAME, CONTEXT_ID, |contexts| {
-                active_first(contexts, |context| context.is_active)
+                contexts
             })?;
         let permission = row.choice(PERMISSION, &PERMISSIONS);
         let user_id = collect(&mut errors, user_id).flatten();
@@ -464,7 +458,7 @@ fn record(
     permission: &UserPermissionRow,
     user: Option<&UserAccountRow>,
     store: Option<&StoreRow>,
-    context: Option<&Context>,
+    context: Option<&ContextRow>,
 ) -> String {
     let mut record = format!(
         "{}: {}",
@@ -562,57 +556,25 @@ fn upsert_failure(
     }
 }
 
-/// A program, named by its master list, or a context without one, such as the patient context.
-#[derive(Clone)]
-struct Context {
-    id: String,
-    /// The master list's name; blank without one.
-    name: String,
-    is_active: bool,
+/// Few: one per program, plus the patient context.
+fn read_contexts(connection: &StorageConnection) -> Result<InMemory<ContextRow>, RepositoryError> {
+    Ok(InMemory::new(ContextRowRepository::new(connection).all()?))
 }
 
-/// Few: one per program.
-fn read_contexts(connection: &StorageConnection) -> Result<InMemory<Context>, RepositoryError> {
-    let contexts = ContextRowRepository::new(connection).all()?;
-    let ids: Vec<String> = contexts.iter().map(|context| context.id.clone()).collect();
-    let master_lists: HashMap<String, _> = MasterListRowRepository::new(connection)
-        .find_many_by_id(&ids)?
-        .into_iter()
-        .map(|master_list| (master_list.id.clone(), master_list))
-        .collect();
-    Ok(InMemory::new(
-        contexts
-            .into_iter()
-            .map(|context| {
-                let master_list = master_lists.get(&context.id);
-                Context {
-                    name: master_list
-                        .map(|master_list| master_list.name.clone())
-                        .unwrap_or_default(),
-                    is_active: master_list.is_none_or(|master_list| master_list.is_active),
-                    id: context.id,
-                }
-            })
-            .collect(),
-    ))
-}
-
-/// By master list name; a context without one is found only by id.
-impl KeyedTable for InMemory<Context> {
-    type Record = Context;
-    fn id(context: &Context) -> &str {
+/// By name, the program's.
+impl KeyedTable for InMemory<ContextRow> {
+    type Record = ContextRow;
+    fn id(context: &ContextRow) -> &str {
         &context.id
     }
-    fn key(context: &Context) -> &str {
+    fn key(context: &ContextRow) -> &str {
         &context.name
     }
-    fn find_by_id(&self, id: &str) -> Result<Option<Context>, RepositoryError> {
+    fn find_by_id(&self, id: &str) -> Result<Option<ContextRow>, RepositoryError> {
         Ok(self.get(id).cloned())
     }
-    fn find_by_key(&self, name: &str) -> Result<Vec<Context>, RepositoryError> {
-        let mut found = self.with_key(name);
-        found.retain(|context| !context.name.is_empty());
-        Ok(found)
+    fn find_by_key(&self, name: &str) -> Result<Vec<ContextRow>, RepositoryError> {
+        Ok(self.with_key(name))
     }
 }
 
@@ -644,7 +606,7 @@ struct References {
     users: HashMap<String, UserAccountRow>,
     /// With the name of the store's name.
     stores: HashMap<String, (StoreRow, String)>,
-    contexts: InMemory<Context>,
+    contexts: InMemory<ContextRow>,
 }
 
 impl References {
@@ -663,20 +625,9 @@ impl References {
             .into_iter()
             .map(|user| (user.id.clone(), user))
             .collect();
-        // Few, so read whole.
-        let stores = StoreRepository::new(connection)
-            .query(Pagination::all(), None, None)?
-            .into_iter()
-            .map(|store| {
-                (
-                    store.store_row.id.clone(),
-                    (store.store_row, store.name_row.name),
-                )
-            })
-            .collect();
         Ok(References {
             users,
-            stores,
+            stores: stores_with_names(connection)?,
             contexts: read_contexts(connection)?,
         })
     }
@@ -688,7 +639,7 @@ impl References {
             .and_then(|id| self.stores.get(id))
     }
 
-    fn context(&self, permission: &UserPermissionRow) -> Option<&Context> {
+    fn context(&self, permission: &UserPermissionRow) -> Option<&ContextRow> {
         permission
             .context_id
             .as_deref()
@@ -701,7 +652,7 @@ fn cells(
     permission: &UserPermissionRow,
     user: Option<&UserAccountRow>,
     store: Option<&StoreRow>,
-    context: Option<&Context>,
+    context: Option<&ContextRow>,
 ) -> Vec<Value> {
     vec![
         permission.id.clone().into(),

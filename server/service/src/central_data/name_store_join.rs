@@ -11,6 +11,7 @@ use super::{
     name::{TYPES as NAME_TYPES, type_label},
     name_with_code,
     sheet::Value,
+    stores_with_names,
 };
 use crate::{
     i64_to_u32,
@@ -18,10 +19,10 @@ use crate::{
 };
 use repository::{
     EqualFilter, NameRow, NameRowRepository, NameRowType, NameStoreJoin, NameStoreJoinFilter,
-    NameStoreJoinRepository, NameStoreJoinRow, Pagination, RepositoryError, StorageConnection,
-    StoreRepository, StoreRow, StoreRowRepository, StringFilter,
+    NameStoreJoinRepository, NameStoreJoinRow, RepositoryError, StorageConnection, StoreRow,
+    StoreRowRepository, StringFilter,
 };
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::{cell::RefCell, rc::Rc};
 use util::uuid::uuid;
 
 const ID: &str = "id";
@@ -84,17 +85,7 @@ impl ImportTable for NameStoreJoinTable {
         connection: &StorageConnection,
         filter: &ExportFilter,
     ) -> Result<Vec<Vec<Value>>, RepositoryError> {
-        // Few, so each join's store and the store's name come from memory.
-        let stores: HashMap<String, (StoreRow, String)> = StoreRepository::new(connection)
-            .query(Pagination::all(), None, None)?
-            .into_iter()
-            .map(|store| {
-                (
-                    store.store_row.id.clone(),
-                    (store.store_row, store.name_row.name),
-                )
-            })
-            .collect();
+        let stores = stores_with_names(connection)?;
         // One query: the export has already checked the row count against the import cap.
         let mut joins =
             NameStoreJoinRepository::new(connection).query_by_filter(join_filter(filter))?;

@@ -162,16 +162,17 @@ pub fn find_user_permission(
     connection: &StorageConnection,
     row: &UserPermissionRow,
 ) -> Result<Vec<UserPermissionRow>, RepositoryError> {
-    let mut filter = UserPermissionFilter::new()
-        .user_id(EqualFilter::equal_to(row.user_id.clone()))
-        .permission(EqualFilter::equal_to(row.permission.clone()));
-    filter.store_id = Some(match &row.store_id {
-        Some(store_id) => EqualFilter::equal_to(store_id.clone()),
+    let equal_or_null = |value: &Option<String>| match value {
+        Some(value) => EqualFilter::equal_to(value.clone()),
         None => EqualFilter::is_null(true),
-    });
-    let mut found = UserPermissionRepository::new(connection).query_by_filter(filter)?;
-    found.retain(|other| other.context_id == row.context_id);
-    Ok(found)
+    };
+    UserPermissionRepository::new(connection).query_by_filter(UserPermissionFilter {
+        user_id: Some(EqualFilter::equal_to(row.user_id.clone())),
+        store_id: Some(equal_or_null(&row.store_id)),
+        permission: Some(EqualFilter::equal_to(row.permission.clone())),
+        context_id: Some(equal_or_null(&row.context_id)),
+        ..Default::default()
+    })
 }
 
 /// Checks only what changes, so a saved permission that no longer passes stays editable.

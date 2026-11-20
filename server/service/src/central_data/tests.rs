@@ -7151,8 +7151,7 @@ fn permissions_containing(contains: Option<&str>) -> ExportTable {
     }
 }
 
-/// `user_setup`, plus store MS, the Immunisation program and the patient context (no master
-/// list). On MS: Anna has store access, stocktake and documents in both contexts, plus an unknown
+/// `user_setup`, plus store MS, the Immunisation program and the patient context. On MS: Anna has store access, stocktake and documents in both contexts, plus an unknown
 /// permission; Ben, deleted Carl and the setup admin each have one.
 async fn permission_setup(name: &str) -> (StorageConnection, ServiceProvider, TempDir) {
     let (connection, service_provider, dir, _) = user_setup(name).await;
@@ -7170,14 +7169,6 @@ async fn permission_setup(name: &str) -> (StorageConnection, ServiceProvider, Te
             id: "store_ms".to_string(),
             code: "MS".to_string(),
             name_id: "ms_name".to_string(),
-            ..Default::default()
-        })
-        .unwrap();
-    MasterListRowRepository::new(&connection)
-        .upsert_one(&MasterListRow {
-            id: "immunisation".to_string(),
-            name: "Immunisation".to_string(),
-            is_active: true,
             ..Default::default()
         })
         .unwrap();
@@ -7270,7 +7261,8 @@ async fn user_permissions_export_then_import_makes_no_changes() {
         sheet.headers,
         [PERMISSION_HEADERS.as_slice(), &["store_name"]].concat()
     );
-    // Not the unknown permission, Carl's, the setup admin's or the importer's (no user row).
+    // Not the unknown permission, Carl's, the setup admin's or the importer's (no user row). By
+    // username, store code, permission, then context name.
     let rows: Vec<&[String]> = sheet.rows.iter().map(|row| row.cells.as_slice()).collect();
     let row = |id, username, permission, context_name, context_id| {
         [
@@ -7290,7 +7282,6 @@ async fn user_permissions_export_then_import_makes_no_changes() {
     assert_eq!(
         rows,
         [
-            row("anna_patients", "anna", "DOCUMENT_QUERY", "", "Patient"),
             row(
                 "anna_documents",
                 "anna",
@@ -7298,6 +7289,7 @@ async fn user_permissions_export_then_import_makes_no_changes() {
                 "Immunisation",
                 "immunisation"
             ),
+            row("anna_patients", "anna", "DOCUMENT_QUERY", "Patient", "Patient"),
             row("anna_stocktake", "anna", "STOCKTAKE_QUERY", "", ""),
             row("anna_access", "anna", "STORE_ACCESS", "", ""),
             row("ben_report", "ben", "REPORT", "", ""),
@@ -7486,12 +7478,19 @@ async fn a_user_permission_finds_its_references_and_cannot_change_them() {
     let path = write_file(
         dir.path(),
         permission_sheet(vec![
-            // By ids, and the patient context by id.
+            // By ids alone.
             permission_row(&[
                 ("user_id", "anna"),
                 ("store_id", "store_ms"),
                 ("permission", "DOCUMENT_QUERY"),
                 ("context_id", "Patient"),
+            ]),
+            // By name, the patient context too.
+            permission_row(&[
+                ("username", "anna"),
+                ("store_code", "MS"),
+                ("permission", "DOCUMENT_QUERY"),
+                ("context_name", "Patient"),
             ]),
             // Blank store keeps the saved one.
             permission_row(&[("id", "anna_stocktake"), ("username", "anna")]),
@@ -7510,7 +7509,7 @@ async fn a_user_permission_finds_its_references_and_cannot_change_them() {
     assert_eq!(summary.errors, vec![]);
     assert_eq!(
         (summary.tables[0].unchanged, summary.tables[0].deleted),
-        (2, 1)
+        (3, 1)
     );
     assert_eq!(
         summary.changes[0].record,

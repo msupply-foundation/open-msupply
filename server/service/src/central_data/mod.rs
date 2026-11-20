@@ -4,7 +4,7 @@ use crate::{
 };
 use cells::{Row, RowError};
 use chrono::NaiveDate;
-use repository::{RepositoryError, StorageConnection};
+use repository::{Pagination, RepositoryError, StorageConnection, StoreRepository, StoreRow};
 use std::{
     any::Any,
     cell::RefCell,
@@ -292,6 +292,22 @@ impl Change {
     pub fn between_upserts<R: PartialEq>(saved: Option<&R>, new: &R) -> Self {
         Self::between(saved, new, |_| true)
     }
+}
+
+/// Every store by id, with its name's name. Stores are few, so they're read whole.
+pub(crate) fn stores_with_names(
+    connection: &StorageConnection,
+) -> Result<HashMap<String, (StoreRow, String)>, RepositoryError> {
+    Ok(StoreRepository::new(connection)
+        .query(Pagination::all(), None, None)?
+        .into_iter()
+        .map(|store| {
+            (
+                store.store_row.id.clone(),
+                (store.store_row, store.name_row.name),
+            )
+        })
+        .collect())
 }
 
 /// How the preview and messages name a record whose name can repeat.
