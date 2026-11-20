@@ -6,7 +6,7 @@ use super::{
     field_changes,
     lookup::{
         Found, InMemory, NOT_FOUND, NamesOfType, active_first, find_by_id_or_composite_key,
-        find_reference, reference_conflict,
+        find_reference, new_id_conflict, reference_conflict,
     },
     name::{TYPES as NAME_TYPES, type_label},
     name_with_code,
@@ -283,17 +283,19 @@ impl NameStoreJoinSheet {
         name_id: Option<&str>,
     ) -> Result<Result<Option<NameStoreJoinRow>, RowError>, RepositoryError> {
         let repo = NameStoreJoinRepository::new(connection);
-        let by_key: Vec<NameStoreJoinRow> = match (store_id, name_id) {
-            (Some(store_id), Some(name_id)) => repo
-                .query_by_filter(
-                    NameStoreJoinFilter::new()
-                        .store_id(EqualFilter::equal_to(store_id.to_string()))
-                        .name_id(EqualFilter::equal_to(name_id.to_string())),
-                )?
-                .into_iter()
-                .map(|join| join.name_store_join)
-                .collect(),
-            _ => Vec::new(),
+        let by_key = || -> Result<Vec<NameStoreJoinRow>, RepositoryError> {
+            Ok(match (store_id, name_id) {
+                (Some(store_id), Some(name_id)) => repo
+                    .query_by_filter(
+                        NameStoreJoinFilter::new()
+                            .store_id(EqualFilter::equal_to(store_id.to_string()))
+                            .name_id(EqualFilter::equal_to(name_id.to_string())),
+                    )?
+                    .into_iter()
+                    .map(|join| join.name_store_join)
+                    .collect(),
+                _ => Vec::new(),
+            })
         };
         find_by_id_or_composite_key(
             row,
@@ -312,7 +314,11 @@ impl NameStoreJoinSheet {
                     Found::ById => None,
                     Found::NewIdBesideKey if self.added_own_name(saved) => None,
                     Found::NewIdBesideKey => {
-                        Some(self.conflict(connection, row, saved, id, false)?)
+                        let name = NameRowRepository::new(connection)
+                            .find_one_by_id(&saved.name_id)?
+                            .unwrap_or_default();
+                        let record = record(&name, self.stores.get(&saved.store_id));
+                        Some(new_id_conflict(row, &record, &saved.id, id))
                     }
                 })
             },
@@ -375,7 +381,13 @@ impl NameStoreJoinSheet {
         };
         let name = name_with_id(connection, found_name, &saved.name_id)?.unwrap_or_default();
         let store = self.stores.get(&saved.store_id);
-        check_delete(row, COLUMNS, cells(&saved, &name, store), errors)?;
+        check_delete(
+            row,
+            COLUMNS,
+            &[NAME_TYPE],
+            cells(&saved, &name, store),
+            errors,
+        )?;
 
         delete_name_store_join(connection, &saved.id)?;
         Ok(RowOutcome {

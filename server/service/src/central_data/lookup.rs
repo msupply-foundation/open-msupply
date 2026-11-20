@@ -386,6 +386,14 @@ pub fn reference_conflict(
     )
 }
 
+/// For `Found::NewIdBesideKey`: the row repeats `record`'s whole key with another id.
+pub fn new_id_conflict(row: &Row, record: &str, saved_id: &str, id: &str) -> RowError {
+    row.error(
+        "id",
+        format!("id conflict: {record} has id {saved_id}, but this row has id {id}"),
+    )
+}
+
 /// How `find_by_id_or_composite_key` found the record it passes to `check`.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Found {
@@ -395,27 +403,27 @@ pub enum Found {
     NewIdBesideKey,
 }
 
-/// The saved record a row changes: by `id`, else among `by_key`, the records its key finds.
-/// `Ok(None)` adds one. A record not found by id within `by_key` goes to `check`, which returns
-/// its conflict or `None` to take it.
+/// The saved record a row changes: by `id`, else among `by_key`, the records its key finds, read
+/// only when needed. `Ok(None)` adds one. The record found goes to `check`, which returns its
+/// conflict or `None` to take it.
 pub fn find_by_id_or_composite_key<R>(
     row: &Row,
     id: Option<&str>,
-    mut by_key: Vec<R>,
+    by_key: impl FnOnce() -> Result<Vec<R>, RepositoryError>,
     record_id: impl Fn(&R) -> &str,
     find_by_id: impl FnOnce(&str) -> Result<Option<R>, RepositoryError>,
     check: impl FnOnce(&R, Found, &str) -> Result<Option<RowError>, RepositoryError>,
 ) -> Result<Result<Option<R>, RowError>, RepositoryError> {
-    by_key.sort_by(|a, b| record_id(a).cmp(record_id(b)));
-    let Some(id) = id else {
-        return Ok(pick_one(by_key).map_err(|e| row.error("id", e.message(""))));
+    let sorted = |mut records: Vec<R>| {
+        records.sort_by(|a, b| record_id(a).cmp(record_id(b)));
+        records
     };
-    if let Some(position) = by_key.iter().position(|record| record_id(record) == id) {
-        return Ok(Ok(Some(by_key.swap_remove(position))));
-    }
+    let Some(id) = id else {
+        return Ok(pick_one(sorted(by_key()?)).map_err(|e| row.error("id", e.message(""))));
+    };
     let (saved, found) = match find_by_id(id)? {
         Some(saved) => (saved, Found::ById),
-        None => match by_key.into_iter().next() {
+        None => match sorted(by_key()?).into_iter().next() {
             Some(saved) => (saved, Found::NewIdBesideKey),
             None => return Ok(Ok(None)),
         },

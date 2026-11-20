@@ -513,7 +513,13 @@ impl NameSheet {
         let Some(saved) = existing.filter(|saved| saved.deleted_datetime.is_none()) else {
             return already_deleted(row, CODE, errors);
         };
-        check_delete(row, COLUMNS, cells(&saved, &self.references), errors)?;
+        check_delete(
+            row,
+            COLUMNS,
+            &[TYPE],
+            cells(&saved, &self.references),
+            errors,
+        )?;
 
         let record = name_with_code(&saved.name, &saved.code);
         delete_name(connection, &saved.id).map_err(|error| match error {

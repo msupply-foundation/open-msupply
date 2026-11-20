@@ -3559,6 +3559,13 @@ fn all_users() -> ExportTable {
 #[actix_rt::test]
 async fn users_export_without_passwords_then_import_makes_no_changes() {
     let (connection, service_provider, dir, _) = user_setup("central_data_user_round_trip").await;
+    // Sorted in any letter case, so after anna.
+    UserAccountRowRepository::new(&connection)
+        .upsert_one(&UserAccountRow {
+            username: "Ben".to_string(),
+            ..ben()
+        })
+        .unwrap();
     let before = UserAccountRowRepository::new(&connection)
         .find_all()
         .unwrap();
@@ -3578,7 +3585,7 @@ async fn users_export_without_passwords_then_import_makes_no_changes() {
         .iter()
         .map(|row| (row.cells[1].as_str(), row.cells[2].as_str()))
         .collect();
-    assert_eq!(cells, [("anna", ""), ("ben", "")]);
+    assert_eq!(cells, [("anna", ""), ("Ben", "")]);
 
     let summary = CentralDataService
         .import(&ctx, &path, &no_sessions(), today())
@@ -6866,8 +6873,8 @@ async fn a_name_store_join_row_cannot_change_its_store_or_name() {
             ),
             (
                 3,
-                Some("name_code"),
-                "name_code and id conflict: Main store (MAIN) in store MS has name_code MAIN and id join_own, but this row has name_code MAIN and id copied"
+                Some("id"),
+                "id conflict: Main store (MAIN) in store MS has id join_own, but this row has id copied"
             ),
             (
                 4,
@@ -6994,8 +7001,8 @@ async fn another_servers_join_for_a_new_stores_own_name_takes_the_place_of_the_o
         row_errors(&summary),
         vec![(
             3,
-            Some("name_code"),
-            "name_code and id conflict: Main store (MAIN) in store MS has name_code MAIN and id join_own, but this row has name_code MAIN and id copied"
+            Some("id"),
+            "id conflict: Main store (MAIN) in store MS has id join_own, but this row has id copied"
         )]
     );
 
@@ -7248,6 +7255,13 @@ async fn user_permissions_export_then_import_makes_no_changes() {
         permission_setup("central_data_permission_round_trip").await;
     let ctx = as_user(&service_provider, IMPORTER);
     let before = permissions_of(&connection, "anna");
+    // Sorted in any letter case, so after anna.
+    UserAccountRowRepository::new(&connection)
+        .upsert_one(&UserAccountRow {
+            username: "Ben".to_string(),
+            ..ben()
+        })
+        .unwrap();
 
     let bytes = CentralDataService
         .export(&ctx, &[permissions_containing(None)])
@@ -7289,10 +7303,28 @@ async fn user_permissions_export_then_import_makes_no_changes() {
                 "Immunisation",
                 "immunisation"
             ),
-            row("anna_patients", "anna", "DOCUMENT_QUERY", "Patient", "Patient"),
+            row(
+                "anna_patients",
+                "anna",
+                "DOCUMENT_QUERY",
+                "Patient",
+                "Patient"
+            ),
             row("anna_stocktake", "anna", "STOCKTAKE_QUERY", "", ""),
             row("anna_access", "anna", "STORE_ACCESS", "", ""),
-            row("ben_report", "ben", "REPORT", "", ""),
+            [
+                "ben_report",
+                "Ben",
+                "ben",
+                "MS",
+                "store_ms",
+                "REPORT",
+                "",
+                "",
+                "",
+                "Main store"
+            ]
+            .map(String::from),
         ]
     );
 
@@ -7569,8 +7601,8 @@ async fn a_user_permission_finds_its_references_and_cannot_change_them() {
             ),
             (
                 4,
-                Some("permission"),
-                "permission and id conflict: anna: STOCKTAKE_QUERY in store MS has permission STOCKTAKE_QUERY and id anna_stocktake, but this row has permission STOCKTAKE_QUERY and id copy"
+                Some("id"),
+                "id conflict: anna: STOCKTAKE_QUERY in store MS has id anna_stocktake, but this row has id copy"
             ),
             (
                 5,
@@ -7748,4 +7780,33 @@ async fn a_user_permission_finds_a_user_the_user_sheet_adds() {
         [("store_ms".to_string(), true)]
     );
     assert_eq!(permissions_of(&connection, &dina.id).len(), 1);
+}
+
+// covers: OMS-REG-CDIO-01.26, .155
+
+#[actix_rt::test]
+async fn a_delete_row_matches_a_permission_and_username_in_any_letter_case() {
+    let (connection, service_provider, dir) =
+        permission_setup("central_data_permission_delete_any_case").await;
+    let ctx = as_user(&service_provider, IMPORTER);
+    let path = write_file(
+        dir.path(),
+        permission_sheet(vec![permission_row(&[
+            ("id", "anna_stocktake"),
+            ("username", "ANNA"),
+            ("store_code", "MS"),
+            ("permission", "stocktake_query"),
+            ("delete", "DELETE"),
+        ])]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].deleted, 1);
+    assert!(
+        !permissions_of(&connection, "anna")
+            .iter()
+            .any(|(id, ..)| id == "anna_stocktake")
+    );
 }

@@ -45,10 +45,12 @@ pub(crate) fn already_deleted(
 }
 
 /// Before a `DELETE` row deletes its record: the row may repeat `saved`, the record's cells in
-/// `columns` order, but not change them. `errors` are the row's others; with any, the row fails.
+/// `columns` order, but not change them. `any_case` are the columns read in any letter case, such
+/// as choices and usernames. `errors` are the row's others; with any, the row fails.
 pub(crate) fn check_delete(
     row: &Row,
     columns: &[&str],
+    any_case: &[&str],
     saved: Vec<Value>,
     mut errors: Vec<RowError>,
 ) -> Result<(), RowFailure> {
@@ -58,7 +60,7 @@ pub(crate) fn check_delete(
         .zip(saved)
         .filter(|(column, _)| *column != DELETE_COLUMN)
         .collect();
-    if let Err(e) = check_unchanged(row, &saved) {
+    if let Err(e) = check_unchanged(row, &saved, any_case) {
         errors.push(e);
     }
     if errors.is_empty() {
@@ -69,8 +71,12 @@ pub(crate) fn check_delete(
 }
 
 /// A `DELETE` row may repeat `saved` (as exported) but not change it. Columns not in `saved` and
-/// blank cells aren't checked.
-pub fn check_unchanged(row: &Row, saved: &[(&str, Value)]) -> Result<(), RowError> {
+/// blank cells aren't checked; `any_case` columns match in any letter case.
+pub fn check_unchanged(
+    row: &Row,
+    saved: &[(&str, Value)],
+    any_case: &[&str],
+) -> Result<(), RowError> {
     let changed: Vec<&str> = saved
         .iter()
         .filter(|(column, value)| {
@@ -79,6 +85,9 @@ pub fn check_unchanged(row: &Row, saved: &[(&str, Value)]) -> Result<(), RowErro
             };
             match value {
                 // Cells are read trimmed, so a padded saved value reads back without its spaces.
+                Value::Text(text) if any_case.contains(column) => {
+                    cell.to_lowercase() != trim_spaces(text).to_lowercase()
+                }
                 Value::Text(text) => cell != trim_spaces(text),
                 // Excel numbers are floats: 3 can read as "3.0".
                 Value::Number(number) => cell.parse::<f64>().ok() != Some(*number),
@@ -170,11 +179,11 @@ mod tests {
             ["A", "Clinic", "2026-01-01", "DELETE"],
         ] {
             with_row(&cells, |row| {
-                assert_eq!(check_unchanged(&row, &saved()), Ok(()))
+                assert_eq!(check_unchanged(&row, &saved(), &[]), Ok(()))
             });
         }
         with_row(&["A", "Hospital", "", "DELETE"], |row| {
-            let error = check_unchanged(&row, &saved()).unwrap_err();
+            let error = check_unchanged(&row, &saved(), &[]).unwrap_err();
             assert_eq!(error.column.as_deref(), Some("delete"));
             assert_eq!(
                 error.message,
@@ -184,10 +193,28 @@ mod tests {
     }
 
     #[test]
+    fn an_any_case_column_matches_in_any_letter_case() {
+        let saved = || {
+            [
+                ("code", Value::Text("A".into())),
+                ("name", Value::Text("Clinic".into())),
+            ]
+        };
+        with_row(&["A", "CLINIC", "", "DELETE"], |row| {
+            assert_eq!(check_unchanged(&row, &saved(), &["name"]), Ok(()));
+            assert!(check_unchanged(&row, &saved(), &[]).is_err());
+        });
+        // Other columns still match exactly.
+        with_row(&["a", "Clinic", "", "DELETE"], |row| {
+            assert!(check_unchanged(&row, &saved(), &["name"]).is_err())
+        });
+    }
+
+    #[test]
     fn a_padded_saved_value_matches_its_exported_cell() {
         let saved = [("name", Value::Text(" Clinic ".into()))];
         with_row(&["A", "Clinic", "", "DELETE"], |row| {
-            assert_eq!(check_unchanged(&row, &saved), Ok(()))
+            assert_eq!(check_unchanged(&row, &saved, &[]), Ok(()))
         });
     }
 
@@ -209,7 +236,7 @@ mod tests {
                 headers: &headers,
                 cells: &cells,
             };
-            check_unchanged(&row, &saved).map_err(|error| error.message)
+            check_unchanged(&row, &saved, &[]).map_err(|error| error.message)
         };
         assert_eq!(check(["3.0", "true", ""]), Ok(()));
         // A flag typed as 1 or 0 is the same value.

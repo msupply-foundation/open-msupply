@@ -105,7 +105,8 @@ impl ImportTable for UserTable {
     ) -> Result<Vec<Vec<Value>>, RepositoryError> {
         let mut users = exportable(connection)?;
         users.retain(|user| matches(filter, user));
-        users.sort_by(|a, b| a.username.cmp(&b.username));
+        // Any letter case, so `anna` comes before `Ben`; usernames are unique in any case.
+        users.sort_by_cached_key(|user| user.username.to_lowercase());
         Ok(users
             .into_iter()
             .map(|user| cells(&user, Value::Empty))
@@ -360,7 +361,13 @@ impl UserSheet {
         let Some(saved) = existing.filter(|saved| saved.deleted_datetime.is_none()) else {
             return already_deleted(row, USERNAME, errors);
         };
-        check_delete(row, COLUMNS, cells(&saved, Value::Empty), errors)?;
+        check_delete(
+            row,
+            COLUMNS,
+            &[USERNAME, LANGUAGE],
+            cells(&saved, Value::Empty),
+            errors,
+        )?;
 
         delete_user(connection, &self.importer, &saved.id).map_err(|error| match error {
             DeleteUserError::DeletingSelf => row

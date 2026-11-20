@@ -5,7 +5,7 @@ use super::{
     delete::{DELETE_COLUMN, already_deleted, check_delete, is_delete},
     lookup::{
         Found, InMemory, KeyedTable, NOT_FOUND, active_first, find_by_id_or_composite_key,
-        find_reference, record_conflict, reference_conflict,
+        find_reference, new_id_conflict, record_conflict, reference_conflict,
     },
     sheet::Value,
     stores_with_names,
@@ -103,14 +103,16 @@ impl ImportTable for UserPermissionTable {
                 let context = records.context(permission);
                 let mut cells = cells(permission, user, store.map(|(store, _)| store), context);
                 cells.push(store.map(|(_, name)| name.clone()).into());
+                // Usernames and names in any letter case, so `anna` comes before `Ben`.
                 let order = (
-                    user.map(|user| user.username.clone()).unwrap_or_default(),
+                    user.map(|user| user.username.to_lowercase())
+                        .unwrap_or_default(),
                     store
                         .map(|(store, _)| store.code.clone())
                         .unwrap_or_default(),
                     permission.permission.as_ref().to_string(),
                     context
-                        .map(|context| context.name.clone())
+                        .map(|context| context.name.to_lowercase())
                         .unwrap_or_default(),
                     permission.id.clone(),
                 );
@@ -294,9 +296,9 @@ impl UserPermissionSheet {
         key: &Key,
         delete: bool,
     ) -> Result<Result<Option<UserPermissionRow>, RowError>, RepositoryError> {
-        let by_key = match key.record() {
-            Some(record) => find_user_permission(connection, &record)?,
-            None => Vec::new(),
+        let by_key = || match key.record() {
+            Some(record) => find_user_permission(connection, &record),
+            None => Ok(Vec::new()),
         };
         // Blank context is none, except on a `DELETE` row. Blank store keeps the saved one.
         let differs = |given: &Reference, saved: &Option<String>, blank_keeps: bool| match given {
@@ -312,7 +314,14 @@ impl UserPermissionSheet {
             |id| UserPermissionRowRepository::new(connection).find_one_by_id(id),
             |saved, found, id| {
                 let column = match found {
-                    Found::NewIdBesideKey => Some(PERMISSION),
+                    Found::NewIdBesideKey => {
+                        return Ok(Some(new_id_conflict(
+                            row,
+                            &self.record(saved),
+                            &saved.id,
+                            id,
+                        )));
+                    }
                     Found::ById
                         if key
                             .user_id
@@ -405,6 +414,7 @@ impl UserPermissionSheet {
         check_delete(
             row,
             COLUMNS,
+            &[USERNAME, PERMISSION],
             cells(
                 &saved,
                 self.users.get(&saved.user_id),
