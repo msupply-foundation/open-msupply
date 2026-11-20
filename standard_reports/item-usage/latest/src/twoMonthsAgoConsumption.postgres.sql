@@ -1,9 +1,9 @@
 WITH
     last_month AS (
-        SELECT date_trunc('month', CURRENT_DATE - interval '1 month') AS last_month
+        SELECT date_trunc('month', instant_to_calendar_date(now() AT TIME ZONE 'UTC', $timezone) - interval '1 month') AS last_month
     ),
     two_months_ago AS (
-        SELECT date_trunc('month', CURRENT_DATE - interval '2 month') AS two_months_ago
+        SELECT date_trunc('month', instant_to_calendar_date(now() AT TIME ZONE 'UTC', $timezone) - interval '2 month') AS two_months_ago
     )
 SELECT
     SUM(quantity) AS quantity,

@@ -1,6 +1,6 @@
 WITH
     this_month AS (
-        SELECT date('now', 'start of month') AS this_month
+        SELECT date(instant_to_calendar_date(datetime('now'), $timezone), 'start of month') AS this_month
     )
 SELECT
     SUM(quantity) AS quantity,

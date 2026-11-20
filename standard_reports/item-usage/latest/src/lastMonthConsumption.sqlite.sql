@@ -1,9 +1,9 @@
 WITH
     this_month AS (
-        SELECT date('now', 'start of month') AS this_month
+        SELECT date(instant_to_calendar_date(datetime('now'), $timezone), 'start of month') AS this_month
     ),
     last_month AS (
-        SELECT date('now', 'start of month', '-1 month') AS last_month
+        SELECT date(instant_to_calendar_date(datetime('now'), $timezone), 'start of month', '-1 month') AS last_month
     )
 SELECT
     SUM(quantity) AS quantity,
