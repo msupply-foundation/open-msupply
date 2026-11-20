@@ -28,13 +28,15 @@ const processStockLines = (nodes, sort, dir) => {
   return sortedNodes;
 };
 
+// Whole days from today to the expiry date. Today is the local date, which on the server is the
+// report's timezone: subtracting now from the expiry date's UTC midnight gave the day before or
+// after, depending on the hour and the timezone.
 const calculateDaysUntilExpired = expiryDateString => {
-  let daysUntilExpired = undefined;
-  if (!!expiryDateString) {
-    let now = Date.now();
-    daysUntilExpired = (new Date(expiryDateString) - now) / 1000 / 60 / 60 / 24;
-  }
-  return daysUntilExpired;
+  if (!expiryDateString) return undefined;
+  const [year, month, day] = expiryDateString.split('-').map(Number);
+  const now = new Date();
+  const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  return (Date.UTC(year, month - 1, day) - today) / 1000 / 60 / 60 / 24;
 };
 
 const calculateExpectedUsage = (daysUntilExpired, line) => {
