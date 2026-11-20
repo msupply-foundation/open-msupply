@@ -1,7 +1,6 @@
 use repository::{
-    KeyType, KeyValueStoreRepository, NameRowRepository, NameRowType, NameStoreJoinRepository,
-    NameStoreJoinRow, PaginationOption, RepositoryError, SiteRowRepository, StorageConnection,
-    Store, StoreRow, StoreRowRepository,
+    NameRowRepository, NameRowType, NameStoreJoinRepository, NameStoreJoinRow, PaginationOption,
+    RepositoryError, SiteRowRepository, StorageConnection, Store, StoreRow, StoreRowRepository,
 };
 use repository::{StoreFilter, StoreRepository, StoreSort};
 use util::uuid::uuid;
@@ -53,9 +52,6 @@ pub enum UpsertStoreError {
         other_code: String,
     },
     SiteNotFound,
-    /// See `is_own_site_store`.
-    MovesOwnSiteStore,
-    DisablesOwnSiteStore,
     DatabaseError(RepositoryError),
 }
 
@@ -142,16 +138,6 @@ fn validate(
             });
         }
     }
-    if let Some(saved) = saved
-        && is_own_site_store(connection, saved)?
-    {
-        if row.site_id != saved.site_id {
-            return Err(UpsertStoreError::MovesOwnSiteStore);
-        }
-        if row.is_disabled && !saved.is_disabled {
-            return Err(UpsertStoreError::DisablesOwnSiteStore);
-        }
-    }
     if saved.is_none_or(|saved| saved.site_id != row.site_id)
         && SiteRowRepository::new(connection)
             .find_one_by_id(row.site_id)?
@@ -160,19 +146,6 @@ fn validate(
         return Err(UpsertStoreError::SiteNotFound);
     }
     Ok(())
-}
-
-/// Whether `store` is on this server's own site. Login offers only those stores, so moving one
-/// away or disabling it can leave its users, the admin a standalone central server made at setup
-/// among them, with no store to log in to.
-fn is_own_site_store(
-    connection: &StorageConnection,
-    store: &StoreRow,
-) -> Result<bool, RepositoryError> {
-    Ok(
-        KeyValueStoreRepository::new(connection).get_i32(KeyType::SettingsSyncSiteId)?
-            == Some(store.site_id),
-    )
 }
 
 #[cfg(test)]

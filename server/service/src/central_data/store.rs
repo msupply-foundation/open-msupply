@@ -313,24 +313,6 @@ fn upsert_failure(
                 format!("Site {} isn't on this server", store.site_id),
             )
             .into(),
-        UpsertStoreError::MovesOwnSiteStore => row
-            .error(
-                SITE_ID,
-                format!(
-                    "Store {} is on this server's site, where its users log in, so import can't move it to another site",
-                    store.code
-                ),
-            )
-            .into(),
-        UpsertStoreError::DisablesOwnSiteStore => row
-            .error(
-                IS_DISABLED,
-                format!(
-                    "Store {} is on this server's site, where its users log in, so import can't disable it",
-                    store.code
-                ),
-            )
-            .into(),
         UpsertStoreError::DatabaseError(error) => RowFailure::Database(error),
     }
 }

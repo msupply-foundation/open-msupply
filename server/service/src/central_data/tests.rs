@@ -6201,10 +6201,10 @@ async fn a_name_finds_a_supplying_store_the_store_sheet_adds() {
 // covers: OMS-REG-CDIO-01.144
 
 #[actix_rt::test]
-async fn a_store_on_the_servers_own_site_cannot_be_moved_or_disabled() {
+async fn a_store_on_the_servers_own_site_can_be_moved_and_disabled() {
     let (connection, service_provider, dir) = store_setup("central_data_store_own_site").await;
     let ctx = service_provider.basic_context().unwrap();
-    // This server is site 2, with its own store; Main store is on site 0.
+    // This server is site 2, with its own store.
     SiteRowRepository::new(&connection)
         .upsert(&SiteRow {
             id: 2,
@@ -6226,47 +6226,20 @@ async fn a_store_on_the_servers_own_site_cannot_be_moved_or_disabled() {
         })
         .unwrap();
 
+    // As sync and the Sites screen allow, though its users can no longer log in here.
     let path = write_file(
         dir.path(),
-        store_sheet(vec![
-            store_row(&[("code", "CENTRAL"), ("site_id", "1")]),
-            store_row(&[("code", "CENTRAL"), ("is_disabled", "TRUE")]),
-        ]),
-    );
-    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
-    assert_eq!(
-        row_errors(&summary),
-        vec![
-            (
-                2,
-                Some("site_id"),
-                "Store CENTRAL is on this server's site, where its users log in, so import can't move it to another site"
-            ),
-            (
-                3,
-                Some("is_disabled"),
-                "Store CENTRAL is on this server's site, where its users log in, so import can't disable it"
-            ),
-        ]
-    );
-
-    // Its other columns change; a store on another site can be moved and disabled.
-    let path = write_file(
-        dir.path(),
-        store_sheet(vec![
-            store_row(&[("code", "CENTRAL"), ("store_mode", "DISPENSARY")]),
-            store_row(&[("code", "MS"), ("site_id", "1"), ("is_disabled", "TRUE")]),
-        ]),
+        store_sheet(vec![store_row(&[
+            ("code", "CENTRAL"),
+            ("site_id", "1"),
+            ("is_disabled", "TRUE"),
+        ])]),
     );
     let summary = CentralDataService
         .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.changes[0].change, Change::Deleted);
     let central = find_store(&connection, "central").unwrap();
-    assert_eq!(
-        (central.site_id, central.is_disabled, central.store_mode),
-        (2, false, StoreMode::Dispensary)
-    );
-    let main = find_store(&connection, "store_main").unwrap();
-    assert_eq!((main.site_id, main.is_disabled), (1, true));
+    assert_eq!((central.site_id, central.is_disabled), (1, true));
 }
