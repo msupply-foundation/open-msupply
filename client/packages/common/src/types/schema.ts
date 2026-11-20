@@ -4896,6 +4896,12 @@ export type InsertInboundShipmentLineInput = {
   sellPricePerPack: Scalars['Float']['input'];
   shippedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   shippedPackSize?: InputMaybe<Scalars['Float']['input']>;
+  /**
+   * The new line's authorisation state, on a purchase-order-linked shipment
+   * whose store requires line authorisation (omitted: Pending). Passed or
+   * Rejected needs the authorise permission. Ignored on any other line.
+   */
+  status?: InputMaybe<InvoiceLineStatusType>;
   taxPercentage?: InputMaybe<Scalars['Float']['input']>;
   totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
   volumePerPack?: InputMaybe<Scalars['Float']['input']>;

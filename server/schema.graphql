@@ -4321,6 +4321,12 @@ input InsertInboundShipmentLineInput {
 	and its stock. Doesn't propose a barcode (see `proposeBarcode`).
 	"""
 	barcode: String
+	"""
+	The new line's authorisation state, on a purchase-order-linked shipment
+	whose store requires line authorisation (omitted: Pending). Passed or
+	Rejected needs the authorise permission. Ignored on any other line.
+	"""
+	status: InvoiceLineStatusType
 }
 
 union InsertInboundShipmentLineResponse = InsertInboundShipmentLineError | InvoiceLineNode

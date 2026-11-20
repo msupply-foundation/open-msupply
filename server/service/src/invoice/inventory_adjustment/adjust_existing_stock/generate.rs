@@ -126,6 +126,7 @@ pub fn generate(
 
     let insert_stock_in_or_out_line = match adjustment_type {
         AdjustmentType::Addition => InsertStockInOrOutLine::StockIn(InsertStockInLine {
+            status: None,
             r#type: StockInType::InventoryAddition,
             id: invoice_line_id.clone(),
             invoice_id,
