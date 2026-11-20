@@ -149,6 +149,7 @@ export type PrescriptionsVariables = {
     notEqualAll?: Array<string> | null;
   } | null;
     isProgramInvoice?: boolean | null;
+    isForUnnamedPatient?: boolean | null;
     purchaseOrderId?: {
     equalTo?: string | null;
     equalAny?: Array<string> | null;
@@ -204,6 +205,7 @@ export type PrescriptionsResult = {
   invoiceNumber: number;
   status: "NEW" | "ALLOCATED" | "PICKED" | "SHIPPED" | "DELIVERED" | "RECEIVED" | "VERIFIED" | "CANCELLED";
   otherPartyName: string;
+  isForUnnamedPatient: boolean;
   colour: string | null;
   comment: string | null;
   theirReference: string | null;
@@ -215,7 +217,7 @@ export type PrescriptionsResult = {
 };
 
 export const Prescriptions = {
-  query: "query prescriptions($storeId: String!, $filter: InvoiceFilterInput, $sort: [InvoiceSortInput!], $page: PaginationInput) {\n  invoices(\n    storeId: $storeId\n    filter: $filter\n    sort: $sort\n    page: $page\n    type: [PRESCRIPTION]\n  ) {\n    ... on InvoiceConnector {\n      totalCount\n      nodes {\n        id\n        invoiceNumber\n        status\n        otherPartyName\n        colour\n        comment\n        theirReference\n        createdDatetime\n        backdatedDatetime\n        customFields\n      }\n    }\n  }\n}",
+  query: "query prescriptions($storeId: String!, $filter: InvoiceFilterInput, $sort: [InvoiceSortInput!], $page: PaginationInput) {\n  invoices(\n    storeId: $storeId\n    filter: $filter\n    sort: $sort\n    page: $page\n    type: [PRESCRIPTION]\n  ) {\n    ... on InvoiceConnector {\n      totalCount\n      nodes {\n        id\n        invoiceNumber\n        status\n        otherPartyName\n        isForUnnamedPatient\n        colour\n        comment\n        theirReference\n        createdDatetime\n        backdatedDatetime\n        customFields\n      }\n    }\n  }\n}",
 } as TypedDocument<PrescriptionsResult, PrescriptionsVariables>;
 
 export type DeletePrescriptionsVariables = {

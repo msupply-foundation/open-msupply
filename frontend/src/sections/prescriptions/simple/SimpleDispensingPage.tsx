@@ -6,6 +6,7 @@ import {
   Match,
   Show,
   Switch,
+  untrack,
 } from 'solid-js';
 import type { Component } from 'solid-js';
 import { createStore, produce, reconcile } from 'solid-js/store';
@@ -18,7 +19,13 @@ import {
 } from '@/api/graphql';
 import { gated } from '@/api/gated';
 import { sameFetchedValue } from '@/typeHelpers';
-import { getCurrencyInfo, homeCurrency, locale, t } from '@/intl';
+import {
+  getCurrencyInfo,
+  homeCurrency,
+  locale,
+  localisedTime,
+  t,
+} from '@/intl';
 import { prescriptionPreferences } from '@/store/storeContext';
 import {
   fetchPatientOptionById,
@@ -42,6 +49,7 @@ import { SimpleDispensingItems } from './simpleDispensing.generated';
 import {
   SimpleDispense,
   SimpleDispensedVisit,
+  SimpleUnnamedPatient,
 } from './simpleDispense.generated';
 import { AmountDialog } from './AmountDialog';
 import {
@@ -53,13 +61,17 @@ import {
   removeLine,
   setAmount,
   shortLines,
+  startsWithUnnamed,
   unitsListed,
+  unnamedAfterDispense,
+  unnamedStillChosen,
   unreadIds,
   visitWasSaved,
   type CardItem,
   type ListLine,
   type MedicineCard,
   type DispenseInput,
+  type DispensedTo,
   type SaveReply,
   type VisitRecord,
 } from './simpleDispensingLogic';
@@ -194,6 +206,26 @@ const SimpleDispensingPage: Component = () => {
   // Who the visit is for (rules › who it's for and the list): nothing can be
   // added until someone is chosen, and choosing someone else keeps the list.
   const [patient, setPatient] = createSignal<PatientOption | null>(null);
+  // Or the store's unnamed patient (rules › the unnamed patient), which a
+  // new visit starts with where the store says so. The preferences are in
+  // before this screen opens, since it waits for the dispensing screen.
+  const [unnamedPicked, setUnnamed] = createSignal(
+    untrack(() => startsWithUnnamed(prescriptionPreferences()))
+  );
+  // Chosen only while the store still uses it: if sync turns the setting off
+  // mid-visit, nobody is chosen and the list stays, so the visit can't be
+  // dispensed to it (rules › the unnamed patient).
+  const unnamed = () =>
+    unnamedStillChosen(unnamedPicked(), prescriptionPreferences());
+  const chosen = () => unnamed() || patient() !== null;
+  const chooseUnnamed = (on: boolean) => {
+    setNotice(undefined);
+    setPatient(null);
+    setUnnamed(on);
+  };
+  // The unnamed patient's record, once the server has given it: the same
+  // one for every visit.
+  let unnamedPatient: DispensedTo | undefined;
   // The patient search hands back an id and name only, for someone found or
   // just created: read the record so their code, date of birth and gender
   // show.
@@ -302,19 +334,26 @@ const SimpleDispensingPage: Component = () => {
   };
 
   /** The visit is saved: ready the screen for the next person. */
-  const finished = (who: { name: string }): void => {
+  const finished = (who: DispensedTo): void => {
     visit.current = undefined;
     setUnconfirmed(false);
     setChecked([]);
     update([]);
     setPatient(null);
+    // The unnamed patient stays chosen after a visit to it (rules › the
+    // unnamed patient).
+    setUnnamed(unnamedAfterDispense(who, prescriptionPreferences()));
     setSearchedIds([]);
     // The next visit reads its medicines afresh: none of this one's stock
     // stands in for them while that read is out, or after it fails.
     setSearchedItems(undefined);
     setNotice({
       severity: 'success',
-      text: t('messages.dispensed-to', { name: who.name }),
+      // "Unnamed patient" would read the same for every walk-in: when, not
+      // who.
+      text: who.isUnnamed
+        ? t('messages.dispensed-at', { time: localisedTime(new Date()) })
+        : t('messages.dispensed-to', { name: who.name }),
     });
     void refetchItems();
   };
@@ -366,10 +405,47 @@ const SimpleDispensingPage: Component = () => {
     };
   };
 
+  /**
+   * Who the visit is saved for: the chosen patient, or the store's unnamed
+   * patient, which the server creates the first time it is asked. Undefined
+   * when nobody is chosen; `failed` when the unnamed patient couldn't be
+   * had, and nothing has been saved.
+   */
+  const dispensedTo = async (): Promise<
+    DispensedTo | { failed: true; missing?: string[] } | undefined
+  > => {
+    if (!unnamed()) return patient() ?? undefined;
+    if (unnamedPatient) return unnamedPatient;
+    // Background: a failure is this screen's to say, as Dispense's is.
+    const result = await graphqlFetch(
+      SimpleUnnamedPatient,
+      { storeId: params.storeId },
+      { returnGraphqlErrors: true, background: true }
+    );
+    if (result.kind !== 'success')
+      return {
+        failed: true,
+        missing:
+          result.kind === 'graphqlError' && isForbidden(result.errors)
+            ? missingPermissions(result.errors)
+            : undefined,
+      };
+    unnamedPatient = {
+      ...result.data.getOrCreateUnnamedPatient,
+      isUnnamed: true,
+    };
+    return unnamedPatient;
+  };
+
   /** Check the list against the stock now; save it if it is all there. */
   const checkAndSave = async (): Promise<void> => {
-    const who = patient();
+    const who = await dispensedTo();
     if (!who) return;
+    if ('failed' in who) {
+      if (who.missing) reportPermissionDenied(who.missing);
+      setNotice({ severity: 'error', text: t('error.dispense-failed') });
+      return;
+    }
     setUnconfirmed(false);
     // The list as it stands now, so the check and the save are of the same
     // lines.
@@ -482,9 +558,12 @@ const SimpleDispensingPage: Component = () => {
           <WhoIsItFor
             storeId={params.storeId}
             patient={patient()}
+            useUnnamed={prescriptionPreferences().useUnnamedPatient}
+            unnamed={unnamed()}
             disabled={locked()}
             onSelect={chosen => {
               setNotice(undefined);
+              setUnnamed(false);
               setPatient(minimalPatientOption(chosen.id, chosen.name));
               void showDetails(chosen.id);
             }}
@@ -492,6 +571,8 @@ const SimpleDispensingPage: Component = () => {
               setNotice(undefined);
               setPatient(null);
             }}
+            onUnnamed={() => chooseUnnamed(true)}
+            onChange={() => chooseUnnamed(false)}
           />
           {/* Staff can't switch screens (rules › the Simple screen): the list
               is where past records are found. Nothing on this screen's list
@@ -516,7 +597,7 @@ const SimpleDispensingPage: Component = () => {
             heading
             label={t('heading.choose-medicines')}
             hint={
-              patient() === null
+              !chosen()
                 ? t('messages.choose-who-first')
                 : t('messages.press-an-amount')
             }
@@ -532,7 +613,7 @@ const SimpleDispensingPage: Component = () => {
               includeHiddenWithStock
               width="full"
               clearable={false}
-              disabled={patient() === null || locked()}
+              disabled={!chosen() || locked()}
               value={searchValue()}
               onSelect={item => {
                 if (!item) return;
@@ -578,7 +659,7 @@ const SimpleDispensingPage: Component = () => {
                       available={available(card)}
                       listed={unitsListed(lines, card.item.id)}
                       oneRow={isPhone()}
-                      canAdd={patient() !== null && !locked()}
+                      canAdd={chosen() && !locked()}
                       onAmount={(_, amount) => addToList(card, amount)}
                       onAskAmount={() => askAmount(card.item.id)}
                     />
@@ -616,7 +697,7 @@ const SimpleDispensingPage: Component = () => {
             its lines. */}
         <DispensingList
           isPhone={isPhone()}
-          forName={patient()?.name}
+          forName={unnamed() ? t('label.unnamed-patient') : patient()?.name}
           lines={lines}
           cardOf={cardOf}
           onAmount={(itemId, units) =>
@@ -625,7 +706,7 @@ const SimpleDispensingPage: Component = () => {
           onRemove={itemId => update(removeLine(lines, itemId))}
           onClear={() => void clear()}
           onDispense={() => void dispense()}
-          canDispense={patient() !== null}
+          canDispense={chosen()}
           dispensing={dispensing()}
           looking={looking()}
           locked={locked()}
