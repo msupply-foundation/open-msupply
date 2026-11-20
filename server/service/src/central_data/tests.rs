@@ -2488,14 +2488,11 @@ async fn a_home_currency_an_invoice_uses_stays_the_home_currency() {
     let summary = CentralDataService
         .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
-    assert_eq!(
-        row_errors(&summary)[0],
-        (
-            3,
-            Some("is_home_currency"),
-            "USD is used by an invoice as the home currency, so it must stay the home currency"
-        )
-    );
+    assert!(row_errors(&summary).contains(&(
+        3,
+        Some("is_home_currency"),
+        "USD is used by an invoice as the home currency, so it must stay the home currency"
+    )));
     assert_eq!(find_currency(&connection, "usd"), Some(usd()));
     assert_eq!(find_currency(&connection, "nzd"), Some(nzd()));
 
@@ -5313,14 +5310,8 @@ async fn name_references_are_found_by_code_or_id() {
     assert_eq!(
         row_errors(&summary),
         vec![
-            (5, Some("currency_code"), "referenced record not found"),
-            (6, Some("custom_data"), "custom_data must be JSON, or blank"),
-            (
-                7,
-                Some("code"),
-                "This code belongs to a system name, which the server needs"
-            ),
-            // Last, as a supplying store is looked for again once the store sheet could add it.
+            // Found after every sheet has run, as the store sheet may add them, but listed in
+            // row order.
             (
                 2,
                 Some("supplying_store_code"),
@@ -5328,6 +5319,13 @@ async fn name_references_are_found_by_code_or_id() {
             ),
             (3, Some("supplying_store_id"), "referenced record not found"),
             (4, Some("supplying_store_id"), "referenced record not found"),
+            (5, Some("currency_code"), "referenced record not found"),
+            (6, Some("custom_data"), "custom_data must be JSON, or blank"),
+            (
+                7,
+                Some("code"),
+                "This code belongs to a system name, which the server needs"
+            ),
         ]
     );
 
@@ -6210,18 +6208,18 @@ async fn a_name_finds_a_supplying_store_the_store_sheet_adds() {
         not_found,
         vec![
             (
-                3,
+                2,
                 Some("supplying_store_code"),
                 "referenced record not found"
             ),
             (
-                2,
+                3,
                 Some("supplying_store_code"),
                 "referenced record not found"
             ),
         ]
     );
-    // Counted against the name sheet, after the store sheet's own error.
+    // Counted against the name sheet, though found after the store sheet ran.
     assert_eq!(summary.tables[0].table, CentralDataTable::Name);
     assert_eq!(summary.tables[0].error_count, 3);
 }

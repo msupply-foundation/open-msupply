@@ -716,6 +716,12 @@ fn import_sheets<'a>(
         ));
     }
 
+    let heading_errors_listed = summary.errors.len();
+    let sheet_order: HashMap<String, usize> = table_sheets
+        .iter()
+        .enumerate()
+        .map(|(position, (_, sheet, _, _))| (sheet.name.clone(), position))
+        .collect();
     // Each sheet that ran, with its place in `summary.tables`, for `finish_file`.
     let mut finishing = Vec::new();
     for (table, sheet, heading_errors, is_refused) in table_sheets {
@@ -791,6 +797,14 @@ fn import_sheets<'a>(
         summary.tables[position].error_count += errors.len() as u32;
         summary.add_errors(errors);
     }
+    // `finish_file` errors come last, so the row errors are put back in sheet then row order. A
+    // sheet's error with no row stays after its rows.
+    summary.errors[heading_errors_listed..].sort_by_key(|error| {
+        (
+            sheet_order.get(&error.sheet).copied(),
+            error.row.unwrap_or(u32::MAX),
+        )
+    });
     Ok(summary)
 }
 
