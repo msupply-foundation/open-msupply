@@ -148,7 +148,7 @@ pub fn delete_checked_user_permission(
                 let joins = UserStoreJoinRowRepository::new(connection);
                 for join in joins.find_many_by_user_id(&saved.user_id)? {
                     if join.store_id == *store_id {
-                        joins.delete_by_id(&join.id)?;
+                        joins.delete(&join.id)?;
                     }
                 }
             }
@@ -317,7 +317,8 @@ mod tests {
     use super::*;
     use chrono::NaiveDate;
     use repository::{
-        ContextRow, KeyType, KeyValueStoreRepository, StoreRow, UserAccountRow,
+        ChangelogCondition, ChangelogRepository, ChangelogTableName, ContextRow, CursorAndLimit,
+        KeyType, KeyValueStoreRepository, RowActionType, StoreRow, UserAccountRow,
         mock::MockDataInserts, test_db::setup_all,
     };
 
@@ -477,6 +478,46 @@ mod tests {
         );
         // Already gone.
         delete_user_permission(&connection, "admin", "access").unwrap();
+    }
+
+    #[actix_rt::test]
+    async fn taking_store_access_away_syncs_the_store_join_removal() {
+        let connection = setup("user_permission_store_join_delete_syncs").await;
+        upsert_user_permission(
+            &connection,
+            &permission("access", "anna", PermissionType::StoreAccess),
+        )
+        .unwrap();
+        let join_id = UserStoreJoinRowRepository::new(&connection)
+            .find_many_by_user_id("anna")
+            .unwrap()
+            .remove(0)
+            .id;
+        let changelog = ChangelogRepository::new(&connection);
+        let mark = changelog.max_cursor().unwrap();
+
+        delete_user_permission(&connection, "admin", "access").unwrap();
+        let deleted: Vec<_> = changelog
+            .query(
+                ChangelogCondition::True(),
+                CursorAndLimit {
+                    cursor: mark as i64,
+                    limit: 100,
+                },
+            )
+            .unwrap()
+            .rows
+            .into_iter()
+            .filter(|row| row.row_action == RowActionType::Delete)
+            .map(|row| (row.table_name, row.record_id))
+            .collect();
+        assert_eq!(
+            deleted,
+            [
+                (ChangelogTableName::UserPermission, "access".to_string()),
+                (ChangelogTableName::UserStoreJoin, join_id),
+            ]
+        );
     }
 
     #[actix_rt::test]
