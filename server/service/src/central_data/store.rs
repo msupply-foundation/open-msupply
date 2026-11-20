@@ -244,9 +244,10 @@ impl SheetImport for StoreSheet {
     }
 }
 
-/// As `find_reference`. `name_code` finds the name within `r#type`, `STORE` when blank, so an
-/// unedited export finds a saved store's name whatever its type. `upsert_store` checks the type of
-/// a name the row changes, whichever column found it.
+/// As `find_reference`. `name_code` finds the name within `r#type`. When it's blank, `STORE`, or
+/// every type beside a `name_id`, which settles the name: an export writes a patient's type blank,
+/// and must still find a saved store's name. `upsert_store` checks the type of a name the row
+/// changes, whichever column found it.
 fn find_name(
     connection: &StorageConnection,
     row: &Row,
@@ -254,7 +255,7 @@ fn find_name(
 ) -> Result<Result<Option<Option<String>>, RowError>, RepositoryError> {
     let names = NamesOfType {
         repo: NameRowRepository::new(connection),
-        r#type: Some(r#type.unwrap_or(NameRowType::Store)),
+        r#type: r#type.or_else(|| row.text(NAME_ID).is_none().then_some(NameRowType::Store)),
     };
     find_reference(&names, row, NAME_CODE, NAME_ID, |names| {
         active_first(names, |name| name.deleted_datetime.is_none())

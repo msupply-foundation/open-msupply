@@ -6026,6 +6026,34 @@ async fn a_store_cannot_have_a_patient_or_a_system_name() {
     );
 }
 
+// covers: OMS-REG-CDIO-01.139
+
+#[actix_rt::test]
+async fn a_store_whose_name_is_a_patient_imports_unchanged() {
+    let (connection, service_provider, dir) =
+        store_setup("central_data_store_patient_round_trip").await;
+    let ctx = service_provider.basic_context().unwrap();
+    // As old data can have it; import can't give a store such a name.
+    StoreRowRepository::new(&connection)
+        .upsert_one(&StoreRow {
+            name_id: "patient".to_string(),
+            ..find_store(&connection, "store_main").unwrap()
+        })
+        .unwrap();
+    let before = find_store(&connection, "store_main");
+
+    let bytes = CentralDataService
+        .export(&ctx, &[stores_containing(Some("MS"), None)])
+        .unwrap();
+    let path = write_file(dir.path(), bytes);
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].unchanged, 1);
+    assert_eq!(find_store(&connection, "store_main"), before);
+}
+
 // covers: OMS-REG-CDIO-01.23, .39, .140
 
 #[actix_rt::test]
