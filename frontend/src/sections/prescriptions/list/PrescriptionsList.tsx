@@ -22,8 +22,10 @@ import {
   CommentHeader,
   getCellDefinition,
   getDateCell,
+  getDateTimeCell,
   getNumberCell,
 } from '../../../ui/elements/table/tableHelpers';
+import { remToPx } from '../../../ui/utils/rem';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { StatusChip } from '../../../ui/elements/feedback/StatusChip';
 import {
@@ -63,6 +65,7 @@ import {
 } from '../../../domain/customFields';
 import { filterFields, type PrescriptionFilter } from './listFilters';
 import { shownPatientName } from '../patientName';
+import { medicinesGiven } from './medicinesGiven';
 import { CreatePrescriptionModal } from './CreatePrescriptionModal';
 import {
   DeletePrescriptionsAction,
@@ -113,8 +116,10 @@ const PrescriptionsList: Component = () => {
   // A new visit is dispensed the store's way (spec/prescriptions rules › the
   // Simple screen): where the store dispenses on the Simple screen, this list
   // is its Dispensing records, and a new record starts there instead.
+  const simpleStore = () =>
+    prescriptionPreferences().dispensingScreen === 'SIMPLE';
   const newRecord = () => {
-    if (prescriptionPreferences().dispensingScreen === 'SIMPLE')
+    if (simpleStore())
       navigate(`/${params.storeId}/dispensary/dispensing/simple`);
     else setCreateOpen(true);
   };
@@ -164,6 +169,9 @@ const PrescriptionsList: Component = () => {
     },
     sort: query().sort,
     page: { first: query().first, offset: query().offset },
+    // The Medicines column's lines, only where it shows (rules › Dispensing
+    // records).
+    withMedicines: simpleStore(),
   }));
 
   // Keyed on the SERIALISED variables; read via `.latest` — never suspends,
@@ -226,6 +234,13 @@ const PrescriptionsList: Component = () => {
     void refetch();
   };
 
+  // A Simple store's widths (ui-surface S1 › layout), in rem: each column
+  // sized to what it holds, so the row fits a 1280px laptop with the side
+  // menu and Medicines takes the room left. A Standard store keeps the
+  // table's defaults.
+  const width = (size: number, max = size) =>
+    simpleStore() ? { size: remToPx(size), maxSize: remToPx(max) } : {};
+
   const columns = (): Column<PrescriptionRow, SortKey>[] => [
     {
       c: { key: 'otherPartyName' },
@@ -253,6 +268,7 @@ const PrescriptionsList: Component = () => {
         );
       },
       meta: { headerPosition: 'primary' },
+      ...width(14, 15),
     },
     {
       c: { key: 'status' },
@@ -268,25 +284,50 @@ const PrescriptionsList: Component = () => {
         );
       },
       meta: { headerPosition: 'badge' },
+      ...width(8),
     },
     {
       c: { key: 'invoiceNumber' },
       sortKey: 'invoiceNumber',
       header: () => t('label.number'),
       ...getNumberCell(),
+      // Wide enough for the header and its sort arrow on one line.
+      ...width(6.5),
     },
     {
       // The prescription date — backdated when set, else created
       // (OMS-REG-DIS-03.49); its server sort key is the same coalescence.
       c: { accessor: prescriptionDateOf, id: 'prescriptionDatetime' },
       sortKey: 'invoiceDatetime',
-      header: () => t('label.dispensed-date'),
-      ...getDateCell(),
+      // A Simple store finds a visit by when it was (rules › Dispensing
+      // records): the date and the time in one column, so sorting by it
+      // orders the day's visits too.
+      header: () =>
+        simpleStore() ? t('label.dispensed') : t('label.dispensed-date'),
+      ...(simpleStore() ? getDateTimeCell() : getDateCell()),
+      ...width(9.5),
     },
+    // And by what was given.
+    ...(simpleStore()
+      ? [
+          {
+            // One line, cut short; a clipped cell shows the whole list on
+            // hover (the table's own reveal).
+            c: {
+              accessor: (row: PrescriptionRow) =>
+                medicinesGiven(row.lines?.nodes ?? []),
+              id: 'medicines',
+            },
+            header: () => t('label.medicines'),
+            ...width(11.5, 22),
+          } satisfies Column<PrescriptionRow, SortKey>,
+        ]
+      : []),
     {
       c: { key: 'theirReference' },
       sortKey: 'theirReference',
       header: () => t('label.reference'),
+      ...width(6, 7),
     },
     {
       c: { key: 'comment' },
@@ -320,6 +361,7 @@ const PrescriptionsList: Component = () => {
             </Button>
             <ExportPrescriptionsAction
               storeId={params.storeId}
+              withMedicines={simpleStore()}
               filter={() => query().filter}
               customFieldFilter={() => query().cf}
               customFields={cfDefs}
