@@ -56,3 +56,16 @@ export const changedUpdates = <T extends { id: string }>(
   updates: T[],
   loaded: ReadonlyMap<string, string>
 ): T[] => updates.filter(u => loaded.get(u.id) !== JSON.stringify(u));
+
+/**
+ * Whether picking `next` for a batch puts it back as it was loaded. A user
+ * without the authorise permission is offered a signed-off state only when the
+ * batch was saved with it; picking it again closes the batch to them, so it
+ * returns to its loaded state, edits made while it was Pending dropped, rather
+ * than send a change the server refuses (OMS-FUN-ISE-001.15).
+ */
+export const restoresLoadedBatch = (
+  canAuthorise: boolean,
+  saved: AuthStatus | null,
+  next: AuthStatus
+): boolean => !canAuthorise && isSignedOff(next) && next === saved;

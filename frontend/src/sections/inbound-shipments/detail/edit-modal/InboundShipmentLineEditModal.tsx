@@ -94,6 +94,7 @@ import {
   authStatusOptions,
   changedUpdates,
   lockedBySignOff,
+  restoresLoadedBatch,
 } from './lineAuthorisation';
 import { Num } from '@/ui/elements/typography/Num';
 
@@ -479,8 +480,12 @@ type ChosenItem = {
 const Body: Component<InboundShipmentLineEditModalProps> = props => {
   const [item, setItem] = createSignal<ChosenItem | null>(null);
   const [batches, setBatches] = createStore<DraftBatch[]>([]);
-  // Not reactive: read only when a save is built.
-  const loadedUpdates = new Map<string, string>();
+  // Each existing batch as it was loaded, keyed by id: a save sends only the
+  // batches that differ from it (OMS-FUN-ISE-001.14), and a batch a user
+  // without the authorise permission signs off again goes back to it
+  // (restoresLoadedBatch). Copies, since the store writes through to the
+  // objects it is given. Not reactive: read only on a save or a status pick.
+  const loadedBatches = new Map<string, DraftBatch>();
   const [saving, setSaving] = createSignal(false);
   const [errorMessage, setErrorMessage] = createSignal<string>();
   // True while an item's existing lines are being fetched (mount, and each "OK
@@ -578,12 +583,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       purchaseOrderLinked: !!props.purchaseOrderId,
       costLocked: props.costLocked,
     };
-    setBatches(lines.map(line => fromLine(line, shipment)));
-    // Each batch's update as loaded, so a save sends only the batches the user
-    // changed (OMS-FUN-ISE-001.14).
-    loadedUpdates.clear();
-    for (const b of batches)
-      loadedUpdates.set(b.id, JSON.stringify(toUpdate(b)));
+    const seeded = lines.map(line => fromLine(line, shipment));
+    setBatches(seeded);
+    loadedBatches.clear();
+    for (const b of seeded) loadedBatches.set(b.id, { ...b });
     setLoadedRequested(first.requisitionLine?.requestedQuantity ?? null);
     setTransferComment(first.transferComment);
     // A PO-linked shipment's existing lines already cite the order line they
@@ -922,6 +925,26 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     else setBatches(index, 'deleted', true);
   };
 
+  // A batch's Auth status pick. A user without the authorise permission who
+  // picks a batch's saved sign-off again gets the batch back as it was loaded:
+  // it is closed to them once more, so edits made while it was Pending would
+  // only have the save refused (OMS-FUN-ISE-001.15).
+  const changeStatus = (id: string, status: AuthStatus) => {
+    const index = indexById(id);
+    if (index < 0) return;
+    const loaded = loadedBatches.get(id);
+    if (
+      loaded &&
+      restoresLoadedBatch(
+        props.canAuthorise,
+        batches[index].savedStatus,
+        status
+      )
+    )
+      setBatches(index, { ...loaded });
+    else setBatches(index, 'status', status);
+  };
+
   // The rows the table shows: the draft minus soft-deleted batches.
   const rows = (): DraftBatch[] => batches.filter(b => !b.deleted);
 
@@ -979,7 +1002,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     !!props.readOnly ||
     (authorisation() && lockedBySignOff(props.canAuthorise, b.status));
 
-  // An existing batch's update. Built for every batch on load too, so a save
+  // An existing batch's update. Built for each batch as loaded too, so a save
   // can send only the ones the user changed (changedUpdates).
   const toUpdate = (b: DraftBatch) => ({
     id: b.id,
@@ -1045,7 +1068,9 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       }));
     const update = changedUpdates(
       batches.filter(b => !b.isNew && !b.deleted).map(toUpdate),
-      loadedUpdates
+      new Map(
+        [...loadedBatches].map(([id, b]) => [id, JSON.stringify(toUpdate(b))])
+      )
     );
     const del = batches
       .filter(b => !b.isNew && b.deleted)
@@ -1153,6 +1178,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     setItem(null);
     setPoLineId(undefined);
     setBatches([]);
+    loadedBatches.clear();
     setErrorMessage(undefined);
     setMarkedItemId(undefined);
     // Focus the selector so the next item can be typed / picked.
@@ -1596,9 +1622,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                     adornment: <StatusDot status={status} />,
                   }))}
                   // Fixed 3-option list ⇒ the string out is one of the union.
-                  onValueChange={v =>
-                    updateBatch(b.id, 'status', v as AuthStatus)
-                  }
+                  onValueChange={v => changeStatus(b.id, v as AuthStatus)}
                 />
               );
             },
@@ -1852,6 +1876,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         return (
           <ActivitySelect
             hideLabel
+            disabled={batchLocked(b)}
             size="small"
             campaignId={b.campaignId ?? undefined}
             campaign={

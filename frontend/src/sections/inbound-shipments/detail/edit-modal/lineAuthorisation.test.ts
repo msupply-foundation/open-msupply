@@ -4,6 +4,7 @@ import {
   changedUpdates,
   isSignedOff,
   lockedBySignOff,
+  restoresLoadedBatch,
 } from './lineAuthorisation';
 
 describe('line authorisation in the line editor', () => {
@@ -43,6 +44,17 @@ describe('line authorisation in the line editor', () => {
     expect(lockedBySignOff(false, 'PENDING')).toBe(false);
     expect(lockedBySignOff(false, null)).toBe(false);
     expect(lockedBySignOff(true, 'PASSED')).toBe(false);
+  });
+
+  it('OMS-FUN-ISE-001.15: signing a batch off again without the permission puts it back as it was loaded', () => {
+    expect(restoresLoadedBatch(false, 'PASSED', 'PASSED')).toBe(true);
+    expect(restoresLoadedBatch(false, 'REJECTED', 'REJECTED')).toBe(true);
+    // Sending it to Pending is the open change (.16), not a restore.
+    expect(restoresLoadedBatch(false, 'PASSED', 'PENDING')).toBe(false);
+    expect(restoresLoadedBatch(false, 'PENDING', 'PENDING')).toBe(false);
+    // Someone who can authorise is just changing the state.
+    expect(restoresLoadedBatch(true, 'PASSED', 'PASSED')).toBe(false);
+    expect(restoresLoadedBatch(true, 'PENDING', 'PASSED')).toBe(false);
   });
 
   it('OMS-FUN-ISE-001.14: sends only the batches that changed since they were loaded', () => {
