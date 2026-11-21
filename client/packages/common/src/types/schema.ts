@@ -4898,8 +4898,9 @@ export type InsertInboundShipmentLineInput = {
   shippedPackSize?: InputMaybe<Scalars['Float']['input']>;
   /**
    * The new line's authorisation state, on a purchase-order-linked shipment
-   * whose store requires line authorisation (omitted: Pending). Passed or
-   * Rejected needs the authorise permission. Ignored on any other line.
+   * whose store requires line authorisation (omitted: Pending); ignored on
+   * any other line. Passed or Rejected needs the authorise permission on any
+   * external line, including one that ignores it.
    */
   status?: InputMaybe<InvoiceLineStatusType>;
   taxPercentage?: InputMaybe<Scalars['Float']['input']>;

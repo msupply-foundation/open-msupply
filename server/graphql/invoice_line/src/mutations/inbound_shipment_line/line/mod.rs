@@ -47,7 +47,8 @@ fn update_needs_authorise(
     match requested {
         Some(Some(InvoiceLineStatusType::Pending)) => false,
         Some(status @ Some(_)) => is_sign_off(status),
-        // State left as it is (or cleared): a signed-off line stays closed.
+        // State left as it is: a signed-off line stays closed. (`Some(None)`
+        // never arrives: async-graphql parses an explicit null as omitted.)
         _ => matches!(
             stored,
             Some(InvoiceLineStatus::Passed) | Some(InvoiceLineStatus::Rejected)
@@ -148,13 +149,11 @@ mod authorisation_test {
             ));
         }
         // .15: a signed-off line stays closed when its state is left alone.
-        for requested in [None, Some(None)] {
-            assert!(update_needs_authorise(requested, Some(&Stored::Passed)));
-            assert!(update_needs_authorise(requested, Some(&Stored::Rejected)));
-            // .14: a pending line, or one without a state, is open.
-            assert!(!update_needs_authorise(requested, Some(&Stored::Pending)));
-            assert!(!update_needs_authorise(requested, None));
-        }
+        assert!(update_needs_authorise(None, Some(&Stored::Passed)));
+        assert!(update_needs_authorise(None, Some(&Stored::Rejected)));
+        // .14: a pending line, or one without a state, is open.
+        assert!(!update_needs_authorise(None, Some(&Stored::Pending)));
+        assert!(!update_needs_authorise(None, None));
     }
 }
 
