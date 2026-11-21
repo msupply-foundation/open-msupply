@@ -414,15 +414,18 @@ export const DispensingList = (props: {
             </Show>
             {/* The panel's actions, at its inline end, Dispense last. */}
             <div class={styles.actions}>
-              <Button
-                variant="ghost"
-                disabled={!hasLines() || props.locked}
-                loading={props.looking}
-                data-testid="clear-list-button"
-                onClick={() => props.onClear()}
-              >
-                {t('common.clear')}
-              </Button>
+              {/* Hidden, not disabled, with nothing to clear (ui-surface S9). */}
+              <Show when={hasLines()}>
+                <Button
+                  variant="ghost"
+                  disabled={props.locked}
+                  loading={props.looking}
+                  data-testid="clear-list-button"
+                  onClick={() => props.onClear()}
+                >
+                  {t('common.clear')}
+                </Button>
+              </Show>
               {dispenseButton('dispense-button')}
             </div>
           </footer>
