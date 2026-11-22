@@ -1,6 +1,7 @@
 const { TestEnvironment } = require('jest-environment-jsdom');
 
-// Runs a test file in the timezone its docblock names, as convert_data runs in the report's:
+// Runs a test file in a timezone, as convert_data runs in the report's. jest.config.js runs every
+// file in each of its timezones; a file that needs one in particular names it in its docblock:
 //
 //   /**
 //    * @jest-environment ./jest-timezone-environment.js

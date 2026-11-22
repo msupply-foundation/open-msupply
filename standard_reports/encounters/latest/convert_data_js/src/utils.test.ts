@@ -22,8 +22,10 @@ describe("applyDaysLate", () => {
   it("counts calendar days, not 24-hour periods", () => {
     jest.useFakeTimers();
     try {
-      jest.setSystemTime(new Date("2024-04-02T10:00:00Z"));
-      const result = applyDaysLate([{ startDatetime: "2024-04-01T15:00:00Z" }]);
+      // 10:00 today, for an appointment at 15:00 yesterday (local times)
+      jest.setSystemTime(new Date(2024, 3, 2, 10));
+      const startDatetime = new Date(2024, 3, 1, 15).toISOString();
+      const result = applyDaysLate([{ startDatetime }]);
       expect(result[0].daysLate).toEqual(1);
       expect(result[0].status).toEqual("LATE");
     } finally {

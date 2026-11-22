@@ -11,7 +11,8 @@ import outputData from '../output.json' assert { type: 'json' };
 describe('test process stock lines', () => {
   beforeAll(() => {
     jest.useFakeTimers();
-    jest.setSystemTime(new Date('2024-04-01'));
+    // Noon on 1 April, local time
+    jest.setSystemTime(new Date(2024, 3, 1, 12));
   });
   // mock out the 4 internal functions
   // calculateExpectedUsage.mockImplementation(() => 20);
@@ -33,7 +34,8 @@ describe('test process stock lines', () => {
 describe('days until expired is added correctly', () => {
   beforeAll(() => {
     jest.useFakeTimers();
-    jest.setSystemTime(new Date('2024-04-01'));
+    // Noon on 1 April, local time
+    jest.setSystemTime(new Date(2024, 3, 1, 12));
   });
   it('returns undefined if undefined', () => {
     expect(calculateDaysUntilExpired(undefined)).toBe(undefined);
