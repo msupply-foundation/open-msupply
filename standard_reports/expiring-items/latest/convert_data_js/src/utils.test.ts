@@ -44,6 +44,17 @@ describe('days until expired is added correctly', () => {
     expect(calculateDaysUntilExpired('2024-04-03')).toBe(2);
     expect(calculateDaysUntilExpired('2024-05-03')).toBe(32);
   });
+  // OMS-REG-RPT-05.24
+  it('counts whole days across a daylight saving change', () => {
+    // Auckland's clocks went back an hour on 7 April 2024, so these two days are 49 hours long
+    jest.setSystemTime(new Date(2024, 3, 6, 12));
+    try {
+      expect(calculateDaysUntilExpired('2024-04-08')).toBe(2);
+    } finally {
+      jest.setSystemTime(new Date(2024, 3, 1, 12));
+    }
+  });
+  // OMS-REG-RPT-05.25
   it('is 0 for stock expiring today, which is at risk in full', () => {
     expect(calculateDaysUntilExpired('2024-04-01')).toBe(0);
     const [line] = processStockLines(

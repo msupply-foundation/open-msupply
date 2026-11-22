@@ -19,6 +19,18 @@ describe("applyDaysLate", () => {
     expect(result[0].status).toEqual("");
   });
 
+  it("counts calendar days across a daylight saving change", () => {
+    jest.useFakeTimers();
+    try {
+      // Auckland's clocks went back an hour on 7 April 2024
+      jest.setSystemTime(new Date(2024, 3, 8, 10));
+      const startDatetime = new Date(2024, 3, 6, 15).toISOString();
+      expect(applyDaysLate([{ startDatetime }])[0].daysLate).toEqual(2);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   it("counts calendar days, not 24-hour periods", () => {
     jest.useFakeTimers();
     try {
