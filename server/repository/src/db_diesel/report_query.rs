@@ -1386,6 +1386,7 @@ mod item_usage_report_test {
 
     use super::{ReportQueryExecutor, ReportSqlQuery};
     use crate::{
+        ConsumptionEstimateRow, ConsumptionEstimateRowRepository, ConsumptionEstimateType,
         InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType,
         mock::{MockData, MockDataInserts, mock_name_a, mock_stock_line_a},
         test_db::setup_all_with_data,
@@ -1443,9 +1444,22 @@ mod item_usage_report_test {
         }
     }
 
+    /// An estimate of `quantity` for item_a in store_a, dated `date`.
+    fn estimate(id: &str, date: NaiveDate, quantity: f64) -> ConsumptionEstimateRow {
+        ConsumptionEstimateRow {
+            id: id.to_string(),
+            store_id: mock_stock_line_a().store_id,
+            r#type: ConsumptionEstimateType::Monthly,
+            date,
+            quantity,
+            item_id: mock_stock_line_a().item_id,
+        }
+    }
+
     /// Consumption counts in the month of its day in the user's timezone. Early on the 1st in
     /// Kiritimati (UTC+14) is still the previous month in UTC, which is the day `consumption.date`
-    /// holds, so counting by that put it in last month.
+    /// holds, so counting by that put it in last month. An estimate has no instant, only its day,
+    /// which counts as it is. OMS-REG-RPT-01.14
     #[actix_rt::test]
     async fn item_usage_counts_consumption_in_the_users_month() {
         let timezone = Tz::Pacific__Kiritimati;
@@ -1454,7 +1468,7 @@ mod item_usage_report_test {
         let mid_last_month = (this_month - Duration::days(1)).with_day(15).unwrap();
         let at = |date: NaiveDate, hour: u32| date.and_hms_opt(hour, 0, 0).unwrap();
 
-        let (_, _, connection_manager, _) = setup_all_with_data(
+        let (_, connection, connection_manager, _) = setup_all_with_data(
             "item_usage_counts_consumption_in_the_users_month",
             MockDataInserts::all(),
             issue("early_on_the_1st", at(this_month, 5), timezone, 3.0).join(issue(
@@ -1465,6 +1479,17 @@ mod item_usage_report_test {
             )),
         )
         .await;
+        let estimates = ConsumptionEstimateRowRepository::new(&connection);
+        estimates
+            .upsert_one(&estimate("estimate_on_the_1st", this_month, 11.0))
+            .unwrap();
+        estimates
+            .upsert_one(&estimate(
+                "estimate_end_of_last_month",
+                this_month - Duration::days(1),
+                13.0,
+            ))
+            .unwrap();
         let executor = ReportQueryExecutor::new(&connection_manager);
         let parameters = json!({ "storeId": "store_a", "timezone": timezone.name() })
             .as_object()
@@ -1492,8 +1517,8 @@ mod item_usage_report_test {
                 .and_then(|row| row["quantity"].as_f64())
         };
 
-        assert_eq!(item_a("thisMonthConsumption"), Some(3.0));
-        assert_eq!(item_a("lastMonthConsumption"), Some(7.0));
+        assert_eq!(item_a("thisMonthConsumption"), Some(3.0 + 11.0));
+        assert_eq!(item_a("lastMonthConsumption"), Some(7.0 + 13.0));
         assert_eq!(item_a("twoMonthsAgoConsumption"), None);
     }
 }
