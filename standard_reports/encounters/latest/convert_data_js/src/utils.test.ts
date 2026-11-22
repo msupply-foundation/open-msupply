@@ -18,6 +18,18 @@ describe("applyDaysLate", () => {
     expect(result[0].daysLate).toEqual(0);
     expect(result[0].status).toEqual("");
   });
+
+  it("counts calendar days, not 24-hour periods", () => {
+    jest.useFakeTimers();
+    try {
+      jest.setSystemTime(new Date("2024-04-02T10:00:00Z"));
+      const result = applyDaysLate([{ startDatetime: "2024-04-01T15:00:00Z" }]);
+      expect(result[0].daysLate).toEqual(1);
+      expect(result[0].status).toEqual("LATE");
+    } finally {
+      jest.useRealTimers();
+    }
+  });
 });
 
 describe("getStatus", () => {
