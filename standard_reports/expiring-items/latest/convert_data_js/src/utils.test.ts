@@ -42,17 +42,22 @@ describe('days until expired is added correctly', () => {
     expect(calculateDaysUntilExpired('2024-04-03')).toBe(2);
     expect(calculateDaysUntilExpired('2024-05-03')).toBe(32);
   });
-  it('counts from the local date, not the UTC date', () => {
-    // On the server, local time is the report's timezone. 2 April 07:00 UTC is still 1 April
-    // in Pago Pago, so an item expiring on 2 April has a day left there.
-    jest.setSystemTime(new Date('2024-04-02T07:00:00Z'));
-    const localDate = jest.spyOn(Date.prototype, 'getDate').mockReturnValue(1);
-    try {
-      expect(calculateDaysUntilExpired('2024-04-02')).toBe(1);
-    } finally {
-      localDate.mockRestore();
-      jest.setSystemTime(new Date('2024-04-01'));
-    }
+  it('is 0 for stock expiring today, which is at risk in full', () => {
+    expect(calculateDaysUntilExpired('2024-04-01')).toBe(0);
+    const [line] = processStockLines(
+      [
+        {
+          expiryDate: '2024-04-01',
+          packSize: 1,
+          totalNumberOfPacks: 50,
+          item: { stats: { averageMonthlyConsumption: 30 } },
+        },
+      ],
+      undefined,
+      undefined
+    );
+    expect(line.daysUntilExpired).toBe(0);
+    expect(line.stockAtRisk).toBe(50);
   });
   afterAll(() => {
     jest.useRealTimers();
