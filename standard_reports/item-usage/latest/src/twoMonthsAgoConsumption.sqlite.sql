@@ -13,8 +13,6 @@ WITH
             COALESCE(instant_to_calendar_date(datetime, $timezone), date) AS date
         FROM consumption
         WHERE store_id = $storeId
-            -- Skip older rows before converting each one: a UTC day is at most a day off the local one
-            AND consumption.date >= date(instant_to_calendar_date(datetime('now'), $timezone), 'start of month', '-2 month', '-1 day')
     )
 SELECT
     SUM(quantity) AS quantity,
