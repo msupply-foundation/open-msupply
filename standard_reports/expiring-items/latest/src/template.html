@@ -22,7 +22,8 @@
         <td>{{stockLine.item.name}}</td>
         <td class="expiry-date">
           {% if stockLine.daysUntilExpired is number %}
-            {% if stockLine.daysUntilExpired <= 0 %}
+            {# Usable to the end of its expiry day (#1786), as stock screens and allocation treat it #}
+            {% if stockLine.daysUntilExpired < 0 %}
               <span class="expired">{{t(k="report.expired", f="Expired")}}</span>
               {% elif stockLine.daysUntilExpired <= arguments.monthsItemsExpire *
                 (365.25 / 12.0) %}

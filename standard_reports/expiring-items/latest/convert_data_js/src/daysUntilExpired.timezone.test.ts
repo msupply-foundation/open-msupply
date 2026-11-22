@@ -15,6 +15,7 @@ describe('days until expired west of UTC', () => {
     jest.useRealTimers();
   });
 
+  // OMS-REG-RPT-05.24
   it('counts from the local date, not the UTC date', () => {
     expect(new Date().getDate()).toBe(1);
     expect(calculateDaysUntilExpired('2024-04-02')).toBe(1);
