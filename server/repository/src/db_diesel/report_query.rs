@@ -1376,3 +1376,124 @@ mod tests {
         assert_eq!(rows, vec![json!({ "id": "store_a" })]);
     }
 }
+
+/// The Item Usage standard report's SQL, run as written in `standard_reports/`, on both dialects.
+#[cfg(test)]
+mod item_usage_report_test {
+    use chrono::{Datelike, Duration, NaiveDate, Utc};
+    use serde_json::json;
+    use util::timezone::Tz;
+
+    use super::{ReportQueryExecutor, ReportSqlQuery};
+    use crate::{
+        InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType,
+        mock::{MockData, MockDataInserts, mock_name_a, mock_stock_line_a},
+        test_db::setup_all_with_data,
+    };
+
+    const SQL_DIR: &str = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../standard_reports/item-usage/latest/src"
+    );
+
+    fn report_query(name: &str) -> ReportSqlQuery {
+        let read = |file: String| std::fs::read_to_string(format!("{SQL_DIR}/{file}")).unwrap();
+        let (sqlite, postgres) = if name == "stockOnOrder" {
+            (read(format!("{name}.sql")), read(format!("{name}.sql")))
+        } else {
+            (
+                read(format!("{name}.sqlite.sql")),
+                read(format!("{name}.postgres.sql")),
+            )
+        };
+        ReportSqlQuery {
+            name: name.to_string(),
+            sqlite,
+            postgres,
+        }
+    }
+
+    /// An outbound shipment of `packs` from store_a, picked at `local` in `timezone`.
+    fn issue(id: &str, local: chrono::NaiveDateTime, timezone: Tz, packs: f64) -> MockData {
+        let picked = local.and_local_timezone(timezone).unwrap().naive_utc();
+        let stock_line = mock_stock_line_a();
+        MockData {
+            invoices: vec![InvoiceRow {
+                id: id.to_string(),
+                store_id: stock_line.store_id.clone(),
+                name_id: mock_name_a().id,
+                r#type: InvoiceType::OutboundShipment,
+                status: InvoiceStatus::Shipped,
+                created_datetime: picked,
+                picked_datetime: Some(picked),
+                shipped_datetime: Some(picked),
+                ..Default::default()
+            }],
+            invoice_lines: vec![InvoiceLineRow {
+                id: format!("{id}_line"),
+                invoice_id: id.to_string(),
+                item_id: stock_line.item_id.clone(),
+                stock_line_id: Some(stock_line.id.clone()),
+                pack_size: 1.0,
+                number_of_packs: packs,
+                r#type: InvoiceLineType::StockOut,
+                ..Default::default()
+            }],
+            ..Default::default()
+        }
+    }
+
+    /// Consumption counts in the month of its day in the user's timezone. Early on the 1st in
+    /// Kiritimati (UTC+14) is still the previous month in UTC, which is the day `consumption.date`
+    /// holds, so counting by that put it in last month.
+    #[actix_rt::test]
+    async fn item_usage_counts_consumption_in_the_users_month() {
+        let timezone = Tz::Pacific__Kiritimati;
+        let today = Utc::now().with_timezone(&timezone).date_naive();
+        let this_month = today.with_day(1).unwrap();
+        let mid_last_month = (this_month - Duration::days(1)).with_day(15).unwrap();
+        let at = |date: NaiveDate, hour: u32| date.and_hms_opt(hour, 0, 0).unwrap();
+
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "item_usage_counts_consumption_in_the_users_month",
+            MockDataInserts::all(),
+            issue("early_on_the_1st", at(this_month, 5), timezone, 3.0).join(issue(
+                "mid_last_month",
+                at(mid_last_month, 12),
+                timezone,
+                7.0,
+            )),
+        )
+        .await;
+        let executor = ReportQueryExecutor::new(&connection_manager);
+        let parameters = json!({ "storeId": "store_a", "timezone": timezone.name() })
+            .as_object()
+            .unwrap()
+            .clone();
+
+        let names = [
+            "thisMonthConsumption",
+            "lastMonthConsumption",
+            "twoMonthsAgoConsumption",
+            "expiringInSixMonths",
+            "expiringInTwelveMonths",
+            "stockOnOrder",
+        ];
+        let results = executor
+            .run(
+                names.iter().map(|name| report_query(name)).collect(),
+                &parameters,
+            )
+            .unwrap();
+        let item_a = |name: &str| {
+            let rows = &results.iter().find(|(query, _)| query == name).unwrap().1;
+            rows.iter()
+                .find(|row| row["item_id"] == "item_a")
+                .and_then(|row| row["quantity"].as_f64())
+        };
+
+        assert_eq!(item_a("thisMonthConsumption"), Some(3.0));
+        assert_eq!(item_a("lastMonthConsumption"), Some(7.0));
+        assert_eq!(item_a("twoMonthsAgoConsumption"), None);
+    }
+}
