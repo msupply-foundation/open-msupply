@@ -7,6 +7,12 @@
 %}{{t(k="messages.not-applicable", f="N/A")}}{% endif %}
 {% endmacro input %}
 
+{# Service lines have no quantity, pack size or price - only a total - so they are listed apart from the stock #}
+{% set service_lines = data.invoiceLines.nodes | filter(attribute="type", value="SERVICE") %}
+{% set pricing = data.invoice.pricing %}
+{% set tax = pricing.totalAfterTax - pricing.totalBeforeTax %}
+{% if data.invoice.purchaseOrder %}{% set column_count = 12 %}{% else %}{% set column_count = 11 %}{% endif %}
+
 <table class="header_date_section">
     <tr>
         <td class="header_section_field_left">{{t(k="label.entered-by",f="Entered by")}}: {{ data.invoice.user.username
@@ -44,6 +50,7 @@
             </tr>
         </thead>
         {% for line in data.invoiceLines.nodes -%}
+        {% if line.type != "SERVICE" %}
         {% set cost = line.costPricePerPack | default(value=0.0) %}
         {% set pack = line.packSize | default(value=1.0) %}
         <tr class="body_value">
@@ -69,21 +76,52 @@
             <td class="total_extension" style="width: 50px;">{{ line.totalBeforeTax | default(value=0.0) |
                 round(precision=2) }}</td>
         </tr>
+        {% endif %}
         {%- endfor %}
+        {% if service_lines | length > 0 %}
+        <tr class="charges_heading">
+            <td colspan="{{ column_count }}">{{t(k="heading.service-charges",f="Service charges")}}</td>
+        </tr>
+        {% for line in service_lines -%}
+        <tr class="body_value">
+            <td class="location_code" style="width: 80px;"></td>
+            <td class="location_code" style="width: 50px;">{{ line.itemCode }}</td>
+            <td class="item_name" style="width: 350px;">{{ line.itemName }}</td>
+            <td class="quantity" style="width: 50px;"></td>
+            <td class="pack" style="width: 50px;"></td>
+            <td class="pack" style="width: 50px;"></td>
+            {% if data.invoice.purchaseOrder %}
+            <td class="quantity" style="width: 70px;"></td>
+            {% endif %}
+            <td class="batch" style="width: 50px;"></td>
+            <td class="expiry" style="width: 80px;"></td>
+            <td class="cost_price" style="width: 80px;"></td>
+            <td class="cost_price" style="width: 80px;"></td>
+            <td class="total_extension" style="width: 50px;">{{ line.totalBeforeTax | round(precision=2) }}</td>
+        </tr>
+        {%- endfor %}
+        {% endif %}
     </table>
 </body>
 
+{% macro total_row(label, value) %}
+    <tr class="body_total_column_label">
+        <th class="header_section_field_right">{{ label }}: {{ value | round(precision=2) }}</th>
+    </tr>
+{% endmacro total_row %}
+
+{% set stock_label = t(k="heading.stock-charges",f="Stock charges") %}
+{% set service_label = t(k="heading.service-charges",f="Service charges") %}
+{% set subtotal_label = t(k="heading.sub-total",f="Sub total") %}
+{% set tax_label = t(k="heading.tax",f="Tax") %}
+{% set total_label = t(k="heading.total",f="Total") %}
+
 <table class="body_total_section" cellpadding="2" cellspacing="0">
-    <tr class="body_total_column_label">
-        <th class="header_section_field_right">{{t(k="heading.sub-total",f="Sub total")}}: {{
-            data.invoice.pricing.totalBeforeTax | default(value=0.0) | round(precision=2) }}</th>
-    </tr>
-    <tr class="body_total_column_label">
-        <th class="header_section_field_right">{{t(k="heading.tax",f="Tax")}}: {{ data.invoice.pricing.taxPercentage |
-            default(value=0.0) | round(precision=2) }}</th>
-    </tr>
-    <tr class="body_total_column_label">
-        <th class="header_section_field_right">{{t(k="heading.total",f="Total")}}: {{ data.invoice.pricing.totalAfterTax
-            | default(value=0.0) | round(precision=2) }}</th>
-    </tr>
+    {% if service_lines | length > 0 %}
+    {{ self::total_row(label=stock_label, value=pricing.stockTotalBeforeTax) }}
+    {{ self::total_row(label=service_label, value=pricing.serviceTotalBeforeTax) }}
+    {% endif %}
+    {{ self::total_row(label=subtotal_label, value=pricing.totalBeforeTax) }}
+    {{ self::total_row(label=tax_label, value=tax) }}
+    {{ self::total_row(label=total_label, value=pricing.totalAfterTax) }}
 </table>
