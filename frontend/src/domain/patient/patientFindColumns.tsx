@@ -3,7 +3,7 @@ import { type Column } from '../../ui/elements/table/DataTable';
 import { getCellDefinition } from '../../ui/elements/table/tableHelpers';
 import { remToPx } from '../../ui/utils/rem';
 import { genderLabel } from './gender';
-import { ageFromDob } from './age';
+import { displayAge } from './age';
 import { type PatientFindRow } from './patientFind';
 
 // The columns of a patient search's results (#631 spike; spec/patients S2
@@ -35,10 +35,9 @@ export const patientFindColumns = <T extends PatientFindRow>(): Column<
     ...getCellDefinition('dateOfBirth'),
   },
   {
-    c: { accessor: row => ageFromDob(row.dateOfBirth) ?? '', id: 'age' },
+    c: { accessor: row => displayAge(row.dateOfBirth), id: 'age' },
     header: () => t('label.age'),
-    meta: { align: 'right' },
-    size: remToPx(4),
+    size: remToPx(9),
   },
   {
     c: { key: 'gender' },
