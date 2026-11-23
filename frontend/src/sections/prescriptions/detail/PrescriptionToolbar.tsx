@@ -1,4 +1,4 @@
-import { createSignal, Show, type Component } from 'solid-js';
+import { createMemo, createSignal, Show, type Component } from 'solid-js';
 import { FormRowItem } from '@/ui/layout/Form/FormRowItem';
 import { t } from '../../../intl';
 import { DateField } from '../../../ui/elements/inputs/DateField';
@@ -10,6 +10,7 @@ import { CustomFieldsToolbar } from '../../../domain/customFields';
 import { instantToLocalParts } from '../../../ui/elements/inputs/dateTimeConvert';
 import { todayCalendarDate } from '../../../intl/calendarDate';
 import { prescriptionDateOf } from '../prescriptionStatus';
+import { shownPatientName } from '../patientName';
 import {
   prescriptionDateInstant,
   type UpdateInput,
@@ -102,6 +103,19 @@ export const PrescriptionToolbar: Component<
   // record's own editability gate, never relaxes it.
   const fromRequest = () => props.node.prescriptionRequestId != null;
 
+  // The unnamed patient by its translated label (rules › the unnamed
+  // patient). A memo, so the field gets the same object until the patient
+  // changes.
+  const shownPatient = createMemo(() => {
+    const patient = props.node.patient;
+    return patient
+      ? {
+          id: patient.id,
+          name: shownPatientName(patient.name, patient.isUnnamed),
+        }
+      : undefined;
+  });
+
   // The shown day: a pending pick while one awaits confirmation, else the
   // prescription date's LOCAL calendar day.
   const shownDay = () => {
@@ -135,9 +149,13 @@ export const PrescriptionToolbar: Component<
           storeId={props.storeId}
           size="small"
           testId="prescription-patient"
-          patient={props.node.patient ?? undefined}
+          patient={shownPatient()}
           disabled={props.disabled || fromRequest()}
-          onEditPatient={props.onEditPatient}
+          // Not for the unnamed patient: it has no details to edit, and every
+          // walk-in shares it (rules › the unnamed patient).
+          onEditPatient={
+            props.node.patient?.isUnnamed ? undefined : props.onEditPatient
+          }
           saveLabel={t('button.save-and-dispense')}
           onChange={patient => props.onSave({ patientId: patient.id })}
         />

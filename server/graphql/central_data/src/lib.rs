@@ -296,9 +296,11 @@ pub enum CentralDataTableNode {
     LocationType,
     Currency,
     Name,
+    Store,
     User,
     Item,
     MasterList,
+    NameStoreJoin,
 }
 
 #[derive(InputObject)]

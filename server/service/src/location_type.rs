@@ -110,7 +110,9 @@ fn validate(
         KeyCase::Exact,
         |code| repo.find_by_trimmed_code(code),
         |other| &other.id,
-    )? {
+    )?
+    .map(|other| other.id)
+    {
         Some(other_id) => Err(UpsertLocationTypeError::DuplicateCode { other_id }),
         None => Ok(()),
     }

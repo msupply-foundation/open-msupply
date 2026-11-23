@@ -61,6 +61,13 @@ export const TABLES: {
     hasStatus: false,
   },
   {
+    value: 'STORE',
+    labelKey: 'stores',
+    sheet: 'store',
+    searchKey: 'label.code-or-name-contains',
+    hasStatus: true,
+  },
+  {
     value: 'USER',
     labelKey: 'label.users',
     sheet: 'user',
@@ -80,6 +87,13 @@ export const TABLES: {
     sheet: 'master_list',
     searchKey: 'label.code-or-name-contains',
     hasStatus: true,
+  },
+  {
+    value: 'NAME_STORE_JOIN',
+    labelKey: 'label.names-in-stores',
+    sheet: 'name_store_join',
+    searchKey: 'label.code-contains',
+    hasStatus: false,
   },
 ];
 

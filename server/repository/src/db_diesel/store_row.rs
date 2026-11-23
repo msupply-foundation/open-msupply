@@ -3,7 +3,7 @@ use super::{StorageConnection, item_link_row::item_link, name_row::name};
 use crate::{
     ChangelogSyncType, ChangelogTableName, RowActionType, SourceSiteId, Upsert,
     db_diesel::changelog::ChangelogRepository, diesel_macros::define_linked_tables,
-    repository_error::RepositoryError,
+    repository_error::RepositoryError, trim, trim_spaces,
 };
 
 use chrono::NaiveDate;
@@ -171,6 +171,14 @@ impl<'a> StoreRowRepository<'a> {
             .filter(store::id.eq_any(ids))
             .load(self.connection.lock().connection())?;
         Ok(result)
+    }
+
+    /// Spaces around either code don't count; letter case does.
+    pub fn find_by_trimmed_code(&self, code: &str) -> Result<Vec<StoreRow>, RepositoryError> {
+        Ok(store::table
+            .filter(trim(store::code).eq(trim_spaces(code)))
+            .order(store::id.asc())
+            .load(self.connection.lock().connection())?)
     }
 
     pub fn all(&self) -> Result<Vec<StoreRow>, RepositoryError> {

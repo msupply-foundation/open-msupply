@@ -42,6 +42,7 @@ use mutations::insert_document_registry::*;
 use mutations::patient::insert::InsertPatientInput;
 use mutations::patient::insert::InsertPatientResponse;
 use mutations::patient::insert::insert_patient;
+use mutations::patient::unnamed_patient::get_or_create_unnamed_patient;
 use mutations::patient::update::UpdatePatientInput;
 use mutations::patient::update::UpdatePatientResponse;
 use mutations::patient::update::update_patient;
@@ -352,6 +353,17 @@ impl ProgramsMutations {
         input: InsertPatientInput,
     ) -> Result<InsertPatientResponse> {
         insert_patient(ctx, store_id, input)
+    }
+
+    /// The store's unnamed patient, the one record its walk-in visits are
+    /// dispensed to: created on the first call, the same record after.
+    /// Refused where the store's "Use the unnamed patient" is off.
+    pub async fn get_or_create_unnamed_patient(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<PatientNode> {
+        get_or_create_unnamed_patient(ctx, store_id)
     }
 
     /// Updates a new patient (without document data)

@@ -2,8 +2,8 @@ use super::cells::{Row, RowError};
 use repository::{
     CurrencyRow, CurrencyRowRepository, ItemRow, ItemRowRepository, LocationTypeRow,
     LocationTypeRowRepository, MasterListRow, MasterListRowRepository, NameRow, NameRowRepository,
-    NameRowType, RepositoryError, StoreRow, UnitRow, UnitRowRepository, UserAccountRow,
-    UserAccountRowRepository, trim_spaces,
+    NameRowType, RepositoryError, StoreRow, StoreRowRepository, UnitRow, UnitRowRepository,
+    UserAccountRow, UserAccountRowRepository, trim_spaces,
 };
 use std::collections::HashMap;
 
@@ -122,6 +122,23 @@ impl KeyedTable for UserAccountRowRepository<'_> {
     }
     fn find_by_key(&self, username: &str) -> Result<Vec<UserAccountRow>, RepositoryError> {
         self.find_by_trimmed_username_any_case(username)
+    }
+}
+
+/// Looked up by code.
+impl KeyedTable for StoreRowRepository<'_> {
+    type Record = StoreRow;
+    fn id(store: &StoreRow) -> &str {
+        &store.id
+    }
+    fn key(store: &StoreRow) -> &str {
+        &store.code
+    }
+    fn find_by_id(&self, id: &str) -> Result<Option<StoreRow>, RepositoryError> {
+        self.find_one_by_id(id)
+    }
+    fn find_by_key(&self, code: &str) -> Result<Vec<StoreRow>, RepositoryError> {
+        self.find_by_trimmed_code(code)
     }
 }
 
@@ -416,11 +433,67 @@ pub fn find_reference<T: KeyedTable>(
     }
     let id = row.text(id_column);
     let code = row.text(code_column);
-    let id_exists = match id.as_deref() {
+    Ok(
+        lookup_reference(table, id.as_deref(), code.as_deref(), narrow)?
+            .map(Some)
+            .map_err(|error| {
+                error.to_row_error(
+                    row.sheet,
+                    row.number,
+                    code_column,
+                    id_column,
+                    code.as_deref(),
+                )
+            }),
+    )
+}
+
+/// Why a reference wasn't found, and whether its id is to blame.
+#[derive(Debug, PartialEq)]
+pub struct ReferenceError {
+    pub error: LookupError,
+    unknown_id: bool,
+}
+
+impl ReferenceError {
+    /// The error on the sheet's row, in the id column when the id is to blame. `code` is the
+    /// row's code cell, which the message quotes.
+    pub fn to_row_error(
+        &self,
+        sheet: &str,
+        row: u32,
+        code_column: &str,
+        id_column: &str,
+        code: Option<&str>,
+    ) -> RowError {
+        RowError {
+            sheet: sheet.to_string(),
+            row: Some(row),
+            column: Some(
+                if self.unknown_id {
+                    id_column
+                } else {
+                    code_column
+                }
+                .to_string(),
+            ),
+            message: self.error.message(code.unwrap_or_default()),
+        }
+    }
+}
+
+/// As `find_reference`, given the cells, for a reference a later sheet may add.
+pub fn lookup_reference<T: KeyedTable>(
+    table: &T,
+    id: Option<&str>,
+    code: Option<&str>,
+    narrow: impl Fn(Vec<T::Record>) -> Vec<T::Record>,
+) -> Result<Result<Option<String>, ReferenceError>, RepositoryError> {
+    let id_exists = match id {
         Some(id) => table.find_by_id(id)?.is_some(),
         None => false,
     };
-    let code_matches: Option<Vec<String>> = match code.as_deref() {
+    let code_matches: Option<Vec<String>> = match code {
         Some(code) => {
             let matches = table.find_by_key(code)?;
             let matches = if id.is_some() {
@@ -437,16 +510,12 @@ pub fn find_reference<T: KeyedTable>(
         }
         None => None,
     };
-    Ok(resolve(id.as_deref(), id_exists, code_matches.as_deref())
-        .map(Some)
-        .map_err(|error| {
-            let column = if id.is_some() && !id_exists {
-                id_column
-            } else {
-                code_column
-            };
-            row.error(column, error.message(code.as_deref().unwrap_or_default()))
-        }))
+    Ok(
+        resolve(id, id_exists, code_matches.as_deref()).map_err(|error| ReferenceError {
+            error,
+            unknown_id: id.is_some() && !id_exists,
+        }),
+    )
 }
 
 /// `code_matches` holds the ids the code matched, `None` when no code was given. Given both, id
