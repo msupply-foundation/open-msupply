@@ -67,35 +67,40 @@ export const hasSourceLink = (
   linkedShipment: { id: string } | null | undefined
 ): boolean => isExternalScope || !!linkedShipment;
 
-// The detail's kind banner (spec/inbound-shipments › ui-surface), as a message
-// key — or none. One per source link:
+// The detail's kind banner (spec/inbound-shipments › ui-surface), as the
+// message keys its sentences join from — empty for no banner. Built from the
+// short `info.*` keys, as the old UI and the customer-returns banner are,
+// because those are the ones translated in (nearly) every catalog. One per
+// source link:
 //   none — says the status will not update automatically: nobody else moves it.
-//   purchaseOrder — no banner (issue #1588). It was built here and stays
-//     editable, and the header already links its PO, so neither message fits:
-//     the transfer copy told the user another store made it and that they
-//     could not edit it.
-//   transfer — says the sending store created it, plus, at Picked or Shipped,
-//     that details can't be edited until Delivered. Those are exactly the
-//     transfer statuses EDITABLE below leaves out before Delivered, so the
-//     sentence never claims a lock the screen doesn't apply (New is editable).
-export const kindBannerKey = (info: {
+//   purchaseOrder — nothing to say about its origin (issue #1588): it was built
+//     here and the header already links its PO. Only while the status locks it
+//     (Shipped) does it say details can't be edited until Delivered.
+//   transfer — says the sending store created it, plus the same no-edit
+//     sentence while the status locks it (Picked, Shipped).
+export const kindBannerKeys = (info: {
   inboundType: InboundInfoFragment['inboundType'];
   linkedShipment?: { id: string } | null;
   status: string;
-}): LocaleKey | undefined => {
+}): LocaleKey[] => {
+  const noEdit: LocaleKey[] = lockedUntilDelivered(info.status)
+    ? ['info.automatic-shipment-no-edit']
+    : [];
   switch (sourceLinkOf(info)) {
     case 'none':
-      return 'messages.inbound-manual-info';
+      return ['info.manual-shipment'];
     case 'purchaseOrder':
-      return undefined;
+      return noEdit;
     case 'transfer':
-      return AWAITING_DELIVERY.includes(info.status as InboundStatus)
-        ? 'messages.inbound-automatic-info'
-        : 'info.automatic-shipment';
+      return ['info.automatic-shipment', ...noEdit];
   }
 };
 
-const AWAITING_DELIVERY: InboundStatus[] = ['PICKED', 'SHIPPED'];
+// Read off the edit gate rather than listed, so the no-edit sentence can't
+// drift from what the screen actually locks. Verified is locked for good, not
+// until Delivered.
+const lockedUntilDelivered = (status: string): boolean =>
+  !isEditable(status) && status !== 'VERIFIED';
 
 const FLOWS: Record<SourceLink, InboundStatus[]> = {
   none: ['NEW', 'DELIVERED', 'RECEIVED', 'VERIFIED'],
