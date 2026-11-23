@@ -65,15 +65,17 @@ impl From<RepositoryError> for DeleteUserStoreJoinError {
 /// each user has at most one, with `default_stores`, once all its saves are made, so a batch such
 /// as an import can move a default in either order. Joins the caller's transaction, so an
 /// import's earlier rows count.
-pub fn upsert_user_store_join_leaving_default(
+/// `protected` is `protected_user_ids`, read once by a caller that saves many.
+pub fn upsert_user_store_join_unchecked_default(
     connection: &StorageConnection,
+    protected: &[String],
     row: &UserStoreJoinRow,
 ) -> Result<(), UpsertUserStoreJoinError> {
     connection
         .transaction_sync(|connection| -> Result<(), UpsertUserStoreJoinError> {
             let repo = UserStoreJoinRowRepository::new(connection);
             let saved = repo.find_one_by_id(&row.id)?;
-            validate(connection, saved.as_ref(), row)?;
+            validate(connection, protected, saved.as_ref(), row)?;
             repo.upsert_one(row)?;
             if saved.is_none() {
                 give_store_access(connection, &row.user_id, &row.store_id)?;
@@ -86,19 +88,21 @@ pub fn upsert_user_store_join_leaving_default(
 /// Takes the store away. The last join to it takes every store access the user has there too, so
 /// they can no longer log in to it; a duplicate join, as legacy mSupply can send, keeps both.
 /// Their other permissions there are kept. A default store leaves the user none, as in legacy
-/// mSupply. `deleting_user_id` can't lock themselves out.
+/// mSupply. `deleting_user_id` can't lock themselves out. Returns whether the store was taken
+/// away: false for an id already gone, or when a duplicate join keeps it.
 pub fn delete_user_store_join(
     connection: &StorageConnection,
+    protected: &[String],
     deleting_user_id: &str,
     id: &str,
-) -> Result<(), DeleteUserStoreJoinError> {
+) -> Result<bool, DeleteUserStoreJoinError> {
     connection
-        .transaction_sync(|connection| -> Result<(), DeleteUserStoreJoinError> {
+        .transaction_sync(|connection| -> Result<bool, DeleteUserStoreJoinError> {
             let repo = UserStoreJoinRowRepository::new(connection);
             let Some(saved) = repo.find_one_by_id(id)? else {
-                return Ok(());
+                return Ok(false);
             };
-            if protected_user_ids(connection)?.contains(&saved.user_id) {
+            if protected.contains(&saved.user_id) {
                 return Err(DeleteUserStoreJoinError::Protected);
             }
             let removes_store = find_user_store_join(connection, &saved.user_id, &saved.store_id)?
@@ -117,7 +121,7 @@ pub fn delete_user_store_join(
                     permissions.delete(&access.id)?;
                 }
             }
-            Ok(())
+            Ok(removes_store)
         })
         .map_err(|error| error.to_inner_error())
 }
@@ -176,11 +180,12 @@ pub(crate) fn is_last_store_on_site(
 /// even if it no longer passes as new, such as one whose user was deleted.
 fn validate(
     connection: &StorageConnection,
+    protected: &[String],
     saved: Option<&UserStoreJoinRow>,
     row: &UserStoreJoinRow,
 ) -> Result<(), UpsertUserStoreJoinError> {
     check_not_protected(
-        connection,
+        protected,
         &row.user_id,
         saved.map(|saved| saved.user_id.as_str()),
     )?;
@@ -254,6 +259,10 @@ mod tests {
         StoreRow, StoreRowRepository, UserAccountRow, UserAccountRowRepository,
         mock::MockDataInserts, test_db::setup_all,
     };
+
+    fn protected(connection: &StorageConnection) -> Vec<String> {
+        protected_user_ids(connection).unwrap()
+    }
 
     fn join(id: &str, user_id: &str, store_id: &str, is_default: bool) -> UserStoreJoinRow {
         UserStoreJoinRow {
@@ -329,8 +338,12 @@ mod tests {
     #[actix_rt::test]
     async fn a_new_store_gives_store_access_so_the_user_can_log_in() {
         let connection = setup("user_store_join_gives_store_access").await;
-        upsert_user_store_join_leaving_default(&connection, &join("a", "anna", "first", true))
-            .unwrap();
+        upsert_user_store_join_unchecked_default(
+            &connection,
+            &protected(&connection),
+            &join("a", "anna", "first", true),
+        )
+        .unwrap();
         assert_eq!(joins(&connection, "anna"), [("first".to_string(), true)]);
         // The id sync and login give it.
         assert_eq!(
@@ -342,12 +355,17 @@ mod tests {
             )]
         );
         // Not given twice, nor again on an update.
-        upsert_user_store_join_leaving_default(&connection, &join("a", "anna", "first", false))
-            .unwrap();
+        upsert_user_store_join_unchecked_default(
+            &connection,
+            &protected(&connection),
+            &join("a", "anna", "first", false),
+        )
+        .unwrap();
         assert_eq!(access(&connection, "anna", "first").len(), 1);
 
-        let refused =
-            |row: UserStoreJoinRow| upsert_user_store_join_leaving_default(&connection, &row);
+        let refused = |row: UserStoreJoinRow| {
+            upsert_user_store_join_unchecked_default(&connection, &protected(&connection), &row)
+        };
         assert_eq!(
             refused(join("b", "anna", "first", false)),
             Err(UpsertUserStoreJoinError::DuplicateJoin {
@@ -366,8 +384,12 @@ mod tests {
         UserStoreJoinRowRepository::new(&connection)
             .upsert_one(&join("carls", "carl", "first", false))
             .unwrap();
-        upsert_user_store_join_leaving_default(&connection, &join("carls", "carl", "first", true))
-            .unwrap();
+        upsert_user_store_join_unchecked_default(
+            &connection,
+            &protected(&connection),
+            &join("carls", "carl", "first", true),
+        )
+        .unwrap();
         assert_eq!(
             refused(join("b", "admin", "first", false)),
             Err(UpsertUserStoreJoinError::Protected)
@@ -381,14 +403,22 @@ mod tests {
     #[actix_rt::test]
     async fn a_saved_store_can_change_only_its_default_flag() {
         let connection = setup("user_store_join_record_changed").await;
-        upsert_user_store_join_leaving_default(&connection, &join("a", "anna", "first", true))
-            .unwrap();
+        upsert_user_store_join_unchecked_default(
+            &connection,
+            &protected(&connection),
+            &join("a", "anna", "first", true),
+        )
+        .unwrap();
         for changed in [
             join("a", "anna", "second", true),
             join("a", "carl", "first", true),
         ] {
             assert_eq!(
-                upsert_user_store_join_leaving_default(&connection, &changed),
+                upsert_user_store_join_unchecked_default(
+                    &connection,
+                    &protected(&connection),
+                    &changed
+                ),
                 Err(UpsertUserStoreJoinError::RecordChanged),
                 "{changed:?}"
             );
@@ -399,8 +429,12 @@ mod tests {
         assert_eq!(access(&connection, "anna", "second").len(), 0);
 
         // A second default is the caller's to check.
-        upsert_user_store_join_leaving_default(&connection, &join("b", "anna", "second", true))
-            .unwrap();
+        upsert_user_store_join_unchecked_default(
+            &connection,
+            &protected(&connection),
+            &join("b", "anna", "second", true),
+        )
+        .unwrap();
         assert_eq!(
             default_stores(&connection, vec!["anna".to_string()])
                 .unwrap()
@@ -414,10 +448,18 @@ mod tests {
     #[actix_rt::test]
     async fn taking_a_store_away_takes_its_store_access_and_leaves_no_default() {
         let connection = setup("user_store_join_delete").await;
-        upsert_user_store_join_leaving_default(&connection, &join("a", "anna", "first", true))
-            .unwrap();
-        upsert_user_store_join_leaving_default(&connection, &join("b", "anna", "second", false))
-            .unwrap();
+        upsert_user_store_join_unchecked_default(
+            &connection,
+            &protected(&connection),
+            &join("a", "anna", "first", true),
+        )
+        .unwrap();
+        upsert_user_store_join_unchecked_default(
+            &connection,
+            &protected(&connection),
+            &join("b", "anna", "second", false),
+        )
+        .unwrap();
         let permissions = UserPermissionRowRepository::new(&connection);
         // A duplicate, as legacy mSupply sends, and another permission there.
         for (id, permission) in [
@@ -435,33 +477,43 @@ mod tests {
                 .unwrap();
         }
 
-        delete_user_store_join(&connection, "admin", "a").unwrap();
+        delete_user_store_join(&connection, &protected(&connection), "admin", "a").unwrap();
         assert_eq!(joins(&connection, "anna"), [("second".to_string(), false)]);
         assert_eq!(access(&connection, "anna", "first"), Vec::<String>::new());
         assert!(permissions.find_one_by_id("report").unwrap().is_some());
         // Already gone.
-        delete_user_store_join(&connection, "admin", "a").unwrap();
+        delete_user_store_join(&connection, &protected(&connection), "admin", "a").unwrap();
     }
 
     #[actix_rt::test]
     async fn a_duplicate_join_keeps_the_store_and_its_store_access() {
         let connection = setup("user_store_join_duplicate").await;
-        upsert_user_store_join_leaving_default(&connection, &join("a", "anna", "first", true))
-            .unwrap();
+        upsert_user_store_join_unchecked_default(
+            &connection,
+            &protected(&connection),
+            &join("a", "anna", "first", true),
+        )
+        .unwrap();
         // A duplicate, as legacy mSupply can send; the save service refuses one.
         UserStoreJoinRowRepository::new(&connection)
             .upsert_one(&join("duplicate", "anna", "first", false))
             .unwrap();
 
         // Her only store on this site, but the duplicate keeps it.
-        delete_user_store_join(&connection, "anna", "a").unwrap();
+        assert_eq!(
+            delete_user_store_join(&connection, &protected(&connection), "anna", "a"),
+            Ok(false)
+        );
         assert_eq!(joins(&connection, "anna"), [("first".to_string(), false)]);
         assert_eq!(access(&connection, "anna", "first").len(), 1);
         assert_eq!(
-            delete_user_store_join(&connection, "anna", "duplicate"),
+            delete_user_store_join(&connection, &protected(&connection), "anna", "duplicate"),
             Err(DeleteUserStoreJoinError::LocksOutSelf)
         );
-        delete_user_store_join(&connection, "admin", "duplicate").unwrap();
+        assert_eq!(
+            delete_user_store_join(&connection, &protected(&connection), "admin", "duplicate"),
+            Ok(true)
+        );
         assert_eq!(joins(&connection, "anna"), []);
         assert_eq!(access(&connection, "anna", "first").len(), 0);
     }
@@ -479,22 +531,26 @@ mod tests {
             })
             .unwrap();
         for (id, store_id) in [("a", "first"), ("b", "second"), ("c", "elsewhere")] {
-            upsert_user_store_join_leaving_default(&connection, &join(id, "anna", store_id, false))
-                .unwrap();
+            upsert_user_store_join_unchecked_default(
+                &connection,
+                &protected(&connection),
+                &join(id, "anna", store_id, false),
+            )
+            .unwrap();
         }
-        delete_user_store_join(&connection, "anna", "a").unwrap();
+        delete_user_store_join(&connection, &protected(&connection), "anna", "a").unwrap();
         assert_eq!(
-            delete_user_store_join(&connection, "anna", "b"),
+            delete_user_store_join(&connection, &protected(&connection), "anna", "b"),
             Err(DeleteUserStoreJoinError::LocksOutSelf)
         );
         // Another user can.
-        delete_user_store_join(&connection, "admin", "b").unwrap();
+        delete_user_store_join(&connection, &protected(&connection), "admin", "b").unwrap();
 
         UserStoreJoinRowRepository::new(&connection)
             .upsert_one(&join("admins", "admin", "first", true))
             .unwrap();
         assert_eq!(
-            delete_user_store_join(&connection, "anna", "admins"),
+            delete_user_store_join(&connection, &protected(&connection), "anna", "admins"),
             Err(DeleteUserStoreJoinError::Protected)
         );
     }

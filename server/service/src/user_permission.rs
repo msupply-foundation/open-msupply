@@ -165,7 +165,7 @@ fn validate(
     row: &UserPermissionRow,
 ) -> Result<(), UpsertUserPermissionError> {
     check_not_protected(
-        connection,
+        &protected_user_ids(connection)?,
         &row.user_id,
         saved.map(|saved| saved.user_id.as_str()),
     )?;

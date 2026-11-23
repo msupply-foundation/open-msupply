@@ -8716,6 +8716,33 @@ async fn deleting_one_of_two_duplicate_user_stores_keeps_the_store() {
     assert!(store_access_of(&connection, "anna").contains(&"store_ms".to_string()));
 }
 
+// covers: OMS-REG-CDIO-01.21
+
+#[actix_rt::test]
+async fn a_store_a_later_row_deletes_is_blamed_on_that_row_alone() {
+    let (connection, service_provider, dir) =
+        user_store_setup("central_data_user_store_update_then_delete").await;
+    let ctx = as_user(&service_provider, IMPORTER);
+    let before = store_joins_of(&connection, "anna");
+    let path = write_file(
+        dir.path(),
+        user_store_sheet(vec![
+            user_store_row(&[("id", "anna_store_ms"), ("is_default", "TRUE")]),
+            user_store_row(&[("id", "anna_store_ms"), ("delete", "DELETE")]),
+            user_store_row(&[("id", "anna_store_a"), ("is_default", "FALSE")]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    // Not that another sheet took the store away: the file has no other sheet.
+    assert_eq!(
+        row_errors(&summary),
+        vec![(3, None, "Row 2 already changes this record")]
+    );
+    assert_eq!(store_joins_of(&connection, "anna"), before);
+}
+
 // covers: OMS-REG-CDIO-01.168
 
 #[actix_rt::test]

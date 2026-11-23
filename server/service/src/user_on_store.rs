@@ -1,6 +1,5 @@
 //! Checks shared by the records that belong to a user on a store: user permissions and user
 //! store joins.
-use crate::user_account::upsert::protected_user_ids;
 use repository::{
     RepositoryError, StorageConnection, StoreRowRepository, UserAccountRowRepository,
 };
@@ -21,13 +20,13 @@ impl From<RepositoryError> for UserOnStoreError {
     }
 }
 
-/// Neither the record's user nor, for a saved record, its saved user is protected.
+/// Neither the record's user nor, for a saved record, its saved user is in `protected`, from
+/// `protected_user_ids`.
 pub(crate) fn check_not_protected(
-    connection: &StorageConnection,
+    protected: &[String],
     user_id: &str,
     saved_user_id: Option<&str>,
 ) -> Result<(), UserOnStoreError> {
-    let protected = protected_user_ids(connection)?;
     let is_protected = |id: &str| protected.iter().any(|protected| protected == id);
     if is_protected(user_id) || saved_user_id.is_some_and(is_protected) {
         return Err(UserOnStoreError::Protected);

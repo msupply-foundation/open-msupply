@@ -20,7 +20,7 @@ use crate::{
     user_account::upsert::protected_user_ids,
     user_store_join::{
         DeleteUserStoreJoinError, UpsertUserStoreJoinError, default_stores, delete_user_store_join,
-        find_user_store_join, has_store_access, upsert_user_store_join_leaving_default,
+        find_user_store_join, has_store_access, upsert_user_store_join_unchecked_default,
     },
 };
 use repository::{
@@ -28,7 +28,7 @@ use repository::{
     UserAccountRowRepository, UserStoreJoinFilter, UserStoreJoinRepository, UserStoreJoinRow,
     UserStoreJoinRowRepository,
 };
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use util::uuid::uuid;
 
 const IS_DEFAULT: &str = "is_default";
@@ -133,6 +133,7 @@ impl ImportTable for UserStoreJoinTable {
             default_checks: Vec::new(),
             written: Vec::new(),
             removed: Vec::new(),
+            deleted: HashSet::new(),
         }))
     }
 }
@@ -155,6 +156,9 @@ struct UserStoreJoinSheet {
     /// Each `DELETE` row, with the join it removed, should a later sheet give the user store
     /// access there again. Its message is set then.
     removed: Vec<(RowError, UserStoreJoinRow)>,
+    /// Each join a `DELETE` row removed, so a store this sheet took away isn't blamed on
+    /// another sheet.
+    deleted: HashSet<String>,
 }
 
 impl SheetImport for UserStoreJoinSheet {
@@ -196,11 +200,7 @@ impl SheetImport for UserStoreJoinSheet {
         if delete {
             // Named by the row's user and store, as found.
             let missing = match (&user_id, &store_id) {
-                (Some(user_id), Some(store_id)) => format!(
-                    "{} in store {}",
-                    self.username(user_id),
-                    self.store_code(store_id)
-                ),
+                (Some(user_id), Some(store_id)) => self.record(user_id, store_id),
                 _ => id.clone().unwrap_or_default(),
             };
             return self.delete(connection, row, existing, missing);
@@ -234,7 +234,7 @@ impl SheetImport for UserStoreJoinSheet {
         };
         let change = Change::between_upserts(saved, &new);
         if change != Change::Unchanged {
-            upsert_user_store_join_leaving_default(connection, &new)
+            upsert_user_store_join_unchecked_default(connection, &self.protected, &new)
                 .map_err(|error| self.upsert_failure(row, &new, error))?;
             let gives_default = new.is_default && !saved.is_some_and(|saved| saved.is_default);
             self.default_checks.push((
@@ -257,7 +257,7 @@ impl SheetImport for UserStoreJoinSheet {
                     )
                 })
                 .unwrap_or_default(),
-            record: self.record(&new),
+            record: self.record(&new.user_id, &new.store_id),
             record_id: new.id,
             change,
         })
@@ -286,7 +286,7 @@ impl SheetImport for UserStoreJoinSheet {
         for join in default_stores(connection, user_ids)? {
             defaults.entry(join.user_id.clone()).or_default().push(join);
         }
-        let gives_default: Vec<&str> = checks
+        let gives_default: HashSet<&str> = checks
             .iter()
             .filter(|(_, _, gives)| *gives)
             .map(|(_, join, _)| join.user_id.as_str())
@@ -295,7 +295,8 @@ impl SheetImport for UserStoreJoinSheet {
         for (mut error, join, gives) in checks.iter().cloned() {
             let user_defaults = defaults.get(&join.user_id).map_or(&[][..], Vec::as_slice);
             // Blame the rows giving a default, else every row of the user's.
-            if user_defaults.len() <= 1 || (!gives && gives_default.contains(&&*join.user_id)) {
+            if user_defaults.len() <= 1 || (!gives && gives_default.contains(join.user_id.as_str()))
+            {
                 continue;
             }
             let codes = |joins: &mut dyn Iterator<Item = &UserStoreJoinRow>| {
@@ -351,6 +352,10 @@ impl SheetImport for UserStoreJoinSheet {
             errors.push(error);
         }
         for (mut error, join) in std::mem::take(&mut self.written) {
+            // Deleted by a later row of this sheet, which has its own error.
+            if self.deleted.contains(&join.id) {
+                continue;
+            }
             if repo.find_one_by_id(&join.id)?.is_none() {
                 error.message = format!(
                     "This row gives {} store {}, but the user_permission sheet takes their \
@@ -387,11 +392,11 @@ impl UserStoreJoinSheet {
     }
 
     /// `anna in store MS`.
-    fn record(&self, join: &UserStoreJoinRow) -> String {
+    fn record(&self, user_id: &str, store_id: &str) -> String {
         format!(
             "{} in store {}",
-            self.username(&join.user_id),
-            self.store_code(&join.store_id)
+            self.username(user_id),
+            self.store_code(store_id)
         )
     }
 
@@ -416,7 +421,7 @@ impl UserStoreJoinSheet {
             |join| &join.id,
             |id| UserStoreJoinRowRepository::new(connection).find_one_by_id(id),
             |saved, found, id| {
-                let record = self.record(saved);
+                let record = self.record(&saved.user_id, &saved.store_id);
                 Ok(match found {
                     Found::NewIdBesideKey => Some(new_id_conflict(row, &record, &saved.id, id)),
                     Found::ById if user_id.is_some_and(|user_id| user_id != saved.user_id) => {
@@ -467,28 +472,29 @@ impl UserStoreJoinSheet {
             Vec::new(),
         )?;
 
-        delete_user_store_join(connection, &self.importer, &saved.id).map_err(
-            |error| match error {
-                DeleteUserStoreJoinError::LocksOutSelf => row
-                    .error(
-                        DELETE_COLUMN,
-                        "This is your last store on this server. You can't take it away, or \
+        let removes_store =
+            delete_user_store_join(connection, &self.protected, &self.importer, &saved.id)
+                .map_err(|error| match error {
+                    DeleteUserStoreJoinError::LocksOutSelf => row
+                        .error(
+                            DELETE_COLUMN,
+                            "This is your last store on this server. You can't take it away, or \
                          you couldn't log in again",
-                    )
-                    .into(),
-                DeleteUserStoreJoinError::Protected => {
-                    protected_error(row, self.username(&saved.user_id), "stores").into()
-                }
-                DeleteUserStoreJoinError::DatabaseError(error) => RowFailure::Database(error),
-            },
-        )?;
+                        )
+                        .into(),
+                    DeleteUserStoreJoinError::Protected => {
+                        protected_error(row, self.username(&saved.user_id), "stores").into()
+                    }
+                    DeleteUserStoreJoinError::DatabaseError(error) => RowFailure::Database(error),
+                })?;
+        self.deleted.insert(saved.id.clone());
         // A duplicate join keeps the store, and its store access.
-        if find_user_store_join(connection, &saved.user_id, &saved.store_id)?.is_empty() {
+        if removes_store {
             self.removed
                 .push((row.error(DELETE_COLUMN, String::new()), saved.clone()));
         }
         Ok(RowOutcome {
-            record: self.record(&saved),
+            record: self.record(&saved.user_id, &saved.store_id),
             record_id: saved.id,
             change: Change::Deleted,
             fields: Vec::new(),
