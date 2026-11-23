@@ -154,7 +154,8 @@ struct UserStoreJoinSheet {
     /// the user without store access there. Its message is set then.
     written: Vec<(RowError, UserStoreJoinRow)>,
     /// Each `DELETE` row, with the join it removed, should a later sheet give the user store
-    /// access there again. Its message is set then.
+    /// access there again. Its message is set then. A later row of this sheet giving the store
+    /// back drops it.
     removed: Vec<(RowError, UserStoreJoinRow)>,
     /// Each join a `DELETE` row removed, so a store this sheet took away isn't blamed on
     /// another sheet.
@@ -244,6 +245,10 @@ impl SheetImport for UserStoreJoinSheet {
             ));
             self.written
                 .push((row.error(STORE_CODE, String::new()), new.clone()));
+            // Gives back a store an earlier row took away, so that row's check is this row's.
+            self.removed.retain(|(_, removed)| {
+                removed.user_id != new.user_id || removed.store_id != new.store_id
+            });
         }
         let user = self.users.get(&new.user_id);
         let store = self.stores.get(&new.store_id);

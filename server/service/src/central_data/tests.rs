@@ -8743,6 +8743,43 @@ async fn a_store_a_later_row_deletes_is_blamed_on_that_row_alone() {
     assert_eq!(store_joins_of(&connection, "anna"), before);
 }
 
+// covers: OMS-REG-CDIO-01.173
+
+#[actix_rt::test]
+async fn a_store_a_later_row_gives_back_is_not_blamed_on_another_sheet() {
+    let (connection, service_provider, dir) =
+        user_store_setup("central_data_user_store_delete_then_add").await;
+    let ctx = as_user(&service_provider, IMPORTER);
+    let path = write_file(
+        dir.path(),
+        user_store_sheet(vec![
+            user_store_row(&[("id", "anna_store_ms"), ("delete", "DELETE")]),
+            user_store_row(&[
+                ("username", "anna"),
+                ("store_code", "MS"),
+                ("is_default", "FALSE"),
+            ]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    // The file has no user_permission sheet to blame: the later row gives the store back.
+    assert_eq!(summary.errors, vec![]);
+    // Through a new record: the first row deleted hers.
+    assert_eq!(
+        UserStoreJoinRowRepository::new(&connection)
+            .find_one_by_id("anna_store_ms")
+            .unwrap(),
+        None
+    );
+    assert_eq!(
+        store_joins_of(&connection, "anna"),
+        [(mock_store_a().id, true), ("store_ms".to_string(), false)]
+    );
+    assert!(store_access_of(&connection, "anna").contains(&"store_ms".to_string()));
+}
+
 // covers: OMS-REG-CDIO-01.168
 
 #[actix_rt::test]
