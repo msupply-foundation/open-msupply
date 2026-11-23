@@ -2,8 +2,8 @@
     {% include "style.css" %}
 </style>
 
-{% macro dateOrNA(datetime) %}
-{% if datetime %}{{ datetime | date(format="%d/%m/%Y", timezone=arguments.timezone) }}{% else %}{{t(k="messages.not-applicable", f="N/A")}}{% endif %}
+{% macro dateOrNA(datetime) %} 
+{% if datetime %}{{ datetime | date(format="%d/%m/%Y", timezone=arguments.timezone) }}{% else %}{{t(k="messages.not-applicable", f="N/A")}}{% endif %} 
 {% endmacro input %}
 
 {# Service lines have no quantity, pack size or price - only a total - so they are listed apart from the stock #}
@@ -79,7 +79,7 @@
 
 {% set stock_label = t(k="heading.stock-charges",f="Stock charges") %}
 {% set service_label = t(k="heading.service-charges",f="Service charges") %}
-{% set subtotal_label = t(k="label.cost-subtotal",f="Subtotal") %}
+{% set subtotal_label = t(k="heading.sub-total",f="Sub total") %}
 {% set tax_label = t(k="label.tax",f="Tax") %}
 {% set total_label = t(k="label.total",f="Total") %}
 {% set show_tax = tax | round(precision=2) != 0 %}

@@ -90,6 +90,17 @@
   font-family: Tahoma;
 }
 
+.body_total_section {
+  font-weight: bold;
+}
+
+/* the empty cells take up the width, keeping each label and value against the right edge */
+.body_total_section .cost_price,
+.body_total_section .total_extension {
+  width: 1%;
+  white-space: nowrap;
+}
+
 .body_section tr.body_column_label th {
   border-bottom: 0.5px solid black;
 }
