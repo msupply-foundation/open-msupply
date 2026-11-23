@@ -3,13 +3,21 @@ module.exports = {
   getStatus,
 };
 
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
+// The local calendar date of `date`, as a number of milliseconds that subtracts in whole days
+function localDay(date) {
+  return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
 function applyDaysLate(encounterNodes) {
   const withDaysLate = encounterNodes.map((encounter) => {
     const startDatetime = new Date(encounter.startDatetime);
 
-    const dateDiff = Math.floor(
-      (new Date() - startDatetime) / (1000 * 60 * 60 * 24)
-    );
+    // Calendar days, from the encounter's date to today, in local time - on the server, the
+    // report's timezone. Counting 24-hour periods made yesterday afternoon 0 days late this
+    // morning.
+    const dateDiff = (localDay(new Date()) - localDay(startDatetime)) / MS_PER_DAY;
 
     const daysLate = dateDiff > 0 ? dateDiff : 0;
 

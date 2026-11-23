@@ -5,7 +5,8 @@ import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
 import { TrashIcon } from '../../../../ui/icons';
-import { runInboundBatch } from '../inboundShipmentUpdate';
+import { batchRefusal, runInboundBatch } from '../inboundShipmentUpdate';
+import { reportPermissionDenied } from '@/api/graphql';
 import type { InboundLineErrors } from '../inboundShipmentUpdate';
 
 export interface LineActionProps {
@@ -55,13 +56,20 @@ const Body = (props: LineActionProps & { onClose: () => void }) => {
   const run = async () => {
     if (phase() !== 'confirm') return;
     setPhase('working');
+    const ids = props.selectedIds();
     const outcome = await runInboundBatch(props.storeId, props.isExternal, {
-      deleteInboundShipmentLines: props.selectedIds().map(id => ({ id })),
+      deleteInboundShipmentLines: ids.map(id => ({ id })),
     });
     if (!outcome) return setPhase('confirm'); // handled globally
-    if (outcome.errors.size > 0) {
-      props.onError(outcome.errors);
-      setErrorMessage([...outcome.errors.values()][0]);
+    const refusal = batchRefusal(outcome, ids);
+    if (refusal?.kind === 'forbidden') {
+      reportPermissionDenied(refusal.permissions);
+      props.onClose();
+      return;
+    }
+    if (refusal) {
+      props.onError(refusal.errors);
+      setErrorMessage(refusal.message);
       setPhase('error');
       return;
     }

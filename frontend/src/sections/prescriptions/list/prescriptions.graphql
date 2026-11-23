@@ -12,11 +12,16 @@
 # not a variable: this query serves one screen pinned to one type, so no caller
 # can forget it — and forgetting it would now widen the rows, not just the
 # permission.
+#
+# `withMedicines` reads each record's lines for the Medicines column, only in a
+# store that dispenses on the Simple screen (spec/prescriptions contract ›
+# Dispensing records). The lines are batched across the page server-side.
 query prescriptions(
   $storeId: String!
   $filter: InvoiceFilterInput
   $sort: [InvoiceSortInput!]
   $page: PaginationInput
+  $withMedicines: Boolean = false
 ) {
   invoices(
     storeId: $storeId
@@ -39,6 +44,15 @@ query prescriptions(
         createdDatetime
         backdatedDatetime
         customFields
+        lines @include(if: $withMedicines) {
+          nodes {
+            type
+            itemId
+            itemName
+            packSize
+            numberOfPacks
+          }
+        }
       }
     }
   }

@@ -170,6 +170,14 @@ export const exportDate = (value: Date | string | number): string =>
   format(calendarDateOrInstantToDate(value), 'P', { locale: dateFnsLocale() });
 
 /**
+ * A time for a FILE, beside {@link exportDate} and for the same reasons: the
+ * locale's short time, in Latin digits. Anything a user reads on screen wants
+ * {@link localisedTime} instead.
+ */
+export const exportTime = (value: Date | string | number): string =>
+  format(calendarDateOrInstantToDate(value), 'p', { locale: dateFnsLocale() });
+
+/**
  * The app language's NUMERIC short-date pattern — the `P` that
  * {@link localisedDate} renders — in the token vocabulary the date fields
  * format and parse with (`dd`, `MM`, `yyyy` plus literal separators):

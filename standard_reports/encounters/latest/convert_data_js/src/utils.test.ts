@@ -18,6 +18,32 @@ describe("applyDaysLate", () => {
     expect(result[0].daysLate).toEqual(0);
     expect(result[0].status).toEqual("");
   });
+
+  it("counts calendar days across a daylight saving change", () => {
+    jest.useFakeTimers();
+    try {
+      // Auckland's clocks went back an hour on 7 April 2024
+      jest.setSystemTime(new Date(2024, 3, 8, 10));
+      const startDatetime = new Date(2024, 3, 6, 15).toISOString();
+      expect(applyDaysLate([{ startDatetime }])[0].daysLate).toEqual(2);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it("counts calendar days, not 24-hour periods", () => {
+    jest.useFakeTimers();
+    try {
+      // 10:00 today, for an appointment at 15:00 yesterday (local times)
+      jest.setSystemTime(new Date(2024, 3, 2, 10));
+      const startDatetime = new Date(2024, 3, 1, 15).toISOString();
+      const result = applyDaysLate([{ startDatetime }]);
+      expect(result[0].daysLate).toEqual(1);
+      expect(result[0].status).toEqual("LATE");
+    } finally {
+      jest.useRealTimers();
+    }
+  });
 });
 
 describe("getStatus", () => {
