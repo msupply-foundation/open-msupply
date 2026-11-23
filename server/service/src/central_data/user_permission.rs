@@ -14,8 +14,8 @@ use crate::{
     i64_to_u32,
     user_account::upsert::protected_user_ids,
     user_permission::{
-        DeleteUserPermissionError, UpsertUserPermissionError, add_checked_user_permission,
-        delete_checked_user_permission, find_user_permission, new_user_permission_id,
+        DeleteUserPermissionError, UpsertUserPermissionError, delete_user_permission,
+        find_user_permission, new_user_permission_id, upsert_user_permission,
     },
 };
 use repository::{
@@ -241,14 +241,8 @@ impl SheetImport for UserPermissionSheet {
             context_id: key.context_id.flatten(),
         };
         new.id = id.unwrap_or_else(|| new_user_permission_id(&new));
-        let Some(user) = self.users.get(&new.user_id) else {
-            return Err(row
-                .error(row.reference_column(USERNAME, USER_ID), NOT_FOUND)
-                .into());
-        };
-        // References, permission, key and protection are checked above.
-        add_checked_user_permission(connection, &new, user)
-            .map_err(|error| upsert_failure(row, &new, Some(user), error))?;
+        upsert_user_permission(connection, &new)
+            .map_err(|error| upsert_failure(row, &new, self.users.get(&new.user_id), error))?;
         Ok(RowOutcome {
             record: self.record(&new),
             record_id: new.id,
@@ -427,18 +421,17 @@ impl UserPermissionSheet {
             Vec::new(),
         )?;
 
-        delete_checked_user_permission(connection, &self.importer, &saved).map_err(|error| {
-            match error {
+        delete_user_permission(connection, &self.importer, &saved.id).map_err(
+            |error| match error {
                 DeleteUserPermissionError::LocksOutSelf => row
                     .error(DELETE_COLUMN, locks_out_message(&saved.permission))
                     .into(),
-                // Unreachable: refused in `import_row`.
                 DeleteUserPermissionError::Protected => {
                     protected_error(row, self.username(&saved.user_id)).into()
                 }
                 DeleteUserPermissionError::DatabaseError(error) => RowFailure::Database(error),
-            }
-        })?;
+            },
+        )?;
         Ok(RowOutcome {
             record: self.record(&saved),
             record_id: saved.id,
@@ -537,7 +530,6 @@ fn upsert_failure(
                 format!("{username} is deleted, so they can't be given a permission"),
             )
             .into(),
-        // Unreachable: found by `find_reference`.
         UpsertUserPermissionError::UserNotFound => row.error(user_column, NOT_FOUND).into(),
         UpsertUserPermissionError::StoreNotFound => row
             .error(row.reference_column(STORE_CODE, STORE_ID), NOT_FOUND)
@@ -545,7 +537,6 @@ fn upsert_failure(
         UpsertUserPermissionError::ContextNotFound => row
             .error(row.reference_column(CONTEXT_NAME, CONTEXT_ID), NOT_FOUND)
             .into(),
-        // Unreachable: checked in `import_row` and `find_permission`.
         UpsertUserPermissionError::StoreRequired => row
             .error(
                 STORE_CODE,
