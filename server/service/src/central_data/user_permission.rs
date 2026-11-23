@@ -553,6 +553,13 @@ fn upsert_failure(
                 format!("{username} already has this permission, through {other_id}"),
             )
             .into(),
+        // Finding the record makes a changed key a conflict first.
+        UpsertUserPermissionError::RecordChanged => row
+            .error(
+                ID,
+                "A user permission can't change: delete it and add another",
+            )
+            .into(),
         UpsertUserPermissionError::DatabaseError(error) => RowFailure::Database(error),
     }
 }

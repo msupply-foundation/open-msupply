@@ -23,6 +23,8 @@ pub enum UpsertUserPermissionError {
     DuplicatePermission {
         other_id: String,
     },
+    /// A saved record's user, store, permission or context. Delete it and add another.
+    RecordChanged,
     DatabaseError(RepositoryError),
 }
 
@@ -140,55 +142,52 @@ pub fn find_user_permission(
     })
 }
 
-/// Checks only what changes, so a saved permission that no longer passes stays editable.
+/// A saved record never changes: its store join and the lockout check `delete_user_permission`
+/// makes would be left behind. Re-saving it unchanged passes, even if it no longer would as new.
 fn validate(
     connection: &StorageConnection,
     saved: Option<&UserPermissionRow>,
     row: &UserPermissionRow,
 ) -> Result<(), UpsertUserPermissionError> {
-    let user_changes = saved.is_none_or(|saved| saved.user_id != row.user_id);
-    let store_changes = saved.is_none_or(|saved| saved.store_id != row.store_id);
-    let permission_changes = saved.is_none_or(|saved| saved.permission != row.permission);
-    let context_changes = saved.is_none_or(|saved| saved.context_id != row.context_id);
-
     let protected = protected_user_ids(connection)?;
     if protected.contains(&row.user_id)
         || saved.is_some_and(|saved| protected.contains(&saved.user_id))
     {
         return Err(UpsertUserPermissionError::Protected);
     }
-    if user_changes {
-        let user = UserAccountRowRepository::new(connection)
-            .find_one_by_id(&row.user_id)?
-            .ok_or(UpsertUserPermissionError::UserNotFound)?;
-        if user.deleted_datetime.is_some() {
-            return Err(UpsertUserPermissionError::UserDeleted);
+    if let Some(saved) = saved {
+        if saved != row {
+            return Err(UpsertUserPermissionError::RecordChanged);
         }
+        return Ok(());
     }
-    if permission_changes && matches!(row.permission, PermissionType::Unknown(_)) {
+
+    let user = UserAccountRowRepository::new(connection)
+        .find_one_by_id(&row.user_id)?
+        .ok_or(UpsertUserPermissionError::UserNotFound)?;
+    if user.deleted_datetime.is_some() {
+        return Err(UpsertUserPermissionError::UserDeleted);
+    }
+    if matches!(row.permission, PermissionType::Unknown(_)) {
         return Err(UpsertUserPermissionError::UnknownPermission);
     }
-    if store_changes && row.store_id.is_none() {
+    let Some(store_id) = &row.store_id else {
         return Err(UpsertUserPermissionError::StoreRequired);
-    }
-    if store_changes
-        && let Some(store_id) = &row.store_id
-        && StoreRowRepository::new(connection)
-            .find_one_by_id(store_id)?
-            .is_none()
+    };
+    if StoreRowRepository::new(connection)
+        .find_one_by_id(store_id)?
+        .is_none()
     {
         return Err(UpsertUserPermissionError::StoreNotFound);
     }
-    if context_changes
-        && let Some(context_id) = &row.context_id
+    if let Some(context_id) = &row.context_id
         && !ContextRowRepository::new(connection).check_exists_by_id(context_id)?
     {
         return Err(UpsertUserPermissionError::ContextNotFound);
     }
-    if (user_changes || store_changes || permission_changes || context_changes)
-        && let Some(other) = find_user_permission(connection, row)?
-            .into_iter()
-            .find(|other| other.id != row.id)
+    if let Some(other) = find_user_permission(connection, row)?
+        .into_iter()
+        .find(|other| other.id != row.id)
     {
         return Err(UpsertUserPermissionError::DuplicatePermission { other_id: other.id });
     }
@@ -445,6 +444,56 @@ mod tests {
         );
         // Already gone.
         delete_user_permission(&connection, "admin", "access").unwrap();
+    }
+
+    #[actix_rt::test]
+    async fn a_saved_permission_never_changes_its_user_store_permission_or_context() {
+        let connection = setup("user_permission_saved_never_changes").await;
+        StoreRowRepository::new(&connection)
+            .upsert_one(&StoreRow {
+                id: "other_store".to_string(),
+                name_id: "name_store_a".to_string(),
+                ..Default::default()
+            })
+            .unwrap();
+        let access = permission("access", "anna", PermissionType::StoreAccess);
+        upsert_user_permission(&connection, &access).unwrap();
+
+        for changed in [
+            UserPermissionRow {
+                store_id: Some("other_store".to_string()),
+                ..access.clone()
+            },
+            UserPermissionRow {
+                permission: PermissionType::Report,
+                ..access.clone()
+            },
+            UserPermissionRow {
+                user_id: "gone".to_string(),
+                ..access.clone()
+            },
+            UserPermissionRow {
+                context_id: Some("program".to_string()),
+                ..access.clone()
+            },
+        ] {
+            assert_eq!(
+                upsert_user_permission(&connection, &changed),
+                Err(UpsertUserPermissionError::RecordChanged),
+                "{changed:?}"
+            );
+        }
+        // She keeps only the store she has access to.
+        assert_eq!(joins(&connection, "anna"), [("store".to_string(), true)]);
+
+        // Unchanged passes, though anna's deletion would refuse it as new.
+        let users = UserAccountRowRepository::new(&connection);
+        let mut anna = users.find_one_by_id("anna").unwrap().unwrap();
+        anna.deleted_datetime = NaiveDate::from_ymd_opt(2025, 1, 1)
+            .unwrap()
+            .and_hms_opt(0, 0, 0);
+        users.upsert_one(&anna).unwrap();
+        upsert_user_permission(&connection, &access).unwrap();
     }
 
     #[actix_rt::test]
