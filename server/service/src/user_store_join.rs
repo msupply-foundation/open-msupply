@@ -207,7 +207,7 @@ pub fn has_store_access(
 }
 
 /// Every store access the user has on the store, in any context.
-fn store_access(
+pub(crate) fn store_access(
     connection: &StorageConnection,
     user_id: &str,
     store_id: &str,

@@ -1,6 +1,6 @@
 use crate::{
     user_account::upsert::protected_user_ids,
-    user_store_join::{find_user_store_join, is_last_store_on_site},
+    user_store_join::{find_user_store_join, is_last_store_on_site, store_access},
 };
 use repository::{
     ContextRowRepository, EqualFilter, PermissionType, RepositoryError, StorageConnection,
@@ -194,20 +194,17 @@ fn validate(
     Ok(())
 }
 
-/// On `store_id`, or any store.
+/// On any store.
 fn count_permission(
     connection: &StorageConnection,
     user_id: &str,
-    store_id: Option<&str>,
     permission: PermissionType,
 ) -> Result<i64, RepositoryError> {
-    let mut filter = UserPermissionFilter::new()
-        .user_id(EqualFilter::equal_to(user_id.to_string()))
-        .permission(EqualFilter::equal_to(permission));
-    if let Some(store_id) = store_id {
-        filter = filter.store_id(EqualFilter::equal_to(store_id.to_string()));
-    }
-    UserPermissionRepository::new(connection).count(Some(filter))
+    UserPermissionRepository::new(connection).count(Some(
+        UserPermissionFilter::new()
+            .user_id(EqualFilter::equal_to(user_id.to_string()))
+            .permission(EqualFilter::equal_to(permission)),
+    ))
 }
 
 /// Duplicates, as legacy mSupply sends, each grant access: only the last removes the store.
@@ -219,12 +216,7 @@ fn removes_store(
         return Ok(false);
     };
     Ok(saved.permission == PermissionType::StoreAccess
-        && count_permission(
-            connection,
-            &saved.user_id,
-            Some(store_id),
-            PermissionType::StoreAccess,
-        )? <= 1)
+        && store_access(connection, &saved.user_id, store_id)?.len() <= 1)
 }
 
 /// Server admin and central-data edit count on any store.
@@ -235,7 +227,7 @@ fn locks_out(
 ) -> Result<bool, RepositoryError> {
     match saved.permission {
         PermissionType::ServerAdmin | PermissionType::EditCentralData => {
-            Ok(count_permission(connection, &saved.user_id, None, saved.permission.clone())? <= 1)
+            Ok(count_permission(connection, &saved.user_id, saved.permission.clone())? <= 1)
         }
         PermissionType::StoreAccess if removes_store => match &saved.store_id {
             Some(store_id) => is_last_store_on_site(connection, &saved.user_id, store_id),
