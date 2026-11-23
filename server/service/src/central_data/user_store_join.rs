@@ -10,7 +10,10 @@ use super::{
     },
     sheet::Value,
     stores_with_names,
-    user_refs::{ID, USER_ID, USERNAME, protected_error, store_code, user_column, username},
+    user_refs::{
+        ID, STORE_CODE, STORE_ID, USER_ID, USERNAME, check_not_protected, exportable_users,
+        protected_error, store_code, user_column, username, users_by_id,
+    },
 };
 use crate::{
     i64_to_u32,
@@ -21,15 +24,13 @@ use crate::{
     },
 };
 use repository::{
-    EqualFilter, RepositoryError, StorageConnection, StoreRow, StoreRowRepository, StringFilter,
-    UserAccountRow, UserAccountRowRepository, UserOnStoreFilter, UserStoreJoinFilter,
-    UserStoreJoinRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
+    RepositoryError, StorageConnection, StoreRow, StoreRowRepository, UserAccountRow,
+    UserAccountRowRepository, UserStoreJoinFilter, UserStoreJoinRepository, UserStoreJoinRow,
+    UserStoreJoinRowRepository,
 };
 use std::collections::HashMap;
 use util::uuid::uuid;
 
-const STORE_CODE: &str = "store_code";
-const STORE_ID: &str = "store_id";
 const IS_DEFAULT: &str = "is_default";
 const STORE_NAME: &str = "store_name";
 
@@ -80,13 +81,8 @@ impl ImportTable for UserStoreJoinTable {
     ) -> Result<Vec<Vec<Value>>, RepositoryError> {
         // One query: the export has already checked the row cap.
         let joins = UserStoreJoinRepository::new(connection)
-            .query_by_filter(matching(exportable(connection)?, filter))?;
-        // Few, so read whole, as the import does.
-        let users: HashMap<String, UserAccountRow> = UserAccountRowRepository::new(connection)
-            .find_all()?
-            .into_iter()
-            .map(|user| (user.id.clone(), user))
-            .collect();
+            .query_by_filter(exportable(connection, filter)?)?;
+        let users = users_by_id(connection)?;
         let stores = stores_with_names(connection)?;
         let mut rows: Vec<_> = joins
             .into_iter()
@@ -117,10 +113,9 @@ impl ImportTable for UserStoreJoinTable {
         filter: &ExportFilter,
     ) -> Result<RecordCount, RepositoryError> {
         let repo = UserStoreJoinRepository::new(connection);
-        let exportable = exportable(connection)?;
         Ok(RecordCount {
-            matching: i64_to_u32(repo.count(Some(matching(exportable.clone(), filter)))?),
-            total: i64_to_u32(repo.count(Some(exportable))?),
+            matching: i64_to_u32(repo.count(Some(exportable(connection, filter)?))?),
+            total: i64_to_u32(repo.count(Some(exportable(connection, &ExportFilter::default())?))?),
         })
     }
 
@@ -196,7 +191,7 @@ impl SheetImport for UserStoreJoinSheet {
             .map(|saved| saved.user_id.as_str())
             .or(user_id.as_deref())
         {
-            self.check_user(row, user_id)?;
+            check_not_protected(row, &self.protected, &self.users, user_id, "stores")?;
         }
         if delete {
             // Named by the row's user and store, as found.
@@ -400,14 +395,6 @@ impl UserStoreJoinSheet {
         )
     }
 
-    /// A protected user's stores aren't imported.
-    fn check_user(&self, row: &Row, user_id: &str) -> Result<(), RowError> {
-        if self.protected.iter().any(|protected| protected == user_id) {
-            return Err(protected_error(row, self.username(user_id), "stores"));
-        }
-        Ok(())
-    }
-
     /// The saved join a row changes: by id, else by its user and store together. `Ok(None)` for
     /// a row that adds one.
     fn find_join(
@@ -552,26 +539,17 @@ impl UserStoreJoinSheet {
     }
 }
 
-/// Joins whose user is neither protected nor deleted, in SQL as they can be many.
-fn exportable(connection: &StorageConnection) -> Result<UserStoreJoinFilter, RepositoryError> {
+/// The joins an export holds, searched by `filter`.
+fn exportable(
+    connection: &StorageConnection,
+    filter: &ExportFilter,
+) -> Result<UserStoreJoinFilter, RepositoryError> {
+    let (user_id, user_on_store) = exportable_users(connection, filter)?;
     Ok(UserStoreJoinFilter {
-        user_id: Some(EqualFilter::not_equal_all(protected_user_ids(connection)?)),
-        user_on_store: UserOnStoreFilter {
-            user_is_deleted: Some(false),
-            ..Default::default()
-        },
+        user_id: Some(user_id),
+        user_on_store,
         ..Default::default()
     })
-}
-
-/// `exportable`, searching username or store code.
-fn matching(mut exportable: UserStoreJoinFilter, filter: &ExportFilter) -> UserStoreJoinFilter {
-    if let Some(text) = filter.contains.as_deref().map(str::trim)
-        && !text.is_empty()
-    {
-        exportable.user_on_store.username_or_store_code = Some(StringFilter::like(text));
-    }
-    exportable
 }
 
 /// One per column. The export adds `store_name`.

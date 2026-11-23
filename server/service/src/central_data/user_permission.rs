@@ -9,7 +9,10 @@ use super::{
     },
     sheet::Value,
     stores_with_names,
-    user_refs::{ID, USER_ID, USERNAME, protected_error, store_code, username},
+    user_refs::{
+        ID, STORE_CODE, STORE_ID, USER_ID, USERNAME, check_not_protected, exportable_users,
+        protected_error, store_code, username, users_by_id,
+    },
 };
 use crate::{
     i64_to_u32,
@@ -21,13 +24,11 @@ use crate::{
 };
 use repository::{
     ContextRow, EqualFilter, PermissionType, RepositoryError, StorageConnection, StoreRow,
-    StoreRowRepository, StringFilter, UserAccountRow, UserAccountRowRepository, UserOnStoreFilter,
-    UserPermissionFilter, UserPermissionRepository, UserPermissionRow, UserPermissionRowRepository,
+    StoreRowRepository, UserAccountRow, UserAccountRowRepository, UserPermissionFilter,
+    UserPermissionRepository, UserPermissionRow, UserPermissionRowRepository,
 };
 use std::{collections::HashMap, sync::LazyLock};
 
-const STORE_CODE: &str = "store_code";
-const STORE_ID: &str = "store_id";
 const PERMISSION: &str = "permission";
 const CONTEXT_NAME: &str = "context_name";
 const CONTEXT_ID: &str = "context_id";
@@ -90,7 +91,7 @@ impl ImportTable for UserPermissionTable {
     ) -> Result<Vec<Vec<Value>>, RepositoryError> {
         // One query: the export has already checked the row cap.
         let permissions = UserPermissionRepository::new(connection)
-            .query_by_filter(matching(exportable(connection)?, filter))?;
+            .query_by_filter(exportable(connection, filter)?)?;
         let records = References::read(connection)?;
         let mut rows: Vec<_> = permissions
             .iter()
@@ -126,10 +127,9 @@ impl ImportTable for UserPermissionTable {
         filter: &ExportFilter,
     ) -> Result<RecordCount, RepositoryError> {
         let repo = UserPermissionRepository::new(connection);
-        let exportable = exportable(connection)?;
         Ok(RecordCount {
-            matching: i64_to_u32(repo.count(Some(matching(exportable.clone(), filter)))?),
-            total: i64_to_u32(repo.count(Some(exportable))?),
+            matching: i64_to_u32(repo.count(Some(exportable(connection, filter)?))?),
+            total: i64_to_u32(repo.count(Some(exportable(connection, &ExportFilter::default())?))?),
         })
     }
 
@@ -200,9 +200,8 @@ impl SheetImport for UserPermissionSheet {
             .as_ref()
             .map(|saved| saved.user_id.as_str())
             .or(key.user_id.as_deref())
-            && self.protected.iter().any(|protected| protected == user_id)
         {
-            return Err(protected_error(row, self.username(user_id), "permissions").into());
+            check_not_protected(row, &self.protected, &self.users, user_id, "permissions")?;
         }
         if delete {
             // Named by the row's user, store, permission and context, as found.
@@ -545,29 +544,20 @@ fn upsert_failure(
     }
 }
 
-/// Exportable permissions, in SQL as they can be many.
-fn exportable(connection: &StorageConnection) -> Result<UserPermissionFilter, RepositoryError> {
+/// The permissions an export holds, searched by `filter`: those the server checks.
+fn exportable(
+    connection: &StorageConnection,
+    filter: &ExportFilter,
+) -> Result<UserPermissionFilter, RepositoryError> {
+    let (user_id, user_on_store) = exportable_users(connection, filter)?;
     Ok(UserPermissionFilter {
-        user_id: Some(EqualFilter::not_equal_all(protected_user_ids(connection)?)),
+        user_id: Some(user_id),
         permission: Some(EqualFilter::equal_any(
             PermissionType::known_iter().collect(),
         )),
-        user_on_store: UserOnStoreFilter {
-            user_is_deleted: Some(false),
-            ..Default::default()
-        },
+        user_on_store,
         ..Default::default()
     })
-}
-
-/// `exportable`, searching username or store code.
-fn matching(mut exportable: UserPermissionFilter, filter: &ExportFilter) -> UserPermissionFilter {
-    if let Some(text) = filter.contains.as_deref().map(str::trim)
-        && !text.is_empty()
-    {
-        exportable.user_on_store.username_or_store_code = Some(StringFilter::like(text));
-    }
-    exportable
 }
 
 /// What exported permissions refer to.
@@ -580,14 +570,8 @@ struct References {
 
 impl References {
     fn read(connection: &StorageConnection) -> Result<Self, RepositoryError> {
-        // Few, so read whole, as the import does.
-        let users = UserAccountRowRepository::new(connection)
-            .find_all()?
-            .into_iter()
-            .map(|user| (user.id.clone(), user))
-            .collect();
         Ok(References {
-            users,
+            users: users_by_id(connection)?,
             stores: stores_with_names(connection)?,
             contexts: read_contexts(connection)?,
         })
