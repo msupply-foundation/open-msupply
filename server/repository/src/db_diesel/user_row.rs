@@ -1,8 +1,8 @@
 use super::StorageConnection;
 
 use crate::{
-    ChangelogRepository, ChangelogSyncType, Delete, RowActionType, SourceSiteId, Upsert, lower,
-    repository_error::RepositoryError, trim, trim_spaces,
+    ChangelogRepository, ChangelogSyncType, Delete, RowActionType, SourceSiteId, StringFilter,
+    Upsert, lower, repository_error::RepositoryError, trim, trim_spaces,
 };
 
 use chrono::NaiveDateTime;
@@ -25,6 +25,51 @@ table! {
         deleted_datetime -> Nullable<Timestamp>,
     }
 }
+
+/// Narrows records that belong to a user on a store, such as permissions and store joins.
+#[derive(Clone, Default)]
+pub struct UserOnStoreFilter {
+    pub user_is_deleted: Option<bool>,
+    /// The user's username or the store's code.
+    pub username_or_store_code: Option<StringFilter>,
+}
+
+/// Applies a `UserOnStoreFilter` to `$query`, whose rows name their user in `$user_id` and their
+/// store in `$store_id`, a non-null expression.
+macro_rules! apply_user_on_store_filter {
+    ($query:ident, $filter:expr, $user_id:expr, $store_id:expr) => {{
+        use $crate::db_diesel::{store_row::store, user_row::user_account};
+        let $crate::UserOnStoreFilter {
+            user_is_deleted,
+            username_or_store_code,
+        } = $filter;
+        if let Some(text) = username_or_store_code {
+            let mut users = user_account::table.into_boxed::<$crate::DBType>();
+            $crate::diesel_macros::apply_string_filter!(
+                users,
+                Some(text.clone()),
+                user_account::username
+            );
+            let mut stores = store::table.into_boxed::<$crate::DBType>();
+            $crate::diesel_macros::apply_string_filter!(stores, Some(text), store::code);
+            $query = $query.filter(
+                $user_id
+                    .eq_any(users.select(user_account::id))
+                    .or($store_id.eq_any(stores.select(store::id))),
+            );
+        }
+        if let Some(is_deleted) = user_is_deleted {
+            let users = user_account::table.into_boxed::<$crate::DBType>();
+            let users = if is_deleted {
+                users.filter(user_account::deleted_datetime.is_not_null())
+            } else {
+                users.filter(user_account::deleted_datetime.is_null())
+            };
+            $query = $query.filter($user_id.eq_any(users.select(user_account::id)));
+        }
+    }};
+}
+pub(crate) use apply_user_on_store_filter;
 
 // EnumIter outside tests too, so central data import can check it names every language.
 #[derive(

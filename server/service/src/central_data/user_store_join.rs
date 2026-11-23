@@ -22,8 +22,8 @@ use crate::{
 };
 use repository::{
     EqualFilter, RepositoryError, StorageConnection, StoreRow, StoreRowRepository, StringFilter,
-    UserAccountRow, UserAccountRowRepository, UserStoreJoinFilter, UserStoreJoinRepository,
-    UserStoreJoinRow, UserStoreJoinRowRepository,
+    UserAccountRow, UserAccountRowRepository, UserOnStoreFilter, UserStoreJoinFilter,
+    UserStoreJoinRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
 };
 use std::collections::HashMap;
 use util::uuid::uuid;
@@ -556,7 +556,10 @@ impl UserStoreJoinSheet {
 fn exportable(connection: &StorageConnection) -> Result<UserStoreJoinFilter, RepositoryError> {
     Ok(UserStoreJoinFilter {
         user_id: Some(EqualFilter::not_equal_all(protected_user_ids(connection)?)),
-        user_is_deleted: Some(false),
+        user_on_store: UserOnStoreFilter {
+            user_is_deleted: Some(false),
+            ..Default::default()
+        },
         ..Default::default()
     })
 }
@@ -566,7 +569,7 @@ fn matching(mut exportable: UserStoreJoinFilter, filter: &ExportFilter) -> UserS
     if let Some(text) = filter.contains.as_deref().map(str::trim)
         && !text.is_empty()
     {
-        exportable.username_or_store_code = Some(StringFilter::like(text));
+        exportable.user_on_store.username_or_store_code = Some(StringFilter::like(text));
     }
     exportable
 }

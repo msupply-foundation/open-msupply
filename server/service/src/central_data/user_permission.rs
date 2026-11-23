@@ -21,7 +21,7 @@ use crate::{
 };
 use repository::{
     ContextRow, EqualFilter, PermissionType, RepositoryError, StorageConnection, StoreRow,
-    StoreRowRepository, StringFilter, UserAccountRow, UserAccountRowRepository,
+    StoreRowRepository, StringFilter, UserAccountRow, UserAccountRowRepository, UserOnStoreFilter,
     UserPermissionFilter, UserPermissionRepository, UserPermissionRow, UserPermissionRowRepository,
 };
 use std::{collections::HashMap, sync::LazyLock};
@@ -552,7 +552,10 @@ fn exportable(connection: &StorageConnection) -> Result<UserPermissionFilter, Re
         permission: Some(EqualFilter::equal_any(
             PermissionType::known_iter().collect(),
         )),
-        user_is_deleted: Some(false),
+        user_on_store: UserOnStoreFilter {
+            user_is_deleted: Some(false),
+            ..Default::default()
+        },
         ..Default::default()
     })
 }
@@ -562,7 +565,7 @@ fn matching(mut exportable: UserPermissionFilter, filter: &ExportFilter) -> User
     if let Some(text) = filter.contains.as_deref().map(str::trim)
         && !text.is_empty()
     {
-        exportable.username_or_store_code = Some(StringFilter::like(text));
+        exportable.user_on_store.username_or_store_code = Some(StringFilter::like(text));
     }
     exportable
 }

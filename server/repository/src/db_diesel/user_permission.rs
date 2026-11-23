@@ -1,10 +1,10 @@
 use super::{
-    DBType, PermissionType, StorageConnection, UserPermissionRow, store_row::store,
-    user_permission_row::user_permission, user_row::user_account,
+    DBType, PermissionType, StorageConnection, UserOnStoreFilter, UserPermissionRow,
+    user_permission_row::user_permission, user_row::apply_user_on_store_filter,
 };
-use crate::{EqualFilter, Pagination, Sort, StringFilter};
+use crate::{EqualFilter, Pagination, Sort};
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
+    diesel_macros::{apply_equal_filter, apply_sort_no_case},
     repository_error::RepositoryError,
 };
 
@@ -20,8 +20,7 @@ pub struct UserPermissionFilter {
     pub permission: Option<EqualFilter<PermissionType>>,
     pub has_context: Option<bool>,
     pub context_id: Option<EqualFilter<String>>,
-    pub user_is_deleted: Option<bool>,
-    pub username_or_store_code: Option<StringFilter>,
+    pub user_on_store: UserOnStoreFilter,
 }
 
 #[derive(PartialEq, Debug)]
@@ -108,30 +107,16 @@ fn create_filtered_query(filter: Option<UserPermissionFilter>) -> BoxedUserPermi
             permission,
             has_context,
             context_id,
-            user_is_deleted,
-            username_or_store_code,
+            user_on_store,
         } = f;
 
-        // First: or_filter ORs with the whole where clause, so it only groups while that's empty.
-        if let Some(text) = username_or_store_code {
-            let mut users = user_account::table.into_boxed::<DBType>();
-            apply_string_filter!(users, Some(text.clone()), user_account::username);
-            let mut stores = store::table.into_boxed::<DBType>();
-            apply_string_filter!(stores, Some(text), store::code);
-            query = query
-                .filter(user_permission::user_id.eq_any(users.select(user_account::id)))
-                .or_filter(user_permission::store_id.eq_any(stores.select(store::id.nullable())));
-        }
-        if let Some(is_deleted) = user_is_deleted {
-            let mut users = user_account::table.into_boxed::<DBType>();
-            users = if is_deleted {
-                users.filter(user_account::deleted_datetime.is_not_null())
-            } else {
-                users.filter(user_account::deleted_datetime.is_null())
-            };
-            query = query.filter(user_permission::user_id.eq_any(users.select(user_account::id)));
-        }
-
+        // Every permission is on a store, though the column allows none.
+        apply_user_on_store_filter!(
+            query,
+            user_on_store,
+            user_permission::user_id,
+            user_permission::store_id.assume_not_null()
+        );
         apply_equal_filter!(query, id, user_permission::id);
         apply_equal_filter!(query, user_id, user_permission::user_id);
         apply_equal_filter!(query, store_id, user_permission::store_id);
