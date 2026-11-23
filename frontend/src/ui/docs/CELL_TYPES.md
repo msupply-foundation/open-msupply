@@ -23,9 +23,9 @@ Two ways to get a fragment:
 ```ts
 // extra meta merged in (no manual spread of the preset's meta):
 { ...getCellDefinition('numberOfPacks', { cardPosition: 'header-badge' }) }
-// override the width (rem → px), or the cell (e.g. an errorable code):
+// override the width (rem → px), or the cell (e.g. a value from elsewhere on the row):
 { ...getCellDefinition('itemName'), size: remToPx(24) }
-{ ...getCellDefinition('itemCode'), cell: info => <ErrorableCode …/> }
+{ ...getCellDefinition('itemCode'), cell: info => info.row.original.item.code }
 ```
 
 ## Width model

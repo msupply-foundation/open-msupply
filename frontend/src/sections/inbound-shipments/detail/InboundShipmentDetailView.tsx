@@ -50,7 +50,6 @@ import {
   type PaginationProps,
 } from '../../../ui/elements/table/Pagination';
 import { remToPx } from '../../../ui/utils/rem';
-import styles from './InboundShipmentDetailView.module.css';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { useUrlQueryState } from '../../../list/urlQueryState';
 import {
@@ -764,17 +763,6 @@ const InboundShipmentDetailView: Component = () => {
         sortKey: 'itemCode',
         header: () => t('label.code'),
         ...getCellDefinition('itemCode'),
-        // A line that arrived via another store's transfer (linkedInvoiceId
-        // set) can't be independently deleted; flag its code in the error tone
-        // so the provenance is visible (spec OMS-REG-REPL-09.19/.20 / M9).
-        cell: info => {
-          const line = info.row.original;
-          return (
-            <span class={line.linkedInvoiceId ? styles.errorCode : undefined}>
-              {line.itemCode}
-            </span>
-          );
-        },
       },
       {
         c: { key: 'itemName' },
