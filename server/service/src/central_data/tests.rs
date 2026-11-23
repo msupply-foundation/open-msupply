@@ -5329,7 +5329,7 @@ async fn name_references_are_found_by_code_or_id() {
                 Some("supplying_store_code"),
                 "referenced record not found"
             ),
-            (3, Some("supplying_store_id"), "referenced record not found"),
+            // Row 3's id alone is saved as given, as sync saves it.
             (4, Some("supplying_store_id"), "referenced record not found"),
             (5, Some("currency_code"), "referenced record not found"),
             (6, Some("custom_data"), "custom_data must be JSON, or blank"),
@@ -5343,16 +5343,27 @@ async fn name_references_are_found_by_code_or_id() {
 
     let path = write_file(
         dir.path(),
-        name_sheet(vec![new(&[
-            ("code", "G"),
-            ("supplying_store_code", "MS"),
-            ("currency_code", "NZD"),
-        ])]),
+        name_sheet(vec![
+            new(&[
+                ("code", "G"),
+                ("supplying_store_code", "MS"),
+                ("currency_code", "NZD"),
+            ]),
+            new(&[("code", "H"), ("supplying_store_id", "not_synced_yet")]),
+        ]),
     );
     let summary = CentralDataService
         .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
+    let waiting = NameRowRepository::new(&connection)
+        .find_by_trimmed_code("H")
+        .unwrap()
+        .remove(0);
+    assert_eq!(
+        waiting.supplying_store_id.as_deref(),
+        Some("not_synced_yet")
+    );
     let added = NameRowRepository::new(&connection)
         .find_by_trimmed_code("G")
         .unwrap()
@@ -6207,6 +6218,13 @@ async fn a_name_finds_a_supplying_store_the_store_sheet_adds() {
                     ("supplying_store_code", "NEW2"),
                     ("delete", "DELETE"),
                 ]),
+                // With a store sheet, an id alone is checked too.
+                new_name_row(&[
+                    ("code", "CL6"),
+                    ("type", "FACILITY"),
+                    ("name", "Waiting clinic"),
+                    ("supplying_store_id", "not_synced_yet"),
+                ]),
             ],
             vec![new_store_row(&[("code", "NEW2"), ("name_code", "MAIN")])],
         ),
@@ -6229,11 +6247,12 @@ async fn a_name_finds_a_supplying_store_the_store_sheet_adds() {
                 Some("supplying_store_code"),
                 "referenced record not found"
             ),
+            (4, Some("supplying_store_id"), "referenced record not found"),
         ]
     );
     // Counted against the name sheet, though found after the store sheet ran.
     assert_eq!(summary.tables[0].table, CentralDataTable::Name);
-    assert_eq!(summary.tables[0].error_count, 3);
+    assert_eq!(summary.tables[0].error_count, 4);
     // A row with errors writes nothing, so CL8 isn't counted or listed as added.
     assert_eq!(
         (summary.tables[0].inserted, summary.tables[0].deleted),
@@ -6245,7 +6264,7 @@ async fn a_name_finds_a_supplying_store_the_store_sheet_adds() {
 // covers: OMS-REG-CDIO-01.143
 
 #[actix_rt::test]
-async fn without_a_store_sheet_a_missing_supplying_store_is_an_error_at_once() {
+async fn without_a_store_sheet_a_missing_supplying_store_is_saved_by_its_id() {
     let (_, service_provider, dir) = store_setup("central_data_name_no_store_sheet").await;
     let ctx = service_provider.basic_context().unwrap();
     let path = write_file(
@@ -6258,9 +6277,18 @@ async fn without_a_store_sheet_a_missing_supplying_store_is_an_error_at_once() {
                 ("supplying_store_code", "GONE"),
             ]),
             new_name_row(&[("code", "CL7"), ("type", "FACILITY"), ("name", "Clinic")]),
+            // A store the code and id don't find is saved by its id, as sync saves it.
+            new_name_row(&[
+                ("code", "CL6"),
+                ("type", "FACILITY"),
+                ("name", "Waiting clinic"),
+                ("supplying_store_code", "LATER"),
+                ("supplying_store_id", "later_store"),
+            ]),
         ]),
     );
     let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    // A code alone has no id to save.
     assert_eq!(
         row_errors(&summary),
         vec![(
@@ -6269,15 +6297,14 @@ async fn without_a_store_sheet_a_missing_supplying_store_is_an_error_at_once() {
             "referenced record not found"
         )]
     );
-    // Only CL7 is added.
-    assert_eq!(summary.tables[0].inserted, 1);
+    assert_eq!(summary.tables[0].inserted, 2);
     assert_eq!(
         summary
             .changes
             .iter()
             .map(|change| change.row)
             .collect::<Vec<_>>(),
-        [3]
+        [3, 4]
     );
 }
 
