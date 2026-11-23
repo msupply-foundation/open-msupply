@@ -242,7 +242,7 @@ impl SheetImport for UserPermissionSheet {
             context_id: key.context_id.flatten(),
         };
         new.id = id.unwrap_or_else(|| new_user_permission_id(&new));
-        upsert_user_permission(connection, &new)
+        upsert_user_permission(connection, &self.protected, &new)
             .map_err(|error| upsert_failure(row, &new, self.users.get(&new.user_id), error))?;
         Ok(RowOutcome {
             record: self.record(&new),
@@ -415,7 +415,7 @@ impl UserPermissionSheet {
             Vec::new(),
         )?;
 
-        delete_user_permission(connection, &self.importer, &saved.id).map_err(
+        delete_user_permission(connection, &self.protected, &self.importer, &saved.id).map_err(
             |error| match error {
                 DeleteUserPermissionError::LocksOutSelf => row
                     .error(DELETE_COLUMN, locks_out_message(&saved.permission))

@@ -1,7 +1,4 @@
-use crate::{
-    user_account::upsert::protected_user_ids,
-    user_on_store::{UserOnStoreError, check_new_user_and_store, check_not_protected},
-};
+use crate::user_on_store::{UserOnStoreError, check_new_user_and_store, check_not_protected};
 use repository::{
     EqualFilter, KeyType, KeyValueStoreRepository, PermissionType, RepositoryError,
     StorageConnection, UserFilter, UserPermissionFilter, UserPermissionRepository,
@@ -89,7 +86,8 @@ pub fn upsert_user_store_join_unchecked_default(
 /// they can no longer log in to it; a duplicate join, as legacy mSupply can send, keeps both.
 /// Their other permissions there are kept. A default store leaves the user none, as in legacy
 /// mSupply. `deleting_user_id` can't lock themselves out. Returns whether the store was taken
-/// away: false for an id already gone, or when a duplicate join keeps it.
+/// away: false for an id already gone, or when a duplicate join keeps it. `protected` is as for
+/// `upsert_user_store_join_unchecked_default`.
 pub fn delete_user_store_join(
     connection: &StorageConnection,
     protected: &[String],
@@ -102,9 +100,8 @@ pub fn delete_user_store_join(
             let Some(saved) = repo.find_one_by_id(id)? else {
                 return Ok(false);
             };
-            if protected.contains(&saved.user_id) {
-                return Err(DeleteUserStoreJoinError::Protected);
-            }
+            check_not_protected(protected, &saved.user_id, None)
+                .map_err(|_| DeleteUserStoreJoinError::Protected)?;
             let removes_store = find_user_store_join(connection, &saved.user_id, &saved.store_id)?
                 .iter()
                 .all(|join| join.id == saved.id);
@@ -254,6 +251,7 @@ fn give_store_access(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::user_account::upsert::protected_user_ids;
     use chrono::NaiveDate;
     use repository::{
         StoreRow, StoreRowRepository, UserAccountRow, UserAccountRowRepository,

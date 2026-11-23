@@ -1,5 +1,4 @@
 use crate::{
-    user_account::upsert::protected_user_ids,
     user_on_store::{UserOnStoreError, check_new_user_and_store, check_not_protected},
     user_store_join::{find_user_store_join, is_last_store_on_site, store_access},
 };
@@ -80,16 +79,17 @@ pub fn new_user_permission_id(row: &UserPermissionRow) -> String {
 }
 
 /// Store access also adds the user's store join, so they can log in. Joins the caller's
-/// transaction.
+/// transaction. `protected` is `protected_user_ids`, read once by a caller that saves many.
 pub fn upsert_user_permission(
     connection: &StorageConnection,
+    protected: &[String],
     row: &UserPermissionRow,
 ) -> Result<(), UpsertUserPermissionError> {
     connection
         .transaction_sync(|connection| -> Result<(), UpsertUserPermissionError> {
             let repo = UserPermissionRowRepository::new(connection);
             let saved = repo.find_one_by_id(&row.id)?;
-            validate(connection, saved.as_ref(), row)?;
+            validate(connection, protected, saved.as_ref(), row)?;
             save(connection, row)?;
             Ok(())
         })
@@ -107,9 +107,10 @@ fn save(connection: &StorageConnection, row: &UserPermissionRow) -> Result<(), R
 }
 
 /// Taking store access away also removes the store join. `deleting_user_id` can't lock themselves
-/// out.
+/// out. `protected` is as for `upsert_user_permission`.
 pub fn delete_user_permission(
     connection: &StorageConnection,
+    protected: &[String],
     deleting_user_id: &str,
     id: &str,
 ) -> Result<(), DeleteUserPermissionError> {
@@ -119,9 +120,8 @@ pub fn delete_user_permission(
             let Some(saved) = repo.find_one_by_id(id)? else {
                 return Ok(());
             };
-            if protected_user_ids(connection)?.contains(&saved.user_id) {
-                return Err(DeleteUserPermissionError::Protected);
-            }
+            check_not_protected(protected, &saved.user_id, None)
+                .map_err(|_| DeleteUserPermissionError::Protected)?;
             // Before deleting: inside an import's transaction an error doesn't roll back.
             let removes_store = removes_store(connection, &saved)?;
             if saved.user_id == deleting_user_id && locks_out(connection, &saved, removes_store)? {
@@ -161,11 +161,12 @@ pub fn find_user_permission(
 /// makes would be left behind. Re-saving it unchanged passes, even if it no longer would as new.
 fn validate(
     connection: &StorageConnection,
+    protected: &[String],
     saved: Option<&UserPermissionRow>,
     row: &UserPermissionRow,
 ) -> Result<(), UpsertUserPermissionError> {
     check_not_protected(
-        &protected_user_ids(connection)?,
+        protected,
         &row.user_id,
         saved.map(|saved| saved.user_id.as_str()),
     )?;
@@ -263,12 +264,17 @@ fn add_store_join(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::user_account::upsert::protected_user_ids;
     use chrono::NaiveDate;
     use repository::{
         ChangelogCondition, ChangelogRepository, ChangelogTableName, ContextRow, CursorAndLimit,
         KeyType, KeyValueStoreRepository, RowActionType, StoreRow, StoreRowRepository,
         UserAccountRow, UserAccountRowRepository, mock::MockDataInserts, test_db::setup_all,
     };
+
+    fn protected(connection: &StorageConnection) -> Vec<String> {
+        protected_user_ids(connection).unwrap()
+    }
 
     fn permission(id: &str, user_id: &str, permission: PermissionType) -> UserPermissionRow {
         UserPermissionRow {
@@ -333,10 +339,11 @@ mod tests {
     async fn a_user_gets_a_known_permission_once_per_store_and_context() {
         let connection = setup("upsert_user_permission").await;
         let reading = permission("a", "anna", PermissionType::StocktakeQuery);
-        upsert_user_permission(&connection, &reading).unwrap();
+        upsert_user_permission(&connection, &protected(&connection), &reading).unwrap();
         assert_eq!(
             upsert_user_permission(
                 &connection,
+                &protected(&connection),
                 &permission("b", "anna", PermissionType::StocktakeQuery)
             ),
             Err(UpsertUserPermissionError::DuplicatePermission {
@@ -346,6 +353,7 @@ mod tests {
         // In a context, it's another permission.
         upsert_user_permission(
             &connection,
+            &protected(&connection),
             &UserPermissionRow {
                 context_id: Some("program".to_string()),
                 ..permission("b", "anna", PermissionType::StocktakeQuery)
@@ -353,8 +361,9 @@ mod tests {
         )
         .unwrap();
 
-        let refused =
-            |row: UserPermissionRow| upsert_user_permission(&connection, &row).unwrap_err();
+        let refused = |row: UserPermissionRow| {
+            upsert_user_permission(&connection, &protected(&connection), &row).unwrap_err()
+        };
         assert_eq!(
             refused(permission("d", "nobody", PermissionType::StocktakeQuery)),
             UpsertUserPermissionError::UserNotFound
@@ -402,21 +411,21 @@ mod tests {
     async fn store_access_lets_the_user_log_in_to_the_store_until_it_is_taken_away() {
         let connection = setup("user_permission_store_access").await;
         let access = permission("access", "anna", PermissionType::StoreAccess);
-        upsert_user_permission(&connection, &access).unwrap();
+        upsert_user_permission(&connection, &protected(&connection), &access).unwrap();
         // First store, so default; adding it again makes no second join.
         assert_eq!(joins(&connection, "anna"), [("store".to_string(), true)]);
         UserPermissionRowRepository::new(&connection)
             .delete("access")
             .unwrap();
-        upsert_user_permission(&connection, &access).unwrap();
+        upsert_user_permission(&connection, &protected(&connection), &access).unwrap();
         assert_eq!(joins(&connection, "anna"), [("store".to_string(), true)]);
 
         // Another permission leaves the join; store access takes it away.
         let reading = permission("reading", "anna", PermissionType::StocktakeQuery);
-        upsert_user_permission(&connection, &reading).unwrap();
-        delete_user_permission(&connection, "admin", "reading").unwrap();
+        upsert_user_permission(&connection, &protected(&connection), &reading).unwrap();
+        delete_user_permission(&connection, &protected(&connection), "admin", "reading").unwrap();
         assert_eq!(joins(&connection, "anna").len(), 1);
-        delete_user_permission(&connection, "admin", "access").unwrap();
+        delete_user_permission(&connection, &protected(&connection), "admin", "access").unwrap();
         assert_eq!(joins(&connection, "anna"), []);
         assert_eq!(
             UserPermissionRowRepository::new(&connection)
@@ -425,7 +434,7 @@ mod tests {
             None
         );
         // Already gone.
-        delete_user_permission(&connection, "admin", "access").unwrap();
+        delete_user_permission(&connection, &protected(&connection), "admin", "access").unwrap();
     }
 
     #[actix_rt::test]
@@ -439,7 +448,7 @@ mod tests {
             })
             .unwrap();
         let access = permission("access", "anna", PermissionType::StoreAccess);
-        upsert_user_permission(&connection, &access).unwrap();
+        upsert_user_permission(&connection, &protected(&connection), &access).unwrap();
 
         for changed in [
             UserPermissionRow {
@@ -460,7 +469,7 @@ mod tests {
             },
         ] {
             assert_eq!(
-                upsert_user_permission(&connection, &changed),
+                upsert_user_permission(&connection, &protected(&connection), &changed),
                 Err(UpsertUserPermissionError::RecordChanged),
                 "{changed:?}"
             );
@@ -475,7 +484,7 @@ mod tests {
             .unwrap()
             .and_hms_opt(0, 0, 0);
         users.upsert_one(&anna).unwrap();
-        upsert_user_permission(&connection, &access).unwrap();
+        upsert_user_permission(&connection, &protected(&connection), &access).unwrap();
     }
 
     #[actix_rt::test]
@@ -483,6 +492,7 @@ mod tests {
         let connection = setup("user_permission_store_join_delete_syncs").await;
         upsert_user_permission(
             &connection,
+            &protected(&connection),
             &permission("access", "anna", PermissionType::StoreAccess),
         )
         .unwrap();
@@ -494,7 +504,7 @@ mod tests {
         let changelog = ChangelogRepository::new(&connection);
         let mark = changelog.max_cursor().unwrap();
 
-        delete_user_permission(&connection, "admin", "access").unwrap();
+        delete_user_permission(&connection, &protected(&connection), "admin", "access").unwrap();
         let deleted: Vec<_> = changelog
             .query(
                 ChangelogCondition::True(),
@@ -523,6 +533,7 @@ mod tests {
         let connection = setup("user_permission_duplicate_store_access").await;
         upsert_user_permission(
             &connection,
+            &protected(&connection),
             &permission("access", "anna", PermissionType::StoreAccess),
         )
         .unwrap();
@@ -535,9 +546,9 @@ mod tests {
             ))
             .unwrap();
 
-        delete_user_permission(&connection, "admin", "access").unwrap();
+        delete_user_permission(&connection, &protected(&connection), "admin", "access").unwrap();
         assert_eq!(joins(&connection, "anna"), [("store".to_string(), true)]);
-        delete_user_permission(&connection, "admin", "duplicate").unwrap();
+        delete_user_permission(&connection, &protected(&connection), "admin", "duplicate").unwrap();
         assert_eq!(joins(&connection, "anna"), []);
     }
 
@@ -554,14 +565,15 @@ mod tests {
                 })
                 .unwrap();
             }
-            delete_user_permission(&connection, "anna", "first").unwrap();
+            delete_user_permission(&connection, &protected(&connection), "anna", "first").unwrap();
             assert_eq!(
-                delete_user_permission(&connection, "anna", "second"),
+                delete_user_permission(&connection, &protected(&connection), "anna", "second"),
                 Err(DeleteUserPermissionError::LocksOutSelf),
                 "{permission_type:?}"
             );
             // Another user can.
-            delete_user_permission(&connection, "someone", "second").unwrap();
+            delete_user_permission(&connection, &protected(&connection), "someone", "second")
+                .unwrap();
         }
 
         repo.upsert_one(&permission(
@@ -571,7 +583,7 @@ mod tests {
         ))
         .unwrap();
         assert_eq!(
-            delete_user_permission(&connection, "anna", "admins"),
+            delete_user_permission(&connection, &protected(&connection), "anna", "admins"),
             Err(DeleteUserPermissionError::Protected)
         );
     }
@@ -603,23 +615,31 @@ mod tests {
             ("on_second", "second"),
             ("off_site", "store"),
         ] {
-            upsert_user_permission(&connection, &access(id, store_id)).unwrap();
+            upsert_user_permission(&connection, &protected(&connection), &access(id, store_id))
+                .unwrap();
         }
         // A duplicate keeps the store.
         UserPermissionRowRepository::new(&connection)
             .upsert_one(&access("on_second_again", "second"))
             .unwrap();
 
-        delete_user_permission(&connection, "anna", "on_first").unwrap();
-        delete_user_permission(&connection, "anna", "on_second_again").unwrap();
+        delete_user_permission(&connection, &protected(&connection), "anna", "on_first").unwrap();
+        delete_user_permission(
+            &connection,
+            &protected(&connection),
+            "anna",
+            "on_second_again",
+        )
+        .unwrap();
         // Her last store on this site, though she has one on another.
         assert_eq!(
-            delete_user_permission(&connection, "anna", "on_second"),
+            delete_user_permission(&connection, &protected(&connection), "anna", "on_second"),
             Err(DeleteUserPermissionError::LocksOutSelf)
         );
         assert!(joins(&connection, "anna").contains(&("second".to_string(), false)));
         // Another user can.
-        delete_user_permission(&connection, "someone", "on_second").unwrap();
+        delete_user_permission(&connection, &protected(&connection), "someone", "on_second")
+            .unwrap();
     }
 
     #[test]
