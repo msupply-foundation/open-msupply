@@ -36,7 +36,7 @@ export type CentralDataImportResultFragment = ({
   __typename: "CentralDataImportNode";
 } & {
   tables: Array<{
-  table: "UNIT" | "LOCATION_TYPE" | "CURRENCY" | "NAME" | "STORE" | "USER" | "ITEM" | "MASTER_LIST" | "NAME_STORE_JOIN" | "USER_PERMISSION";
+  table: "UNIT" | "LOCATION_TYPE" | "CURRENCY" | "NAME" | "STORE" | "USER" | "ITEM" | "MASTER_LIST" | "NAME_STORE_JOIN" | "USER_STORE_JOIN" | "USER_PERMISSION";
   inserted: number;
   updated: number;
   deleted: number;
@@ -67,7 +67,7 @@ export type CentralDataImportResultFragment = ({
 
 export type CentralDataExportCountsVariables = {
   tables: Array<{
-    table: "UNIT" | "LOCATION_TYPE" | "CURRENCY" | "NAME" | "STORE" | "USER" | "ITEM" | "MASTER_LIST" | "NAME_STORE_JOIN" | "USER_PERMISSION";
+    table: "UNIT" | "LOCATION_TYPE" | "CURRENCY" | "NAME" | "STORE" | "USER" | "ITEM" | "MASTER_LIST" | "NAME_STORE_JOIN" | "USER_STORE_JOIN" | "USER_PERMISSION";
     contains?: string | null;
     isActive?: boolean | null;
   }>;
@@ -78,7 +78,7 @@ export type CentralDataExportCountsResult = {
   centralData: {
   exportCounts: {
   tables: Array<{
-  table: "UNIT" | "LOCATION_TYPE" | "CURRENCY" | "NAME" | "STORE" | "USER" | "ITEM" | "MASTER_LIST" | "NAME_STORE_JOIN" | "USER_PERMISSION";
+  table: "UNIT" | "LOCATION_TYPE" | "CURRENCY" | "NAME" | "STORE" | "USER" | "ITEM" | "MASTER_LIST" | "NAME_STORE_JOIN" | "USER_STORE_JOIN" | "USER_PERMISSION";
   matching: number;
   total: number;
 }>;
@@ -94,7 +94,7 @@ export const CentralDataExportCounts = {
 
 export type CentralDataExportVariables = {
   tables: Array<{
-    table: "UNIT" | "LOCATION_TYPE" | "CURRENCY" | "NAME" | "STORE" | "USER" | "ITEM" | "MASTER_LIST" | "NAME_STORE_JOIN" | "USER_PERMISSION";
+    table: "UNIT" | "LOCATION_TYPE" | "CURRENCY" | "NAME" | "STORE" | "USER" | "ITEM" | "MASTER_LIST" | "NAME_STORE_JOIN" | "USER_STORE_JOIN" | "USER_PERMISSION";
     contains?: string | null;
     isActive?: boolean | null;
   }>;
