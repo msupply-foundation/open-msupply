@@ -31,6 +31,7 @@ mod unit;
 mod user;
 mod user_permission;
 mod user_refs;
+mod user_store_join;
 
 #[cfg(test)]
 mod tests;
@@ -56,6 +57,7 @@ pub enum CentralDataTable {
     Item,
     MasterList,
     NameStoreJoin,
+    UserStoreJoin,
     UserPermission,
 }
 
@@ -121,7 +123,9 @@ impl CentralDataTable {
     pub fn server_admin_only(self) -> bool {
         matches!(
             self,
-            CentralDataTable::User | CentralDataTable::UserPermission
+            CentralDataTable::User
+                | CentralDataTable::UserStoreJoin
+                | CentralDataTable::UserPermission
         )
     }
 
@@ -136,6 +140,7 @@ impl CentralDataTable {
             CentralDataTable::Item => "item",
             CentralDataTable::MasterList => "master_list",
             CentralDataTable::NameStoreJoin => "name_store_join",
+            CentralDataTable::UserStoreJoin => "user_store_join",
             CentralDataTable::UserPermission => "user_permission",
         }
     }
@@ -152,6 +157,7 @@ static TABLES: &[&(dyn ImportTable + Sync)] = &[
     &item::ItemTable,
     &master_list::MasterListTable,
     &name_store_join::NameStoreJoinTable,
+    &user_store_join::UserStoreJoinTable,
     &user_permission::UserPermissionTable,
 ];
 
