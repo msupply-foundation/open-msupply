@@ -1,6 +1,7 @@
 import { createMemo, Show } from 'solid-js';
 import type { JSX } from 'solid-js';
 import { type Column as TanColumn, type Header } from '@tanstack/solid-table';
+import { InfoTooltip } from '../feedback/InfoTooltip';
 import { renderTemplate } from './renderTemplate';
 import type { ColumnWidth } from './columnResize';
 import styles from './DataTable.module.css';
@@ -43,6 +44,7 @@ export function HeaderCell<T>(props: {
   // tick of a drag (#1890).
   const isResizing = createMemo(() => column().getIsResizing());
   const align = () => column().columnDef.meta?.align;
+  const description = () => column().columnDef.meta?.description;
   // A real growth cap (delivered as max-width). TanStack merges its default
   // maxSize (Number.MAX_SAFE_INTEGER) into every columnDef, so treat only a
   // value below that sentinel as an actual cap.
@@ -131,6 +133,23 @@ export function HeaderCell<T>(props: {
               on a locale change (see renderTemplate.ts). */}
           {renderTemplate(column().columnDef.header, props.header.getContext())}
         </span>
+        {/* What the column's figure means (meta.description), behind an info
+            mark beside the label. Its own click stops here, so opening it
+            never sorts the column. */}
+        <Show when={description()}>
+          {text => (
+            <span
+              class={styles.thInfo}
+              onClick={event => event.stopPropagation()}
+            >
+              <InfoTooltip
+                text={text()}
+                placement="bottom"
+                triggerTestId={`header-info-${column().id}`}
+              />
+            </span>
+          )}
+        </Show>
         {indicator()}
       </span>
       {/* Resize handle on the trailing edge. TanStack's getResizeHandler drives the drag

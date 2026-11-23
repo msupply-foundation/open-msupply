@@ -654,6 +654,14 @@ tr[data-row-state='disabled']:not(.rowClickable) {
   overflow-wrap: break-word;
 }
 
+/* A column's description mark (meta.description) — a fixed-size sibling of the
+   text, so a wrapping label never squeezes it out. */
+.thInfo {
+  display: inline-flex;
+  flex-shrink: 0;
+  margin-inline-start: var(--space-1);
+}
+
 /* Header label is a flex row, so align it with justify-content (data-align lives on the
    parent .th). Placed after the base .thLabel to keep specificity ascending. */
 .th[data-align='right'] .thLabel {
