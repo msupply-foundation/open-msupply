@@ -4,8 +4,9 @@ use crate::{
 };
 use chrono::NaiveDate;
 use repository::{
-    InvoiceLine, InvoiceLineRowRepository, InvoiceRowRepository, RepositoryError,
-    StockLineRowRepository, vvm_status::vvm_status_log_row::VVMStatusLogRowRepository,
+    InvoiceLine, InvoiceLineRowRepository, InvoiceLineStatus, InvoiceRowRepository,
+    RepositoryError, StockLineRowRepository,
+    vvm_status::vvm_status_log_row::VVMStatusLogRowRepository,
 };
 
 mod generate;
@@ -54,6 +55,11 @@ pub struct InsertStockInLine {
     pub shipped_pack_size: Option<f64>,
     pub purchase_order_line_id: Option<String>,
     pub reason_option_id: Option<String>,
+    /// The line's authorisation state, where the line takes one (a
+    /// purchase-order-linked shipment whose store requires line authorisation);
+    /// None there is Pending. Ignored on every other line. Who may set Passed or
+    /// Rejected is checked by the caller.
+    pub status: Option<InvoiceLineStatus>,
 }
 
 type OutError = InsertStockInLineError;
@@ -122,6 +128,7 @@ pub enum InsertStockInLineError {
     IncorrectLocationType,
     PurchaseOrderLineIdRequired,
     PurchaseOrderLineDoesNotExist,
+    PurchaseOrderLineNotFromLinkedOrder,
     WrongInboundShipmentType,
     CannotSetManufactureDateInFuture,
 }
@@ -148,9 +155,10 @@ where
 mod test {
     use repository::{
         EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository,
-        InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType,
-        PreferenceRow, PurchaseOrderLineRow, PurchaseOrderLineRowRepository, PurchaseOrderRow,
-        PurchaseOrderRowRepository, StorePreferenceRow, StorePreferenceRowRepository,
+        InvoiceLineRowRepository, InvoiceLineStatus, InvoiceRow, InvoiceRowRepository,
+        InvoiceStatus, InvoiceType, PreferenceRow, PreferenceRowRepository, PurchaseOrderLineRow,
+        PurchaseOrderLineRowRepository, PurchaseOrderRow, PurchaseOrderRowRepository,
+        StorePreferenceRow, StorePreferenceRowRepository,
         barcode_proposal::{BarcodeProposalFilter, BarcodeProposalRepository},
         mock::{
             MockData, MockDataInserts, currency_b, mock_customer_return_a,
@@ -158,7 +166,7 @@ mod test {
             mock_inbound_shipment_a, mock_inbound_shipment_c, mock_inbound_shipment_e, mock_item_a,
             mock_item_restricted_location_type_b, mock_location_with_restricted_location_type_a,
             mock_name_customer_a, mock_name_store_b, mock_outbound_shipment_e,
-            mock_purchase_order_a, mock_purchase_order_a_line_1,
+            mock_purchase_order_a, mock_purchase_order_a_line_1, mock_purchase_order_b_line_1,
             mock_shipment_variance_reason_option, mock_store_a, mock_store_b, mock_user_account_a,
             mock_vaccine_item_a, mock_vvm_status_a,
         },
@@ -655,6 +663,65 @@ mod test {
     }
 
     #[actix_rt::test]
+    async fn insert_stock_in_line_purchase_order_line_from_other_order() {
+        fn po_a_inbound() -> InvoiceRow {
+            InvoiceRow {
+                id: "po_a_inbound".to_string(),
+                store_id: mock_store_a().id,
+                name_id: mock_name_store_b().id,
+                r#type: InvoiceType::InboundShipment,
+                status: InvoiceStatus::New,
+                purchase_order_id: Some(mock_purchase_order_a().id),
+                ..Default::default()
+            }
+        }
+
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "insert_stock_in_line_purchase_order_line_from_other_order",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![po_a_inbound()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+
+        let new_line = |id: &str, purchase_order_line_id: String| InsertStockInLine {
+            id: id.to_string(),
+            invoice_id: po_a_inbound().id,
+            item_id: mock_item_a().id,
+            pack_size: 1.0,
+            number_of_packs: 1.0,
+            r#type: StockInType::InboundShipment,
+            purchase_order_line_id: Some(purchase_order_line_id),
+            ..Default::default()
+        };
+
+        // A line of a different purchase order is refused
+        assert_eq!(
+            insert_stock_in_line(
+                &context,
+                new_line("other_order_line", mock_purchase_order_b_line_1().id),
+                None
+            ),
+            Err(ServiceError::PurchaseOrderLineNotFromLinkedOrder)
+        );
+
+        // A line of the linked purchase order is accepted
+        insert_stock_in_line(
+            &context,
+            new_line("linked_order_line", mock_purchase_order_a_line_1().id),
+            None,
+        )
+        .unwrap();
+    }
+
+    #[actix_rt::test]
     async fn insert_stock_in_line_authorised_received_invoice() {
         fn authorised_received_inbound() -> InvoiceRow {
             InvoiceRow {
@@ -1036,6 +1103,108 @@ mod test {
         assert_eq!(
             invoice_line.stock_line_id, None,
             "Stock line should NOT be created for external inbound shipment when authorisation preference is enabled"
+        );
+    }
+
+    // OMS-FUN-ISE-001.12 / .13: a new line on an external inbound shipment
+    // under the authorisation preference takes the state it is inserted with,
+    // else Pending; on a shipment without the preference the state is ignored.
+    #[actix_rt::test]
+    async fn insert_external_inbound_line_takes_requested_status() {
+        fn external_inbound(id: &str, invoice_number: i64) -> InvoiceRow {
+            InvoiceRow {
+                id: id.to_string(),
+                name_id: mock_name_store_b().id,
+                store_id: mock_store_a().id,
+                invoice_number,
+                r#type: InvoiceType::InboundShipment,
+                status: InvoiceStatus::New,
+                purchase_order_id: Some(mock_purchase_order_a().id),
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "insert_external_inbound_line_takes_requested_status",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![external_inbound("ext_auth_status", 997)],
+                preferences: vec![PreferenceRow {
+                    id: "ext_auth_pref_status_test".to_string(),
+                    key: "external_inbound_shipment_lines_must_be_authorised".to_string(),
+                    value: "true".to_string(),
+                    store_id: Some(mock_store_a().id),
+                }],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let insert = |id: &str, invoice_id: &str, status: Option<InvoiceLineStatus>| {
+            insert_stock_in_line(
+                &context,
+                InsertStockInLine {
+                    id: id.to_string(),
+                    invoice_id: invoice_id.to_string(),
+                    item_id: mock_item_a().id,
+                    pack_size: 1.0,
+                    number_of_packs: 2.0,
+                    r#type: StockInType::InboundShipment,
+                    purchase_order_line_id: Some(mock_purchase_order_a_line_1().id),
+                    status,
+                    ..Default::default()
+                },
+                None,
+            )
+            .unwrap()
+            .invoice_line_row
+            .status
+        };
+
+        assert_eq!(
+            insert(
+                "ext_passed",
+                "ext_auth_status",
+                Some(InvoiceLineStatus::Passed)
+            ),
+            Some(InvoiceLineStatus::Passed)
+        );
+        assert_eq!(
+            insert(
+                "ext_rejected",
+                "ext_auth_status",
+                Some(InvoiceLineStatus::Rejected)
+            ),
+            Some(InvoiceLineStatus::Rejected)
+        );
+        assert_eq!(
+            insert("ext_default", "ext_auth_status", None),
+            Some(InvoiceLineStatus::Pending)
+        );
+
+        // Without the preference the line takes no state, whatever is sent.
+        InvoiceRowRepository::new(&connection)
+            .upsert_one(&external_inbound("ext_no_pref", 998))
+            .unwrap();
+        PreferenceRowRepository::new(&connection)
+            .upsert_one(&PreferenceRow {
+                id: "ext_auth_pref_status_test".to_string(),
+                key: "external_inbound_shipment_lines_must_be_authorised".to_string(),
+                value: "false".to_string(),
+                store_id: Some(mock_store_a().id),
+            })
+            .unwrap();
+        assert_eq!(
+            insert(
+                "ext_ignored",
+                "ext_no_pref",
+                Some(InvoiceLineStatus::Passed)
+            ),
+            None
         );
     }
 

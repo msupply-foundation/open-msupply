@@ -129,19 +129,19 @@ impl PluginInstance {
     pub fn get_all(r#type: PluginType) -> Vec<Arc<PluginInstance>> {
         let plugins = PLUGINS.read().unwrap();
 
-        for plugin in plugins.iter() {
-            log::info!(
+        let matching: Vec<_> = plugins.iter().filter(|p| p.has_type(&r#type)).collect();
+
+        // Debug, not info: get_all runs on every read of item store properties
+        // (item search, the inbound shipment prefill), whatever plugins are installed
+        for plugin in &matching {
+            log::debug!(
                 "Plugin loaded: {} (version {})",
                 plugin.instance.code,
                 plugin.instance.version
             );
         }
 
-        plugins
-            .iter()
-            .filter(|p| p.has_type(&r#type))
-            .map(|p| p.instance.clone())
-            .collect()
+        matching.into_iter().map(|p| p.instance.clone()).collect()
     }
 
     pub fn get_one_with_code(code: &str, r#type: PluginType) -> Option<Arc<PluginInstance>> {

@@ -16,10 +16,12 @@ export type ReportsVariables = {
     name?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     code?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     context?: {
     equalTo?: "ASSET" | "INBOUND_SHIPMENT" | "OUTBOUND_SHIPMENT" | "REQUISITION" | "STOCKTAKE" | "RESOURCE" | "PATIENT" | "DISPENSARY" | "REPACK" | "OUTBOUND_RETURN" | "INBOUND_RETURN" | "REPORT" | "PRESCRIPTION" | "INTERNAL_ORDER" | "PURCHASE_ORDER" | "SUPPLIER_RETURN" | "CUSTOMER_RETURN" | "STOCK_MOVEMENT" | "PRESCRIPTION_REQUEST" | null;

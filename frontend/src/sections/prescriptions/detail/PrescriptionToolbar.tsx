@@ -3,17 +3,14 @@ import { FormRowItem } from '@/ui/layout/Form/FormRowItem';
 import { t } from '../../../intl';
 import { DateField } from '../../../ui/elements/inputs/DateField';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
-import {
-  PatientSearch,
-  minimalPatientOption,
-  type PatientOption,
-} from '../../../domain/patient';
+import { PatientField } from '../../patients';
 import { ClinicianSelect } from '../../../domain/clinician';
 import { ProgramNameSelect } from '../../../domain/program';
 import { CustomFieldsToolbar } from '../../../domain/customFields';
 import { instantToLocalParts } from '../../../ui/elements/inputs/dateTimeConvert';
 import { todayCalendarDate } from '../../../intl/calendarDate';
 import { prescriptionDateOf } from '../prescriptionStatus';
+import { shownPatientName } from '../patientName';
 import {
   prescriptionDateInstant,
   type UpdateInput,
@@ -106,12 +103,17 @@ export const PrescriptionToolbar: Component<
   // record's own editability gate, never relaxes it.
   const fromRequest = () => props.node.prescriptionRequestId != null;
 
-  // A MEMO, not a getter: it MINTS an option object, so a getter would hand a
-  // new identity to the picker on every read and invalidate everything
-  // downstream that keys off it — including the combobox's own selection sync.
-  const patientOption = createMemo((): PatientOption | undefined => {
+  // The unnamed patient by its translated label (rules › the unnamed
+  // patient). A memo, so the field gets the same object until the patient
+  // changes.
+  const shownPatient = createMemo(() => {
     const patient = props.node.patient;
-    return patient ? minimalPatientOption(patient.id, patient.name) : undefined;
+    return patient
+      ? {
+          id: patient.id,
+          name: shownPatientName(patient.name, patient.isUnnamed),
+        }
+      : undefined;
   });
 
   // The shown day: a pending pick while one awaits confirmation, else the
@@ -140,28 +142,22 @@ export const PrescriptionToolbar: Component<
   return (
     <>
       <FormRowItem weight={1.9} minWidth="11rem">
-        <PatientSearch
-          label={t('label.patient')}
-          size="small"
+        {/* A prescription always has a patient: it is changed by choosing
+            another, never emptied (OMS-REG-DIS-03.33). The pencil edits the
+            patient whatever the prescription's own editability. */}
+        <PatientField
           storeId={props.storeId}
-          selected={patientOption()}
+          size="small"
+          testId="prescription-patient"
+          patient={shownPatient()}
           disabled={props.disabled || fromRequest()}
-          // No clear affordance: a prescription always HAS a patient, so the
-          // field is never nullable — it is changed by picking another, never
-          // emptied (ui-standards/controls § clearability follows optionality,
-          // D5; the current app's patient input is likewise not clearable).
-          clearable={false}
-          // The picker's edit-patient affordance (spec/patients S4 allow-edit),
-          // available whatever the prescription's own editability — it edits
-          // the patient, not the prescription (ui-surface S3 § header fields).
-          // Opens the S4 edit modal in place over this screen (#1038), owned by
-          // the detail view alongside its other modals.
-          onEditPatient={props.onEditPatient}
-          // A prescription always has a patient: the picker never clears
-          // (null selections are ignored), it only swaps (OMS-REG-DIS-03.33).
-          onSelect={patient =>
-            patient && props.onSave({ patientId: patient.id })
+          // Not for the unnamed patient: it has no details to edit, and every
+          // walk-in shares it (rules › the unnamed patient).
+          onEditPatient={
+            props.node.patient?.isUnnamed ? undefined : props.onEditPatient
           }
+          saveLabel={t('button.save-and-dispense')}
+          onChange={patient => props.onSave({ patientId: patient.id })}
         />
       </FormRowItem>
       {/* Clinician and Program keep the row's own 10rem floor. */}

@@ -1,0 +1,8 @@
+mutation SaveOutboundShipmentItemLines(
+  $storeId: String!
+  $input: SaveOutboundShipmentLinesInput!
+) {
+  saveOutboundShipmentItemLines(input: $input, storeId: $storeId) {
+    id
+  }
+}

@@ -13,12 +13,14 @@ use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, uuid::uuid};
 use crate::{
     NullableUpdate,
     activity_log::activity_log_entry,
+    backend_plugin::types::transform_item_store_properties::Context,
     invoice::inventory_adjustment::UpdateInventoryAdjustmentReason,
     invoice_line::{
         stock_in_line::{InsertStockInLine, StockInType},
         stock_out_line::{InsertStockOutLine, StockOutType},
     },
     number::next_number,
+    pricing::default_sell_price::DefaultSellPrices,
     service_provider::ServiceContext,
 };
 
@@ -187,6 +189,7 @@ fn generate_stock_in_out_or_update(
 
     let stock_in_or_out_line = if delta > 0.0 {
         StockChange::StockIn(InsertStockInLine {
+            status: None,
             r#type: StockInType::InventoryAddition,
             id: invoice_line_id,
             invoice_id: inventory_addition_id.to_string(),
@@ -394,6 +397,7 @@ fn generate_new_stock_line(
     store_id: &str,
     inventory_addition_id: &str,
     stocktake_line: &StocktakeLine,
+    default_sell_prices: &DefaultSellPrices,
 ) -> Result<StockLineJob, UpdateStocktakeError> {
     let stocktake_line_row = stocktake_line.line.to_owned();
     let item_id = stocktake_line.item.id.to_string();
@@ -420,7 +424,13 @@ fn generate_new_stock_line(
 
     let pack_size = stocktake_line_row.pack_size.unwrap_or(0.0);
     let cost_price_per_pack = stocktake_line_row.cost_price_per_pack.unwrap_or(0.0);
-    let sell_price_per_pack = stocktake_line_row.sell_price_per_pack.unwrap_or(0.0);
+    // A line nobody gave a sell price, such as one from a master list, takes the
+    // store's default sell price; a price that was entered is kept, 0 included
+    let sell_price_per_pack = stocktake_line_row.sell_price_per_pack.unwrap_or_else(|| {
+        default_sell_prices
+            .for_pack(&stocktake_line.item, pack_size)
+            .unwrap_or(0.0)
+    });
     let invoice_line_id = uuid();
 
     let update_inventory_adjustment_reason = generate_update_inventory_adjustment_reason(
@@ -429,6 +439,7 @@ fn generate_new_stock_line(
     );
 
     let stock_in_line = StockChange::StockIn(InsertStockInLine {
+        status: None,
         r#type: StockInType::InventoryAddition,
         id: invoice_line_id,
         invoice_id: inventory_addition_id.to_string(),
@@ -618,6 +629,17 @@ pub fn generate(
     let mut location_movements: Vec<LocationMovementRow> = Vec::new();
     let mut vvm_status_logs: Vec<VVMStatusLogRow> = Vec::new();
 
+    let default_sell_prices = DefaultSellPrices::load(
+        connection,
+        Context::NewStock,
+        store_id,
+        stocktake_lines
+            .iter()
+            .filter(|line| line.stock_line.is_none())
+            .map(|line| line.item.id.clone())
+            .collect(),
+    )?;
+
     for stocktake_line in stocktake_lines {
         let StockLineJob {
             stocktake_line,
@@ -638,7 +660,12 @@ pub fn generate(
             )?
         } else {
             // create new stock line
-            generate_new_stock_line(store_id, &inventory_addition_id, &stocktake_line)?
+            generate_new_stock_line(
+                store_id,
+                &inventory_addition_id,
+                &stocktake_line,
+                &default_sell_prices,
+            )?
         };
         match stock_in_out_or_update {
             Some(StockChange::StockIn(line)) => {

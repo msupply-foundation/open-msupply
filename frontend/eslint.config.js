@@ -5,6 +5,31 @@ import commentLength from 'eslint-plugin-comment-length';
 import compat from 'eslint-plugin-compat';
 import globals from 'globals';
 import pluginImports from './scripts/eslint/pluginImports.mjs';
+import { readFileSync } from 'node:fs';
+import { dirname } from 'node:path';
+
+/*
+ * Every block is anchored at the REPO root (the `basePath` stamped on below),
+ * not at this file's directory, because the in-repo plugins live beside
+ * frontend/ — public ones in plugins/, country ones in private/plugins/.
+ * Globs are therefore repo-relative: host code is `frontend/...`. An absolute
+ * basePath matches the same whichever directory ESLint runs from, so an editor
+ * linting from frontend/ still applies the host blocks; `pnpm lint` runs from
+ * the repo root so the plugin directories are inside its base path too.
+ */
+const REPO_ROOT = dirname(import.meta.dirname);
+
+/*
+ * The minimum browser, stated once in package.json. eslint-plugin-compat looks
+ * for a browserslist by walking up from each linted file, which finds
+ * frontend/package.json for host code but nothing for a plugin outside
+ * frontend/ — so it would fall back to browserslist's defaults (Opera Mini and
+ * all) and flag `Promise.all`. Handing it the list makes every file answer to
+ * the same target.
+ */
+const { browserslist } = JSON.parse(
+  readFileSync(new URL('./package.json', import.meta.url), 'utf8')
+);
 
 /*
  * Comment line-length cap. `overflow-only` wraps ONLY lines that exceed the
@@ -64,6 +89,33 @@ const jsxDownloadRestriction = {
   message: downloadIdiomMessage,
 };
 
+/*
+ * Dates and numbers the user sees go through src/intl. The browser's own
+ * locale methods follow the device, not the app's language, and pick the
+ * Solar Hijri calendar for Dari and Pashto (#1326, #1838). Slicing an ISO
+ * string takes the UTC day, the day before for a local midnight east of
+ * Greenwich (#1898); calendarDate.ts converts a Date to a calendar date. The
+ * date fields, which build month and weekday names with the calendar pinned
+ * to Gregorian, have their own block below.
+ */
+const localeFormatMessage =
+  'Follows the device, not the app language (#1326, #1838). From src/intl: ' +
+  'localisedDate / localisedDateTime / localisedTime for a date, ' +
+  'displayNumber or roundedText for a figure, the currency helpers for money.';
+const localeFormatRestrictions = [
+  'toLocaleString',
+  'toLocaleDateString',
+  'toLocaleTimeString',
+].map(property => ({ property, message: localeFormatMessage }));
+const isoStringSliceRestriction = {
+  selector:
+    'CallExpression[callee.property.name=/^(slice|substring|substr|split)$/]' +
+    '[callee.object.callee.property.name="toISOString"]',
+  message:
+    'Takes the UTC day, the day before east of Greenwich (#1898). Use ' +
+    'dateToCalendarDate from src/intl/calendarDate.ts.',
+};
+
 const sharedRules = {
   '@typescript-eslint/no-unused-vars': [
     'error',
@@ -95,19 +147,22 @@ const sharedRules = {
  * Type-checking is owned by `tsc` (see the `check` script); ESLint covers what
  * the compiler doesn't, so these rules are the fast, non-type-aware set.
  */
-export default tseslint.config(
+const config = tseslint.config(
   {
     ignores: [
-      // Anywhere, not just the root: plugins/<code>/dist holds built bundles.
+      // Anywhere, not just the root: <plugin dir>/dist holds built bundles.
       '**/dist/**',
-      'dist-ssr/**',
-      'node_modules/**',
+      'frontend/dist-ssr/**',
+      '**/node_modules/**',
       '**/*.generated.ts',
       '**/*.css.d.ts',
-      'codegen/**', // CommonJS (.cjs) with its own node:test suite
+      'frontend/codegen/**', // CommonJS (.cjs) with its own node:test suite
       // A prebuilt bundle is a build artifact wherever it appears — it is
       // packed verbatim, so it is output, not source.
-      'plugins/*/backend/prebuilt/**',
+      '{plugins,private/plugins}/*/backend/prebuilt/**',
+      // The React-UI plugins imported from the *-plugins repos: old-UI code,
+      // linted (if at all) by client/'s config, not this one.
+      '{plugins,private/plugins}/*/react/**',
     ],
   },
 
@@ -115,10 +170,10 @@ export default tseslint.config(
   // APIs unsupported by the minimum browser (browserslist in package.json —
   // Chromium 132, the WebView on the oldest Android 8.1 tablets deployed).
   // The example
-  // plugins (plugins/examples/) are the same: ordinary Solid components running in the
-  // host's runtime, so they answer to the same rules.
+  // plugins (plugins/examples/) are the same: ordinary Solid components
+  // running in the host's runtime, so they answer to the same rules.
   {
-    files: ['src/**/*.{ts,tsx}', 'plugins/examples/**/*.{ts,tsx}'],
+    files: ['frontend/src/**/*.{ts,tsx}', 'plugins/examples/**/*.{ts,tsx}'],
     // The reference BACKEND plugin is not browser code — it has its own block
     // below rather than Solid, DOM globals and browser-compat rules.
     ignores: ['plugins/examples/*/backend/**'],
@@ -140,11 +195,30 @@ export default tseslint.config(
         'error',
         cryptoRandomUuidRestriction,
         createObjectUrlRestriction,
+        ...localeFormatRestrictions,
       ],
       'no-restricted-syntax': [
         'error',
         anchorDownloadRestriction,
         jsxDownloadRestriction,
+        isoStringSliceRestriction,
+      ],
+    },
+  },
+
+  // The date fields build month and weekday names from the browser with the
+  // calendar pinned to Gregorian (dateTimeConvert.ts, DatePickerPanel.tsx),
+  // so only the locale-method ban lifts here.
+  {
+    files: [
+      'frontend/src/ui/elements/inputs/dateTimeConvert.ts',
+      'frontend/src/ui/elements/inputs/DatePickerPanel.tsx',
+    ],
+    rules: {
+      'no-restricted-properties': [
+        'error',
+        cryptoRandomUuidRestriction,
+        createObjectUrlRestriction,
       ],
     },
   },
@@ -152,18 +226,23 @@ export default tseslint.config(
   // The platform layer OWNS the browser-download idiom banned above —
   // openDocument.ts (and its tests) is where object URLs and anchor clicks
   // legitimately implement the web halves of saveBlob/openBlob. Only the
-  // download restrictions lift here; the crypto one stands everywhere.
+  // download restrictions lift here; the crypto and date ones stand.
   {
-    files: ['src/platform/**/*.{ts,tsx}'],
+    files: ['frontend/src/platform/**/*.{ts,tsx}'],
     rules: {
-      'no-restricted-properties': ['error', cryptoRandomUuidRestriction],
-      'no-restricted-syntax': 'off',
+      'no-restricted-properties': [
+        'error',
+        cryptoRandomUuidRestriction,
+        ...localeFormatRestrictions,
+      ],
+      'no-restricted-syntax': ['error', isoStringSliceRestriction],
     },
   },
 
   /*
-   * The in-repo country plugins (plugins/<code>/src, and a form plugin's root
-   * module, catalogues and `forms/` tree). Same rules as app source —
+   * The in-repo plugins (private/plugins/<code>/src, and any public one at
+   * plugins/<code>/src), and a form plugin's root module, catalogues and
+   * `forms/` tree. Same rules as app source —
    * they are Solid components in the host's runtime, so the reactivity and
    * browser-compat rules apply identically — plus the import boundary
    * (spec/plugins/sdk-contract.md § imports): a plugin may import ONLY the SDK
@@ -173,10 +252,10 @@ export default tseslint.config(
    */
   {
     files: [
-      'plugins/*/src/**/*.{ts,tsx}',
-      'plugins/*/*.{ts,tsx}',
-      'plugins/*/translations/**/*.ts',
-      'plugins/*/forms/**/*.{ts,tsx}',
+      '{plugins,private/plugins}/*/src/**/*.{ts,tsx}',
+      '{plugins,private/plugins}/*/*.{ts,tsx}',
+      '{plugins,private/plugins}/*/translations/**/*.ts',
+      '{plugins,private/plugins}/*/forms/**/*.{ts,tsx}',
     ],
     extends: [
       js.configs.recommended,
@@ -194,11 +273,16 @@ export default tseslint.config(
       'no-console': ['error', { allow: ['info', 'warn', 'error'] }],
       // Same Android WebView, same dead click (#1169) — a plugin needing to
       // hand the user a file is an SDK gap, not a hand-rolled download.
-      'no-restricted-properties': ['error', createObjectUrlRestriction],
+      'no-restricted-properties': [
+        'error',
+        createObjectUrlRestriction,
+        ...localeFormatRestrictions,
+      ],
       'no-restricted-syntax': [
         'error',
         anchorDownloadRestriction,
         jsxDownloadRestriction,
+        isoStringSliceRestriction,
       ],
       // What a plugin may import, resolved against each file
       // (scripts/eslint/pluginImports.mjs).
@@ -210,20 +294,21 @@ export default tseslint.config(
    * The Afghanistan plugin's stored shapes are wire constraints: rows the
    * React bundle wrote are in the field and the Afghanistan reports compile
    * against a copy of its type module, so payload field names stay snake_case
-   * (plugins/afghanistan/rules.md § data conventions). Property names and the
-   * destructured reads of them are exempt from camelcase there; identifiers
-   * the plugin coins are not.
+   * (private/plugins/afghanistan/rules.md § data conventions). Property names
+   * and the destructured reads of them are exempt from camelcase there;
+   * identifiers the plugin coins are not.
    */
   {
-    files: ['plugins/afghanistan/src/**/*.{ts,tsx}'],
+    files: ['private/plugins/afghanistan/src/**/*.{ts,tsx}'],
     rules: {
       camelcase: ['error', { properties: 'never', ignoreDestructuring: true }],
     },
   },
 
   /*
-   * Every BACKEND half — the reference plugin (plugins/examples/<code>/backend) and
-   * the country plugins' — which run in the server's BoaJS engine. No Solid,
+   * Every BACKEND half — the reference plugin
+   * (plugins/examples/<code>/backend) and the country plugins' — which run in
+   * the server's BoaJS engine. No Solid,
    * no DOM, and deliberately NO `globals.browser`: the only globals they have
    * are the host functions the engine binds, so an accidental `document` or
    * `window` should be an undefined-variable error rather than something the
@@ -239,11 +324,11 @@ export default tseslint.config(
   {
     files: [
       'plugins/examples/*/backend/**/*.ts',
-      'plugins/*/backend/**/*.ts',
+      '{plugins,private/plugins}/*/backend/**/*.ts',
       // The wire contract both halves import. Type-only, so it needs the TS
       // parser and nothing else — and it sits outside `src/`, the only plugin
       // path the app block covers.
-      'plugins/*/shared/**/*.ts',
+      '{plugins,private/plugins}/*/shared/**/*.ts',
     ],
     extends: [js.configs.recommended, tseslint.configs.recommended],
     languageOptions: {
@@ -254,7 +339,7 @@ export default tseslint.config(
 
   // Build config + node scripts.
   {
-    files: ['*.config.{ts,js}', 'scripts/**/*.mjs'],
+    files: ['frontend/*.config.{ts,js}', 'frontend/scripts/**/*.mjs'],
     extends: [js.configs.recommended, tseslint.configs.recommended],
     languageOptions: {
       globals: globals.node,
@@ -267,13 +352,13 @@ export default tseslint.config(
   // above.
   {
     files: [
-      'src/**/*.{ts,tsx}',
-      'plugins/*/src/**/*.{ts,tsx}',
-      'plugins/*/backend/**/*.ts',
-      'plugins/*/shared/**/*.ts',
+      'frontend/src/**/*.{ts,tsx}',
+      '{plugins,private/plugins}/*/src/**/*.{ts,tsx}',
+      '{plugins,private/plugins}/*/backend/**/*.ts',
+      '{plugins,private/plugins}/*/shared/**/*.ts',
       'plugins/examples/**/*.{ts,tsx}',
-      '*.config.{ts,js}',
-      'scripts/**/*.mjs',
+      'frontend/*.config.{ts,js}',
+      'frontend/scripts/**/*.mjs',
     ],
     plugins: { 'comment-length': commentLength },
     rules: {
@@ -287,4 +372,8 @@ export default tseslint.config(
       ],
     },
   }
+);
+
+export default [...config, { settings: { browsers: browserslist } }].map(
+  block => ({ ...block, basePath: REPO_ROOT })
 );

@@ -24,6 +24,12 @@ impl ViewMigrationFragment for ViewMigration {
             "abs"
         };
 
+        let null_datetime = if cfg!(feature = "postgres") {
+            "NULL::timestamp"
+        } else {
+            "NULL"
+        };
+
         // Make sure 'consumption' for the day is based on local date
         let utc_datetime_to_local_date = "date(stock_movement.datetime)";
         // sql_utc_datetime_as_local_date(cfg!(feature = "postgres"), "stock_movement.datetime");
@@ -42,9 +48,36 @@ impl ViewMigrationFragment for ViewMigration {
                     {utc_datetime_to_local_date} AS date,
                     stock_movement.invoice_type AS invoice_type,
                     stock_movement.name_id AS name_id,
-                    stock_movement.name_properties AS name_properties
+                    stock_movement.name_properties AS name_properties,
+                    false AS is_estimate,
+                    -- The instant behind `date`, which is its UTC day, so report SQL can find
+                    -- the day in the user's timezone with instant_to_calendar_date
+                    stock_movement.datetime AS datetime
             FROM stock_movement
-            WHERE invoice_type='OUTBOUND_SHIPMENT' OR invoice_type='PRESCRIPTION';
+            WHERE invoice_type='OUTBOUND_SHIPMENT' OR invoice_type='PRESCRIPTION'
+
+            -- Estimated consumption for a store without history of its own
+            -- (consumption_estimate), added on top of the real thing. Each row
+            -- is a week-long piece of an estimate, dated at its midpoint, and
+            -- reads as the store issuing to itself.
+            UNION ALL
+            SELECT
+                    'n/a' as id,
+                    item_link.item_id AS item_id,
+                    consumption_estimate.store_id AS store_id,
+                    consumption_estimate.quantity AS quantity,
+                    consumption_estimate.date AS date,
+                    'OUTBOUND_SHIPMENT' AS invoice_type,
+                    name.id AS name_id,
+                    name.properties AS name_properties,
+                    true AS is_estimate,
+                    -- An estimate is dated by calendar day, with no instant behind it
+                    {null_datetime} AS datetime
+            FROM consumption_estimate
+            JOIN item_link ON item_link.id = consumption_estimate.item_link_id
+            JOIN store ON store.id = consumption_estimate.store_id
+            JOIN name_link ON name_link.id = store.name_link_id
+            JOIN name ON name.id = name_link.name_id;
             "#
         )?;
 

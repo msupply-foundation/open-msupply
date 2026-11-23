@@ -275,6 +275,18 @@ export const EditPreference = ({
           disabled={disabled}
         />
       );
+    case PreferenceValueNodeType.CommonMedicines:
+      // Edited only in the new front end, from an editor that opens from its
+      // Simple dispensing screen (#2188), never here or in the store settings.
+      // The server leaves it out of the preferences listed for editing, so
+      // this case is only for the exhaustive check.
+      return null;
+    case PreferenceValueNodeType.DispensingScreen:
+      // Which screen the new front end's dispensing opens on (#2188). Only
+      // the new front end has the Simple screen, so it is set there, on its
+      // Global preferences page and store editor. Left out of the list here
+      // (withoutNewFrontEndOnly), so this case is only for the exhaustive check.
+      return null;
     default:
       try {
         noOtherVariants(preference.valueType);

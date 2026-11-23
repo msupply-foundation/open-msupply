@@ -29,10 +29,12 @@ export type StocktakesVariables = {
     comment?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     description?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     status?: {
     equalTo?: "NEW" | "FINALISED" | null;

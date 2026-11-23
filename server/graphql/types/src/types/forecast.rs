@@ -143,8 +143,9 @@ impl RequisitionLineForecastPreviewNode {
     /// The consumption history and stock evolution for the previewed line, as
     /// `requisitionLineChart` gives them for a saved one — so an item being added charts
     /// before its line exists. The draft's requested quantity isn't part of the preview, so
-    /// the stock projection adds nothing at delivery. Null if the chart can't be read: the
-    /// chart is context, so failing to read it doesn't fail the preview
+    /// the stock projection adds nothing at delivery. Only the series the query selects are
+    /// read; the others are null. Null if the chart can't be read: the chart is context, so
+    /// failing to read it doesn't fail the preview
     pub async fn chart(
         &self,
         ctx: &Context<'_>,
@@ -160,14 +161,23 @@ impl RequisitionLineForecastPreviewNode {
             let amc_lookback_months = get_store_preferences(&connection, store_id)
                 .map_err(|e| format!("{e:?}"))?
                 .monthly_consumption_look_back_period;
+            // Only the series the query selects are read
+            let look_ahead = ctx.look_ahead();
             get_forecast_preview_chart(
                 &connection,
                 store_id,
                 &self.preview,
-                ConsumptionOptionsInput::to_domain(amc_lookback_months, consumption_options_input),
-                stock_evolution_options_input
-                    .map(|i| i.to_domain())
-                    .unwrap_or_default(),
+                look_ahead.field("consumptionHistory").exists().then(|| {
+                    ConsumptionOptionsInput::to_domain(
+                        amc_lookback_months,
+                        consumption_options_input,
+                    )
+                }),
+                look_ahead.field("stockEvolution").exists().then(|| {
+                    stock_evolution_options_input
+                        .map(|i| i.to_domain())
+                        .unwrap_or_default()
+                }),
             )
             .map_err(|e| format!("{e:?}"))
         };

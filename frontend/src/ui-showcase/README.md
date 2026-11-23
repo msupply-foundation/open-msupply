@@ -40,6 +40,8 @@ if (import.meta.env.DEV && window.location.hash.startsWith('#/showcase')) {
 
 Add an entry to the registry in [`sections.tsx`](./sections.tsx) (id, label, component, menu category) and create the matching `<Name>Showcase.tsx` (+ optional `.module.css`) beside it. The shell derives the menu and panels from the registry; the section id becomes its hash.
 
+Every section is scanned for WCAG 2.2 AA violations on every front end PR (`pnpm a11y:showcase`), so a new section also needs a baseline file, `frontend/e2e/a11y-baseline/showcase/<id>.json`: the scan fails while a section and its baseline don't pair up. Record it with `A11Y_UPDATE_BASELINE=1 pnpm a11y:showcase` and check what it wrote against a similar section's file. Anything beyond the debt they share is new, and is for fixing rather than recording. The section's table of contents isn't scanned: it's showcase chrome. See [`e2e/README.md` § Accessibility scans](../../e2e/README.md#accessibility-scans).
+
 ### Keep the page metadata + TOC in sync
 
 Each standard section page (Components + Layout) also exports a [`PageMetadata`](./metadata.ts) — the hand-authored data behind the page's Table of Contents (`common/SectionTOC`) and the not-yet-built showcase Search (`buildSearchIndex` in `metadata.ts`). It lives beside the component and **must be kept current as the showcase changes**, or the TOC links (and, later, Search) silently drift from what's on the page:

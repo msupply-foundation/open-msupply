@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   customDate,
   exportDate,
+  exportTime,
   getDisplayAge,
   loadDateFnsLocale,
   localeDateFormat,
@@ -32,6 +33,9 @@ describe('getDisplayAge (spec/patients — age display)', () => {
   it('shows whole years once at least one year old', () => {
     expect(getDisplayAge(new Date(2024, 9, 1))).toBe('1 year'); // exactly 1y
     expect(getDisplayAge(new Date(1994, 5, 30))).toBe('31 years');
+    // A birthday counts on the day, whatever the leap days between (#1755).
+    expect(getDisplayAge('2023-10-01')).toBe('2 years');
+    expect(getDisplayAge('2023-10-02')).toBe('1 year');
   });
 
   it('shows months and days when under one year old', () => {
@@ -231,6 +235,16 @@ describe('digit systems match the numbers beside them', () => {
     setLocale('ar');
     expect(localisedDate(AT)).not.toMatch(/[0-9]/);
     expect(exportDate(AT)).toBe('06/09/2026');
+  });
+
+  it('keeps a time bound for a FILE in Latin digits, as its date is', async () => {
+    // A dispensing record's Dispensed column joins the two: one cell must not
+    // read in two digit systems.
+    await loadDateFnsLocale('ar');
+    setLocale('ar');
+    expect(localisedTime(AT)).not.toMatch(/[0-9]/);
+    expect(exportTime(AT)).toMatch(/[0-9]/);
+    expect(exportTime(AT)).not.toMatch(/[\u0660-\u0669\u06F0-\u06F9]/);
   });
 
   it('reads one digit system across every rung of “how long ago”', async () => {

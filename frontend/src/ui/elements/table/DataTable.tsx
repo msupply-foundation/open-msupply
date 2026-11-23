@@ -4,10 +4,12 @@ import {
   createMemo,
   createSignal,
   For,
+  getOwner,
   Match,
   on,
   onCleanup,
   onMount,
+  runWithOwner,
   Show,
   Switch,
 } from 'solid-js';
@@ -92,8 +94,18 @@ import { ColumnSettings, listedColumnIds } from './ColumnSettings';
 import { TableSettings } from './TableSettings';
 import { Pagination, type PaginationProps } from './Pagination';
 import { paginationState } from './paginationState';
+import { scrollTableToTop } from './scrollTableToTop';
 import { isRtl, t, tPlural } from '../../../intl';
+import { shallowEqual } from '../../../typeHelpers';
 import styles from './DataTable.module.css';
+import { samePinning, sameRecord } from './stateEquality';
+import {
+  dragStart,
+  fillColumnId,
+  resizeMoved,
+  type ColumnWidth,
+  type ResizeStart,
+} from './columnResize';
 
 // The column model
 // (Column/ColumnIdentity/toColumnDef/CardGroup/SortState + the ColumnMeta
@@ -187,6 +199,21 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    * Omitted, every row is clickable whenever `onRowClick` is set.
    */
   rowClickable?: (row: T) => boolean;
+  /**
+   * The address a clickable row opens — set it on every table whose rows
+   * navigate, so a row can be opened in a new tab like any link: right-click →
+   * "Open link in new tab" / "Copy link address", Cmd/Ctrl-click,
+   * middle-click (#271). Router-space, the same path `onRowClick` hands
+   * `navigate()`; the mount is added for the link (RowLink).
+   *
+   * A link, not a second way to open the row: a plain click still runs
+   * `onRowClick`, so its guards and side effects are untouched, and a
+   * modified click never does — the browser opens the link elsewhere, or, on
+   * a control the link can't reach, nothing happens. Rows that
+   * open a modal have no address and leave this unset; a row it answers
+   * undefined for, or that isn't clickable, gets no link.
+   */
+  rowHref?: (row: T) => string | undefined;
   /**
    * Arrow-key row navigation: `ArrowDown`/`ArrowUp` move a row highlight
    * (clamped at the ends, scrolled into view), `Enter` opens the highlighted
@@ -289,6 +316,13 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    * Shown in both table and card views when there are no rows.
    */
   empty?: JSX.Element;
+  /**
+   * Show the empty state's illustration and "Nothing here" heading. Default
+   * true. Pass false for a table that sits among other content — a dialog's
+   * search results — where the full empty state would dwarf it; the message
+   * (and `empty`) still show, under the column headers.
+   */
+  emptyGraphic?: boolean;
   /**
    * Show the full-screen toggle in the control bar. Default true. Pass false
    * where full
@@ -414,10 +448,9 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
 
   /**
    * Lay out at CONTENT height instead of owning a scroll box: the table grows
-   * to fit its rows and whatever scroller the host provides scrolls it — so
-   * content the host puts BELOW the table (a modal's advisory messages) scrolls
-   * with the rows instead of being pinned under a table that scrolls
-   * internally.
+   * to fit its rows and whatever scroller the host provides scrolls it — one
+   * scroller for the rows and anything the host puts beside them in it,
+   * instead of a box inside a box.
    *
    * Card view only, and deliberately: a row-view table scrolls HORIZONTALLY in
    * that same box (20 columns is normal here), and CSS cannot give one axis
@@ -472,6 +505,14 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
   // not page rows itself (manual, server-driven; see kdd/table-state). Omit for
   // a non-paginated table.
   pagination?: PaginationProps;
+  /**
+   * The page shown, for a host that pages this table but renders the pager
+   * itself — a detail view's line table, whose pager sits in the status
+   * footer (ui-standards § tables → pagination). The table only reads it to
+   * scroll back to the first row when the page changes; it draws no pager
+   * and no row count. Ignored when `pagination` is set.
+   */
+  page?: Pick<PaginationProps, 'offset' | 'pageSize'>;
 };
 
 export function DataTable<T, K extends string, G extends string = never>(
@@ -570,14 +611,27 @@ export function DataTable<T, K extends string, G extends string = never>(
   // sort/selection above) and hands the concrete value to setConfig — so the
   // page receives a value, not an updater. Inlined per field (no generic
   // helper) — four small, click-through handlers.
-  const columnOrder = createMemo<ColumnOrderState>(
-    () => props.config?.columnOrder ?? []
+  //
+  // Each keeps its previous value while the contents are unchanged (#1890).
+  // The resolved config is a NEW object on every write, so without that a
+  // width saved at the end of a resize drag handed TanStack a fresh `[]`
+  // column order — and TanStack's memos compare by reference, so it rebuilt
+  // every cell object and the table remounted every body cell (517 on the
+  // items list) just to save one width.
+  const columnOrder = createMemo(
+    (): ColumnOrderState => props.config?.columnOrder ?? [],
+    undefined,
+    { equals: shallowEqual }
   );
-  const columnPinning = createMemo<ColumnPinningState>(
-    () => props.config?.columnPinning ?? {}
+  const columnPinning = createMemo(
+    (): ColumnPinningState => props.config?.columnPinning ?? {},
+    undefined,
+    { equals: samePinning }
   );
-  const columnVisibility = createMemo<VisibilityState>(
-    () => props.config?.columnVisibility ?? {}
+  const columnVisibility = createMemo(
+    (): VisibilityState => props.config?.columnVisibility ?? {},
+    undefined,
+    { equals: sameRecord }
   );
 
   // View mode is a config field but NOT a TanStack state (no on*Change) — read
@@ -596,8 +650,12 @@ export function DataTable<T, K extends string, G extends string = never>(
     props.rowGroup !== undefined &&
     viewMode() === 'table' &&
     props.config?.groupRows === true;
-  const grouping = createMemo<GroupingState>(() =>
-    grouped() ? [props.rowGroup!.columnId] : []
+  // Same reference-keeping as columnOrder above: a fresh `[]` here also makes
+  // TanStack rebuild every cell.
+  const grouping = createMemo(
+    (): GroupingState => (grouped() ? [props.rowGroup!.columnId] : []),
+    undefined,
+    { equals: shallowEqual }
   );
   const [expanded, setExpanded] = createSignal<ExpandedState>({});
 
@@ -679,12 +737,19 @@ export function DataTable<T, K extends string, G extends string = never>(
   // come through setConfig directly and persist immediately.
   const [transientSizing, setTransientSizing] =
     createSignal<ColumnSizingState | null>(null);
-  const configSizingPx = createMemo<ColumnSizingState>(() => {
-    const rem = props.config?.columnSizing ?? {};
-    return Object.fromEntries(
-      Object.entries(rem).map(([id, r]) => [id, remToPx(r)])
-    );
-  });
+  // The dragged column's width when its drag started (px), so a press that
+  // never moves commits nothing (the drag-end effect below).
+  let resizeStart: ResizeStart | undefined;
+  const configSizingPx = createMemo(
+    (): ColumnSizingState => {
+      const rem = props.config?.columnSizing ?? {};
+      return Object.fromEntries(
+        Object.entries(rem).map(([id, r]) => [id, remToPx(r)])
+      );
+    },
+    undefined,
+    { equals: sameRecord }
+  );
   const pxToRemSizing = (px: ColumnSizingState): ColumnSizingState =>
     Object.fromEntries(Object.entries(px).map(([id, p]) => [id, pxToRem(p)]));
   const columnSizing = (): ColumnSizingState =>
@@ -720,8 +785,11 @@ export function DataTable<T, K extends string, G extends string = never>(
   // isn't enough). Resolved here rather than per page so it's one rule for
   // every caller, and the change handler below resolves TanStack's updater
   // against THIS map, so the next visibility write heals a stale entry.
-  const resolvedColumnVisibility = createMemo<VisibilityState>(() =>
-    resolveColumnVisibility(columnVisibility(), columnDefs())
+  const resolvedColumnVisibility = createMemo(
+    (): VisibilityState =>
+      resolveColumnVisibility(columnVisibility(), columnDefs()),
+    undefined,
+    { equals: sameRecord }
   );
 
   const table = createSolidTable<T>({
@@ -830,15 +898,128 @@ export function DataTable<T, K extends string, G extends string = never>(
   // Guarded by `on` so it only fires on the resizing-state transition, not on
   // unrelated reactivity.
   const isResizing = () => table.getState().columnSizingInfo.isResizingColumn;
+  // Whether ANY column is being dragged — true from press to release. A memo,
+  // because the drag state behind it changes on every pointer move.
+  const resizeActive = createMemo(() => Boolean(isResizing()));
   createEffect(
     on(isResizing, (resizing, wasResizing) => {
       if (wasResizing && !resizing) {
         const pending = transientSizing();
-        if (pending) props.setConfig?.('columnSizing', pxToRemSizing(pending));
+        if (pending && resizeMoved(resizeStart, pending))
+          props.setConfig?.('columnSizing', pxToRemSizing(pending));
         setTransientSizing(null);
+        resizeStart = undefined;
       }
     })
   );
+
+  // While a column is being dragged, body rows out of view paint nothing
+  // (#1890). The browser repaints every row on each tick of a drag, scrolled
+  // out of view or not (its paint area runs thousands of pixels past the
+  // scroll box), which made each tick slower and, worse, uneven. A row parked
+  // with `visibility: hidden` (data-paint-off) still takes part in layout, so
+  // the column widths come out exactly as before; it just isn't drawn. An
+  // IntersectionObserver keeps the set right as rows move during the drag: a
+  // scroll, or a wrapping column whose rows grow or shrink, brings rows in and
+  // out of view, and the margin reveals a row before it arrives. The row
+  // holding focus is never hidden (that would blur its field). Everything
+  // comes back on release.
+  createEffect(
+    on(resizeActive, active => {
+      const body = scrollBox?.querySelector('table')?.tBodies[0];
+      if (!active || !scrollBox || !body) return;
+      const parked = new Set<HTMLElement>();
+      const observer = new IntersectionObserver(
+        entries => {
+          for (const { target, isIntersecting } of entries) {
+            const row = target as HTMLElement;
+            if (isIntersecting || row.contains(document.activeElement)) {
+              delete row.dataset.paintOff;
+              parked.delete(row);
+            } else {
+              row.dataset.paintOff = '';
+              parked.add(row);
+            }
+          }
+        },
+        { root: scrollBox, rootMargin: '200px 0px' }
+      );
+      for (const row of body.rows) observer.observe(row);
+      onCleanup(() => {
+        observer.disconnect();
+        for (const row of parked) delete row.dataset.paintOff;
+      });
+    })
+  );
+
+  // Start a drag from the width the user SEES (#1890). TanStack starts a drag
+  // from getSize(), but a column on its default size has that size only as a
+  // min-width floor, and its content or the table's spare space usually draws
+  // it wider (by 54px on the items list's Code column). From the floor, the
+  // edge would sit still until the pointer covered that gap, and a drag
+  // narrower than the drawn width would do nothing. HeaderCell calls this just
+  // before TanStack's handler, which reads the new size as the drag's start.
+  // Parked in the transient sizing, not config, so it only persists if the
+  // drag goes on to move. The recorded start is that same width, so a press
+  // that never moves saves nothing, a capped column drawn past its cap
+  // included (the rules: columnResize.ts).
+  const startColumnResize = (column: TanColumn<T>, renderedPx: number) => {
+    const size = column.getSize();
+    resizeStart = dragStart(column.id, renderedPx, size);
+    if (resizeStart.px !== size) {
+      setTransientSizing({ ...columnSizing(), [column.id]: resizeStart.px });
+    }
+  };
+
+  // A column's width for its header cell — one memo per column (#1890). A cell
+  // reading column.getSize() itself would depend on the WHOLE sizing state, so
+  // each tick of a resize drag would re-run the render effect of every cell —
+  // and that effect recomputes all of the cell's attributes, pinned-column
+  // lookups included, only to write the same values back. A memo stops at an
+  // unchanged value, so a tick reaches the dragged column's header alone
+  // (body cells carry no width at all — see TableRow). Keyed by id and
+  // resolved through the table on each run, so a column rebuilt from a new
+  // `columns` prop still reads its own def. Created under the table's owner,
+  // so they're disposed with it.
+  //
+  // A width the user set is exact (HeaderCell) — except on the column that
+  // fills the row once every column has one (the rule: columnResize.ts). Drawn
+  // order is the DOM's: left-pinned, unpinned, right-pinned.
+  const fillColumn = createMemo(() =>
+    fillColumnId(
+      [
+        ...table.getLeftVisibleLeafColumns(),
+        ...table.getCenterVisibleLeafColumns(),
+        ...table.getRightVisibleLeafColumns(),
+      ]
+        .filter(c => showInTableView(c.columnDef))
+        .map(c => c.id),
+      columnSizing()
+    )
+  );
+  const owner = getOwner();
+  const widthMemos = new Map<string, () => ColumnWidth>();
+  const columnWidth = (column: TanColumn<T>): ColumnWidth => {
+    let width = widthMemos.get(column.id);
+    if (!width) {
+      const id = column.id;
+      width = runWithOwner(owner, () => {
+        const memo = createMemo(
+          (): ColumnWidth => ({
+            px: (
+              table.getAllLeafColumns().find(c => c.id === id) ?? column
+            ).getSize(),
+            exact: columnSizing()[id] !== undefined && fillColumn() !== id,
+          }),
+          undefined,
+          { equals: (a, b) => a.px === b.px && a.exact === b.exact }
+        );
+        return memo;
+      })!;
+      widthMemos.set(id, width);
+    }
+    return width();
+  };
 
   // --- Keyboard row navigation (KB-N1/KB-E5, issue #1006) ---
   // Table-owned, unlike sort/selection which the page owns — row focus is
@@ -984,6 +1165,28 @@ export function DataTable<T, K extends string, G extends string = never>(
   // rather than its control (scrollCellIntoView).
   const [frozenWidths, setFrozenWidths] = createSignal({ left: 0, right: 0 });
   let scrollBox: HTMLDivElement | undefined;
+  let rootEl: HTMLDivElement | undefined;
+
+  // Changing page (or rows per page) goes back to the first row: the pager
+  // sits at the table's foot, so without this the new page opens scrolled to
+  // its bottom. Keyed on the page shown, not on the pager's clicks, so it
+  // also follows a pager the host renders elsewhere (`page`), the browser's
+  // back/forward, and a filter that resets the offset. The memo holds a
+  // string so a page that did not move (a refetch with a new total, the page
+  // jump given the current page) changes nothing.
+  const shownPage = createMemo(() => {
+    const page = props.pagination ?? props.page;
+    return page ? `${page.offset}:${page.pageSize}` : undefined;
+  });
+  // Not `defer`: a deferred `on` does not record the value it skipped, so
+  // its first real change would arrive with no `before` and be dropped. The
+  // first run (mount) has none either, which is what skips it.
+  createEffect(
+    on(shownPage, (now, before) => {
+      if (now !== undefined && before !== undefined)
+        scrollTableToTop(rootEl, scrollBox);
+    })
+  );
 
   // Walk the header row from each end, accumulating RENDERED widths for as long
   // as the cells are pinned to that side (a frozen block is always a prefix or
@@ -1066,21 +1269,23 @@ export function DataTable<T, K extends string, G extends string = never>(
 
   // --- Auto-fit a column to its widest content (issue #651) ---
   // The Excel gesture: double-clicking a header's resize divider snaps that
-  // column to the width its content actually needs (HeaderCell's onDblClick).
-  // What it writes is exactly what a DRAG writes — the column's `size`, i.e.
-  // its min-width floor — so the fitted width persists, layers, and clears with
-  // "Reset table to default" like any other user width.
+  // column to the width its content actually needs (HeaderCell's second
+  // mousedown). What it writes is exactly what a DRAG writes — the column's
+  // `size`, which HeaderCell draws as the column's exact width once the user
+  // has set it — so the fitted width persists, layers, and clears with "Reset
+  // table to default" like any other user width.
   //
   // Measured, not computed: only the DOM knows what the cells rendered (a
   // formatted number, a localised date, a status chip, this locale's glyph
   // widths at this density). Scope is one column of the CURRENT page — the only
   // "widest content" available without fetching every row.
   //
-  // Same flex-sink caveat as a drag (docs/TABLE_PLAN.md Phase 3): under the
-  // min-width-floor + auto-layout model, the column that absorbs the table's
-  // slack re-absorbs anything auto-fit gives back, so fitting the WIDEST column
-  // narrower can leave it where it was. Fitting a clipped column WIDER — the
-  // gesture people actually reach for — works.
+  // It fits both ways. An exact width takes no share of the table's spare
+  // room, so a column fitted narrower draws narrower and the room goes to the
+  // columns still on their defaults. The one exception is the column that
+  // fills the row once every drawn column has a width the user set
+  // (fillColumnId, columnResize.ts): its fitted width stays a floor, and it
+  // still takes whatever room is left.
 
   // A cell's own inline padding, added back to its content width: a column
   // sized to bare text would clip against its own padding.
@@ -1393,7 +1598,8 @@ export function DataTable<T, K extends string, G extends string = never>(
   // instead (see .root[data-no-toolbar] in the CSS).
   const toolbarInputs = (): ToolbarInputs => ({
     hasFilters: !!filters(),
-    hasPagination: !!props.pagination,
+    // The toolbar carries the row count, which a pager with no total hasn't got.
+    hasPagination: props.pagination?.total !== undefined,
     controlsLifted: !!props.controlsMount,
     hasControls: hasControls(),
   });
@@ -1612,6 +1818,7 @@ export function DataTable<T, K extends string, G extends string = never>(
     // full-bleed the table from its own CSS module (Page.module.css) — a
     // descendant selector can't name this .root class across CSS Modules.
     <div
+      ref={rootEl}
       class={`${styles.root} ${overlay() ? styles.fullScreen : ''}`}
       data-datatable
       style={
@@ -1653,12 +1860,10 @@ export function DataTable<T, K extends string, G extends string = never>(
               data does, and it sits beside the filters that change the number.
               Read from `pagination.total`, so any paginated table shows it
               without the host passing anything extra. */}
-          <Show when={props.pagination}>
-            {pagination => (
-              <span class={styles.toolbarCount} data-testid="table-row-count">
-                {tPlural('pagination.rows-total', pagination().total)}
-              </span>
-            )}
+          <Show when={props.pagination?.total !== undefined}>
+            <span class={styles.toolbarCount} data-testid="table-row-count">
+              {tPlural('pagination.rows-total', props.pagination?.total ?? 0)}
+            </span>
           </Show>
           <Show when={!props.controlsMount}>{controls()}</Show>
         </div>
@@ -1668,6 +1873,15 @@ export function DataTable<T, K extends string, G extends string = never>(
           the popovers and the view toggle behave identically there. */}
       <Show when={props.controlsMount}>
         {mount => <Portal mount={mount()}>{controls()}</Portal>}
+      </Show>
+      {/* While a column is being dragged, a transparent layer covers the page
+          (#1890). A hand drifts down over the rows as it drags, and each row
+          and cell the pointer crossed ran its hover styles and its clipped-
+          text check, which reads layout mid-drag. The layer takes the pointer
+          instead (TanStack follows the drag on the document, which the layer's
+          events still reach) and keeps the resize cursor showing. */}
+      <Show when={resizeActive()}>
+        <div class={styles.resizeOverlay} aria-hidden="true" />
       </Show>
       {/* tableArea fills the remaining height between the toolbar and the
           footer bar, so the scroll box inside it is full-height even for a
@@ -1853,6 +2067,8 @@ export function DataTable<T, K extends string, G extends string = never>(
                                 pinnedStyle={pinnedStyle}
                                 frozenEdge={frozenEdge}
                                 onAutoFit={autoFitColumn}
+                                onResizeStart={startColumnResize}
+                                columnWidth={columnWidth}
                               />
                             </Show>
                           )}
@@ -1877,6 +2093,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                         selectionDisabled={props.selectionDisabled ?? false}
                         onRowClick={props.onRowClick}
                         rowClickable={props.rowClickable}
+                        rowHref={props.rowHref}
                         rowTone={row =>
                           (props.cardTone ?? props.rowTone)?.(row)
                         }
@@ -1918,6 +2135,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                             selectionDisabled={props.selectionDisabled ?? false}
                             onRowClick={props.onRowClick}
                             rowClickable={props.rowClickable}
+                            rowHref={props.rowHref}
                             rowState={props.rowState}
                             rowTone={props.rowTone}
                             rowTint={props.rowTint}
@@ -2002,12 +2220,16 @@ export function DataTable<T, K extends string, G extends string = never>(
                 Loading with no rows shows the spinner; a settled empty list shows
                 the "nothing here" empty state. */}
           <Show when={table.getRowModel().rows.length === 0}>
-            <div class={styles.emptyBody}>
+            <div
+              class={styles.emptyBody}
+              data-plain={props.emptyGraphic === false ? '' : undefined}
+            >
               <Show
                 when={props.loading}
                 fallback={
                   <EmptyState
                     data-testid="nothing-here"
+                    graphic={props.emptyGraphic !== false}
                     message={props.emptyMessage ?? t('table.no-results')}
                   >
                     {props.empty}

@@ -1,12 +1,12 @@
 import { lazy, Show } from 'solid-js';
 import type { Component } from 'solid-js';
-import { useNavigate, useParams } from '@solidjs/router';
+import { useParams } from '@solidjs/router';
 import { t } from '../intl';
 import { Page } from '../ui/layout/Page/Page';
 import { Header } from '../ui/layout/Header/Header';
 import { Breadcrumb } from '../ui/layout/Header/Breadcrumb';
 import { EmptyState } from '../ui/elements/feedback/EmptyState';
-import { Button } from '../ui/elements/buttons/Button';
+import { LinkButton } from '../ui/elements/buttons/LinkButton';
 import { type NavItem } from './navConfig';
 import { navTrail } from './navConfig';
 
@@ -29,7 +29,6 @@ const UnhappyMan = lazy(() => import('../ui/icons/UnhappyMan'));
 // language switch (navConfig).
 export const EntryPage: Component<{ dest?: NavItem }> = props => {
   const params = useParams<{ storeId: string }>();
-  const navigate = useNavigate();
 
   // The destination itself, e.g. Stocktakes — the nav group it sits under is
   // never a crumb (ui-standards › layout, app bar). A not-found route has no
@@ -60,12 +59,9 @@ export const EntryPage: Component<{ dest?: NavItem }> = props => {
       >
         {/* The way out. The store root is Home (App routes). */}
         <Show when={params.storeId}>
-          <Button
-            variant="ghost"
-            onClick={() => navigate(`/${params.storeId}`)}
-          >
+          <LinkButton variant="ghost" href={`/${params.storeId}`}>
             {t('error.go-to-home')}
-          </Button>
+          </LinkButton>
         </Show>
       </EmptyState>
     </Page>

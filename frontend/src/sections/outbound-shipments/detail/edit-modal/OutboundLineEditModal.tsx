@@ -57,7 +57,7 @@ import {
   InfoIcon,
   PauseIcon,
 } from '../../../../ui/icons';
-import { RowStatusBadges, uncapped } from '../RowStatusBadges';
+import { RowStatusBadges } from '../RowStatusBadges';
 import { StatusBadge } from '@/ui/elements/feedback/StatusBadge';
 import {
   DraftStockOutLines,
@@ -1003,6 +1003,19 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     )
   );
 
+  // Whether the advisory stack above the grid has anything to show — one
+  // place for the stack's members, so an advisory added to the stack can't be
+  // left out of the gate that renders it. It reads banners(), not warnings():
+  // a distribution with nothing to report still leaves its entry in
+  // warnings(), and resolves to no banner.
+  const hasAdvisories = createMemo(
+    () =>
+      !!scanNarrowing() ||
+      placeholderUnits() > 0 ||
+      !!activityMismatchBanner() ||
+      banners().length > 0
+  );
+
   // The <Select> value string for the current allocate-in lens. Capture the
   // lens in a local so TS narrows the discriminated union without a cast (a
   // bare second allocateIn() call is not narrowed).
@@ -1390,15 +1403,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       // The meta rides as getCellDefinition's second argument, NOT a sibling
       // `meta:` key — the spread returns its own `meta` and would overwrite one
       // declared beside it (which is exactly how this card lost its header).
-      // Cap-less (the shared `uncapped` — the chips fill the code preset's
-      // 7rem cap and pin the column, the #601 trap the detail table hit too).
-      ...uncapped(
-        getCellDefinition('batch', {
-          headerPosition: 'primary',
-          showLabel: true,
-          hideFromColumnSettings: true,
-        })
-      ),
+      ...getCellDefinition('batch', {
+        headerPosition: 'primary',
+        showLabel: true,
+        hideFromColumnSettings: true,
+      }),
       // Room for the batch value AND its status chips by default; still
       // user-resizable in both directions (no cap).
       size: remToPx(13),
@@ -2152,7 +2161,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               toolbar of their own a few pixels above the cards, spending a
               whole row of a modal whose scarce axis is vertical. Docked at the
               row's inline end by its own auto margin, so it holds that edge
-              whether or not the placeholder notice is beside it, and empty
+              however the pieces before it wrap, and empty
               (invisible) until an item is picked, since the table only exists
               then. */}
           <div ref={setTableControls} class={styles.headerTableControls} />
@@ -2187,75 +2196,30 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           </Stack>
         }
       >
-        {/* The working area: the batch grid and the advisories under it scroll
-            TOGETHER, so a message costs nothing until you reach the end of the
-            cards (the table lays out at content height here — DataTable's
-            `fitContent` — instead of owning a scroll box of its own). */}
-        {/* DIALOG_SCROLL: this is the editor's OWN scroll box between the
-            dialog body and its main table, so in the full-screen sheet the
-            Dialog widens it to the sheet edges the way it widens its own
-            scroll region — otherwise the grid's edge-to-edge bleed would be
-            clipped here, hiding the first and last columns (the chain rule on
-            DialogProps.size, #246). */}
-        <div class={styles.workArea} {...DIALOG_SCROLL}>
-          {/* A scan narrowed the batches: say so, and let the user clear it
-              (.211) — the rows it ruled out sink and disable. */}
-          <Show when={scanNarrowing()}>
-            {narrowing => (
-              <ScanNarrowedNotice
-                batch={narrowing().batch}
-                nothingLeft={narrowing().nothingLeft}
-                onShowAll={() => setScanExcludedIds(new Set<string>())}
-              />
-            )}
-          </Show>
-          {/* Batch grid: one row per available batch, FEFO-ordered; barred rows
-              disabled (OMS-REG-SMV-11.26/.31). */}
-          <div class={styles.batchGrid}>
-            <DataTable
-              dialogTable
-              columns={columns()}
-              rows={draftRows()}
-              rowKey={line => line.id}
-              loading={loadingLines()}
-              cardGroups={CARD_GROUPS}
-              showCardToggle
-              showFullScreen={false}
-              // The controls ride the header row instead of a toolbar of their
-              // own a few pixels above the cards — a whole row of a modal whose
-              // scarce axis is vertical. With nothing else to put in it, the
-              // table's toolbar row then doesn't render at all.
-              controlsMount={tableControls()}
-              // Lay out at content height so THIS modal's scroll area (the work
-              // area around us) scrolls the cards and the advisories under them
-              // as one. Card view only — see the prop.
-              fitContent
-              // The ONE row colour this grid spends: the disabled grey on a
-              // barred or non-allocatable batch (OMS-REG-SMV-11.26/.31/.37). Its former
-              // status tints — expired red, held amber, allocated green — are
-              // gone (2026-08-21, D111 revised); the badges beside each batch
-              // code, the On-hold column, the reddened Expiry-date cell and
-              // the issued figures carry every one of those facts in words.
-              rowState={line => (rowDisabled(line) ? 'disabled' : undefined)}
-              emptyMessage={t('messages.no-stock-available')}
-              config={tableConfig.config()}
-              setConfig={tableConfig.setConfig}
-              configIsDefault={tableConfig.isConfigDefault()}
-              onSaveGlobalDefault={
-                tableConfig.canSaveGlobalDefault()
-                  ? tableConfig.saveGlobalTableConfig
-                  : undefined
-              }
-            />
-          </div>
-
-          {/* ADVISORY messages — they inform, they don't gate the save, so they
-              live in the flow after the last card and scroll away with it
-              rather than holding pinned height over the grid. Anything that
-              gates Save (a rejection, the zero-allocation and VVM
-              confirmations) is in the footer's message slot instead, pinned
-              beside the button it blocks. */}
+        {/* ADVISORY messages — they inform, they don't gate the save. Pinned
+            above the batch grid, so they stay in view however many batches
+            the item has (issue #885); on a screen too short to pin them they
+            scroll away with the body instead (.workArea). Anything that gates
+            Save (a rejection, the zero-allocation and VVM confirmations) is in
+            the footer's message slot instead, pinned beside the button it
+            blocks. Gated as a whole so an empty stack spends no gap over the
+            grid. */}
+        <Show when={hasAdvisories()}>
           <Stack gap="sm">
+            {/* A scan narrowed the batches: say so, and let the user clear it
+                (.211) — the rows it ruled out sink and disable. It explains
+                what the grid no longer offers, so it stays with the other
+                advisories rather than scrolling away with the cards. */}
+            <Show when={scanNarrowing()}>
+              {narrowing => (
+                <ScanNarrowedNotice
+                  batch={narrowing().batch}
+                  nothingLeft={narrowing().nothingLeft}
+                  onShowAll={() => setScanExcludedIds(new Set<string>())}
+                />
+              )}
+            </Show>
+
             {/* The shortfall that became a placeholder — a consequence of the
                 Issue entry, so it reads with the batches it failed to fill,
                 not up in the header row where it reflowed the inputs as the
@@ -2306,6 +2270,57 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               )}
             </For>
           </Stack>
+        </Show>
+
+        {/* The working area: the batch grid scrolls here, under the pinned
+            advisories (the table lays out at content height — DataTable's
+            `fitContent` — instead of owning a scroll box of its own). */}
+        {/* DIALOG_SCROLL: this is the editor's OWN scroll box between the
+            dialog body and its main table, so in the full-screen sheet the
+            Dialog widens it to the sheet edges the way it widens its own
+            scroll region — otherwise the grid's edge-to-edge bleed would be
+            clipped here, hiding the first and last columns (the chain rule on
+            DialogProps.size, #246). */}
+        <div class={styles.workArea} {...DIALOG_SCROLL}>
+          {/* Batch grid: one row per available batch, FEFO-ordered; barred rows
+              disabled (OMS-REG-SMV-11.26/.31). */}
+          <div class={styles.batchGrid}>
+            <DataTable
+              dialogTable
+              columns={columns()}
+              rows={draftRows()}
+              rowKey={line => line.id}
+              loading={loadingLines()}
+              cardGroups={CARD_GROUPS}
+              showCardToggle
+              showFullScreen={false}
+              // The controls ride the header row instead of a toolbar of their
+              // own a few pixels above the cards — a whole row of a modal whose
+              // scarce axis is vertical. With nothing else to put in it, the
+              // table's toolbar row then doesn't render at all.
+              controlsMount={tableControls()}
+              // Lay out at content height so THIS modal's scroll area (the work
+              // area around us) scrolls the cards, under the pinned advisories.
+              // Card view only — see the prop.
+              fitContent
+              // The ONE row colour this grid spends: the disabled grey on a
+              // barred or non-allocatable batch (OMS-REG-SMV-11.26/.31/.37). Its former
+              // status tints — expired red, held amber, allocated green — are
+              // gone (2026-08-21, D111 revised); the badges beside each batch
+              // code, the On-hold column, the reddened Expiry-date cell and
+              // the issued figures carry every one of those facts in words.
+              rowState={line => (rowDisabled(line) ? 'disabled' : undefined)}
+              emptyMessage={t('messages.no-stock-available')}
+              config={tableConfig.config()}
+              setConfig={tableConfig.setConfig}
+              configIsDefault={tableConfig.isConfigDefault()}
+              onSaveGlobalDefault={
+                tableConfig.canSaveGlobalDefault()
+                  ? tableConfig.saveGlobalTableConfig
+                  : undefined
+              }
+            />
+          </div>
         </div>
       </Show>
     </Dialog>

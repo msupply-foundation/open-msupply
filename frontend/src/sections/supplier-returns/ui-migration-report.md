@@ -1,6 +1,6 @@
 # Supplier returns — UI migration report
 
-Audit of the whole `supplier-returns` vertical against the eleven dimensions in [`MIGRATING_A_VERTICAL.md`](../../ui/docs/MIGRATING_A_VERTICAL.md). Judged against the rules, the [component registry](../../../spec/ui-standards/components.md), the reference vertical (`src/sections/stocktakes/`), and the sibling verticals that fill the roles stocktakes lacks — the near-identical twin `customer-returns`, plus `inbound-shipments` (migrated), `outbound-shipments`, `internal-orders`, `prescriptions`, `names`.
+Audit of the whole `supplier-returns` vertical against the eleven dimensions in [`MIGRATING_A_VERTICAL.md`](../../ui/docs/MIGRATING_A_VERTICAL.md). Judged against the rules, the [component registry](../../../../spec/ui-standards/components.md), the reference vertical (`src/sections/stocktakes/`), and the sibling verticals that fill the roles stocktakes lacks — the near-identical twin `customer-returns`, plus `inbound-shipments` (migrated), `outbound-shipments`, `internal-orders`, `prescriptions`, `names`.
 
 **Status: migrated and verified — `pnpm check` green, `pnpm test` green (1048 tests), reactivity re-checked clean over the finished diff. The operator's visual pass is outstanding.**
 
@@ -41,7 +41,7 @@ L1's dimension 2 and 3 cells were `✅` in the audit and should not have been �
 
 ### F1 — Inline `style` building layout / colour (dim 1 C3, dim 6) · 4 sites
 
-**Rule:** [reach-for order](../../ui/docs/MIGRATING_A_VERTICAL.md#the-reach-for-order) step 5 — an inline `style` is always a finding; registry [Layout › horizontal stack](../../../spec/ui-standards/components.md#layout): "A hand-rolled flex row here is a bespoke look-alike (C3)".
+**Rule:** [reach-for order](../../ui/docs/MIGRATING_A_VERTICAL.md#the-reach-for-order) step 5 — an inline `style` is always a finding; registry [Layout › horizontal stack](../../../../spec/ui-standards/components.md#layout): "A hand-rolled flex row here is a bespoke look-alike (C3)".
 
 | Site                                                                       | Was                                                                      | Now                                                                                                              |
 | -------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
@@ -58,7 +58,7 @@ L1's dimension 2 and 3 cells were `✅` in the audit and should not have been �
 
 [SupplierReturnDetailView.tsx:355](detail/SupplierReturnDetailView.tsx#L355) + [SupplierReturnToolbar.tsx](detail/SupplierReturnToolbar.tsx).
 
-**Rule (binding, and the registry's own words):** [Screen structure › app bar — page content](../../../spec/ui-standards/components.md#screen-structure-regions) — "a detail screen's header fields use `HeaderToolbar`, which fixes their layout (each field labelled above its control, equal shares wrapping as a unit) **so every detail header reads alike** — `Toolbar` stays for other content (a list's filter bar)". The vertical instead stacked two `FieldRow`s (inline bold label, `hideLabel` on the control) inside the generic `Toolbar`.
+**Rule (binding, and the registry's own words):** [Screen structure › app bar — page content](../../../../spec/ui-standards/components.md#screen-structure-regions) — "a detail screen's header fields use `HeaderToolbar`, which fixes their layout (each field labelled above its control, equal shares wrapping as a unit) **so every detail header reads alike** — `Toolbar` stays for other content (a list's filter bar)". The vertical instead stacked two `FieldRow`s (inline bold label, `hideLabel` on the control) inside the generic `Toolbar`.
 
 The reference vertical and every migrated sibling agree: [`StocktakeDetailToolbar.tsx:41`](../stocktakes/detail/StocktakeDetailToolbar.tsx#L41), [`InboundShipmentDetailToolbar.tsx`](../inbound-shipments/detail/InboundShipmentDetailToolbar.tsx) (+ [its view:924](../inbound-shipments/detail/InboundShipmentDetailView.tsx#L924)), `prescriptions`, `patients`.
 
@@ -68,7 +68,7 @@ The reference vertical and every migrated sibling agree: [`StocktakeDetailToolba
 
 ### F3 — Related-documents link was a bare `<A>` (dim 1)
 
-[SupplierReturnSidePanel.tsx:183](detail/SupplierReturnSidePanel.tsx#L183). Registry [`RecordLink`](../../../spec/ui-standards/components.md#typography): "A hand-rolled toned `<A>` for a related record is a bespoke look-alike (C3)". The **twin vertical already did it correctly** for the mirror-image link — [`CustomerReturnSidePanel.tsx:182`](../customer-returns/detail/CustomerReturnSidePanel.tsx#L182).
+[SupplierReturnSidePanel.tsx:183](detail/SupplierReturnSidePanel.tsx#L183). Registry [`RecordLink`](../../../../spec/ui-standards/components.md#typography): "A hand-rolled toned `<A>` for a related record is a bespoke look-alike (C3)". The **twin vertical already did it correctly** for the mirror-image link — [`CustomerReturnSidePanel.tsx:182`](../customer-returns/detail/CustomerReturnSidePanel.tsx#L182).
 
 **Fixed:** `RecordLink`, no `kind` (a shipment is a neutral reference), same `#N` label and route.
 
@@ -80,7 +80,7 @@ The reference vertical and every migrated sibling agree: [`StocktakeDetailToolba
 
 ### F5 — Dialog footers ignored `StandardButtons` and D55 (dim 5, dim 1) · 11 footers across 9 dialogs
 
-**Rule:** registry [Modal footer button](../../../spec/ui-standards/components.md#buttons--status) → `CancelButton` / `DialogSaveButton` / `SaveAndNextButton`, "never OK/OK & next, **never an icon**"; [D55](../../../spec/DIVERGENCES.md) is binding and "applied app-wide" — and it keeps `OkButton` for the genuinely-not-a-save acknowledgement.
+**Rule:** registry [Modal footer button](../../../../spec/ui-standards/components.md#buttons--status) → `CancelButton` / `DialogSaveButton` / `SaveAndNextButton`, "never OK/OK & next, **never an icon**"; [D55](../../../../spec/DIVERGENCES.md) is binding and "applied app-wide" — and it keeps `OkButton` for the genuinely-not-a-save acknowledgement.
 
 | Site                                                                                  | Was                                                        | Now                                                                                                            |
 | ------------------------------------------------------------------------------------- | ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
@@ -122,7 +122,7 @@ Both wizard grids render in **table** view inside a `size="large"` dialog (no ca
 
 ### F8 — The wizard context row hand-rolled a flex row and a breakpoint (dim 1, dim 6)
 
-[ReturnItemsModal.module.css](detail/edit-modal/ReturnItemsModal.module.css), used by both wizard hosts. Two things: a `display:flex` row where the registry has a component ([Two-up form row → `FormRow`](../../../spec/ui-standards/components.md#layout)), and a **`@media (max-width: 599px)`** rule doing the wrapping, where `src/ui/CLAUDE.md` #7 reserves breakpoints for deciding _which element renders_, never layout nudges.
+[ReturnItemsModal.module.css](detail/edit-modal/ReturnItemsModal.module.css), used by both wizard hosts. Two things: a `display:flex` row where the registry has a component ([Two-up form row → `FormRow`](../../../../spec/ui-standards/components.md#layout)), and a **`@media (max-width: 599px)`** rule doing the wrapping, where `src/ui/CLAUDE.md` #7 reserves breakpoints for deciding _which element renders_, never layout nudges.
 
 **Fixed:** `<FormRow>` in both hosts; the module now holds only `.hint` (F1), and `ReturnFromShipmentModal` no longer imports it at all.
 
@@ -130,13 +130,13 @@ Both wizard grids render in **table** view inside a `size="large"` dialog (no ca
 
 ### F9 — The list colour cell omitted `variant="row"` (dim 1)
 
-[SupplierReturnsList.tsx:272](list/SupplierReturnsList.tsx#L272). Registry [Colour tag](../../../spec/ui-standards/components.md#buttons--status): "`variant` = **`row` (list cell)** / `field`". Outbound, prescriptions and (post-migration) inbound all pass it.
+[SupplierReturnsList.tsx:272](list/SupplierReturnsList.tsx#L272). Registry [Colour tag](../../../../spec/ui-standards/components.md#buttons--status): "`variant` = **`row` (list cell)** / `field`". Outbound, prescriptions and (post-migration) inbound all pass it.
 
 **Fixed:** `variant="row"` added. No visual change (only `field` carries a trigger class) — this is the registry contract, not a repaint. The dot/picker gate itself was already right, and is what inbound copied from here.
 
 ### F10 — The footer Close — **REVERSED, the finding was wrong** (dim 1, 2, 11)
 
-**What the audit claimed:** the footer's labelled `Button variant="secondary" icon={<XCircleIcon/>}` should be an icon-only `IconButton`, citing the vertical's spec ("**Close** (`button.close`, icon-only)" — [ui-surface S3 § Layout](../../../spec/supplier-returns/ui-surface.md)) and the two shipment footers that render it that way ([inbound](../inbound-shipments/detail/InboundShipmentStatusFooter.tsx#L116), [outbound](../outbound-shipments/detail/OutboundStatusFooter.tsx#L109)). It was changed, then the design owner asked for a proper Close button back (2026-07-30).
+**What the audit claimed:** the footer's labelled `Button variant="secondary" icon={<XCircleIcon/>}` should be an icon-only `IconButton`, citing the vertical's spec ("**Close** (`button.close`, icon-only)" — [ui-surface S3 § Layout](../../../../spec/supplier-returns/ui-surface.md)) and the two shipment footers that render it that way ([inbound](../inbound-shipments/detail/InboundShipmentStatusFooter.tsx#L116), [outbound](../outbound-shipments/detail/OutboundStatusFooter.tsx#L109)). It was changed, then the design owner asked for a proper Close button back (2026-07-30).
 
 **Why the audit got it wrong:** I counted two verticals and stopped. The full count is **3 labelled vs 2 icon-only** — `customer-returns`, `internal-orders` and `prescriptions` all render `<Button variant="secondary" icon={<XCircleIcon/>}>Close</Button>`, and the **reference vertical has no footer Close at all**, so it could not arbitrate. A cross-vertical check that stops at the first agreeing pair isn't a majority; the sibling sweep has to be exhaustive or it just confirms whatever it found first.
 
@@ -150,12 +150,12 @@ Both wizard grids render in **table** view inside a `size="large"` dialog (no ca
 
 Two things this raises, neither of which blocks the change:
 
-1. **On an editable return it puts two filled primaries in one region.** The header cluster is Add item (`primary`, the default `Button`) · Export/Print · More, and [`controls.md`](../../../spec/ui-standards/controls.md) opens with "One **primary** action per region; alternatives are secondary/low-emphasis." Verified live: an editable return now shows Add item **and** Export/Print both filled, plus the footer's Confirm split button. On a read-only return Add item is hidden, so Export/Print is the only emphasised action and the rule holds — which is likely the state that prompted the request. **Open for a ruling** (recorded in [Decisions](#decisions)).
+1. **On an editable return it puts two filled primaries in one region.** The header cluster is Add item (`primary`, the default `Button`) · Export/Print · More, and [`controls.md`](../../../../spec/ui-standards/controls.md) opens with "One **primary** action per region; alternatives are secondary/low-emphasis." Verified live: an editable return now shows Add item **and** Export/Print both filled, plus the footer's Confirm split button. On a read-only return Add item is hidden, so Export/Print is the only emphasised action and the rule holds — which is likely the state that prompted the request. **Open for a ruling** (recorded in [Decisions](#decisions)).
 2. **All five verticals with this action use `secondary`** (stocktakes, inbound, outbound, customer returns, supplier returns). Supplier returns is now the outlier; if the intent is app-wide, it's a one-line change in four more files plus possibly a `controls.md` amendment.
 
 ### F11 — The side-panel Comment was single-line where the spec says multi-line (dim 4, dim 11)
 
-[SupplierReturnSidePanel.tsx:126](detail/SupplierReturnSidePanel.tsx#L126) used `TextField`; [ui-surface S3 § side panel](../../../spec/supplier-returns/ui-surface.md) says "**Comment** (`label.comment`, **multi-line** in-place)", and the registry maps Multi-line → `TextArea`. Three siblings render this exact field as a `TextArea` ([inbound:246](../inbound-shipments/detail/InboundShipmentSidePanel.tsx#L246), internal-orders, prescriptions); four use `TextField` — so the house pattern was split and **this vertical's spec was the tie-breaker**.
+[SupplierReturnSidePanel.tsx:126](detail/SupplierReturnSidePanel.tsx#L126) used `TextField`; [ui-surface S3 § side panel](../../../../spec/supplier-returns/ui-surface.md) says "**Comment** (`label.comment`, **multi-line** in-place)", and the registry maps Multi-line → `TextArea`. Three siblings render this exact field as a `TextArea` ([inbound:246](../inbound-shipments/detail/InboundShipmentSidePanel.tsx#L246), internal-orders, prescriptions); four use `TextField` — so the house pattern was split and **this vertical's spec was the tie-breaker**.
 
 **Fixed:** `TextArea` with inbound's props (`hideLabel`, `width="full"`); the `comment-field` testid is unchanged and still lands on the editable element.
 
@@ -175,7 +175,7 @@ What did change: the Created column now takes `getCellDefinition('createdDatetim
 
 **Missed by the first audit pass** and caught by the spec owner on review — L1's dimensions 2 and 3 were wrongly marked clean.
 
-[SupplierReturnsList.tsx](list/SupplierReturnsList.tsx) wrapped the `FilterBar` in a `<Toolbar>` inside the page `<Header>`. The rule is binding and explicit — [`tables.md` § toolbar](../../../spec/ui-standards/tables.md): "The filter bar **MUST** render in this table toolbar — never in the page header / app bar, and never in a separate page-level toolbar band above the table. This binds every table, list or detail, and **overrides any vertical spec** that places filters elsewhere: a vertical states its filter _set_, never its _location_." `DataTable` carries the slot for exactly this and says so at its `filters` prop: "filters live WITH the table, not the page header".
+[SupplierReturnsList.tsx](list/SupplierReturnsList.tsx) wrapped the `FilterBar` in a `<Toolbar>` inside the page `<Header>`. The rule is binding and explicit — [`tables.md` § toolbar](../../../../spec/ui-standards/tables.md): "The filter bar **MUST** render in this table toolbar — never in the page header / app bar, and never in a separate page-level toolbar band above the table. This binds every table, list or detail, and **overrides any vertical spec** that places filters elsewhere: a vertical states its filter _set_, never its _location_." `DataTable` carries the slot for exactly this and says so at its `filters` prop: "filters live WITH the table, not the page header".
 
 **Every** other list already does it — including the reference vertical ([`StocktakesList.tsx:343`](../stocktakes/list/StocktakesList.tsx#L343)) and `inbound-shipments`, `names`, `items`, `locations`, `stock`. Supplier returns was the only holdout, so nothing about this was a judgment call.
 
@@ -218,18 +218,18 @@ Re-run with the `check-reactivity` skill over the finished diff: **no reactivity
 
 ## Spec edits — one pending sign-off
 
-**F10's reversal needs one spec edit.** [`spec/supplier-returns/ui-surface.md`](../../../spec/supplier-returns/ui-surface.md) S3 § Layout describes the footer's Close as `button.close`, **icon-only**. The implementation now renders a labelled button — the treatment three of the five detail footers use — so as it stands the spec and the code disagree, and the next `spec-build` would put the glyph back.
+**F10's reversal needs one spec edit.** [`spec/supplier-returns/ui-surface.md`](../../../../spec/supplier-returns/ui-surface.md) S3 § Layout describes the footer's Close as `button.close`, **icon-only**. The implementation now renders a labelled button — the treatment three of the five detail footers use — so as it stands the spec and the code disagree, and the next `spec-build` would put the glyph back.
 
 This is a **pure-UI** conflict (which control fills the role, how it presents), so per dimension 11 the standards + house pattern win and the **spec moves**:
 
 - Drop "icon-only" from the Close bullet in S3 § Layout — the bullet names the action and its key, not its presentation. Suggested wording: **Close** (`button.close`), leaving the treatment to the shared standards.
-- No [`DIVERGENCES.md`](../../../spec/DIVERGENCES.md) entry is implied: this is not a deliberate difference from the reference app, just presentation the vertical's spec should not have been fixing.
+- No [`DIVERGENCES.md`](../../../../spec/DIVERGENCES.md) entry is implied: this is not a deliberate difference from the reference app, just presentation the vertical's spec should not have been fixing.
 
 **Not made yet** — spec edits are never silent. Say the word and it's a one-line change.
 
 ## Decisions
 
-**D1 — Export/Print `primary` leaves two primaries in the header when Add item shows (F16).** [`controls.md`](../../../spec/ui-standards/controls.md) allows one primary per region. The change is in as instructed; the question is how to resolve the editable state:
+**D1 — Export/Print `primary` leaves two primaries in the header when Add item shows (F16).** [`controls.md`](../../../../spec/ui-standards/controls.md) allows one primary per region. The change is in as instructed; the question is how to resolve the editable state:
 
 - **(a) Export/Print primary only while Add item is hidden** — the leading _available_ action carries the emphasis; satisfies the rule in both states and matches what a read-only return needed (my recommendation).
 - **(b) Demote Add item to `secondary`** — honours the instruction literally, but takes the emphasis off the vertical's main editing action.
@@ -247,7 +247,7 @@ Whichever way it goes, the other four verticals' Export/Print buttons are still 
 
 Found by the dimension-11 durability check. The spec wins, so these are implementation gaps — but they are behaviour/content, and migration "changes UI composition only":
 
-- **List report selector.** [S1 § Layout](../../../spec/supplier-returns/ui-surface.md) lists three page actions: New return · Export CSV · "the shared **report selector** button". Only the first two exist.
+- **List report selector.** [S1 § Layout](../../../../spec/supplier-returns/ui-surface.md) lists three page actions: New return · Export CSV · "the shared **report selector** button". Only the first two exist.
 - **Line-table selection + bulk bar.** S3 § Layout says "On selection, the bulk-action bar replaces this row: selected count · Delete · clear selection". The detail line table has no selection at all (nor does the customer-returns twin), and S3 § Actions names no delete-lines action — so this may be boilerplate in the Layout bullet rather than intended behaviour. Worth a spec-owner glance.
 - **Group by item.** S3's line table is specified grouped by item with a toggle; the spec **already records the `DataTable` gap** inline (⚠️ Component gap) and sanctions the flat rendering. No action here beyond LIB-1.
 

@@ -156,6 +156,9 @@ const FILTERS: Filter<PatientFilter>[] = constructFilters<PatientFilter>({
   name: null,
   code: null,
   code2: null,
+  // The patient search's own ID match; the list's Patient ID chip is the
+  // broader identifier.
+  codeOrCode2: null,
   phone: null,
   address1: null,
   address2: null,
@@ -165,6 +168,8 @@ const FILTERS: Filter<PatientFilter>[] = constructFilters<PatientFilter>({
   // Custom-field condition AST — driven by the (separate-vertical) custom-field
   // columns, not a standalone chip.
   dynamicFilter: null,
+  // Always this store's patients: the list sets it, not a chip
+  isVisible: null,
 });
 
 // Program-enrolment name is a program-module surface (OMS-REG-DIS-02.53,

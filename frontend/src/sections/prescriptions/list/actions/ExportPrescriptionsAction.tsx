@@ -32,6 +32,11 @@ export interface ExportPrescriptionsActionProps {
    * which the file carries as well.
    */
   customFields: () => CustomFieldDef[];
+  /**
+   * A store that dispenses on the Simple screen: the file carries the time
+   * and the medicines, as the list does (rules › Dispensing records).
+   */
+  withMedicines: boolean;
 }
 
 export const ExportPrescriptionsAction: Component<
@@ -49,12 +54,15 @@ export const ExportPrescriptionsAction: Component<
       // One sort key only (contract wire trap): the list's default order —
       // prescription date, newest first.
       sort: [{ key: 'invoiceDatetime', desc: true }],
+      withMedicines: props.withMedicines,
     };
     const result = await graphqlFetch(Prescriptions, variables);
     if (result.kind !== 'success') return null;
     const nodes = result.data.invoices.nodes;
     return nodes.length
-      ? prescriptionsToCsv(nodes, props.customFields())
+      ? prescriptionsToCsv(nodes, props.customFields(), {
+          withMedicines: props.withMedicines,
+        })
       : null;
   };
 

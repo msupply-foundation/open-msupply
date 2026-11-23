@@ -1,5 +1,8 @@
-import { formatFileSize, t } from '@/intl';
-import type { FileRejection } from '@/ui/elements/inputs/uploadFiles';
+import { t } from '@/intl';
+import {
+  tooLargeMessage,
+  type FileRejection,
+} from '@/ui/elements/inputs/uploadFiles';
 
 /*
  * What this vertical accepts when a user attaches a file — to an asset on the
@@ -25,10 +28,7 @@ export const describeRejections = (rejections: FileRejection<File>[]): string =>
   rejections
     .map(rejection =>
       rejection.reason === 'size'
-        ? t('error.file-exceeds-size-limit', {
-            filename: rejection.file.name,
-            maxSize: formatFileSize(MAX_FILE_BYTES),
-          })
+        ? tooLargeMessage(rejection.file.name, MAX_FILE_BYTES)
         : t('error.file-type-not-supported', {
             filename: rejection.file.name,
           })

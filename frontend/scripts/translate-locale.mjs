@@ -21,31 +21,54 @@
  * trip. Two modes: `insert` (default) only fills keys the target catalog is
  * missing; `update` re-translates everything.
  *
- * This is the "separate pass" CLAUDE.md's locale rule refers to — new keys
- * still go into `locales/en/` only, and machine output is a draft for the
- * translation team, never a substitute for it. Note it can't get plural
- * categories right either: the English catalog's `_one`/`_other` suffixes are
- * copied across as-is, and a language with different CLDR categories needs
- * those forms authored by hand.
+ * Day-to-day translation of new keys is the `translate` skill
+ * (`.claude/skills/translate/`), which drafts with usage context and the
+ * catalog's existing terminology. This script's raw output is literal and
+ * context-free, so writing it into a catalog is for bootstrapping a brand-new
+ * language only. It can't get plural categories right either: the English
+ * catalog's `_one`/`_other` suffixes are copied across as-is, and a language
+ * with different CLDR categories needs those forms authored by hand.
+ *
+ * `--candidates <file>` is the skill's mode: it translates the keys the target
+ * is missing (or those listed in `--keys <file>`, a JSON array) and writes
+ * `{ key: googleText }` to <file> — no prompt, and the catalog is never
+ * touched. The skill uses it as a second opinion for low-resource languages.
  *
  * Usage: pnpm translate-locale <locale_code> [insert|update]
+ *        pnpm translate-locale <locale_code> --candidates <out.json>
+ *          [--keys <keys.json>]
  */
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import readline from 'node:readline/promises';
+import {
+  fail,
+  localesModule,
+  localesRoot as root,
+  placeholderRegex,
+  readJson,
+  readLocaleRegistry,
+  sortKeys,
+  writeJson,
+} from './lib/locale-catalog.mjs';
 
-const root = './src/intl/locales';
-const localesModule = './src/intl/locales.ts';
-const [outputLocale, modeArg] = process.argv.slice(2);
-
-// Usage errors are the user's typo, not a crash — report and exit, no stack.
-const fail = message => {
-  console.error(message);
-  process.exit(1);
+const args = process.argv.slice(2);
+const takeFlag = name => {
+  const index = args.indexOf(name);
+  if (index === -1) return undefined;
+  const [, value] = args.splice(index, 2);
+  if (!value) fail(`${name} needs a file path.`);
+  return value;
 };
+const candidatesFile = takeFlag('--candidates');
+const keysFile = takeFlag('--keys');
+const [outputLocale, modeArg] = args;
 
 if (!outputLocale) {
-  fail('Usage: pnpm translate-locale <locale_code> [insert|update]');
+  fail(
+    'Usage: pnpm translate-locale <locale_code> [insert|update]\n' +
+      '       pnpm translate-locale <locale_code> --candidates <out.json> [--keys <keys.json>]'
+  );
 }
 
 if (outputLocale === 'en') {
@@ -56,43 +79,29 @@ const mode = modeArg ?? 'insert';
 if (!['insert', 'update'].includes(mode)) {
   fail(`Invalid mode "${mode}". Use "insert" (default) or "update".`);
 }
-console.log(`Translating locale with mode "${mode}"...`);
-const targetLanguage = outputLocale;
+if (keysFile && !candidatesFile) {
+  fail('--keys only applies with --candidates.');
+}
+if (!candidatesFile) console.log(`Translating locale with mode "${mode}"...`);
+// Google's code where it differs from ours: it rejects `prs` and serves
+// Dari as Afghan Persian.
+const googleCodes = { prs: 'fa-AF' };
+const targetLanguage = googleCodes[outputLocale] ?? outputLocale;
 const sourceDir = path.join(root, 'en');
 const outputDir = path.join(root, outputLocale);
 
-const placeholderRegex = /(\{\{[^{}]+\}\}|\$t\([^)]+\))/g;
-
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-/*
- * Read the two facts the reminders need out of `locales.ts` by regex rather
- * than importing it — this is a plain node script with no TypeScript loader,
- * and the file's shape is stable (cf. scripts/check-min-browser.mjs, which
- * reads its declarations the same way).
- */
-const readLocaleRegistry = async () => {
-  let source;
+const readRegistryFacts = async () => {
   try {
-    source = await fs.readFile(localesModule, 'utf8');
+    const { codes, meta } = await readLocaleRegistry();
+    return {
+      registered: codes.length === 0 || codes.includes(outputLocale),
+      base: meta[outputLocale]?.base,
+    };
   } catch {
     return { registered: true, base: undefined };
   }
-
-  const supported = source.match(/SUPPORTED_LOCALES = \[([\s\S]*?)\] as const/);
-  const codes = supported
-    ? [...supported[1].matchAll(/'([^']+)'/g)].map(match => match[1])
-    : [];
-
-  const meta = source.match(/LOCALE_META[^=]*= \{([\s\S]*?)\n\};/);
-  const entry = meta
-    ?.at(1)
-    ?.match(new RegExp(`'?${outputLocale}'?: \\{[^}]*base: '([^']+)'`));
-
-  return {
-    registered: codes.length === 0 || codes.includes(outputLocale),
-    base: entry?.[1],
-  };
 };
 
 const confirmProceed = async overlayBase => {
@@ -177,17 +186,6 @@ const listJsonFiles = async directory => {
   return files;
 };
 
-// Codepoint sort, matching the order the shipped catalogs are stored in.
-const sortKeys = value => {
-  if (!value || typeof value !== 'object') return value;
-
-  return Object.fromEntries(
-    Object.entries(value)
-      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
-      .map(([key, nestedValue]) => [key, sortKeys(nestedValue)])
-  );
-};
-
 const translateText = async text => {
   if (cache.has(text)) return cache.get(text);
   if (!text) {
@@ -221,8 +219,39 @@ const translateText = async text => {
   return translated;
 };
 
+// Google's suggestions for the keys the target lacks, written to a scratch
+// file for the translate skill to weigh — the catalog is left untouched.
+const writeCandidates = async () => {
+  const wanted = keysFile ? new Set(await readJson(keysFile)) : undefined;
+  const candidates = {};
+
+  for (const sourcePath of await listJsonFiles(sourceDir)) {
+    const relativePath = path.relative(sourceDir, sourcePath);
+    const source = await readJson(sourcePath);
+    const destination = await readJson(path.join(outputDir, relativePath), {});
+
+    for (const [key, value] of Object.entries(source)) {
+      const include = wanted
+        ? wanted.has(key)
+        : !Object.hasOwn(destination, key);
+      if (!include || typeof value !== 'string') continue;
+      const translated = await translateText(value);
+      // A failed call echoes the English back; that's no candidate at all.
+      if (translated !== value) candidates[key] = translated;
+      await sleep(40);
+    }
+  }
+
+  await writeJson(candidatesFile, candidates);
+  console.log(
+    `wrote ${Object.keys(candidates).length} candidates to ${candidatesFile} (sl=en, tl=${targetLanguage})`
+  );
+};
+
 const main = async () => {
-  const { registered, base } = await readLocaleRegistry();
+  if (candidatesFile) return writeCandidates();
+
+  const { registered, base } = await readRegistryFacts();
   await confirmProceed(base);
 
   const sourceJsonFiles = await listJsonFiles(sourceDir);

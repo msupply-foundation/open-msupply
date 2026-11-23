@@ -72,7 +72,11 @@ export type MonitoringFilter = {
 };
 
 export type MonitoringTab = 'chart' | 'breaches' | 'log';
-export const TABS: readonly MonitoringTab[] = ['chart', 'breaches', 'log'];
+export const TABS = [
+  'chart',
+  'breaches',
+  'log',
+] as const satisfies readonly MonitoringTab[];
 export const DEFAULT_TAB: MonitoringTab = 'chart';
 
 /** The tab a `?tab=` value names; anything unknown is the first tab. */

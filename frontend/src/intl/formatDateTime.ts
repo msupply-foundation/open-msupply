@@ -135,6 +135,7 @@ export const localisedDateTime = (value: Date | string | number): string =>
  * because the point of the value is to be the same for every reader.
  */
 export const utcDateTime = (value: Date | string | number): string =>
+  // eslint-disable-next-line no-restricted-syntax -- UTC on purpose, as above
   calendarDateOrInstantToDate(value)
     .toISOString()
     .slice(0, 16)
@@ -167,6 +168,14 @@ export const customDate = (
  */
 export const exportDate = (value: Date | string | number): string =>
   format(calendarDateOrInstantToDate(value), 'P', { locale: dateFnsLocale() });
+
+/**
+ * A time for a FILE, beside {@link exportDate} and for the same reasons: the
+ * locale's short time, in Latin digits. Anything a user reads on screen wants
+ * {@link localisedTime} instead.
+ */
+export const exportTime = (value: Date | string | number): string =>
+  format(calendarDateOrInstantToDate(value), 'p', { locale: dateFnsLocale() });
 
 /**
  * The app language's NUMERIC short-date pattern — the `P` that

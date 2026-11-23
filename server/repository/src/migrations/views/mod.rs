@@ -116,6 +116,6 @@ mod test {
 
         // Note: what this test does not capture is whether previous views can be dropped
         // successfully (as we only have current state of the views)
-        // This is handled in CI, the validate-db-migration-with-views workflow
+        // This is handled in CI, by the migration check in .github/workflows/server-ci.yaml
     }
 }

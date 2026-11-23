@@ -2,6 +2,7 @@ import { children, createSignal, For, Show, type JSX } from 'solid-js';
 import * as DropdownMenu from '@kobalte/core/dropdown-menu';
 import { ChevronDownIcon } from '../../icons';
 import { createRipple } from '../../utils/createRipple';
+import { usePortalMount } from '../../utils/portalMount';
 import { Ripple } from './Ripple';
 import { ShortcutBadge } from '../keyboard/ShortcutBadge';
 import { ariaKeyshortcuts, type Shortcut } from '../../utils/shortcuts';
@@ -138,6 +139,9 @@ export const SplitButton = (props: SplitButtonProps) => {
 
   const mainRipple = createRipple();
   const caretRipple = createRipple();
+  // Inside a modal dialog the menu must mount in the dialog, or it opens
+  // behind it and takes no clicks (ui/utils/portalMount).
+  const portalMount = usePortalMount();
 
   const pick = (value: string) => {
     setInternal(value);
@@ -236,7 +240,7 @@ export const SplitButton = (props: SplitButtonProps) => {
             onDone={caretRipple.dismiss}
           />
         </DropdownMenu.Trigger>
-        <DropdownMenu.Portal>
+        <DropdownMenu.Portal mount={portalMount?.()}>
           <DropdownMenu.Content class={styles.content}>
             <For each={props.options}>
               {option => (

@@ -9,6 +9,7 @@ import {
   expiringSoonStockPath,
   inboundShipmentListPath,
   internalOrderListPath,
+  itemStockPath,
   lowStockItemsPath,
   outboundShipmentListPath,
   outOfStockItemsPath,
@@ -48,7 +49,7 @@ const wednesday = new Date(2026, 6, 22); // 2026-07-22
 describe('task-list targets', () => {
   // The registry's own spellings (src/nav/navConfig.ts), one builder each, so
   // a plugin tile never hand-encodes a host route (OMS-REG-PLG-04.6/.9;
-  // plugins/cook_islands/ui-surface.md § S2).
+  // private/plugins/cook_islands/ui-surface.md § S2).
   it('names each core list as the navigation registry spells it', () => {
     expect(inboundShipmentListPath()).toBe('replenishment/inbound-shipment');
     expect(outboundShipmentListPath()).toBe('distribution/outbound-shipment');
@@ -61,7 +62,7 @@ describe('task-list targets', () => {
 
   it('addresses one stocktake as the section routes it (:stocktakeId)', () => {
     // The record page behind a count — the Cook Islands count log's row
-    // target (plugins/cook_islands/ui-surface.md § S5). The segment is
+    // target (private/plugins/cook_islands/ui-surface.md § S5). The segment is
     // encoded so an id can never smuggle a separator.
     expect(stocktakeDetailPath('abc123')).toBe('inventory/stocktakes/abc123');
     expect(stocktakeDetailPath('a/b')).toBe('inventory/stocktakes/a%2Fb');
@@ -71,6 +72,22 @@ describe('task-list targets', () => {
 describe('stock paths', () => {
   it('the full stock list is the bare registry path', () => {
     expect(stockListPath()).toBe('inventory/stock');
+  });
+
+  // spec/items rules — the item page's stock on hand links to the register
+  // filtered to this item; searched by code, as the old UI did (#1790). The
+  // link's own filter replaces the list's default, so expired lines (which
+  // the figure counts) show too.
+  it("one item's stock searches the register by the item's code", () => {
+    expect(filterOf(itemStockPath('PARA500'))).toEqual({
+      search: { like: 'PARA500' },
+    });
+  });
+
+  it("encodes a code's URL-special characters", () => {
+    expect(filterOf(itemStockPath('A&B #1'))).toEqual({
+      search: { like: 'A&B #1' },
+    });
   });
 
   // OMS-REG-DB-01.41 — expired: expiry before today (#1786).

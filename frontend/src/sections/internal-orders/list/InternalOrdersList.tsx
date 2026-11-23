@@ -273,8 +273,9 @@ const InternalOrdersList: Component = () => {
     void refetch();
   };
 
-  const openRow = (row: Row) =>
-    navigate(`/${params.storeId}/replenishment/internal-order/${row.id}`);
+  const rowHref = (row: Row) =>
+    `/${params.storeId}/replenishment/internal-order/${row.id}`;
+  const openRow = (row: Row) => navigate(rowHref(row));
 
   // Inline supplier colour-tag edit (spec S1 col 1 / OMS-REG-REPL-04.58): write
   // the colour through the shared header update and refetch on success. Offered
@@ -485,6 +486,7 @@ const InternalOrdersList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
+        rowHref={rowHref}
         // Restricted rows (Sent/Finalised, or a disabled supplier store) read
         // as read-only via the disabled background tint (OMS-REG-REPL-04.37) —
         // the same rowState the other list views key off their editability

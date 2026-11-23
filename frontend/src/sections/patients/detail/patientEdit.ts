@@ -59,7 +59,7 @@ export const seedDraft = (node: PatientNode): PatientDraft => ({
 
 // The plain-path built-in form's required-field rules
 // (OMS-REG-DIS-01.5/.6/.30): code + first name + last name, each a plain
-// required error (deferred to Save). One list so the create wizard and the edit
+// required error (deferred to Save). One list so the create form and the edit
 // tab validate identically; feed to createFormValidation and read back per
 // field / as the summary.
 //

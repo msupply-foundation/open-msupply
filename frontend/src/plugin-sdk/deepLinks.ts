@@ -102,9 +102,9 @@ const dateRange = (from: Date | null, to: Date | null) => ({
 
 // ── Task-list targets ────────────────────────────────────────────────────────
 // The unfiltered core lists a contribution launches into (e.g. the Cook
-// Islands navigator's task tiles — plugins/cook_islands/ui-surface.md § S2).
-// Each returns the path as the navigation registry spells it, from one place,
-// so a plugin never spells (or misspells) a host route.
+// Islands navigator's task tiles — private/plugins/cook_islands/ui-surface.md
+// § S2). Each returns the path as the navigation registry spells it, from one
+// place, so a plugin never spells (or misspells) a host route.
 
 export const inboundShipmentListPath = (): string =>
   'replenishment/inbound-shipment';
@@ -121,7 +121,9 @@ export const internalOrderPath = (orderId: string): string =>
 
 // Named for the record it reaches, which the UI calls a dispensing record
 // (issue #551). The export keeps its original name so plugins built against it
-// keep compiling; it is the returned path that moved.
+// keep compiling; it is the returned path that moved. It opens the store's own
+// dispensing screen (#2188): the list, or the Simple screen in a store that
+// dispenses there.
 export const dispensingListPath = (): string => 'dispensary/dispensing';
 
 /** @deprecated Use {@link dispensingListPath} — the vertical is "Dispensing". */
@@ -129,7 +131,7 @@ export const prescriptionListPath = dispensingListPath;
 
 /**
  * One prescription's detail screen, by invoice id — what the Afghanistan
- * Daily Tally's submitted summary opens per cohort (plugins/afghanistan
+ * Daily Tally's submitted summary opens per cohort (private/plugins/afghanistan
  * ui-surface § S6). URI-encoded like the stocktake builder below.
  */
 export const prescriptionDetailPath = (prescriptionId: string): string =>
@@ -140,9 +142,9 @@ export const stocktakeListPath = (): string => 'inventory/stocktakes';
 /**
  * One stocktake's detail screen — the record page behind a count, which is
  * what the Cook Islands count log opens from a row
- * (plugins/cook_islands/stocktake/ui-surface.md § S5). A record path, not a
- * filtered list: it takes the record's id and nothing else. The segment is
- * URI-encoded so an id can never smuggle a path separator, though real ids
+ * (private/plugins/cook_islands/stocktake/ui-surface.md § S5). A record path,
+ * not a filtered list: it takes the record's id and nothing else. The segment
+ * is URI-encoded so an id can never smuggle a path separator, though real ids
  * are host-minted UUIDs.
  */
 export const stocktakeDetailPath = (stocktakeId: string): string =>
@@ -151,6 +153,21 @@ export const stocktakeDetailPath = (stocktakeId: string): string =>
 // ── Stock ────────────────────────────────────────────────────────────────────
 
 export const stockListPath = (): string => 'inventory/stock';
+
+/**
+ * One item's stock: the register searched by the item's code, as the old UI's
+ * item page links it (#1790). It goes through the list's own search chip, so
+ * the user sees the filter and can clear it. Carrying its own filter, it
+ * replaces the list's default "not expired" chip — the item's stock on hand
+ * counts expired lines too, so the register shows them.
+ *
+ * Host-shared, NOT plugin surface (like listPath): only the item page links
+ * here.
+ */
+export const itemStockPath = (itemCode: string): string =>
+  listPath(stockListPath(), {
+    search: { like: itemCode },
+  } satisfies StockFilter);
 
 /**
  * Expired: expiry before today — a batch is usable to the end of its expiry

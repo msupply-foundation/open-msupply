@@ -13,12 +13,7 @@ import { useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../api/graphql';
 import { isCentralServer } from '../../api/serverInfo';
 import { hasPermission } from '../../store/storeContext';
-import {
-  MAX_FRACTION_DIGITS,
-  t,
-  tPlural,
-  type LocaleKey,
-} from '../../intl';
+import { MAX_FRACTION_DIGITS, t, tPlural, type LocaleKey } from '../../intl';
 import { Page } from '../../ui/layout/Page/Page';
 import { Header } from '../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../ui/layout/Header/Breadcrumb';
@@ -27,6 +22,7 @@ import { Stack } from '../../ui/layout/Stack/Stack';
 import { TextField } from '../../ui/elements/inputs/TextField';
 import { NumberField } from '../../ui/elements/inputs/NumberField';
 import { ToggleSwitch } from '../../ui/elements/inputs/ToggleSwitch';
+import { RadioGroup } from '../../ui/elements/inputs/RadioGroup';
 import { Checkbox } from '../../ui/elements/inputs/Checkbox';
 import { IconButton } from '../../ui/elements/buttons/IconButton';
 import { Button } from '../../ui/elements/buttons/Button';
@@ -41,7 +37,12 @@ import { Alert } from '../../ui/elements/feedback/Alert';
 import { EmptyState } from '../../ui/elements/feedback/EmptyState';
 import { Text } from '../../ui/elements/typography/Text';
 import { CloseIcon, EditIcon } from '../../ui/icons';
-import { createCatalogueView } from '@/domain/preferences';
+import {
+  asDispensingScreen,
+  createCatalogueView,
+  dispensingScreenLabelKey,
+  DISPENSING_SCREENS,
+} from '@/domain/preferences';
 import {
   GlobalPreferences,
   UpsertGlobalPreferences,
@@ -65,6 +66,8 @@ import {
 } from './globalPreferencesLogic';
 import { asV2 } from './translationsLogic';
 import { CustomTranslationsModal } from './CustomTranslationsModal';
+import { GlobalLogoModal } from './GlobalLogoModal';
+import { asLogo } from './logoLogic';
 import styles from './GlobalPreferencesPage.module.css';
 
 /** How long rapid successive edits to one preference coalesce before the
@@ -74,7 +77,7 @@ const AUTO_SAVE_DEBOUNCE_MS = 350;
 /*
  * S1 — the Global preferences page (spec/global-preferences/ui-surface.md
  * § S1): a centred column — filter, the ungrouped rows in SERVED order,
- * then the four group accordions (closed on arrival) — where every control
+ * then the group accordions (closed on arrival) — where every control
  * saves its own change immediately (no Save button, OMS-REG-GPREF-01.8).
  * Controls are written out per kind rather than resolved from a config map
  * (kdd/explicit-composition).
@@ -112,6 +115,7 @@ const GlobalPreferencesPage: Component = () => {
     new Set()
   );
   const [translationsOpen, setTranslationsOpen] = createSignal(false);
+  const [logoOpen, setLogoOpen] = createSignal(false);
 
   const disabled = () =>
     !canEditGlobalPreferences({
@@ -346,8 +350,10 @@ const GlobalPreferencesPage: Component = () => {
   };
 
   /* One catalogue row, dispatched by kind. The GLOBAL read serves BOOLEAN /
-     INTEGER / FLOAT / MULTI_CHOICE (genders) / CUSTOM_TRANSLATIONS_V2 /
-     BACKDATING_DATA only — other kinds are store-scoped and never arrive. */
+     INTEGER / FLOAT / DISPENSING_SCREEN / MULTI_CHOICE (genders) /
+     CUSTOM_TRANSLATIONS_V2 /
+     BACKDATING_DATA / IMAGE (the global logo) only — other kinds are
+     store-scoped and never arrive. */
   const PreferenceRow = (props: { preference: GlobalPreference }) => (
     <>
       <Switch>
@@ -397,6 +403,28 @@ const GlobalPreferencesPage: Component = () => {
           </Row>
           <RowError preference={props.preference} />
         </Match>
+        {/* Which screen dispensing opens on (OMS-REG-GPREF-01.37): both
+            values on the surface, so a single choice reads at a glance and
+            saves on one press, like a switch. The row names it, so the
+            group's own label is hidden. */}
+        <Match when={props.preference.valueType === 'DISPENSING_SCREEN'}>
+          <Row label={label(props.preference)}>
+            <RadioGroup
+              label={label(props.preference)}
+              hideLabel
+              appearance="segmented"
+              value={asDispensingScreen(current(props.preference))}
+              disabled={disabled()}
+              options={DISPENSING_SCREENS.map(screen => ({
+                value: screen,
+                label: t(dispensingScreenLabelKey(screen)),
+                testId: `global-preference-${props.preference.key}-${screen.toLowerCase()}`,
+              }))}
+              onChange={next => stage(props.preference, next)}
+            />
+          </Row>
+          <RowError preference={props.preference} />
+        </Match>
         <Match when={props.preference.valueType === 'MULTI_CHOICE'}>
           <GenderChoice preference={props.preference} />
         </Match>
@@ -415,6 +443,37 @@ const GlobalPreferencesPage: Component = () => {
         <Match when={props.preference.valueType === 'BACKDATING_DATA'}>
           <BackdatingRows preference={props.preference} />
         </Match>
+        {/* The logo as it stands, and an Edit opening S5 — which owns the
+            save, as the translations editor does. */}
+        <Match when={props.preference.valueType === 'IMAGE'}>
+          <Row label={label(props.preference)}>
+            <div class={styles.logoControl}>
+              <Show
+                when={asLogo(current(props.preference))}
+                fallback={
+                  <Text variant="bodySmall">{t('messages.none-uploaded')}</Text>
+                }
+              >
+                {src => (
+                  <img
+                    src={src()}
+                    alt={label(props.preference)}
+                    class={styles.logoThumbnail}
+                    data-testid={`global-preference-${props.preference.key}-image`}
+                  />
+                )}
+              </Show>
+              <Button
+                variant="secondary"
+                onClick={() => setLogoOpen(true)}
+                disabled={disabled()}
+                data-testid={`global-preference-${props.preference.key}`}
+              >
+                <EditIcon /> {t('button.edit')}
+              </Button>
+            </div>
+          </Row>
+        </Match>
       </Switch>
       {/* Trails whichever control the kind resolved to — overridability is a
           property of the preference, not of its kind. */}
@@ -424,6 +483,7 @@ const GlobalPreferencesPage: Component = () => {
 
   const translationsPreference = () =>
     preferences().find(p => p.key === 'customTranslationsV2');
+  const logoPreference = () => preferences().find(p => p.key === 'globalLogo');
 
   return (
     <Page
@@ -469,7 +529,7 @@ const GlobalPreferencesPage: Component = () => {
                   {preference => <PreferenceRow preference={preference} />}
                 </For>
               </div>
-              {/* The four groups, closed on arrival (OMS-REG-GPREF-01.3),
+              {/* The groups, closed on arrival (OMS-REG-GPREF-01.3),
                   ordered by first member's catalogue position; held open
                   while a filter is active. Nothing renders when the filter
                   leaves no group. */}
@@ -556,6 +616,21 @@ const GlobalPreferencesPage: Component = () => {
           }}
           onClose={() => setTranslationsOpen(false)}
         />
+      </Show>
+      <Show when={logoOpen() && logoPreference()}>
+        {preference => (
+          <GlobalLogoModal
+            storeId={params.storeId}
+            value={asLogo(current(preference()))}
+            onSaved={value =>
+              setOverrides(previous => ({
+                ...previous,
+                [preference().key]: value,
+              }))
+            }
+            onClose={() => setLogoOpen(false)}
+          />
+        )}
       </Show>
     </Page>
   );

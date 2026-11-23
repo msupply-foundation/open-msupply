@@ -620,6 +620,9 @@ export const FilterTextInput = (props: FilterTextInputProps) => {
  * DEBOUNCED like the text filter: NumberField eagerly commits every valid
  * keystroke, and an exact-match filter applied at "12" while typing "1200"
  * matches nothing — the pause lets the whole number land as one change.
+ * Enter or blur applies it at once, as the text filter does: a change landing
+ * 300ms after the user moved on reaches the screen as a second, unasked-for
+ * edit (the link-purchase-order modal dropped the row picked in that gap).
  * `decimalLimit` defaults to 0 (an integer filter — stocktake number, pack
  * count); pass a limit for decimal filters.
  */
@@ -646,7 +649,10 @@ export const FilterNumberInput = (props: {
     300
   );
   return (
-    <span class={styles.bareField}>
+    // NumberField turns Enter into a blur and commits in its blur handler,
+    // which runs before focusout reaches here — so this flush carries that
+    // commit. A flush after the chip is gone is a no-op (createDebounced).
+    <span class={styles.bareField} onFocusOut={() => commit.flush()}>
       <NumberField
         label={props.label}
         hideLabel
@@ -767,6 +773,16 @@ const NoOptions = () => (
 );
 
 /**
+ * A filter trigger's accessible name: the filter's label, then the text the
+ * trigger shows. The label alone would hide the shown value from a screen
+ * reader and from voice control ("click Not expired"), which WCAG 2.5.3
+ * Label in Name asks to be part of the name (axe
+ * `label-content-name-mismatch`).
+ */
+const triggerName = (label: string, shown: string | undefined) =>
+  shown ? `${label}, ${shown}` : label;
+
+/**
  * A single-select dropdown. Generic over its option-value union `V`, so
  * `onChange` hands back exactly one of the option values (recovered by
  * matching the emitted string against the typed options — no cast, and an
@@ -798,7 +814,7 @@ export const FilterSelect = <V extends string>(props: FilterSelectProps<V>) => {
         class={styles.enumTrigger}
         data-testid={props.testId}
         ref={(el: HTMLButtonElement) => chipFocus?.ref(el)}
-        aria-label={props.label}
+        aria-label={triggerName(props.label, current()?.label)}
       >
         <span>{current()?.label ?? ''}</span>
         <ChevronDownIcon class={styles.triggerChevron} />
@@ -932,7 +948,7 @@ export const FilterMultiSelect = <V extends string>(props: {
         class={styles.enumTrigger}
         data-testid={props.testId}
         ref={(el: HTMLButtonElement) => chipFocus?.ref(el)}
-        aria-label={props.label}
+        aria-label={triggerName(props.label, summary())}
       >
         <span>{summary()}</span>
         <ChevronDownIcon class={styles.triggerChevron} />

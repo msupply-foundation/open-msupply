@@ -1,5 +1,17 @@
-import { describe, expect, it } from 'vitest';
-import { partitionFiles, type FileLike } from './uploadFiles';
+import { describe, expect, it, vi } from 'vitest';
+import {
+  chooseOne,
+  partitionFiles,
+  tooLargeMessage,
+  type FileLike,
+} from './uploadFiles';
+
+// A message reads as its key and values, so a test pins which message.
+vi.mock('../../../intl', async importOriginal => ({
+  ...(await importOriginal<typeof import('../../../intl')>()),
+  t: (key: string, params?: Record<string, string>) =>
+    `${key} ${JSON.stringify(params)}`,
+}));
 
 const file = (name: string, type: string, size: number): FileLike => ({
   name,
@@ -63,5 +75,34 @@ describe('partitionFiles', () => {
         reason: 'type',
       },
     ]);
+  });
+});
+
+describe('chooseOne', () => {
+  const pdf = file('a.pdf', 'application/pdf', 10);
+  const exe = file('b.exe', 'application/x-msdownload', 10);
+
+  it('chooses the one accepted file, or refuses the one rejected', () => {
+    expect(chooseOne([pdf], [])).toEqual({ kind: 'chosen', file: pdf });
+    expect(chooseOne([], [{ file: exe, reason: 'type' }])).toEqual({
+      kind: 'refused',
+      rejection: { file: exe, reason: 'type' },
+    });
+  });
+
+  it('chooses none for an empty drop or several files, valid or not', () => {
+    expect(chooseOne([], [])).toEqual({ kind: 'none' });
+    expect(chooseOne([pdf, pdf], [])).toEqual({ kind: 'none' });
+    expect(chooseOne([pdf], [{ file: exe, reason: 'type' }])).toEqual({
+      kind: 'none',
+    });
+  });
+});
+
+describe('tooLargeMessage', () => {
+  it('names the file and the limit, as a size', () => {
+    expect(tooLargeMessage('scan.pdf', 50 * 1024 * 1024)).toBe(
+      'error.file-exceeds-size-limit {"filename":"scan.pdf","maxSize":"50.0 MB"}'
+    );
   });
 });

@@ -1,6 +1,8 @@
 use super::{
-    DBType, NameRow, NameStoreJoinRow, StorageConnection, StoreRow, name_row::name,
-    name_store_join::name_store_join, store_row::store,
+    DBType, NameRow, NameStoreJoinRow, StorageConnection, StoreRow,
+    name_row::{name, system_name_filter},
+    name_store_join::name_store_join,
+    store_row::store,
 };
 
 use crate::{
@@ -15,7 +17,6 @@ use crate::{
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};
-use util::constants::SYSTEM_NAME_CODES;
 
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct Name {
@@ -258,11 +259,9 @@ impl<'a> NameRepository<'a> {
                 None => query,
             };
 
-            query = match is_system_name {
-                Some(true) => query.filter(name::code.eq_any(SYSTEM_NAME_CODES)),
-                Some(false) => query.filter(name::code.ne_all(SYSTEM_NAME_CODES)),
-                None => query,
-            };
+            if let Some(is_system_name) = is_system_name {
+                query = query.filter(system_name_filter(is_system_name));
+            }
 
             query = match is_store {
                 Some(true) => query.filter(store::id.is_not_null()),
@@ -453,9 +452,7 @@ impl Name {
     }
 
     pub fn is_system_name(&self) -> bool {
-        SYSTEM_NAME_CODES
-            .iter()
-            .any(|system_name_code| self.name_row.code == *system_name_code)
+        self.name_row.is_system_name()
     }
 
     pub fn store_id(&self) -> Option<&str> {

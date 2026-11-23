@@ -178,7 +178,12 @@ function renderFields(objectFields, parentType, schema, fragments) {
     } else {
       rendered = wrapType(fieldType, tsForNamedType(namedType));
     }
-    lines.push(`  ${alias}: ${rendered};`);
+    // A field under @include or @skip may be absent from the response, so it
+    // is optional: reading it unguarded is a type error, not a runtime one.
+    const conditional = (sel.directives ?? []).some(
+      (d) => d.name.value === "include" || d.name.value === "skip",
+    );
+    lines.push(`  ${alias}${conditional ? "?" : ""}: ${rendered};`);
   }
   return `{\n${lines.join("\n")}\n}`;
 }

@@ -1,4 +1,5 @@
 use log::{debug, error, info};
+use repository::is_unnamed_patient_id;
 use serde::{Deserialize, Serialize};
 use tokio::time::{Duration, sleep};
 
@@ -41,6 +42,15 @@ pub async fn add_patient_name_store_join(
 
     let ctx = service_provider.basic_context()?;
     validate_site_auth(&ctx, &sync_v5_settings).await?;
+
+    // A store's unnamed patient is never linked to another store
+    // (spec/prescriptions rules › the unnamed patient), whatever the
+    // remote's version
+    if is_unnamed_patient_id(&name_id) {
+        return Err(CentralApiError::InternalError(
+            "The unnamed patient can't be linked to a store".to_string(),
+        ));
+    }
 
     // Check patient exists (see README in service/programs/patient)
     if check_patient_exists(&ctx.connection, &name_id)?.is_none() {
@@ -116,4 +126,81 @@ async fn wait_for_sync_of_patient_records(
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod test {
+    use httpmock::{Method::GET, MockServer};
+    use repository::{
+        EqualFilter, KeyType, KeyValueStoreRepository, NameStoreJoinFilter,
+        NameStoreJoinRepository, mock::MockDataInserts, unnamed_patient_id,
+    };
+
+    use super::*;
+    use crate::{
+        sync::test_util_set_is_central_server, test_helpers::setup_all_and_service_provider,
+    };
+
+    // OMS-REG-DIS-12.211: an older site linking through the legacy central
+    // server's path is refused too
+    #[actix_rt::test]
+    async fn linking_the_unnamed_patient_through_the_legacy_path_is_refused() {
+        let context = setup_all_and_service_provider(
+            "v6_link_unnamed_patient_refused",
+            MockDataInserts::none(),
+        )
+        .await;
+        test_util_set_is_central_server(true);
+
+        // The site authenticates against legacy mSupply first
+        let legacy = MockServer::start();
+        legacy.mock(|when, then| {
+            when.method(GET).path("/sync/v5/site");
+            then.status(200).body(
+                r#"{
+                    "id": "site",
+                    "siteId": 2,
+                    "code": "s2",
+                    "name": "Site 2",
+                    "initialisationStatus": "completed",
+                    "isOmSupplyCentralServer": false,
+                    "omSupplyCentralServerUrl": "",
+                    "mSupplyCentralSiteId": 1
+                }"#,
+            );
+        });
+        KeyValueStoreRepository::new(&context.connection)
+            .set_string(KeyType::SettingsSyncUrl, Some(legacy.base_url()))
+            .unwrap();
+
+        let unnamed = unnamed_patient_id("store_a");
+        let result = add_patient_name_store_join(
+            &context.service_provider,
+            NameStoreJoinParams {
+                id: "unnamed_join".to_string(),
+                name_id: unnamed.clone(),
+                store_id: "store_b".to_string(),
+                sync_v5_settings: SyncApiSettings {
+                    server_url: legacy.base_url(),
+                    username: "site".to_string(),
+                    password_sha256: "hash".to_string(),
+                    site_uuid: "uuid".to_string(),
+                    app_version: "1".to_string(),
+                    app_name: "test".to_string(),
+                    sync_version: "6".to_string(),
+                },
+            },
+        )
+        .await;
+        assert!(
+            matches!(result, Err(CentralApiError::InternalError(ref message)) if message.contains("unnamed patient")),
+            "{result:?}"
+        );
+        assert!(
+            NameStoreJoinRepository::new(&context.connection)
+                .query_by_filter(NameStoreJoinFilter::new().name_id(EqualFilter::equal_to(unnamed)))
+                .unwrap()
+                .is_empty()
+        );
+    }
 }

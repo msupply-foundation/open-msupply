@@ -1,16 +1,15 @@
 import { createResource, Show, type Component } from 'solid-js';
-import { useNavigate, useParams } from '@solidjs/router';
+import { useParams } from '@solidjs/router';
 import { gated } from '@/api/gated';
-import { t } from '@/intl';
+import { getDisplayAge, t } from '@/intl';
 import { localisedDate } from '@/intl/formatDateTime';
 import { Page } from '@/ui/layout/Page/Page';
 import { Header } from '@/ui/layout/Header/Header';
 import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
 import { HeaderToolbar } from '@/ui/layout/Header/HeaderToolbar';
 import { LabelledValue } from '@/ui/elements/typography/LabelledValue';
-import { todayCalendarDate } from '@/intl/calendarDate';
 import { fetchCard, fetchCardPatient } from './cardApi';
-import { cardCounts, patientAgeLabel } from './cardModel';
+import { cardCounts } from './cardModel';
 import {
   VaccinationCardNotices,
   VaccinationCardTable,
@@ -31,7 +30,6 @@ const VaccinationCardView: Component = () => {
     patientId: string;
     programEnrolmentId: string;
   }>();
-  const navigate = useNavigate();
 
   const [cardData] = createResource(
     () => ({
@@ -49,6 +47,12 @@ const VaccinationCardView: Component = () => {
   const rows = () => card()?.rows ?? [];
   const patient = () => gated(patientData)?.patient ?? undefined;
   const dateOfBirth = () => patient()?.dateOfBirth ?? null;
+  // The patient's age as it reads across the app (spec/patients rules › what
+  // a patient is); none for a missing or future date of birth.
+  const age = () => {
+    const dob = dateOfBirth();
+    return dob ? getDisplayAge(dob) : '';
+  };
 
   // Every crumb but the leaf navigates (ui-surface § S1): the patient's name
   // to their Details, "Vaccination card" to their Vaccinations tab — the list
@@ -61,15 +65,15 @@ const VaccinationCardView: Component = () => {
     [
       {
         label: t('label.patients'),
-        onClick: () => navigate(`/${params.storeId}/dispensary/patients`),
+        to: `/${params.storeId}/dispensary/patients`,
       },
       {
         label: patient()?.name ?? '',
-        onClick: () => navigate(patientPath()),
+        to: patientPath(),
       },
       {
         label: t('label.vaccination-card'),
-        onClick: () => navigate(`${patientPath()}?tab=vaccinations`),
+        to: `${patientPath()}?tab=vaccinations`,
       },
       { label: card()?.programName ?? '' },
     ].filter(crumb => crumb.label !== '');
@@ -88,9 +92,7 @@ const VaccinationCardView: Component = () => {
             >
               {/* An absent value beside a label shows a dash
                   (ui-standards › detail views). */}
-              <Show when={dateOfBirth()} fallback="—">
-                {dob => patientAgeLabel(dob(), todayCalendarDate())}
-              </Show>
+              {age() || '—'}
             </LabelledValue>
             <LabelledValue
               label={t('label.date-of-birth')}

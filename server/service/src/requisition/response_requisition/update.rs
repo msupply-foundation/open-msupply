@@ -81,7 +81,7 @@ pub fn update_response_requisition(
                 )?;
             }
 
-            get_requisition(ctx, None, &updated_requisition.id)
+            get_requisition(ctx, None, &updated_requisition.id, None)
                 .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::UpdatedRequisitionDoesNotExist)
         })

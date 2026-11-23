@@ -117,6 +117,11 @@ impl StandaloneCentralServiceTrait for StandaloneCentralService {
                     password: admin_password,
                     email: None,
                 })?;
+                // So import can't remove or change the server's only way in.
+                kv.set_string(
+                    KeyType::StandaloneCentralAdminUserId,
+                    Some(admin.id.clone()),
+                )?;
 
                 UserStoreJoinRowRepository::new(con).upsert_one(&UserStoreJoinRow {
                     id: uuid(),
@@ -324,6 +329,11 @@ mod test {
         UserAccountService::new(&connection)
             .verify_password("admin", "pass")
             .unwrap();
+        assert_eq!(
+            kv.get_string(KeyType::StandaloneCentralAdminUserId)
+                .unwrap(),
+            Some(admin.id.clone())
+        );
 
         let permissions = UserPermissionRepository::new(&connection)
             .query_by_filter(

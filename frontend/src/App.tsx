@@ -18,7 +18,7 @@ import {
 } from '@solidjs/router';
 import { graphqlFetch } from './api/graphql';
 import { detectLocale, initialiseLocale, isRtl, locale, t } from './intl';
-import { InitialisationStatus } from './api/initialisation.generated';
+import { InitialisationStatusAtStartup } from './api/initialisation.generated';
 import { fetchServerInfo } from './api/serverInfo';
 import { fetchDisplaySettings } from './api/displaySettings';
 import { authUser, checkAuth, startActivityTracking } from './auth/authContext';
@@ -65,6 +65,7 @@ import { manageReportsRoutes } from './sections/manage-reports';
 import { reportsRoutes } from './sections/reports';
 import { settingsRoutes } from './sections/settings';
 import { sitesRoutes } from './sections/sites';
+import { centralDataRoutes } from './sections/central-data';
 import { helpRoutes, helpDocumentsRoutes } from './sections/help';
 import { globalPreferencesRoutes } from './sections/global-preferences';
 import { customFieldsRoutes } from './sections/custom-fields';
@@ -136,6 +137,7 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   reports: reportsRoutes,
   settings: settingsRoutes,
   'manage/sites': sitesRoutes,
+  'manage/central-data': centralDataRoutes,
   'manage/global-preferences': globalPreferencesRoutes,
   help: helpRoutes,
   'manage/campaigns': campaignsRoutes,
@@ -217,7 +219,7 @@ export const App: Component = () => {
     // Site branding rides along for the same reason: the login and
     // initialisation screens are themed, so it must land before they render.
     const [status] = await Promise.all([
-      graphqlFetch(InitialisationStatus, {}),
+      graphqlFetch(InitialisationStatusAtStartup, {}),
       fetchServerInfo(),
       fetchDisplaySettings(),
     ]);

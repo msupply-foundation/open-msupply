@@ -29,6 +29,7 @@ vi.mock('../store/storeContext', () => ({
 }));
 vi.mock('../api/serverInfo', () => ({
   isCentralServer: () => state.central,
+  isCentralStandalone: () => false,
 }));
 
 import { navConfig } from '../nav/navConfig';

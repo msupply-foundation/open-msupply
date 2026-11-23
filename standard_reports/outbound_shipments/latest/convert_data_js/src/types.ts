@@ -3,6 +3,7 @@ export type Input = {
     otherPartyId?: string;
     before?: string;
     after?: string;
+    timezone?: string;
   };
   data?: {
     invoices?: InvoiceConnector;
@@ -13,6 +14,8 @@ export interface InvoiceConnector {
   nodes: {
     id: string;
     otherPartyName: string;
+    invoiceNumber: number;
+    shippedDatetime: string | null;
     lines: InvoiceLine;
   }[];
 }
@@ -40,6 +43,7 @@ export type Output = {
   data?: {
     lines: Lines;
   };
+  arguments?: Input["arguments"];
 };
 
 export type Lines = {
@@ -54,4 +58,6 @@ export type Lines = {
   costPricePerPack: number;
   totalCost: number | string;
   otherPartyName: string;
+  invoiceNumber: number;
+  shippedDatetime: string | null;
 }[];

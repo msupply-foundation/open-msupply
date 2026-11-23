@@ -41,7 +41,7 @@ type ModalTab = 'details' | 'insurance' | 'custom-fields';
  * **Patient details** / **Insurance** / **Custom fields** dialog reusing the S3
  * Details form and the shared custom-fields editor, opened from any surface
  * that holds a patient without navigating away from it — the prescription
- * header's picker and the prescription-request header's (PatientSearch's
+ * header's patient field and the prescription-request header's (PatientField's
  * `onEditPatient`, spec/prescriptions ui-surface S3 § header fields; #1038).
  *
  * Custom fields earn a tab here because a patient's configured fields are

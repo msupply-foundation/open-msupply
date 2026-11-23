@@ -1,5 +1,4 @@
 import { graphqlFetch } from '../../api/graphql';
-import type { Page } from '../../ui/utils/createPaginatedSearch';
 import {
   PatientSearch,
   type PatientSearchFragment,
@@ -8,6 +7,7 @@ import {
   type CentralPatientSearchResult,
   type CentralPatientSearchVariables,
   LinkPatientToStore,
+  PatientOptionById,
 } from './patient.generated';
 
 // One local search result (spec/patients S4 picker / S2 duplicate check): the
@@ -25,39 +25,18 @@ export type CentralPatient = Extract<
 // A decoded central outcome. `unreachable` is the ONE patient error the app
 // decodes and surfaces (the typed ConnectionError — spec/patients
 // OMS-REG-DIS-01.41); `failed` means a transport/unexpected error the global
-// modal already showed.
+// modal already showed. A search can also be `slow`: central was reached but
+// didn't answer in time (CentralServerNoAnswer).
 export type CentralSearchOutcome =
   | { kind: 'ok'; nodes: CentralPatient[] }
   | { kind: 'unreachable'; message: string }
+  | { kind: 'slow' }
   | { kind: 'failed' };
 
 export type LinkOutcome =
   | { kind: 'ok'; nameId: string }
   | { kind: 'unreachable'; message: string }
   | { kind: 'failed' };
-
-/**
- * Local-search page fetcher for the reusable picker (spec/patients S4). The
- * typed text is placed in `identifier` — the broad match across code /
- * secondary code / name / program-enrolment id. The server hard-codes a
- * 100-row page sorted by code and ignores paging (contract › searching wire
- * trap), so we report `totalCount = rows returned` to stop the picker paging
- * futilely.
- */
-export const patientSearchPageFetcher =
-  (storeId: string) =>
-  async (
-    search: string,
-    _offset: number
-  ): Promise<Page<PatientOption> | undefined> => {
-    const result = await graphqlFetch(PatientSearch, {
-      storeId,
-      input: search ? { identifier: search } : {},
-    });
-    if (result.kind !== 'success') return undefined;
-    const nodes = result.data.patientSearch.nodes.map(node => node.patient);
-    return { nodes, totalCount: nodes.length };
-  };
 
 /**
  * Local duplicate search for the create flow's step ② (spec/patients
@@ -75,21 +54,18 @@ export const searchLocalPatients = async (
 };
 
 /**
- * Resolve one patient for the picker's label when reopened with only a stored
- * id (next of kin restore). Undefined when it doesn't resolve (picker shows
- * empty). Uses the identifier search since there is no single-id search input.
+ * One patient as a picker option, by its id — e.g. a patient just created,
+ * which the create flow hands back with its id and name only. Undefined when
+ * it doesn't resolve. Reads `patients` by id: `patientSearch`'s identifier
+ * matches code, national health number, name and enrolment id, never the id.
  */
 export const fetchPatientOptionById = async (
   storeId: string,
   id: string
 ): Promise<PatientOption | undefined> => {
-  const result = await graphqlFetch(PatientSearch, {
-    storeId,
-    input: { identifier: id },
-  });
+  const result = await graphqlFetch(PatientOptionById, { storeId, id });
   if (result.kind !== 'success') return undefined;
-  return result.data.patientSearch.nodes.find(node => node.patient.id === id)
-    ?.patient;
+  return result.data.patients.nodes.find(patient => patient.id === id);
 };
 
 /**
@@ -127,7 +103,9 @@ export const searchCentralPatients = async (
   if (result.kind !== 'success') return { kind: 'failed' };
   const res = result.data.centralPatientSearch;
   if (res.__typename === 'CentralPatientSearchError')
-    return { kind: 'unreachable', message: res.error.description };
+    return res.error.__typename === 'CentralServerNoAnswer'
+      ? { kind: 'slow' }
+      : { kind: 'unreachable', message: res.error.description };
   return { kind: 'ok', nodes: res.nodes };
 };
 

@@ -35,6 +35,7 @@ export type PrescriptionRequestsVariables = {
     patientName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     createdDatetime?: {
     equalTo?: string | null;
@@ -54,6 +55,7 @@ export type PrescriptionRequestsVariables = {
     username?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     dynamicFilter?: unknown | null;
   } | null;

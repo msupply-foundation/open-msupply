@@ -5,9 +5,10 @@ import {
   Suspense,
   type Component,
 } from 'solid-js';
-import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
+import { useNavigate, useParams } from '@solidjs/router';
+import { useUrlTab } from '../../../list/urlTab';
 import { reportPermissionDenied } from '../../../api/graphql';
-import { gated } from '../../../api/gated';
+import { gated, notFound } from '../../../api/gated';
 import { t, localisedDate, getDisplayAge } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
@@ -28,6 +29,7 @@ import { createAddAction } from '../../../ui/utils/keyActions';
 import { ALT_N } from '../../../ui/utils/shortcuts';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
+import { NotFoundNotice } from '../../../ui/elements/feedback/NotFoundNotice';
 import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
 import { PlusCircleIcon, SaveIcon, XCircleIcon } from '../../../ui/icons';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
@@ -107,11 +109,16 @@ import { hasPermission, patientPreferences } from '../../../store/storeContext';
 const PatientDetailView: Component = () => {
   const params = useParams<{ storeId: string; patientId: string }>();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams<{ tab?: string }>();
-
-  const activeTab = () => searchParams.tab ?? 'details';
-  const setActiveTab = (value: string) =>
-    setSearchParams({ tab: value === 'details' ? undefined : value });
+  // Every tab the screen can show; which of them it does depends on the store.
+  const { tab: activeTab, setTab: setActiveTab } = useUrlTab([
+    'details',
+    'programs',
+    'encounters',
+    'vaccinations',
+    'insurance',
+    'custom-fields',
+    'log',
+  ]);
 
   // The patient read and the Details tab, on the plain path or the document
   // path as the store's Patient registry entry says (spec/patients rules ›
@@ -124,7 +131,12 @@ const PatientDetailView: Component = () => {
     patientId: () => params.patientId,
   });
   // The screen's own read suspends for its first load (the Suspense below);
-  // everything under it reads the patient through patientDetails.node.
+  // everything under it reads the patient through patientDetails.node. The
+  // server answers null — not an error — for an id that is not one of this
+  // store's patients (another name's, another record's, a made-up one), so
+  // the read settles null and the not-found deep-link alert renders below
+  // (#1746); a failed read settles undefined and keeps the spinner, under the
+  // global error modal.
   const { patient: data, refetch } = patientDetails;
   const node = () => data.latest ?? undefined;
   const editor = patientDetails.editor;
@@ -212,8 +224,12 @@ const PatientDetailView: Component = () => {
   );
   const encounters = () => gated(encountersData) ?? [];
 
+  const encounterHref = (encounter: { id: string }) =>
+    `/${params.storeId}/dispensary/encounter/${encounter.id}`;
   const openEncounter = (encounter: { id: string }) =>
-    navigate(`/${params.storeId}/dispensary/encounter/${encounter.id}`);
+    navigate(encounterHref(encounter));
+  const vaccinationCardHref = (enrolment: { id: string }) =>
+    `/${params.storeId}/dispensary/patients/${params.patientId}/vaccination-card/${enrolment.id}`;
 
   // The record-create actions, over the registry entries the server lets this
   // user see: every enrolment type, and the encounter types of the programs the
@@ -348,7 +364,10 @@ const PatientDetailView: Component = () => {
   const displayName = () => node()?.name || t('label.new-patient');
 
   const crumbs = () => [
-    { label: t('label.patients'), onClick: leave },
+    {
+      label: t('label.patients'),
+      to: `/${params.storeId}/dispensary/patients`,
+    },
     { label: displayName() },
   ];
 
@@ -397,7 +416,22 @@ const PatientDetailView: Component = () => {
 
   return (
     <Suspense fallback={<Spinner center />}>
-      <Show when={node()}>
+      <Show
+        when={node()}
+        fallback={
+          // `notFound`, not merely settled: the read re-keys once the
+          // Patient registry settles the path (patientDetails.ts), and that
+          // refetch must not flash the alert; nor may a failed read.
+          <Show when={notFound(data)} fallback={<Spinner center />}>
+            <NotFoundNotice
+              testId="patient-not-found-notice"
+              title={t('error.patient-not-found')}
+              description={t('messages.click-to-return-to-patients')}
+              onClose={() => navigate(`/${params.storeId}/dispensary/patients`)}
+            />
+          </Show>
+        }
+      >
         {n => (
           <Tabs value={activeTab()} onValueChange={setActiveTab}>
             <Page
@@ -566,6 +600,7 @@ const PatientDetailView: Component = () => {
                     rows={encounters()}
                     loading={encountersData.loading}
                     onRowClick={openEncounter}
+                    rowHref={encounterHref}
                     enrolmentRegistries={enrolmentRegistries()}
                   />
                 </TabPanel>
@@ -575,11 +610,8 @@ const PatientDetailView: Component = () => {
                     loading={enrolmentsData.loading}
                     tableId="patient-vaccination-card-list"
                     emptyMessage={t('messages.no-programs')}
-                    onRowClick={row =>
-                      navigate(
-                        `/${params.storeId}/dispensary/patients/${params.patientId}/vaccination-card/${row.id}`
-                      )
-                    }
+                    onRowClick={row => navigate(vaccinationCardHref(row))}
+                    rowHref={vaccinationCardHref}
                   />
                 </TabPanel>
               </Show>
@@ -670,7 +702,7 @@ const PatientDetailView: Component = () => {
                 title={t('heading.are-you-sure')}
                 message={t('messages.confirm-save-generic')}
                 confirmAction="save"
-                onConfirm={() => void details().doSave(() => void refetch())}
+                onConfirm={() => void details().doSave(() => refetch())}
                 onClose={() => details().setConfirmSaveOpen(false)}
               />
               <ConfirmDialog

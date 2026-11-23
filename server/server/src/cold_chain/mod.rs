@@ -98,12 +98,7 @@ pub fn validate_access(
 
 #[cfg(test)]
 mod tests {
-    use actix_web::{
-        App,
-        http::StatusCode,
-        test,
-        web::Data,
-    };
+    use actix_web::{App, http::StatusCode, test, web::Data};
     use repository::{mock::MockDataInserts, test_db::setup_all};
     use service::{
         auth_data::AuthData, service_provider::ServiceProvider, sync::test_util_set_is_initialised,

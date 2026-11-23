@@ -1,5 +1,5 @@
 use base64::prelude::*;
-use chrono::{DateTime, Local, Utc};
+use chrono::{DateTime, Utc};
 use chrono_tz::Tz;
 use log::error;
 use repository::{
@@ -9,6 +9,7 @@ use repository::{
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{BTreeMap, HashMap},
+    sync::LazyLock,
     time::SystemTime,
 };
 use thiserror::Error;
@@ -16,7 +17,7 @@ use util::{format_error, sanitize_filename, uuid::uuid};
 
 use crate::{
     ListError, ListResult, UploadedFile,
-    boajs::{BoaJsError, call_method},
+    boajs::{BoaJsError, call_method_in_timezone},
     get_pagination_or_default, i64_to_u32,
     localisations::{Localisations, TranslationError},
     service_provider::ServiceContext,
@@ -34,6 +35,7 @@ use super::{
     },
     html_printing::html_to_pdf,
     qr_code::qr_code_svg,
+    timezone::arguments_timezone,
     utils::translate_report_arugment_schema,
 };
 
@@ -401,6 +403,9 @@ impl ReportServiceTrait for ReportService {}
 
 #[derive(Debug)]
 pub enum GetReportError {
+    /// No report has this id — an ordinary outcome for a stale or mistyped
+    /// link, not a repository failure.
+    ReportNotFound,
     TranslationError(TranslationError),
     RepositoryError(RepositoryError),
 }
@@ -415,7 +420,7 @@ fn get_report(
         .query_by_filter(ReportFilter::new().id(EqualFilter::equal_to(id.to_string())))
         .map_err(GetReportError::RepositoryError)?
         .pop()
-        .ok_or(GetReportError::RepositoryError(RepositoryError::NotFound))?;
+        .ok_or(GetReportError::ReportNotFound)?;
 
     let report = translate_report_arugment_schema(report, localisations, &user_language)
         .map_err(GetReportError::TranslationError)?;
@@ -644,6 +649,7 @@ fn transform_data(
     data: ReportData,
     convert_data: Option<String>,
     convert_data_type: &ConvertDataType,
+    timezone: Tz,
 ) -> Result<ReportData, ConvertDataError> {
     let Some(convert_data) = convert_data else {
         return Ok(data);
@@ -651,7 +657,7 @@ fn transform_data(
 
     match convert_data_type {
         // Mapping to string via format_error since it's better then debug output on error
-        ConvertDataType::BoaJs => transform_data_boajs(data, convert_data)
+        ConvertDataType::BoaJs => transform_data_boajs(data, convert_data, timezone)
             .map_err(|e| ConvertDataError::BoaJs(format_error(&e))),
         ConvertDataType::Extism => Err(ConvertDataError::Extism(anyhow::anyhow!(
             "Extism convert data no longer implemented."
@@ -659,27 +665,30 @@ fn transform_data(
     }
 }
 
-fn transform_data_boajs(data: ReportData, convert_data: String) -> Result<ReportData, BoaJsError> {
-    call_method(
+fn transform_data_boajs(
+    data: ReportData,
+    convert_data: String,
+    timezone: Tz,
+) -> Result<ReportData, BoaJsError> {
+    call_method_in_timezone(
         data,
         vec!["convert_data"],
         &BASE64_STANDARD.decode(convert_data).unwrap(),
+        timezone,
     )
 }
 
-/// Tera's built-in `now()`, in the user's timezone rather than the server's.
-/// Without a timezone (or with one chrono-tz doesn't know) it falls back to the
-/// server's, as the built-in does. Keeps the built-in's `utc` and `timestamp`
-/// arguments.
+/// Tera's built-in `now()`, in the report's timezone rather than the server's.
+/// Keeps the built-in's `utc` and `timestamp` arguments.
 fn now_function(
-    timezone: Option<Tz>,
+    timezone: Tz,
 ) -> impl Fn(&HashMap<String, serde_json::Value>) -> tera::Result<tera::Value> + Send + Sync {
     move |args| now_at(Utc::now(), timezone, args)
 }
 
 fn now_at(
     now: DateTime<Utc>,
-    timezone: Option<Tz>,
+    timezone: Tz,
     args: &HashMap<String, serde_json::Value>,
 ) -> tera::Result<tera::Value> {
     let flag = |name: &str| match args.get(name) {
@@ -694,12 +703,44 @@ fn now_at(
     if flag("timestamp")? {
         return Ok(now.timestamp().into());
     }
-    let datetime = match (utc, timezone) {
-        (true, _) => now.to_rfc3339(),
-        (false, Some(timezone)) => now.with_timezone(&timezone).fixed_offset().to_rfc3339(),
-        (false, None) => now.with_timezone(&Local).to_rfc3339(),
+    let datetime = if utc {
+        now.to_rfc3339()
+    } else {
+        now.with_timezone(&timezone).fixed_offset().to_rfc3339()
     };
     Ok(datetime.into())
+}
+
+/// Tera's own `date` filter, which [`date_in_timezone`] wraps.
+static TERA_DATE: LazyLock<tera::Tera> = LazyLock::new(tera::Tera::default);
+
+/// Tera's `date` filter, with `timezone` defaulting to the report's; a template's own `timezone=`
+/// still wins. Calendar dates (`2026-01-05`) are shown as the day they name.
+///
+/// An instant with no zone written (`2026-01-05T23:30:00` from postgres' `row_to_json`,
+/// `2026-01-05 23:30:00` from sqlite) is read as UTC, as the database stores it. Tera on its own
+/// ignores `timezone` for the first and refuses the second.
+fn date_in_timezone(timezone: Tz) -> impl tera::Filter {
+    move |value: &tera::Value, args: &HashMap<String, tera::Value>| {
+        let mut args = args.clone();
+        args.entry("timezone".to_string())
+            .or_insert_with(|| tera::Value::String(timezone.name().to_string()));
+        let value = match value.as_str().and_then(zoneless_instant_as_utc) {
+            Some(utc) => tera::Value::String(utc),
+            None => value.clone(),
+        };
+        TERA_DATE.get_filter("date")?.filter(&value, &args)
+    }
+}
+
+/// `2026-01-05T23:30:00` or `2026-01-05 23:30:00` (fractional seconds or not) as
+/// `2026-01-05T23:30:00+00:00`. `None` for anything else - an instant that already has a zone, a
+/// calendar date, or not a date at all - which goes to Tera as it is.
+fn zoneless_instant_as_utc(value: &str) -> Option<String> {
+    ["%Y-%m-%dT%H:%M:%S%.f", "%Y-%m-%d %H:%M:%S%.f"]
+        .iter()
+        .find_map(|format| chrono::NaiveDateTime::parse_from_str(value, format).ok())
+        .map(|naive| naive.and_utc().to_rfc3339())
 }
 
 fn generate_report(
@@ -709,16 +750,13 @@ fn generate_report(
     localisations: &Localisations,
     current_language: Option<String>,
 ) -> Result<GeneratedReport, ReportError> {
-    let user_timezone = arguments
-        .as_ref()
-        .and_then(|arguments| arguments.get("timezone"))
-        .and_then(|timezone| timezone.as_str())
-        .and_then(|timezone| timezone.parse::<Tz>().ok());
+    let timezone = arguments_timezone(&arguments);
     let report_data = ReportData { data, arguments };
     let report_data = transform_data(
         report_data,
         report.convert_data.clone(),
         &report.convert_data_type,
+        timezone,
     )
     .map_err(|err| {
         error!(
@@ -737,6 +775,7 @@ fn generate_report(
     context.insert("isRtl", &is_rtl_locale(&current_language));
 
     let mut tera = tera::Tera::default();
+    tera.register_filter("date", date_in_timezone(timezone));
 
     tera.register_function(
         "qr_code",
@@ -760,7 +799,7 @@ fn generate_report(
 
     // Replaces Tera's built-in now(), which is the server's clock - UTC on
     // Docker-hosted servers - so printed dates follow the user's clock instead.
-    tera.register_function("now", now_function(user_timezone));
+    tera.register_function("now", now_function(timezone));
 
     let mut templates: HashMap<String, String> = report
         .templates
@@ -962,6 +1001,81 @@ impl From<RepositoryError> for ReportError {
 impl From<std::io::Error> for ReportError {
     fn from(_err: std::io::Error) -> Self {
         ReportError::TranslationError
+    }
+}
+
+#[cfg(test)]
+mod report_timezone_test {
+    use std::collections::HashMap;
+
+    use base64::prelude::*;
+    use serde_json::json;
+    use tera::Filter;
+    use util::timezone::Tz;
+
+    use super::{ReportData, date_in_timezone, transform_data_boajs};
+
+    #[test]
+    fn date_filter_defaults_to_the_report_timezone() {
+        let filter = date_in_timezone(Tz::Pacific__Auckland);
+        let date = |value: &str, args: &[(&str, &str)]| {
+            let mut map = HashMap::from([("format".to_string(), json!("%d/%m/%Y %H:%M"))]);
+            for (key, value) in args {
+                map.insert(key.to_string(), json!(value));
+            }
+            filter.filter(&json!(value), &map).unwrap()
+        };
+
+        // An instant is shown in the report's timezone...
+        assert_eq!(
+            date("2026-01-05T23:30:00+00:00", &[]),
+            json!("06/01/2026 12:30")
+        );
+        // ...unless the template names its own
+        assert_eq!(
+            date("2026-01-05T23:30:00+00:00", &[("timezone", "UTC")]),
+            json!("05/01/2026 23:30")
+        );
+        // An instant with no zone written is UTC, as the database stores it: postgres'
+        // `row_to_json` form, and sqlite's (which Tera alone refuses)
+        assert_eq!(date("2026-01-05T23:30:00", &[]), json!("06/01/2026 12:30"));
+        assert_eq!(
+            date("2026-01-05 23:30:00.123456", &[]),
+            json!("06/01/2026 12:30")
+        );
+        // A calendar date is the day it names
+        assert_eq!(date("2026-01-05", &[]), json!("05/01/2026 00:00"));
+    }
+
+    #[test]
+    fn convert_data_local_time_is_the_report_timezone() {
+        // 23:30 UTC on the 5th is the 6th in Auckland, and still the 5th in Los Angeles
+        let bundle = BASE64_STANDARD.encode(
+            r#"
+            export function convert_data({ data, arguments: args }) {
+                const instant = new Date("2026-01-05T23:30:00Z");
+                return { data: { day: instant.getDate(), hours: instant.getHours() }, arguments: args };
+            }
+            "#,
+        );
+        let run = |timezone: Tz| {
+            transform_data_boajs(
+                ReportData {
+                    data: json!({}),
+                    arguments: None,
+                },
+                bundle.clone(),
+                timezone,
+            )
+            .unwrap()
+            .data
+        };
+
+        assert_eq!(run(Tz::Pacific__Auckland), json!({ "day": 6, "hours": 12 }));
+        assert_eq!(
+            run(Tz::America__Los_Angeles),
+            json!({ "day": 5, "hours": 15 })
+        );
     }
 }
 
@@ -1191,18 +1305,18 @@ mod now_test {
         let now = Utc.with_ymd_and_hms(2026, 11, 6, 1, 10, 0).unwrap();
         let no_args = HashMap::new();
 
-        let kabul = now_at(now, Some(Tz::Asia__Kabul), &no_args).unwrap();
+        let kabul = now_at(now, Tz::Asia__Kabul, &no_args).unwrap();
         assert_eq!(kabul, json!("2026-11-06T05:40:00+04:30"));
 
         // Behind UTC, so the printed date is the day before
-        let los_angeles = now_at(now, Some(Tz::America__Los_Angeles), &no_args).unwrap();
+        let los_angeles = now_at(now, Tz::America__Los_Angeles, &no_args).unwrap();
         assert_eq!(los_angeles, json!("2026-11-05T17:10:00-08:00"));
     }
 
     #[test]
     fn now_keeps_the_built_in_arguments() {
         let now = Utc.with_ymd_and_hms(2026, 11, 6, 1, 10, 0).unwrap();
-        let kabul = Some(Tz::Asia__Kabul);
+        let kabul = Tz::Asia__Kabul;
 
         let utc = now_at(
             now,
@@ -1272,13 +1386,10 @@ mod now_test {
             "-1100|+0430"
         );
 
-        // Without a timezone, or with an unknown one, now() is the server's as before
-        let server_offset = chrono::Local::now().format("%z").to_string();
-        assert_eq!(render(None), format!("{server_offset}|+0430"));
-        assert_eq!(
-            render(Some(json!({ "timezone": "Narnia" }))),
-            format!("{server_offset}|+0430")
-        );
+        // Without a timezone, or with an unknown one, now() is UTC rather than the server's
+        // clock, so a server never needs a timezone set up
+        assert_eq!(render(None), "+0000|+0430");
+        assert_eq!(render(Some(json!({ "timezone": "Narnia" }))), "+0000|+0430");
     }
 }
 
@@ -1426,5 +1537,37 @@ mod report_filter_test {
             .find(|r| r.id == result.clone().into_iter().next().unwrap())
             .unwrap();
         assert_eq!(report.version, Version::from_str("2.8.2"));
+    }
+}
+
+#[cfg(test)]
+mod get_report_test {
+    use crate::{report::report_service::GetReportError, service_provider::ServiceProvider};
+    use repository::{mock::MockDataInserts, test_db::setup_all};
+
+    // An unknown id is its own typed outcome, not a repository failure, so a
+    // detail screen can say "not found" instead of raising an error (#1746).
+    #[actix_rt::test]
+    async fn get_report_unknown_id_is_report_not_found() {
+        let (_, _, connection_manager, _) = setup_all(
+            "get_report_unknown_id_is_report_not_found",
+            MockDataInserts::none().reports(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let ctx = service_provider.basic_context().unwrap();
+        let localisations = service_provider
+            .localisations_service
+            .get_localisations(&ctx.connection)
+            .unwrap();
+
+        let result = service_provider.report_service.get_report(
+            &ctx,
+            &localisations,
+            "en".to_string(),
+            "not_a_report_id",
+        );
+        assert!(matches!(result, Err(GetReportError::ReportNotFound)));
     }
 }

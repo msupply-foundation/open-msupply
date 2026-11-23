@@ -77,6 +77,14 @@ pub trait PreferenceServiceTrait: Sync + Send {
             invoice_status_options,
             do_not_print_placeholder_line_labels,
             prompt_for_batch_and_expiry_on_inbound_shipments,
+            // Hidden from the preferences edit UI until it has an editor (#2188)
+            common_medicines: _,
+
+            // Dispensing (#2188)
+            dispensing_screen,
+            use_unnamed_patient,
+            start_with_unnamed_patient,
+            ask_for_patient_type,
         } = self.get_preference_provider();
 
         let input = AppendIfTypeInputs {
@@ -171,6 +179,13 @@ pub trait PreferenceServiceTrait: Sync + Send {
             &mut prefs,
             &input,
         )?;
+
+        // Dispensing (#2188): global preferences a store may override. Last,
+        // so every earlier row keeps its place in both listings.
+        append_if_type(dispensing_screen, &mut prefs, &input)?;
+        append_if_type(use_unnamed_patient, &mut prefs, &input)?;
+        append_if_type(start_with_unnamed_patient, &mut prefs, &input)?;
+        append_if_type(ask_for_patient_type, &mut prefs, &input)?;
 
         Ok(prefs)
     }
