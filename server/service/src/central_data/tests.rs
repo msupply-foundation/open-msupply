@@ -7810,3 +7810,95 @@ async fn a_delete_row_matches_a_permission_and_username_in_any_letter_case() {
             .any(|(id, ..)| id == "anna_stocktake")
     );
 }
+
+// covers: OMS-REG-CDIO-01.36, .160
+
+#[actix_rt::test]
+async fn a_delete_row_with_a_missing_reference_applies_nothing() {
+    let (connection, service_provider, dir) =
+        permission_setup("central_data_permission_delete_missing_reference").await;
+    let ctx = as_user(&service_provider, IMPORTER);
+    let before = permissions_of(&connection, "anna");
+    let path = write_file(
+        dir.path(),
+        permission_sheet(vec![
+            permission_row(&[("id", "anna_stocktake"), ("delete", "DELETE")]),
+            permission_row(&[
+                ("username", "nobody"),
+                ("store_code", "MS"),
+                ("permission", "REPORT"),
+                ("delete", "DELETE"),
+            ]),
+            permission_row(&[
+                ("username", "anna"),
+                ("store_code", "NOPE"),
+                ("permission", "REPORT"),
+                ("delete", "DELETE"),
+            ]),
+            permission_row(&[
+                ("username", "anna"),
+                ("store_code", "MS"),
+                ("permission", "DOCUMENT_QUERY"),
+                ("context_name", "No such program"),
+                ("delete", "DELETE"),
+            ]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (3, Some("username"), "referenced record not found"),
+            (4, Some("store_code"), "referenced record not found"),
+            (5, Some("context_name"), "referenced record not found"),
+        ]
+    );
+    // Row 2's delete is rolled back with the rest.
+    assert_eq!(permissions_of(&connection, "anna"), before);
+}
+
+// covers: OMS-REG-CDIO-01.36
+
+#[actix_rt::test]
+async fn a_name_delete_row_with_a_missing_reference_applies_nothing() {
+    let (connection, service_provider, dir) =
+        name_setup("central_data_name_delete_missing_reference").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let path = write_file(
+        dir.path(),
+        name_sheet(vec![
+            name_row(&[("id", "clinic"), ("delete", "DELETE")]),
+            // Neither finds a name, but their references are looked up first.
+            name_row(&[
+                ("code", "GONE"),
+                ("type", "FACILITY"),
+                ("currency_code", "XXX"),
+                ("delete", "DELETE"),
+            ]),
+            name_row(&[
+                ("code", "GONE"),
+                ("type", "FACILITY"),
+                ("supplying_store_code", "NOPE"),
+                ("delete", "DELETE"),
+            ]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (3, Some("currency_code"), "referenced record not found"),
+            (
+                4,
+                Some("supplying_store_code"),
+                "referenced record not found"
+            ),
+        ]
+    );
+    // Row 2's delete is rolled back with the rest.
+    assert_eq!(find_name(&connection, "clinic"), Some(central_clinic()));
+}
