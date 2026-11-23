@@ -1,10 +1,12 @@
-use crate::user_account::upsert::protected_user_ids;
+use crate::{
+    user_account::upsert::protected_user_ids,
+    user_on_store::{UserOnStoreError, check_new_user_and_store, check_not_protected},
+};
 use repository::{
     EqualFilter, KeyType, KeyValueStoreRepository, PermissionType, RepositoryError,
-    StorageConnection, StoreRowRepository, UserAccountRowRepository, UserFilter,
-    UserPermissionFilter, UserPermissionRepository, UserPermissionRow, UserPermissionRowRepository,
-    UserRepository, UserStoreJoinFilter, UserStoreJoinRepository, UserStoreJoinRow,
-    UserStoreJoinRowRepository,
+    StorageConnection, UserFilter, UserPermissionFilter, UserPermissionRepository,
+    UserPermissionRow, UserPermissionRowRepository, UserRepository, UserStoreJoinFilter,
+    UserStoreJoinRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
 };
 
 #[derive(Debug, PartialEq)]
@@ -21,6 +23,20 @@ pub enum UpsertUserStoreJoinError {
     /// A saved join's user or store. Delete it and add another.
     RecordChanged,
     DatabaseError(RepositoryError),
+}
+
+impl From<UserOnStoreError> for UpsertUserStoreJoinError {
+    fn from(error: UserOnStoreError) -> Self {
+        match error {
+            UserOnStoreError::Protected => UpsertUserStoreJoinError::Protected,
+            UserOnStoreError::UserNotFound => UpsertUserStoreJoinError::UserNotFound,
+            UserOnStoreError::UserDeleted => UpsertUserStoreJoinError::UserDeleted,
+            UserOnStoreError::StoreNotFound => UpsertUserStoreJoinError::StoreNotFound,
+            UserOnStoreError::DatabaseError(error) => {
+                UpsertUserStoreJoinError::DatabaseError(error)
+            }
+        }
+    }
 }
 
 impl From<RepositoryError> for UpsertUserStoreJoinError {
@@ -163,12 +179,11 @@ fn validate(
     saved: Option<&UserStoreJoinRow>,
     row: &UserStoreJoinRow,
 ) -> Result<(), UpsertUserStoreJoinError> {
-    let protected = protected_user_ids(connection)?;
-    if protected.contains(&row.user_id)
-        || saved.is_some_and(|saved| protected.contains(&saved.user_id))
-    {
-        return Err(UpsertUserStoreJoinError::Protected);
-    }
+    check_not_protected(
+        connection,
+        &row.user_id,
+        saved.map(|saved| saved.user_id.as_str()),
+    )?;
     if let Some(saved) = saved {
         if saved.user_id != row.user_id || saved.store_id != row.store_id {
             return Err(UpsertUserStoreJoinError::RecordChanged);
@@ -176,18 +191,7 @@ fn validate(
         return Ok(());
     }
 
-    let user = UserAccountRowRepository::new(connection)
-        .find_one_by_id(&row.user_id)?
-        .ok_or(UpsertUserStoreJoinError::UserNotFound)?;
-    if user.deleted_datetime.is_some() {
-        return Err(UpsertUserStoreJoinError::UserDeleted);
-    }
-    if StoreRowRepository::new(connection)
-        .find_one_by_id(&row.store_id)?
-        .is_none()
-    {
-        return Err(UpsertUserStoreJoinError::StoreNotFound);
-    }
+    check_new_user_and_store(connection, &row.user_id, &row.store_id)?;
     if let Some(other) = find_user_store_join(connection, &row.user_id, &row.store_id)?
         .into_iter()
         .find(|other| other.id != row.id)
@@ -246,7 +250,10 @@ fn give_store_access(
 mod tests {
     use super::*;
     use chrono::NaiveDate;
-    use repository::{StoreRow, UserAccountRow, mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        StoreRow, StoreRowRepository, UserAccountRow, UserAccountRowRepository,
+        mock::MockDataInserts, test_db::setup_all,
+    };
 
     fn join(id: &str, user_id: &str, store_id: &str, is_default: bool) -> UserStoreJoinRow {
         UserStoreJoinRow {

@@ -116,6 +116,7 @@ pub mod sync_v7;
 pub mod temperature_excursion;
 pub mod unit;
 pub mod user_account;
+pub mod user_on_store;
 pub mod user_permission;
 pub mod user_store_join;
 pub mod vaccination;

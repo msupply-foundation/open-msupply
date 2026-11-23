@@ -1,11 +1,12 @@
 use crate::{
     user_account::upsert::protected_user_ids,
+    user_on_store::{UserOnStoreError, check_new_user_and_store, check_not_protected},
     user_store_join::{find_user_store_join, is_last_store_on_site, store_access},
 };
 use repository::{
     ContextRowRepository, EqualFilter, PermissionType, RepositoryError, StorageConnection,
-    StoreRowRepository, UserAccountRowRepository, UserPermissionFilter, UserPermissionRepository,
-    UserPermissionRow, UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
+    UserPermissionFilter, UserPermissionRepository, UserPermissionRow, UserPermissionRowRepository,
+    UserStoreJoinRow, UserStoreJoinRowRepository,
 };
 use util::uuid::uuid;
 
@@ -28,6 +29,20 @@ pub enum UpsertUserPermissionError {
     /// A saved record's user, store, permission or context. Delete it and add another.
     RecordChanged,
     DatabaseError(RepositoryError),
+}
+
+impl From<UserOnStoreError> for UpsertUserPermissionError {
+    fn from(error: UserOnStoreError) -> Self {
+        match error {
+            UserOnStoreError::Protected => UpsertUserPermissionError::Protected,
+            UserOnStoreError::UserNotFound => UpsertUserPermissionError::UserNotFound,
+            UserOnStoreError::UserDeleted => UpsertUserPermissionError::UserDeleted,
+            UserOnStoreError::StoreNotFound => UpsertUserPermissionError::StoreNotFound,
+            UserOnStoreError::DatabaseError(error) => {
+                UpsertUserPermissionError::DatabaseError(error)
+            }
+        }
+    }
 }
 
 impl From<RepositoryError> for UpsertUserPermissionError {
@@ -149,12 +164,11 @@ fn validate(
     saved: Option<&UserPermissionRow>,
     row: &UserPermissionRow,
 ) -> Result<(), UpsertUserPermissionError> {
-    let protected = protected_user_ids(connection)?;
-    if protected.contains(&row.user_id)
-        || saved.is_some_and(|saved| protected.contains(&saved.user_id))
-    {
-        return Err(UpsertUserPermissionError::Protected);
-    }
+    check_not_protected(
+        connection,
+        &row.user_id,
+        saved.map(|saved| saved.user_id.as_str()),
+    )?;
     if let Some(saved) = saved {
         if saved != row {
             return Err(UpsertUserPermissionError::RecordChanged);
@@ -162,24 +176,13 @@ fn validate(
         return Ok(());
     }
 
-    let user = UserAccountRowRepository::new(connection)
-        .find_one_by_id(&row.user_id)?
-        .ok_or(UpsertUserPermissionError::UserNotFound)?;
-    if user.deleted_datetime.is_some() {
-        return Err(UpsertUserPermissionError::UserDeleted);
-    }
     if matches!(row.permission, PermissionType::Unknown(_)) {
         return Err(UpsertUserPermissionError::UnknownPermission);
     }
     let Some(store_id) = &row.store_id else {
         return Err(UpsertUserPermissionError::StoreRequired);
     };
-    if StoreRowRepository::new(connection)
-        .find_one_by_id(store_id)?
-        .is_none()
-    {
-        return Err(UpsertUserPermissionError::StoreNotFound);
-    }
+    check_new_user_and_store(connection, &row.user_id, store_id)?;
     if let Some(context_id) = &row.context_id
         && !ContextRowRepository::new(connection).check_exists_by_id(context_id)?
     {
@@ -263,8 +266,8 @@ mod tests {
     use chrono::NaiveDate;
     use repository::{
         ChangelogCondition, ChangelogRepository, ChangelogTableName, ContextRow, CursorAndLimit,
-        KeyType, KeyValueStoreRepository, RowActionType, StoreRow, UserAccountRow,
-        mock::MockDataInserts, test_db::setup_all,
+        KeyType, KeyValueStoreRepository, RowActionType, StoreRow, StoreRowRepository,
+        UserAccountRow, UserAccountRowRepository, mock::MockDataInserts, test_db::setup_all,
     };
 
     fn permission(id: &str, user_id: &str, permission: PermissionType) -> UserPermissionRow {
