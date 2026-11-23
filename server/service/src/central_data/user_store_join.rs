@@ -277,14 +277,19 @@ impl SheetImport for UserStoreJoinSheet {
         _sheet: &str,
     ) -> Result<Vec<RowError>, RepositoryError> {
         let checks = std::mem::take(&mut self.default_checks);
+        if checks.is_empty() {
+            return Ok(Vec::new());
+        }
+        let mut user_ids: Vec<String> = checks
+            .iter()
+            .map(|(_, join, _)| join.user_id.clone())
+            .collect();
+        user_ids.sort();
+        user_ids.dedup();
+        // Every user's at once.
         let mut defaults: HashMap<String, Vec<UserStoreJoinRow>> = HashMap::new();
-        for (_, join, _) in &checks {
-            if !defaults.contains_key(&join.user_id) {
-                defaults.insert(
-                    join.user_id.clone(),
-                    default_stores(connection, &join.user_id)?,
-                );
-            }
+        for join in default_stores(connection, user_ids)? {
+            defaults.entry(join.user_id.clone()).or_default().push(join);
         }
         let gives_default: Vec<&str> = checks
             .iter()
@@ -293,7 +298,7 @@ impl SheetImport for UserStoreJoinSheet {
             .collect();
         let mut errors = Vec::new();
         for (mut error, join, gives) in checks.iter().cloned() {
-            let user_defaults = &defaults[&join.user_id];
+            let user_defaults = defaults.get(&join.user_id).map_or(&[][..], Vec::as_slice);
             // Blame the rows giving a default, else every row of the user's.
             if user_defaults.len() <= 1 || (!gives && gives_default.contains(&&*join.user_id)) {
                 continue;

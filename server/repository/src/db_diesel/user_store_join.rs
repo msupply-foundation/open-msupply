@@ -14,6 +14,7 @@ use diesel::{dsl::IntoBoxed, prelude::*};
 pub struct UserStoreJoinFilter {
     pub user_id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
+    pub is_default: Option<bool>,
     pub user_is_deleted: Option<bool>,
     pub username_or_store_code: Option<StringFilter>,
 }
@@ -52,6 +53,7 @@ fn create_filtered_query(filter: Option<UserStoreJoinFilter>) -> BoxedUserStoreJ
     if let Some(UserStoreJoinFilter {
         user_id,
         store_id,
+        is_default,
         user_is_deleted,
         username_or_store_code,
     }) = filter
@@ -77,6 +79,9 @@ fn create_filtered_query(filter: Option<UserStoreJoinFilter>) -> BoxedUserStoreJ
         }
         apply_equal_filter!(query, user_id, user_store_join::user_id);
         apply_equal_filter!(query, store_id, user_store_join::store_id);
+        if let Some(is_default) = is_default {
+            query = query.filter(user_store_join::is_default.eq(is_default));
+        }
     }
 
     query

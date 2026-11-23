@@ -3,7 +3,8 @@ use repository::{
     EqualFilter, KeyType, KeyValueStoreRepository, PermissionType, RepositoryError,
     StorageConnection, StoreRowRepository, UserAccountRowRepository, UserFilter,
     UserPermissionFilter, UserPermissionRepository, UserPermissionRow, UserPermissionRowRepository,
-    UserRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
+    UserRepository, UserStoreJoinFilter, UserStoreJoinRepository, UserStoreJoinRow,
+    UserStoreJoinRowRepository,
 };
 
 #[derive(Debug, PartialEq)]
@@ -105,29 +106,29 @@ pub fn delete_user_store_join(
         .map_err(|error| error.to_inner_error())
 }
 
-/// The user's joins to `store_id`.
+/// The user's joins to `store_id`, in id order.
 pub fn find_user_store_join(
     connection: &StorageConnection,
     user_id: &str,
     store_id: &str,
 ) -> Result<Vec<UserStoreJoinRow>, RepositoryError> {
-    Ok(UserStoreJoinRowRepository::new(connection)
-        .find_many_by_user_id(user_id)?
-        .into_iter()
-        .filter(|join| join.store_id == store_id)
-        .collect())
+    UserStoreJoinRepository::new(connection).query_by_filter(UserStoreJoinFilter {
+        user_id: Some(EqualFilter::equal_to(user_id.to_string())),
+        store_id: Some(EqualFilter::equal_to(store_id.to_string())),
+        ..Default::default()
+    })
 }
 
-/// The user's joins marked default.
+/// The joins marked default of every one of `user_ids`, in one query, in id order.
 pub fn default_stores(
     connection: &StorageConnection,
-    user_id: &str,
+    user_ids: Vec<String>,
 ) -> Result<Vec<UserStoreJoinRow>, RepositoryError> {
-    Ok(UserStoreJoinRowRepository::new(connection)
-        .find_many_by_user_id(user_id)?
-        .into_iter()
-        .filter(|join| join.is_default)
-        .collect())
+    UserStoreJoinRepository::new(connection).query_by_filter(UserStoreJoinFilter {
+        user_id: Some(EqualFilter::equal_any(user_ids)),
+        is_default: Some(true),
+        ..Default::default()
+    })
 }
 
 /// Whether `store_id` is the user's only store on this site, as login offers only those. False on
@@ -394,7 +395,7 @@ mod tests {
         upsert_user_store_join_leaving_default(&connection, &join("b", "anna", "second", true))
             .unwrap();
         assert_eq!(
-            default_stores(&connection, "anna")
+            default_stores(&connection, vec!["anna".to_string()])
                 .unwrap()
                 .into_iter()
                 .map(|join| join.id)

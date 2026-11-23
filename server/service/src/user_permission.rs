@@ -251,15 +251,17 @@ fn add_store_join(
     user_id: &str,
     store_id: &str,
 ) -> Result<(), RepositoryError> {
-    if !find_user_store_join(connection, user_id, store_id)?.is_empty() {
+    // Read once: whether the user has the store, and whether it's their first.
+    let repo = UserStoreJoinRowRepository::new(connection);
+    let joins = repo.find_many_by_user_id(user_id)?;
+    if joins.iter().any(|join| join.store_id == store_id) {
         return Ok(());
     }
-    let repo = UserStoreJoinRowRepository::new(connection);
     repo.upsert_one(&UserStoreJoinRow {
         id: uuid(),
         user_id: user_id.to_string(),
         store_id: store_id.to_string(),
-        is_default: repo.find_many_by_user_id(user_id)?.is_empty(),
+        is_default: joins.is_empty(),
     })
 }
 
