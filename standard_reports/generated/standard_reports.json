@@ -854,7 +854,7 @@
       "excel_template_buffer": null
     },
     {
-      "id": "inventory_adjustments_2_14_2_false",
+      "id": "inventory_adjustments_2_14_3_false",
       "name": "Inventory Adjustments",
       "description": null,
       "template": {
@@ -898,13 +898,13 @@
       },
       "context": "REPORT",
       "sub_context": "StockAndItems",
-      "argument_schema_id": "for_report_inventory_adjustments_2_14_2_false",
+      "argument_schema_id": "for_report_inventory_adjustments_2_14_3_false",
       "comment": null,
       "is_custom": false,
-      "version": "2.14.2",
+      "version": "2.14.3",
       "code": "inventory_adjustments",
       "form_schema": {
-        "id": "for_report_inventory_adjustments_2_14_2_false",
+        "id": "for_report_inventory_adjustments_2_14_3_false",
         "type": "reportArgument",
         "json_schema": {
           "$schema": "http://json-schema.org/draft-07/schema#",
@@ -1043,7 +1043,8 @@
               "options": {
                 "dateOnly": true,
                 "disableFuture": true,
-                "min": "#/properties/adjustmentDateFrom"
+                "min": "#/properties/adjustmentDateFrom",
+                "dateAsEndOfDay": true
               }
             },
             {
