@@ -553,8 +553,10 @@ const SimpleDispensingPage: Component = () => {
     }
     visit.current = undefined;
     update([]);
-    // Nothing is left on the list for the last check to speak for.
+    // Nothing is left on the list for the last check, or a message about the
+    // list, to speak for.
     setChecked([]);
+    setNotice(undefined);
   };
 
   // Marks the lines whose price changed (rules › dispensing the visit): in
@@ -768,10 +770,16 @@ const SimpleDispensingPage: Component = () => {
           forName={unnamed() ? t('label.unnamed-patient') : patient()?.name}
           lines={lines}
           cardOf={cardOf}
-          onAmount={(itemId, units) =>
-            update(setAmount(lines, itemId, units, stockOf(itemId)))
-          }
-          onRemove={itemId => update(removeLine(lines, itemId))}
+          // A change to the list takes a message about it away, as adding
+          // to it does (rules › dispensing the visit).
+          onAmount={(itemId, units) => {
+            setNotice(undefined);
+            update(setAmount(lines, itemId, units, stockOf(itemId)));
+          }}
+          onRemove={itemId => {
+            setNotice(undefined);
+            update(removeLine(lines, itemId));
+          }}
           onClear={() => void clear()}
           onDispense={() => void dispense()}
           canDispense={chosen()}

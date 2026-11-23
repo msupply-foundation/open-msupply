@@ -111555,6 +111555,56 @@
    "is_integrated": false
   },
   {
+   "cursor": 3370,
+   "record_id": "use_unnamed_patient_e2e_demo_store",
+   "received_datetime": "2026-11-17T00:00:00",
+   "integration_started_datetime": null,
+   "integration_datetime": null,
+   "integration_error": null,
+   "integration_result": null,
+   "table_name": "preference",
+   "action": "Upsert",
+   "data": {
+    "id": "use_unnamed_patient_e2e_demo_store",
+    "key": "use_unnamed_patient",
+    "value": "true",
+    "store_id": "e2e_demo_store"
+   },
+   "sync_version": "V7",
+   "app_version": null,
+   "source_site_id": 6,
+   "store_id": "e2e_demo_store",
+   "transfer_store_id": null,
+   "patient_id": null,
+   "reference_id": null,
+   "is_integrated": false
+  },
+  {
+   "cursor": 3371,
+   "record_id": "start_with_unnamed_patient_e2e_demo_store",
+   "received_datetime": "2026-11-17T00:00:00",
+   "integration_started_datetime": null,
+   "integration_datetime": null,
+   "integration_error": null,
+   "integration_result": null,
+   "table_name": "preference",
+   "action": "Upsert",
+   "data": {
+    "id": "start_with_unnamed_patient_e2e_demo_store",
+    "key": "start_with_unnamed_patient",
+    "value": "true",
+    "store_id": "e2e_demo_store"
+   },
+   "sync_version": "V7",
+   "app_version": null,
+   "source_site_id": 6,
+   "store_id": "e2e_demo_store",
+   "transfer_store_id": null,
+   "patient_id": null,
+   "reference_id": null,
+   "is_integrated": false
+  },
+  {
    "cursor": 3500,
    "record_id": "e2e_item_dis_vvm",
    "received_datetime": "2026-11-18T00:00:00",
