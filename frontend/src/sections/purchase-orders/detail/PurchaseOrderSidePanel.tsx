@@ -7,12 +7,9 @@ import {
 } from '@/ui/layout/SidePanel/SidePanel';
 import { FieldRow } from '@/ui/elements/inputs/FieldRow';
 import { TextArea } from '@/ui/elements/inputs/TextArea';
-import { NumberField } from '@/ui/elements/inputs/NumberField';
-import { CurrencyField } from '@/ui/elements/inputs/CurrencyField';
 import { DateField } from '@/ui/elements/inputs/DateField';
 import { NameSearch, type NameSeed } from '@/domain/name';
 import { ShippingMethodSelect } from '@/domain/shippingMethod';
-import { createDebouncedField } from '@/domain/debouncedEdit';
 import {
   CancelPurchaseOrderAction,
   DeletePurchaseOrderAction,
@@ -26,7 +23,6 @@ import {
   type SaveFieldResult,
 } from './purchaseOrderEdit';
 import { formatCurrency } from '@/intl/currency';
-import { orderTotals } from './purchaseOrderPricing';
 import {
   canCancel,
   canDelete,
@@ -90,22 +86,6 @@ export const PurchaseOrderSidePanel: Component<
 
   const money = (value: number) => formatCurrency(value, currency());
 
-  // The two discounts save as they are typed. Each shows its own draft while
-  // it is being edited and the order's figure otherwise — so the other one
-  // follows the save, an answer to an earlier keystroke can't land over a
-  // later one, and once left an amount shows what the server made of it
-  // (createDebouncedField).
-  const discountPercentage = createDebouncedField({
-    value: () => props.node.supplierDiscountPercentage ?? undefined,
-    save: (value: number | undefined) =>
-      props.onSaveField({ supplierDiscountPercentage: value ?? 0 }),
-  });
-  const discountAmount = createDebouncedField({
-    value: () => props.node.supplierDiscountAmount,
-    save: (value: number) =>
-      props.onSaveField({ supplierDiscountAmount: value }),
-  });
-
   const status = () => props.node.status as PurchaseOrderStatus;
   const datesDisabled = () =>
     props.readOnly || !canRecordPostSendingDates(status());
@@ -123,15 +103,6 @@ export const PurchaseOrderSidePanel: Component<
       : undefined;
   };
 
-  // The subtotal is what an entered discount AMOUNT is converted against —
-  // and the service DISCARDS an amount entered while it is zero (contract § an
-  // order's own screen, confirmed live). So the amount input closes at a zero
-  // subtotal rather than taking an edit the server will silently drop; the
-  // percentage input stays open, since it is the figure actually stored.
-  // One source with the totals band below the lines, so the two surfaces
-  // cannot drift (rules § pricing and totals).
-  const totals = () => orderTotals(props.node);
-  const subtotal = () => totals().subtotal;
   // An order with no lines has NO totals — the server fabricates 0.0 for both
   // (contract ⚠️), so the line count decides whether a figure exists at all
   // (rules § pricing and totals).
@@ -141,66 +112,15 @@ export const PurchaseOrderSidePanel: Component<
   return (
     <>
       <SidePanelSection value="pricing" title={t('title.pricing')} collapsible>
-        {/* The order's undiscounted total — undiscounted by the SUPPLIER
-            discount only: it already nets off every line's own discount
-            (contract ⚠️ the field called "before discount"). */}
-        <FieldRow
-          label={t('label.cost-subtotal')}
-          readOnly
-          valueTestId="cost-subtotal-value"
-        >
-          {total(subtotal())}
-        </FieldRow>
-
-        {/* The two discount inputs are two views of ONE stored figure: only
-            the percentage is stored, and an amount is converted against the
-            subtotal as it stands. */}
-        <FieldRow label={t('label.supplier-discount-percentage')}>
-          <NumberField
-            label={t('label.supplier-discount-percentage')}
-            hideLabel
-            data-testid="supplier-discount-percentage-input"
-            size="small"
-            width="compact"
-            endAdornment="%"
-            min={0}
-            max={100}
-            decimalLimit={2}
-            emptyValue={0}
-            value={discountPercentage.value()}
-            disabled={props.disabled}
-            onChange={value => discountPercentage.set(value ?? 0)}
-            onFocus={discountPercentage.onFocus}
-            onBlur={discountPercentage.onBlur}
-          />
-        </FieldRow>
-
-        <FieldRow label={t('label.supplier-discount-amount')}>
-          <CurrencyField
-            label={t('label.supplier-discount-amount')}
-            hideLabel
-            data-testid="supplier-discount-amount-input"
-            size="small"
-            width="compact"
-            currency={currency()}
-            min={0}
-            emptyValue={0}
-            value={discountAmount.value()}
-            disabled={props.disabled || subtotal() === 0}
-            onChange={value => discountAmount.set(value ?? 0)}
-            onFocus={discountAmount.onFocus}
-            onBlur={discountAmount.onBlur}
-          />
-        </FieldRow>
-
-        {/* The discounted total — the same figure the totals band reads as
-            Order total. */}
+        {/* What the order costs, every discount included — the same figure
+            the totals band reads as Order total. The supplier discount is
+            entered nowhere on this screen (rules § pricing and totals). */}
         <FieldRow
           label={t('label.cost-final')}
           readOnly
           valueTestId="cost-final-value"
         >
-          <strong>{total(totals().total)}</strong>
+          <strong>{total(props.node.orderTotalAfterDiscount)}</strong>
         </FieldRow>
       </SidePanelSection>
 
