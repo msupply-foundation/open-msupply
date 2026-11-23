@@ -115,6 +115,7 @@ pub fn generate(
                  volume_per_pack,
                  reason_id: _,
              }| InsertStockInLine {
+                status: None,
                 id,
                 expiry_date,
                 number_of_packs,

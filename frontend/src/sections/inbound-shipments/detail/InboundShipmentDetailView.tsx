@@ -68,7 +68,10 @@ import {
   fetchLocationsWithVolume,
   type LocationWithVolume,
 } from '../../../domain/location';
-import { inboundShipmentPreferences } from '../../../store/storeContext';
+import {
+  hasPermission,
+  inboundShipmentPreferences,
+} from '../../../store/storeContext';
 import {
   InboundShipment,
   InboundShipmentLines,
@@ -1566,6 +1569,11 @@ const InboundShipmentDetailView: Component = () => {
                 // field came to be editable on transfers.
                 shippedLocked={sourceLinked()}
                 readOnly={isDisabled()}
+                // Signing a batch off is the authorise permission's (spec
+                // rules → line authorisation); the editor mirrors it.
+                canAuthorise={hasPermission(
+                  'INBOUND_SHIPMENT_EXTERNAL_AUTHORISE'
+                )}
                 locations={locations()}
                 prefs={{
                   vvm: prefs().manageVvmStatusForStock,

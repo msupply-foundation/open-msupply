@@ -818,6 +818,7 @@ export type BatchInboundShipmentVariables = {
     purchaseOrderLineId?: string | null;
     reasonOptionId?: string | null;
     barcode?: string | null;
+    status?: "PENDING" | "PASSED" | "REJECTED" | null;
   }> | null;
     insertFromInternalOrderLines?: Array<{
     invoiceId: string;
@@ -982,6 +983,7 @@ export type BatchInboundShipmentExternalVariables = {
     purchaseOrderLineId?: string | null;
     reasonOptionId?: string | null;
     barcode?: string | null;
+    status?: "PENDING" | "PASSED" | "REJECTED" | null;
   }> | null;
     insertFromInternalOrderLines?: Array<{
     invoiceId: string;

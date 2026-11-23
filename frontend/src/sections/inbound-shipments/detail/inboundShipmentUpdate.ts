@@ -38,9 +38,9 @@ import { deleteRefusalMessage } from './inboundShipmentStatus';
 // trips the global unexpected-error modal (a full-page crash), which is exactly
 // the S7 "never a toast, surfaced inline" contract broken. Unauthenticated /
 // unexpected / transport failures still route globally (graphqlFetch keeps
-// those; only Forbidden shifts to the caller under returnGraphqlErrors — a
-// mutation the user can't perform then reads as an inline rejection, acceptable
-// for these edit surfaces).
+// those; only Forbidden shifts to the caller under returnGraphqlErrors — the
+// line editor shows it as an inline rejection, while the line-selection
+// actions hand it to the permission-denied modal via batchRefusal).
 
 // A placeholder line — a stock-in line with zero packs received and nothing
 // reported shipped: a line added but not yet received. It carries no received
@@ -134,6 +134,13 @@ export type BatchOutcome = {
    * modal's banner rather than a row indicator.
    */
   message?: string;
+  /**
+   * The batch was refused as Forbidden: the permissions the server named as
+   * missing. `message` is set too, for a caller that shows it inline (the line
+   * editor); a line action reports it in the permission-denied modal instead
+   * (batchRefusal).
+   */
+  forbidden?: string[];
 };
 
 // Run a line/service-line batch (insert/update/delete + insert-from-internal-
@@ -162,6 +169,9 @@ export const runInboundBatch = async (
       applied: false,
       errors: new Map(),
       message: untypedRejectionMessage(result.errors),
+      ...(isForbidden(result.errors)
+        ? { forbidden: missingPermissions(result.errors) }
+        : {}),
     };
   if (result.kind !== 'success') return null;
   const batch =
@@ -169,6 +179,33 @@ export const runInboundBatch = async (
       ? result.data.batchInboundShipmentExternal
       : result.data.batchInboundShipment;
   return summariseBatch(batch);
+};
+
+/**
+ * How a line action reports a batch that didn't go through, or undefined when
+ * nothing was refused. A Forbidden belongs in the app's permission-denied
+ * modal (D38), not inline. Any other refusal comes with its message and the
+ * lines to mark: the batch's own per-line errors, or, for a batch-level
+ * rejection that aborted the whole all-or-nothing batch, every line it sent.
+ */
+export const batchRefusal = (
+  outcome: BatchOutcome,
+  lineIds: readonly string[]
+):
+  | { kind: 'forbidden'; permissions: string[] }
+  | { kind: 'refused'; message: string; errors: InboundLineErrors }
+  | undefined => {
+  if (outcome.forbidden)
+    return { kind: 'forbidden', permissions: outcome.forbidden };
+  const message =
+    outcome.message ??
+    (outcome.errors.size > 0 ? [...outcome.errors.values()][0] : undefined);
+  if (message === undefined) return undefined;
+  const errors: InboundLineErrors =
+    outcome.errors.size > 0
+      ? outcome.errors
+      : new Map(lineIds.map(id => [id, message]));
+  return { kind: 'refused', message, errors };
 };
 
 // Fold one batch twin's response (the generated BatchResultFragment) into

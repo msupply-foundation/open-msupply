@@ -5,10 +5,11 @@ use graphql_core::ContextExt;
 use graphql_core::generic_inputs::NullableUpdateInput;
 use graphql_core::simple_generic_errors::{CannotEditInvoice, ForeignKey, ForeignKeyError};
 use graphql_core::standard_graphql_error::{StandardGraphqlError, validate_auth};
-use graphql_types::types::InvoiceLineNode;
+use graphql_types::types::{InvoiceLineNode, InvoiceLineStatusType};
 
+use super::{LineAuthorisation, validate_line_edit_authorisation};
 use graphql_core::generic_inputs::InboundShipmentType;
-use repository::InvoiceLine;
+use repository::{InvoiceLine, InvoiceLineStatus};
 use service::NullableUpdate;
 use service::auth::ResourceAccessRequest;
 use service::invoice_line::stock_in_line::{
@@ -46,6 +47,11 @@ pub struct InsertInput {
     /// The barcode scanned or typed for the line, as read; recorded on the line
     /// and its stock. Doesn't propose a barcode (see `proposeBarcode`).
     pub barcode: Option<String>,
+    /// The new line's authorisation state, on a purchase-order-linked shipment
+    /// whose store requires line authorisation (omitted: Pending); ignored on
+    /// any other line. Passed or Rejected needs the authorise permission on any
+    /// external line, including one that ignores it.
+    pub status: Option<InvoiceLineStatusType>,
 }
 
 #[derive(SimpleObject)]
@@ -78,6 +84,14 @@ pub fn insert(
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+
+    validate_line_edit_authorisation(
+        ctx,
+        store_id,
+        &r#type,
+        &service_context.connection,
+        &[LineAuthorisation::Insert(input.status)],
+    )?;
 
     map_response(service_provider.invoice_line_service.insert_stock_in_line(
         &service_context,
@@ -123,6 +137,7 @@ impl InsertInput {
             purchase_order_line_id,
             reason_option_id,
             barcode,
+            status,
         } = self;
 
         ServiceInput {
@@ -158,6 +173,7 @@ impl InsertInput {
             stock_line_id: None,
             barcode,
             stock_on_hold: false,
+            status: status.map(InvoiceLineStatus::from),
         }
     }
 }

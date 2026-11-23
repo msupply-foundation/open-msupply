@@ -147,6 +147,7 @@ fn generate_line(
         purchase_order_line_id,
         reason_option_id,
         barcode,
+        status: requested_status,
         stock_on_hold: _,
         tax_percentage: _,
         r#type: _,
@@ -190,11 +191,12 @@ fn generate_line(
         },
     };
 
-    // set to pending for external inbound shipments when the preference is enabled
+    // External inbound shipment lines carry a status when the preference is
+    // enabled: the one asked for, else Pending (OMS-FUN-ISE-001.12/.13)
     let add_status =
         purchase_order_id.is_some() && external_inbound_shipment_lines_must_be_authorised;
     let status = match add_status {
-        true => Some(InvoiceLineStatus::Pending),
+        true => Some(requested_status.unwrap_or(InvoiceLineStatus::Pending)),
         false => None,
     };
 
@@ -273,8 +275,9 @@ fn should_create_stock_line_for_new_line(
             if existing_invoice_row.purchase_order_id.is_some()
                 && external_inbound_shipment_lines_must_be_authorised
             {
-                // If we're adding an external inbound shipment line, and the authorisation preference is enabled
-                // We assume that we can't create a stock line. When the preference is enabled, lines start with a status of pending which shouldn't affect stock.
+                // An external inbound shipment line under the authorisation preference never creates
+                // stock on insert: the authorisation lock refuses a line added once Received, so even
+                // a line inserted Passed waits for the receive, which skips pending and rejected lines.
                 return false;
             }
             should_update_stock(existing_invoice_row)
