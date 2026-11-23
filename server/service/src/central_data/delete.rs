@@ -32,13 +32,22 @@ pub(crate) fn already_deleted(
     key_column: &str,
     errors: Vec<RowError>,
 ) -> Result<RowOutcome, RowFailure> {
+    let key = row.text(key_column).or(row.text(ID)).unwrap_or_default();
+    already_deleted_as(row, key, errors)
+}
+
+/// As `already_deleted`, named `record`, for a table whose lookup key is several columns.
+pub(crate) fn already_deleted_as(
+    row: &Row,
+    record: String,
+    errors: Vec<RowError>,
+) -> Result<RowOutcome, RowFailure> {
     if !errors.is_empty() {
         return Err(RowFailure::Invalid(errors));
     }
-    let key = row.text(key_column).or(row.text(ID)).unwrap_or_default();
     Ok(RowOutcome {
-        record_id: row.text(ID).unwrap_or_else(|| key.clone()),
-        record: key,
+        record_id: row.text(ID).unwrap_or_else(|| record.clone()),
+        record,
         change: Change::Unchanged,
         fields: Vec::new(),
     })

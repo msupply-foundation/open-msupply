@@ -2,13 +2,14 @@ use super::{
     CentralDataTable, Change, ExportFilter, ImportTable, RecordCount, RowFailure, RowOutcome,
     SheetImport, SheetStart,
     cells::{Row, RowError, collect},
-    delete::{DELETE_COLUMN, already_deleted, check_delete, is_delete},
+    delete::{DELETE_COLUMN, already_deleted_as, check_delete, is_delete},
     lookup::{
         Found, InMemory, NOT_FOUND, active_first, find_by_id_or_composite_key, find_reference,
         new_id_conflict, read_contexts, record_conflict, reference_conflict,
     },
     sheet::Value,
     stores_with_names,
+    user_refs::{ID, USER_ID, USERNAME, protected_error, store_code, username},
 };
 use crate::{
     i64_to_u32,
@@ -25,9 +26,6 @@ use repository::{
 };
 use std::{collections::HashMap, sync::LazyLock};
 
-const ID: &str = "id";
-const USERNAME: &str = "username";
-const USER_ID: &str = "user_id";
 const STORE_CODE: &str = "store_code";
 const STORE_ID: &str = "store_id";
 const PERMISSION: &str = "permission";
@@ -204,10 +202,14 @@ impl SheetImport for UserPermissionSheet {
             .or(key.user_id.as_deref())
             && self.protected.iter().any(|protected| protected == user_id)
         {
-            return Err(protected_error(row, self.username(user_id)).into());
+            return Err(protected_error(row, self.username(user_id), "permissions").into());
         }
         if delete {
-            return self.delete(connection, row, existing);
+            // Named by the row's user, store, permission and context, as found.
+            let missing = key
+                .record()
+                .map_or_else(|| id.clone().unwrap_or_default(), |key| self.record(&key));
+            return self.delete(connection, row, existing, missing);
         }
         if let Some(saved) = existing {
             return Ok(RowOutcome {
@@ -274,11 +276,8 @@ impl Key {
 }
 
 impl UserPermissionSheet {
-    /// Else the id.
     fn username<'a>(&'a self, user_id: &'a str) -> &'a str {
-        self.users
-            .get(user_id)
-            .map_or(user_id, |user| user.username.as_str())
+        username(&self.users, user_id)
     }
 
     /// With an id the row's key MUST match, but a `DELETE` row's blank cells aren't compared.
@@ -365,12 +364,7 @@ impl UserPermissionSheet {
                 (USER_ID, &saved.user_id),
             ),
             STORE_CODE => conflict(
-                (
-                    STORE_CODE,
-                    self.stores
-                        .get(saved_store)
-                        .map_or("", |store| store.code.as_str()),
-                ),
+                (STORE_CODE, store_code(&self.stores, saved_store)),
                 (STORE_ID, saved_store),
             ),
             CONTEXT_NAME => conflict(
@@ -401,9 +395,10 @@ impl UserPermissionSheet {
         connection: &StorageConnection,
         row: &Row,
         existing: Option<UserPermissionRow>,
+        missing: String,
     ) -> Result<RowOutcome, RowFailure> {
         let Some(saved) = existing else {
-            return already_deleted(row, PERMISSION, Vec::new());
+            return already_deleted_as(row, missing, Vec::new());
         };
         check_delete(
             row,
@@ -427,7 +422,7 @@ impl UserPermissionSheet {
                     .error(DELETE_COLUMN, locks_out_message(&saved.permission))
                     .into(),
                 DeleteUserPermissionError::Protected => {
-                    protected_error(row, self.username(&saved.user_id)).into()
+                    protected_error(row, self.username(&saved.user_id), "permissions").into()
                 }
                 DeleteUserPermissionError::DatabaseError(error) => RowFailure::Database(error),
             },
@@ -499,22 +494,6 @@ fn locks_out_message(permission: &PermissionType) -> &'static str {
     }
 }
 
-/// On the column the row found the user by, else `id`.
-fn protected_error(row: &Row, username: &str) -> RowError {
-    let column = if row.text(USERNAME).is_some() || row.text(USER_ID).is_some() {
-        row.reference_column(USERNAME, USER_ID)
-    } else {
-        ID
-    };
-    row.error(
-        column,
-        format!(
-            "{username} is protected, as the server needs it, so import can't change their \
-             permissions"
-        ),
-    )
-}
-
 fn upsert_failure(
     row: &Row,
     permission: &UserPermissionRow,
@@ -543,7 +522,9 @@ fn upsert_failure(
                 "store_code is required for a new user permission",
             )
             .into(),
-        UpsertUserPermissionError::Protected => protected_error(row, username).into(),
+        UpsertUserPermissionError::Protected => {
+            protected_error(row, username, "permissions").into()
+        }
         UpsertUserPermissionError::UnknownPermission => row
             .error(PERMISSION, "This server doesn't know this permission")
             .into(),

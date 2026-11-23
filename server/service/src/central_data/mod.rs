@@ -30,6 +30,7 @@ mod store;
 mod unit;
 mod user;
 mod user_permission;
+mod user_refs;
 
 #[cfg(test)]
 mod tests;
