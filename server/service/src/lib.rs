@@ -117,6 +117,7 @@ pub mod temperature_excursion;
 pub mod unit;
 pub mod user_account;
 pub mod user_permission;
+pub mod user_store_join;
 pub mod vaccination;
 pub mod vaccine_course;
 pub mod validate;

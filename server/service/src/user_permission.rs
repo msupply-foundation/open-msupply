@@ -1,9 +1,11 @@
-use crate::user_account::upsert::protected_user_ids;
+use crate::{
+    user_account::upsert::protected_user_ids,
+    user_store_join::{find_user_store_join, is_last_store_on_site},
+};
 use repository::{
-    ContextRowRepository, EqualFilter, KeyType, KeyValueStoreRepository, PermissionType,
-    RepositoryError, StorageConnection, StoreRowRepository, UserAccountRowRepository, UserFilter,
-    UserPermissionFilter, UserPermissionRepository, UserPermissionRow, UserPermissionRowRepository,
-    UserRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
+    ContextRowRepository, EqualFilter, PermissionType, RepositoryError, StorageConnection,
+    StoreRowRepository, UserAccountRowRepository, UserPermissionFilter, UserPermissionRepository,
+    UserPermissionRow, UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
 };
 use util::uuid::uuid;
 
@@ -113,10 +115,8 @@ pub fn delete_user_permission(
             repo.delete(&saved.id)?;
             if removes_store && let Some(store_id) = &saved.store_id {
                 let joins = UserStoreJoinRowRepository::new(connection);
-                for join in joins.find_many_by_user_id(&saved.user_id)? {
-                    if join.store_id == *store_id {
-                        joins.delete(&join.id)?;
-                    }
+                for join in find_user_store_join(connection, &saved.user_id, store_id)? {
+                    joins.delete(&join.id)?;
                 }
             }
             Ok(())
@@ -237,24 +237,10 @@ fn locks_out(
         PermissionType::ServerAdmin | PermissionType::EditCentralData => {
             Ok(count_permission(connection, &saved.user_id, None, saved.permission.clone())? <= 1)
         }
-        PermissionType::StoreAccess if removes_store => {
-            // As login checks it.
-            let Some(site_id) =
-                KeyValueStoreRepository::new(connection).get_i32(KeyType::SettingsSyncSiteId)?
-            else {
-                return Ok(false);
-            };
-            let user = UserRepository::new(connection).query_one(
-                UserFilter::new()
-                    .id(EqualFilter::equal_to(saved.user_id.clone()))
-                    .site_id(EqualFilter::equal_to(site_id)),
-            )?;
-            Ok(!user.is_some_and(|user| {
-                user.stores
-                    .iter()
-                    .any(|store| Some(&store.store_row.id) != saved.store_id.as_ref())
-            }))
-        }
+        PermissionType::StoreAccess if removes_store => match &saved.store_id {
+            Some(store_id) => is_last_store_on_site(connection, &saved.user_id, store_id),
+            None => Ok(false),
+        },
         _ => Ok(false),
     }
 }
@@ -265,16 +251,15 @@ fn add_store_join(
     user_id: &str,
     store_id: &str,
 ) -> Result<(), RepositoryError> {
-    let repo = UserStoreJoinRowRepository::new(connection);
-    let joins = repo.find_many_by_user_id(user_id)?;
-    if joins.iter().any(|join| join.store_id == store_id) {
+    if !find_user_store_join(connection, user_id, store_id)?.is_empty() {
         return Ok(());
     }
+    let repo = UserStoreJoinRowRepository::new(connection);
     repo.upsert_one(&UserStoreJoinRow {
         id: uuid(),
         user_id: user_id.to_string(),
         store_id: store_id.to_string(),
-        is_default: joins.is_empty(),
+        is_default: repo.find_many_by_user_id(user_id)?.is_empty(),
     })
 }
 
