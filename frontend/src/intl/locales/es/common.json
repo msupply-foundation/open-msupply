@@ -1208,6 +1208,7 @@
   "label.username-contains": "Nombre de usuario contiene",
   "label.username-or-store-code-contains": "Nombre de usuario o código de almacén contiene",
   "label.users": "Usuarios",
+  "label.users-in-stores": "Usuarios en almacenes",
   "label.vaccination": "Vacunación",
   "label.vaccination-card": "Tarjeta de vacunación",
   "label.vaccination-cards": "Tarjetas de Vacunación",

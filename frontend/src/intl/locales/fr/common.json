@@ -2494,6 +2494,7 @@
   "label.username-contains": "Le nom d'utilisateur contient",
   "label.username-or-store-code-contains": "Le nom d'utilisateur ou le code dépôt contient",
   "label.users": "Utilisateurs",
+  "label.users-in-stores": "Utilisateurs dans les dépôts",
   "label.vaccination": "Vaccination",
   "label.vaccination-card": "Carte de Vaccination",
   "label.vaccination-cards": "Cartes de Vaccination",

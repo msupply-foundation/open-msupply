@@ -1573,6 +1573,7 @@
   "label.username-contains": "Имя пользователя содержит",
   "label.username-or-store-code-contains": "Имя пользователя или код хранилища содержит",
   "label.users": "Пользователи",
+  "label.users-in-stores": "Пользователи в хранилищах",
   "label.vaccination": "Прививка",
   "label.vaccination-card": "Прививочная Карта",
   "label.vaccination-cards": "Прививочные Карты",

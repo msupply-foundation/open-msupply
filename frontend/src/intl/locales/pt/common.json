@@ -1915,6 +1915,7 @@
   "label.username-contains": "Nome do usuário contém",
   "label.username-or-store-code-contains": "Nome do usuário ou código da unidade de saúde contém",
   "label.users": "Usuários",
+  "label.users-in-stores": "Usuários nos armazéns",
   "label.vaccination": "Vacinação",
   "label.vaccination-card": "Carteira de vacinação",
   "label.vaccination-cards": "Carteiras de vacinação",
