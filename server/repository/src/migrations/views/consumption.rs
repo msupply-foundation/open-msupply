@@ -24,6 +24,12 @@ impl ViewMigrationFragment for ViewMigration {
             "abs"
         };
 
+        let null_datetime = if cfg!(feature = "postgres") {
+            "NULL::timestamp"
+        } else {
+            "NULL"
+        };
+
         // Make sure 'consumption' for the day is based on local date
         let utc_datetime_to_local_date = "date(stock_movement.datetime)";
         // sql_utc_datetime_as_local_date(cfg!(feature = "postgres"), "stock_movement.datetime");
@@ -43,7 +49,10 @@ impl ViewMigrationFragment for ViewMigration {
                     stock_movement.invoice_type AS invoice_type,
                     stock_movement.name_id AS name_id,
                     stock_movement.name_properties AS name_properties,
-                    false AS is_estimate
+                    false AS is_estimate,
+                    -- The instant behind `date`, which is its UTC day, so report SQL can find
+                    -- the day in the user's timezone with instant_to_calendar_date
+                    stock_movement.datetime AS datetime
             FROM stock_movement
             WHERE invoice_type='OUTBOUND_SHIPMENT' OR invoice_type='PRESCRIPTION'
 
@@ -61,7 +70,9 @@ impl ViewMigrationFragment for ViewMigration {
                     'OUTBOUND_SHIPMENT' AS invoice_type,
                     name.id AS name_id,
                     name.properties AS name_properties,
-                    true AS is_estimate
+                    true AS is_estimate,
+                    -- An estimate is dated by calendar day, with no instant behind it
+                    {null_datetime} AS datetime
             FROM consumption_estimate
             JOIN item_link ON item_link.id = consumption_estimate.item_link_id
             JOIN store ON store.id = consumption_estimate.store_id
