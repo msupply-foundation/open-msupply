@@ -3001,7 +3001,7 @@ async fn item_references_are_found_by_code_or_id() {
             (
                 2,
                 Some("unit_name"),
-                "code and id conflict: Vial resolves to vial but id column contains tab"
+                "unit_name and unit_id conflict: Vial resolves to vial but unit_id contains tab"
             ),
             (3, Some("unit_name"), "referenced record not found"),
             (
@@ -7592,7 +7592,7 @@ async fn a_user_permission_finds_its_references_and_cannot_change_them() {
             (
                 2,
                 Some("context_name"),
-                "code and id conflict: Immunisation resolves to immunisation but id column contains Patient"
+                "context_name and context_id conflict: Immunisation resolves to immunisation but context_id contains Patient"
             ),
             (
                 3,
@@ -7607,7 +7607,7 @@ async fn a_user_permission_finds_its_references_and_cannot_change_them() {
             (
                 5,
                 Some("context_id"),
-                "context_id and id conflict: anna: DOCUMENT_QUERY for Immunisation in store MS has context_id immunisation and id anna_documents, but this row has context_id  and id anna_documents"
+                "context_id and id conflict: anna: DOCUMENT_QUERY for Immunisation in store MS has context_id immunisation and id anna_documents, but this row has a blank context_id and id anna_documents"
             ),
             (6, Some("store_code"), "referenced record not found"),
         ]

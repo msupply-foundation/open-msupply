@@ -4,8 +4,8 @@ use super::{
     cells::{Row, RowError, collect},
     delete::{DELETE_COLUMN, already_deleted, check_delete, is_delete},
     lookup::{
-        Found, InMemory, KeyedTable, NOT_FOUND, active_first, find_by_id_or_composite_key,
-        find_reference, new_id_conflict, record_conflict, reference_conflict,
+        Found, InMemory, NOT_FOUND, active_first, find_by_id_or_composite_key, find_reference,
+        new_id_conflict, read_contexts, record_conflict, reference_conflict,
     },
     sheet::Value,
     stores_with_names,
@@ -19,10 +19,9 @@ use crate::{
     },
 };
 use repository::{
-    ContextRow, ContextRowRepository, EqualFilter, PermissionType, RepositoryError,
-    StorageConnection, StoreRow, StoreRowRepository, StringFilter, UserAccountRow,
-    UserAccountRowRepository, UserPermissionFilter, UserPermissionRepository, UserPermissionRow,
-    UserPermissionRowRepository,
+    ContextRow, EqualFilter, PermissionType, RepositoryError, StorageConnection, StoreRow,
+    StoreRowRepository, StringFilter, UserAccountRow, UserAccountRowRepository,
+    UserPermissionFilter, UserPermissionRepository, UserPermissionRow, UserPermissionRowRepository,
 };
 use std::{collections::HashMap, sync::LazyLock};
 
@@ -93,8 +92,8 @@ impl ImportTable for UserPermissionTable {
     ) -> Result<Vec<Vec<Value>>, RepositoryError> {
         // One query: the export has already checked the row cap.
         let permissions = UserPermissionRepository::new(connection)
-            .query_by_filter(permission_filter(connection, Some(filter))?)?;
-        let records = References::read(connection, &permissions)?;
+            .query_by_filter(matching(exportable(connection)?, filter))?;
+        let records = References::read(connection)?;
         let mut rows: Vec<_> = permissions
             .iter()
             .map(|permission| {
@@ -129,9 +128,10 @@ impl ImportTable for UserPermissionTable {
         filter: &ExportFilter,
     ) -> Result<RecordCount, RepositoryError> {
         let repo = UserPermissionRepository::new(connection);
+        let exportable = exportable(connection)?;
         Ok(RecordCount {
-            matching: i64_to_u32(repo.count(Some(permission_filter(connection, Some(filter))?))?),
-            total: i64_to_u32(repo.count(Some(permission_filter(connection, None)?))?),
+            matching: i64_to_u32(repo.count(Some(matching(exportable.clone(), filter)))?),
+            total: i64_to_u32(repo.count(Some(exportable))?),
         })
     }
 
@@ -566,49 +566,26 @@ fn upsert_failure(
     }
 }
 
-/// Few: one per program, plus the patient context.
-fn read_contexts(connection: &StorageConnection) -> Result<InMemory<ContextRow>, RepositoryError> {
-    Ok(InMemory::new(ContextRowRepository::new(connection).all()?))
-}
-
-/// By name, the program's.
-impl KeyedTable for InMemory<ContextRow> {
-    type Record = ContextRow;
-    fn id(context: &ContextRow) -> &str {
-        &context.id
-    }
-    fn key(context: &ContextRow) -> &str {
-        &context.name
-    }
-    fn find_by_id(&self, id: &str) -> Result<Option<ContextRow>, RepositoryError> {
-        Ok(self.get(id).cloned())
-    }
-    fn find_by_key(&self, name: &str) -> Result<Vec<ContextRow>, RepositoryError> {
-        Ok(self.with_key(name))
-    }
-}
-
-/// Exportable permissions, in SQL as they can be many. `filter` searches username or store code.
-fn permission_filter(
-    connection: &StorageConnection,
-    filter: Option<&ExportFilter>,
-) -> Result<UserPermissionFilter, RepositoryError> {
-    let mut permission_filter = UserPermissionFilter {
+/// Exportable permissions, in SQL as they can be many.
+fn exportable(connection: &StorageConnection) -> Result<UserPermissionFilter, RepositoryError> {
+    Ok(UserPermissionFilter {
         user_id: Some(EqualFilter::not_equal_all(protected_user_ids(connection)?)),
         permission: Some(EqualFilter::equal_any(
             PermissionType::known_iter().collect(),
         )),
         user_is_deleted: Some(false),
         ..Default::default()
-    };
-    if let Some(text) = filter
-        .and_then(|filter| filter.contains.as_deref())
-        .map(str::trim)
+    })
+}
+
+/// `exportable`, searching username or store code.
+fn matching(mut exportable: UserPermissionFilter, filter: &ExportFilter) -> UserPermissionFilter {
+    if let Some(text) = filter.contains.as_deref().map(str::trim)
         && !text.is_empty()
     {
-        permission_filter.username_or_store_code = Some(StringFilter::like(text));
+        exportable.username_or_store_code = Some(StringFilter::like(text));
     }
-    Ok(permission_filter)
+    exportable
 }
 
 /// What exported permissions refer to.
@@ -620,18 +597,10 @@ struct References {
 }
 
 impl References {
-    fn read(
-        connection: &StorageConnection,
-        permissions: &[UserPermissionRow],
-    ) -> Result<Self, RepositoryError> {
-        let mut user_ids: Vec<String> = permissions
-            .iter()
-            .map(|permission| permission.user_id.clone())
-            .collect();
-        user_ids.sort();
-        user_ids.dedup();
+    fn read(connection: &StorageConnection) -> Result<Self, RepositoryError> {
+        // Few, so read whole, as the import does.
         let users = UserAccountRowRepository::new(connection)
-            .find_many_by_id(&user_ids)?
+            .find_all()?
             .into_iter()
             .map(|user| (user.id.clone(), user))
             .collect();
