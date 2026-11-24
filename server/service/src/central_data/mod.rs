@@ -20,6 +20,7 @@ pub mod cells;
 mod currency;
 pub mod delete;
 mod item;
+mod item_store_join;
 mod location_type;
 pub mod lookup;
 mod master_list;
@@ -63,6 +64,7 @@ pub enum CentralDataTable {
     MasterListLine,
     MasterListNameJoin,
     NameStoreJoin,
+    ItemStoreJoin,
     UserStoreJoin,
     UserPermission,
 }
@@ -148,6 +150,7 @@ impl CentralDataTable {
             CentralDataTable::MasterListLine => "master_list_line",
             CentralDataTable::MasterListNameJoin => "master_list_name_join",
             CentralDataTable::NameStoreJoin => "name_store_join",
+            CentralDataTable::ItemStoreJoin => "item_store_join",
             CentralDataTable::UserStoreJoin => "user_store_join",
             CentralDataTable::UserPermission => "user_permission",
         }
@@ -167,6 +170,7 @@ static TABLES: &[&(dyn ImportTable + Sync)] = &[
     &master_list_line::MasterListLineTable,
     &master_list_name_join::MasterListNameJoinTable,
     &name_store_join::NameStoreJoinTable,
+    &item_store_join::ItemStoreJoinTable,
     &user_store_join::UserStoreJoinTable,
     &user_permission::UserPermissionTable,
 ];
