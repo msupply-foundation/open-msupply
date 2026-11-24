@@ -45,14 +45,28 @@ public class MainActivity extends BridgeActivity {
         webView.addJavascriptInterface(new LoadingPage(this), "LoadingPageInject");
         webView.loadUrl(LoadingPage.URL);
 
+        // Keeping the page clear of the system bars and the keyboard is
+        // Capacitor's SystemBars plugin's job (Capacitor 8.3+). Edge-to-edge,
+        // enforced from Android 15, draws the app under the status bar, the
+        // navigation bar and the keyboard (issue #2189). For a page that
+        // doesn't declare viewport-fit=cover — the UI doesn't — the plugin pads
+        // the window by the bars, or by the keyboard while it is up, and hands
+        // the WebView zero system-bar insets. It needs @capacitor/keyboard 8.0.6
+        // or later: older versions set their own insets listener on the same
+        // root view, which replaces the plugin's and leaves the app edge-to-edge.
+        //
+        // What reaches the WebView here is therefore only what the page still
+        // has to avoid: zero, unless a page opts in with viewport-fit=cover on
+        // a WebView new enough for Capacitor to pass the insets through. The
+        // keyboard is left out: the window is already padded for it. AppBar,
+        // AppFooter and BasicModal read these variables; they must not be
+        // padded by the bars or the keyboard a second time.
         ViewCompat.setOnApplyWindowInsetsListener(webView, (v, insets) -> {
             Insets bars = insets.getInsets(
                     WindowInsetsCompat.Type.systemBars()
-                            | WindowInsetsCompat.Type.displayCutout()
-                            | WindowInsetsCompat.Type.ime());
+                            | WindowInsetsCompat.Type.displayCutout());
 
             float d = v.getResources().getDisplayMetrics().density;
-            // set inset styles so that we can avoid edge-to-edge content being obscured by system bars, cutouts, or the keyboard
             js = "document.documentElement.style.setProperty('--inset-top',    '" + (bars.top / d)    + "px');" +
                     "document.documentElement.style.setProperty('--inset-bottom', '" + (bars.bottom / d) + "px');" +
                     "document.documentElement.style.setProperty('--inset-left',   '" + (bars.left / d)   + "px');" +
@@ -61,7 +75,10 @@ public class MainActivity extends BridgeActivity {
             // Apply immediately to the currently loaded document
             ((WebView) v).evaluateJavascript(js, null);
 
-            return WindowInsetsCompat.CONSUMED;
+            // Let the WebView apply the insets as well, rather than consuming
+            // them: it needs them for env(safe-area-inset-*) and to keep its
+            // inset state current as the keyboard opens and closes
+            return ViewCompat.onApplyWindowInsets(v, insets);
         });
 
         // Re-inject the inset variables after every page navigation. A full page
