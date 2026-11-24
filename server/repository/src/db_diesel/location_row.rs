@@ -5,7 +5,7 @@ use super::{
 };
 use crate::db_diesel::changelog::changelog::RowOrId;
 use crate::{ChangelogRepository, RowActionType};
-use crate::{ChangelogSyncType, Delete, SourceSiteId, Upsert};
+use crate::{ChangelogSyncType, Delete, SourceSiteId, Upsert, trim, trim_spaces};
 use diesel::prelude::*;
 
 table! {
@@ -97,6 +97,19 @@ impl<'a> LocationRowRepository<'a> {
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<LocationRow>, RepositoryError> {
         Ok(location::table
             .filter(location::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
+
+    /// The store's locations with the code, in id order. Spaces around either code don't count.
+    pub fn find_by_store_and_trimmed_code(
+        &self,
+        store_id: &str,
+        code: &str,
+    ) -> Result<Vec<LocationRow>, RepositoryError> {
+        Ok(location::table
+            .filter(location::store_id.eq(store_id))
+            .filter(trim(location::code).eq(trim_spaces(code)))
+            .order(location::id.asc())
             .load(self.connection.lock().connection())?)
     }
 
