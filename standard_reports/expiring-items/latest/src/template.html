@@ -47,14 +47,14 @@
           }}</td>
         <td style="text-align: right">{{stockLine.averageMonthlyConsumption }}</td>
         <td style="text-align: right">
-          {% if stockLine.expectedUsage %}
+          {% if stockLine.expectedUsage is number %}
               {{ stockLine.expectedUsage | round( precision=1) }}
           {% else %}
             N/A
           {% endif %}
         </td>
         <td style="text-align: right">
-          {% if stockLine.stockAtRisk %}
+          {% if stockLine.stockAtRisk is number %}
             {{ stockLine.stockAtRisk | round( precision=1) }}
           {% else %}
             N/A

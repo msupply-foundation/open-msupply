@@ -72,6 +72,49 @@ describe('days until expired is added correctly', () => {
     expect(line.daysUntilExpired).toBe(0);
     expect(line.stockAtRisk).toBe(50);
   });
+  // OMS-REG-RPT-05.26
+  it('keeps an expected usage of 0 for stock expiring today', () => {
+    const [line] = processStockLines(
+      [
+        {
+          expiryDate: '2024-04-01',
+          packSize: 1,
+          totalNumberOfPacks: 50,
+          item: { stats: { averageMonthlyConsumption: 30 } },
+        },
+      ],
+      undefined,
+      undefined
+    );
+    expect(line.expectedUsage).toBe(0);
+  });
+  // OMS-REG-RPT-05.26
+  it('keeps a stock at risk of 0 when consumption uses all the stock before expiry', () => {
+    const [line] = processStockLines(
+      [
+        {
+          expiryDate: '2024-05-01',
+          packSize: 1,
+          totalNumberOfPacks: 10,
+          item: { stats: { averageMonthlyConsumption: 30 } },
+        },
+      ],
+      undefined,
+      undefined
+    );
+    expect(line.expectedUsage).toBe(10);
+    expect(line.stockAtRisk).toBe(0);
+  });
+  // OMS-REG-RPT-05.26
+  it('gives null, not 0, when there is no figure', () => {
+    const [line] = processStockLines(
+      [{ packSize: 1, totalNumberOfPacks: 10, item: { stats: {} } }],
+      undefined,
+      undefined
+    );
+    expect(line.expectedUsage).toBeNull();
+    expect(line.stockAtRisk).toBeNull();
+  });
   afterAll(() => {
     jest.useRealTimers();
   });
