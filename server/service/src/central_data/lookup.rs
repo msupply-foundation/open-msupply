@@ -1,9 +1,10 @@
 use super::cells::{Row, RowError};
 use repository::{
-    CurrencyRow, CurrencyRowRepository, ItemRow, ItemRowRepository, LocationTypeRow,
-    LocationTypeRowRepository, MasterListRow, MasterListRowRepository, NameRow, NameRowRepository,
-    NameRowType, RepositoryError, StoreRow, StoreRowRepository, UnitRow, UnitRowRepository,
-    UserAccountRow, UserAccountRowRepository, trim_spaces,
+    ContextRow, ContextRowRepository, CurrencyRow, CurrencyRowRepository, ItemRow,
+    ItemRowRepository, LocationTypeRow, LocationTypeRowRepository, MasterListRow,
+    MasterListRowRepository, NameRow, NameRowRepository, NameRowType, RepositoryError,
+    StorageConnection, StoreRow, StoreRowRepository, UnitRow, UnitRowRepository, UserAccountRow,
+    UserAccountRowRepository, trim_spaces,
 };
 use std::collections::HashMap;
 
@@ -213,7 +214,8 @@ where
         self.by_id.get(id)
     }
 
-    fn with_key(&self, key: &str) -> Vec<R> {
+    /// In id order.
+    pub fn with_key(&self, key: &str) -> Vec<R> {
         self.by_key
             .get(&Self::fold(key))
             .into_iter()
@@ -256,6 +258,30 @@ impl KeyedTable for InMemory<LocationTypeRow> {
     }
 }
 
+/// Every context: one per program, plus the patient context.
+pub fn read_contexts(
+    connection: &StorageConnection,
+) -> Result<InMemory<ContextRow>, RepositoryError> {
+    Ok(InMemory::new(ContextRowRepository::new(connection).all()?))
+}
+
+/// By name, the program's.
+impl KeyedTable for InMemory<ContextRow> {
+    type Record = ContextRow;
+    fn id(context: &ContextRow) -> &str {
+        &context.id
+    }
+    fn key(context: &ContextRow) -> &str {
+        &context.name
+    }
+    fn find_by_id(&self, id: &str) -> Result<Option<ContextRow>, RepositoryError> {
+        Ok(self.get(id).cloned())
+    }
+    fn find_by_key(&self, name: &str) -> Result<Vec<ContextRow>, RepositoryError> {
+        Ok(self.with_key(name))
+    }
+}
+
 /// Looked up by code.
 impl KeyedTable for InMemory<StoreRow> {
     type Record = StoreRow;
@@ -289,6 +315,23 @@ impl KeyedTable for InMemory<CurrencyRow> {
     }
 }
 
+impl KeyedTable for InMemory<UserAccountRow> {
+    type Record = UserAccountRow;
+    const ANY_CASE: bool = true;
+    fn id(user: &UserAccountRow) -> &str {
+        UserAccountRowRepository::id(user)
+    }
+    fn key(user: &UserAccountRow) -> &str {
+        UserAccountRowRepository::key(user)
+    }
+    fn find_by_id(&self, id: &str) -> Result<Option<UserAccountRow>, RepositoryError> {
+        Ok(self.get(id).cloned())
+    }
+    fn find_by_key(&self, username: &str) -> Result<Vec<UserAccountRow>, RepositoryError> {
+        Ok(self.with_key(username))
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub enum LookupError {
     NotFound,
@@ -299,12 +342,13 @@ pub enum LookupError {
 pub const NOT_FOUND: &str = "referenced record not found";
 
 impl LookupError {
-    pub fn message(&self, code: &str) -> String {
+    /// `code` is the code cell; the columns name a conflict.
+    pub fn message(&self, code: &str, code_column: &str, id_column: &str) -> String {
         match self {
             LookupError::NotFound => NOT_FOUND.to_string(),
             LookupError::Ambiguous => "ambiguous reference, please provide id instead".to_string(),
             LookupError::Conflict { resolved, provided } => format!(
-                "code and id conflict: {code} resolves to {resolved} but id column contains {provided}"
+                "{code_column} and {id_column} conflict: {code} resolves to {resolved} but {id_column} contains {provided}"
             ),
         }
     }
@@ -335,9 +379,91 @@ pub fn record_conflict(
     key: &str,
     id: &str,
 ) -> String {
+    let has = |value: &str| match value {
+        "" => format!("a blank {column}"),
+        value => format!("{column} {value}"),
+    };
     format!(
-        "{column} and id conflict: {record} has {column} {saved_key} and id {saved_id}, but this row has {column} {key} and id {id}"
+        "{column} and id conflict: {record} has {} and id {saved_id}, but this row has {} and id {id}",
+        has(saved_key),
+        has(key)
     )
+}
+
+/// A row's reference that differs from its record's, in a lookup key. On the code column if the
+/// row fills it, else the id column; each is (column, saved value).
+pub fn reference_conflict(
+    row: &Row,
+    code: (&str, &str),
+    reference_id: (&str, &str),
+    record: &str,
+    record_id: &str,
+    id: &str,
+) -> RowError {
+    let (column, saved) = if row.reference_column(code.0, reference_id.0) == code.0 {
+        code
+    } else {
+        reference_id
+    };
+    row.error(
+        column,
+        record_conflict(
+            column,
+            record,
+            saved,
+            record_id,
+            &row.text(column).unwrap_or_default(),
+            id,
+        ),
+    )
+}
+
+/// For `Found::NewIdBesideKey`: the row repeats `record`'s whole key with another id.
+pub fn new_id_conflict(row: &Row, record: &str, saved_id: &str, id: &str) -> RowError {
+    row.error(
+        "id",
+        format!("id conflict: {record} has id {saved_id}, but this row has id {id}"),
+    )
+}
+
+/// How `find_by_id_or_composite_key` found the record it passes to `check`.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Found {
+    /// The row's key MUST match.
+    ById,
+    /// By key, beside an id no record has: a copied row with one column edited.
+    NewIdBesideKey,
+}
+
+/// The saved record a row changes: by `id`, else among `by_key`, the records its key finds, read
+/// only when needed. `Ok(None)` adds one. The record found goes to `check`, which returns its
+/// conflict or `None` to take it.
+pub fn find_by_id_or_composite_key<R>(
+    row: &Row,
+    id: Option<&str>,
+    by_key: impl FnOnce() -> Result<Vec<R>, RepositoryError>,
+    record_id: impl Fn(&R) -> &str,
+    find_by_id: impl FnOnce(&str) -> Result<Option<R>, RepositoryError>,
+    check: impl FnOnce(&R, Found, &str) -> Result<Option<RowError>, RepositoryError>,
+) -> Result<Result<Option<R>, RowError>, RepositoryError> {
+    let sorted = |mut records: Vec<R>| {
+        records.sort_by(|a, b| record_id(a).cmp(record_id(b)));
+        records
+    };
+    let Some(id) = id else {
+        return Ok(pick_one(sorted(by_key()?)).map_err(|e| row.error("id", e.message("", "", ""))));
+    };
+    let (saved, found) = match find_by_id(id)? {
+        Some(saved) => (saved, Found::ById),
+        None => match sorted(by_key()?).into_iter().next() {
+            Some(saved) => (saved, Found::NewIdBesideKey),
+            None => return Ok(Ok(None)),
+        },
+    };
+    Ok(match check(&saved, found, id)? {
+        Some(error) => Err(error),
+        None => Ok(Some(saved)),
+    })
 }
 
 /// The saved record a row changes, by id, else by its lookup key in `column`. `Ok(None)` for a
@@ -380,7 +506,9 @@ pub fn find_record<T: KeyedTable>(
                 },
             },
         },
-        None => pick_one(narrow(by_key)).map_err(|e| row.error(column, e.message(key))),
+        None => {
+            pick_one(narrow(by_key)).map_err(|e| row.error(column, e.message(key, column, "id")))
+        }
     })
 }
 
@@ -477,7 +605,9 @@ impl ReferenceError {
                 }
                 .to_string(),
             ),
-            message: self.error.message(code.unwrap_or_default()),
+            message: self
+                .error
+                .message(code.unwrap_or_default(), code_column, id_column),
         }
     }
 }
@@ -644,14 +774,26 @@ mod tests {
         );
     }
 
+    #[test]
+    fn a_blank_value_in_a_conflict_reads_as_blank() {
+        assert_eq!(
+            record_conflict("context_id", "A", "p1", "x", "", "x"),
+            "context_id and id conflict: A has context_id p1 and id x, but this row has a blank context_id and id x"
+        );
+        assert_eq!(
+            record_conflict("context_id", "A", "", "x", "p1", "x"),
+            "context_id and id conflict: A has a blank context_id and id x, but this row has context_id p1 and id x"
+        );
+    }
+
     // covers: OMS-REG-CDIO-01.23
 
     #[test]
     fn code_and_id_that_disagree_conflict() {
         let error = resolve(Some("b"), true, Some(&ids(&["a"]))).unwrap_err();
         assert_eq!(
-            error.message("TAB"),
-            "code and id conflict: TAB resolves to a but id column contains b"
+            error.message("TAB", "unit_name", "unit_id"),
+            "unit_name and unit_id conflict: TAB resolves to a but unit_id contains b"
         );
         // A code that finds nothing is an error even when the id is valid.
         assert_eq!(

@@ -178,7 +178,7 @@ fn delete_row(
     let Some(saved) = existing else {
         return already_deleted(row, CODE, errors);
     };
-    check_delete(row, COLUMNS, cells(&saved), errors)?;
+    check_delete(row, COLUMNS, &[], cells(&saved), errors)?;
 
     delete_location_type(connection, &saved.id).map_err(|error| match error {
         DeleteLocationTypeError::InUse(user) => row

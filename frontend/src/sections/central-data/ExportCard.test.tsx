@@ -361,6 +361,38 @@ describe('ExportCard', () => {
     });
   });
 
+  it('gives users in stores a username or store code search and no Status filter (OMS-REG-CDIO-01.46, .162)', async () => {
+    open();
+    expect(
+      shown.fields['central-data-export-user_store_join-search']!.placeholder
+    ).toBe('label.username-or-store-code-contains');
+    expect(
+      shown.selects['central-data-export-user_store_join-status']
+    ).toBeUndefined();
+
+    shown.checkboxes['central-data-export-user_store_join']!.onChange(true);
+    await settle();
+    expect(countRequests().at(-1)).toEqual({
+      tables: [{ table: 'USER_STORE_JOIN', contains: null, isActive: null }],
+    });
+  });
+
+  it('gives user permissions a username or store code search and no Status filter (OMS-REG-CDIO-01.46, .153)', async () => {
+    open();
+    expect(
+      shown.fields['central-data-export-user_permission-search']!.placeholder
+    ).toBe('label.username-or-store-code-contains');
+    expect(
+      shown.selects['central-data-export-user_permission-status']
+    ).toBeUndefined();
+
+    shown.checkboxes['central-data-export-user_permission']!.onChange(true);
+    await settle();
+    expect(countRequests().at(-1)).toEqual({
+      tables: [{ table: 'USER_PERMISSION', contains: null, isActive: null }],
+    });
+  });
+
   it('counts again after typing in Search pauses, and at once for Status (OMS-REG-CDIO-01.47)', async () => {
     open();
     await tickUnits();

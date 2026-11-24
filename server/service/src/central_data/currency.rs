@@ -1,7 +1,7 @@
 use super::{
     CentralDataTable, Change, ExportFilter, FieldChange, ImportTable, RecordCount, RowFailure,
     RowOutcome, SheetImport, SheetStart,
-    cells::{Row, RowError, collect, keep_or_saved},
+    cells::{Row, RowError, and_list, collect, keep_or_saved},
     field_changes,
     lookup::{active_first, find_record},
     sheet::Value,
@@ -243,15 +243,6 @@ impl SheetImport for CurrencySheet {
                 error
             })
             .collect())
-    }
-}
-
-/// `A`, `A and B`, `A, B and C`.
-fn and_list(items: &[&str]) -> String {
-    match items {
-        [] => String::new(),
-        [only] => only.to_string(),
-        [rest @ .., last] => format!("{} and {last}", rest.join(", ")),
     }
 }
 

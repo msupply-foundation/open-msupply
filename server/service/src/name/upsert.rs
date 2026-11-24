@@ -1,8 +1,7 @@
 use crate::record_key::{KeyCase, other_active_with_key};
 use chrono::Utc;
 use repository::{
-    CurrencyRowRepository, NameRow, NameRowRepository, NameUser, RepositoryError,
-    StorageConnection, StoreRowRepository,
+    CurrencyRowRepository, NameRow, NameRowRepository, NameUser, RepositoryError, StorageConnection,
 };
 
 #[derive(Debug, PartialEq)]
@@ -15,9 +14,8 @@ pub enum UpsertNameError {
     },
     /// A system name, which the server relies on.
     Protected,
-    /// References and `custom_data` are checked only when the save changes them, as sync can save
-    /// a supplying store before it arrives.
-    SupplyingStoreNotFound,
+    /// The currency and `custom_data` are checked only when the save changes them. The supplying
+    /// store isn't checked, as sync doesn't: a name can arrive before its store.
     CurrencyNotFound,
     InvalidCustomData,
     DatabaseError(RepositoryError),
@@ -123,11 +121,6 @@ fn validate(
             .as_ref()
             .filter(|new| saved.is_none_or(|saved| value(saved).as_ref() != Some(*new)))
     };
-    if let Some(store_id) = changed(|name| &name.supplying_store_id)
-        && !StoreRowRepository::new(connection).check_exists_by_id(store_id)?
-    {
-        return Err(UpsertNameError::SupplyingStoreNotFound);
-    }
     if let Some(currency_id) = changed(|name| &name.currency_id)
         && CurrencyRowRepository::new(connection)
             .find_one_by_id(currency_id)?
@@ -239,13 +232,6 @@ mod tests {
         for (name, error) in [
             (
                 NameRow {
-                    supplying_store_id: Some("nowhere".to_string()),
-                    ..facility("a", "CL1")
-                },
-                UpsertNameError::SupplyingStoreNotFound,
-            ),
-            (
-                NameRow {
                     currency_id: Some("nowhere".to_string()),
                     ..facility("a", "CL1")
                 },
@@ -262,19 +248,12 @@ mod tests {
             assert_eq!(upsert_name(&connection, &name), Err(error));
         }
 
-        // A supplying store sync saved before its store arrived stays editable while it's kept.
-        let waiting = NameRow {
-            supplying_store_id: Some("not_synced_yet".to_string()),
-            ..facility("a", "CL1")
-        };
-        NameRowRepository::new(&connection)
-            .upsert_one(&waiting)
-            .unwrap();
+        // A supplying store that hasn't arrived yet is saved, as sync saves it.
         upsert_name(
             &connection,
             &NameRow {
-                name: "Renamed".to_string(),
-                ..waiting
+                supplying_store_id: Some("not_synced_yet".to_string()),
+                ..facility("a", "CL1")
             },
         )
         .unwrap();

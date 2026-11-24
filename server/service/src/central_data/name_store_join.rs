@@ -5,11 +5,13 @@ use super::{
     delete::{DELETE_COLUMN, already_deleted, check_delete, is_delete},
     field_changes,
     lookup::{
-        InMemory, NOT_FOUND, NamesOfType, active_first, find_reference, pick_one, record_conflict,
+        Found, InMemory, NOT_FOUND, NamesOfType, active_first, find_by_id_or_composite_key,
+        find_reference, new_id_conflict, reference_conflict,
     },
     name::{TYPES as NAME_TYPES, type_label},
     name_with_code,
     sheet::Value,
+    stores_with_names,
 };
 use crate::{
     i64_to_u32,
@@ -17,10 +19,10 @@ use crate::{
 };
 use repository::{
     EqualFilter, NameRow, NameRowRepository, NameRowType, NameStoreJoin, NameStoreJoinFilter,
-    NameStoreJoinRepository, NameStoreJoinRow, Pagination, RepositoryError, StorageConnection,
-    StoreRepository, StoreRow, StoreRowRepository, StringFilter,
+    NameStoreJoinRepository, NameStoreJoinRow, RepositoryError, StorageConnection, StoreRow,
+    StoreRowRepository, StringFilter,
 };
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::{cell::RefCell, rc::Rc};
 use util::uuid::uuid;
 
 const ID: &str = "id";
@@ -83,17 +85,7 @@ impl ImportTable for NameStoreJoinTable {
         connection: &StorageConnection,
         filter: &ExportFilter,
     ) -> Result<Vec<Vec<Value>>, RepositoryError> {
-        // Few, so each join's store and the store's name come from memory.
-        let stores: HashMap<String, (StoreRow, String)> = StoreRepository::new(connection)
-            .query(Pagination::all(), None, None)?
-            .into_iter()
-            .map(|store| {
-                (
-                    store.store_row.id.clone(),
-                    (store.store_row, store.name_row.name),
-                )
-            })
-            .collect();
+        let stores = stores_with_names(connection)?;
         // One query: the export has already checked the row count against the import cap.
         let mut joins =
             NameStoreJoinRepository::new(connection).query_by_filter(join_filter(filter))?;
@@ -291,43 +283,46 @@ impl NameStoreJoinSheet {
         name_id: Option<&str>,
     ) -> Result<Result<Option<NameStoreJoinRow>, RowError>, RepositoryError> {
         let repo = NameStoreJoinRepository::new(connection);
-        let mut by_key: Vec<NameStoreJoinRow> = match (store_id, name_id) {
-            (Some(store_id), Some(name_id)) => repo
-                .query_by_filter(
-                    NameStoreJoinFilter::new()
-                        .store_id(EqualFilter::equal_to(store_id.to_string()))
-                        .name_id(EqualFilter::equal_to(name_id.to_string())),
-                )?
-                .into_iter()
-                .map(|join| join.name_store_join)
-                .collect(),
-            _ => Vec::new(),
+        let by_key = || -> Result<Vec<NameStoreJoinRow>, RepositoryError> {
+            Ok(match (store_id, name_id) {
+                (Some(store_id), Some(name_id)) => repo
+                    .query_by_filter(
+                        NameStoreJoinFilter::new()
+                            .store_id(EqualFilter::equal_to(store_id.to_string()))
+                            .name_id(EqualFilter::equal_to(name_id.to_string())),
+                    )?
+                    .into_iter()
+                    .map(|join| join.name_store_join)
+                    .collect(),
+                _ => Vec::new(),
+            })
         };
-        by_key.sort_by(|a, b| a.id.cmp(&b.id));
-        let Some(id) = id else {
-            return Ok(pick_one(by_key).map_err(|e| row.error(ID, e.message(""))));
-        };
-        if let Some(position) = by_key.iter().position(|join| join.id == id) {
-            return Ok(Ok(Some(by_key.swap_remove(position))));
-        }
-        Ok(match repo.find_one_by_id(id)? {
-            // Found by id, with a store or name that isn't the row's.
-            Some(saved) => {
-                if store_id.is_some_and(|store_id| store_id != saved.store_id) {
-                    Err(self.conflict(connection, row, &saved, id, true)?)
-                } else if name_id.is_some_and(|name_id| name_id != saved.name_id) {
-                    Err(self.conflict(connection, row, &saved, id, false)?)
-                } else {
-                    Ok(Some(saved))
-                }
-            }
-            // A new id beside a saved store and name is a copied row with one column edited.
-            None => match by_key.first() {
-                Some(saved) if self.added_own_name(saved) => Ok(Some(saved.clone())),
-                Some(saved) => Err(self.conflict(connection, row, saved, id, false)?),
-                None => Ok(None),
+        find_by_id_or_composite_key(
+            row,
+            id,
+            by_key,
+            |join| &join.id,
+            |id| repo.find_one_by_id(id),
+            |saved, found, id| {
+                Ok(match found {
+                    Found::ById if store_id.is_some_and(|store_id| store_id != saved.store_id) => {
+                        Some(self.conflict(connection, row, saved, id, true)?)
+                    }
+                    Found::ById if name_id.is_some_and(|name_id| name_id != saved.name_id) => {
+                        Some(self.conflict(connection, row, saved, id, false)?)
+                    }
+                    Found::ById => None,
+                    Found::NewIdBesideKey if self.added_own_name(saved) => None,
+                    Found::NewIdBesideKey => {
+                        let name = NameRowRepository::new(connection)
+                            .find_one_by_id(&saved.name_id)?
+                            .unwrap_or_default();
+                        let record = record(&name, self.stores.get(&saved.store_id));
+                        Some(new_id_conflict(row, &record, &saved.id, id))
+                    }
+                })
             },
-        })
+        )
     }
 
     /// The join `upsert_store` gave a store this import adds, for the store's own name.
@@ -352,32 +347,24 @@ impl NameStoreJoinSheet {
         let name = NameRowRepository::new(connection)
             .find_one_by_id(&saved.name_id)?
             .unwrap_or_default();
-        let (code_column, id_column, saved_code, saved_id) = if on_store {
+        let (code, reference_id) = if on_store {
             (
-                STORE_CODE,
-                STORE_ID,
-                store.map(|store| store.code.clone()).unwrap_or_default(),
-                saved.store_id.clone(),
+                (STORE_CODE, store.map_or("", |store| store.code.as_str())),
+                (STORE_ID, saved.store_id.as_str()),
             )
         } else {
-            (NAME_CODE, NAME_ID, name.code.clone(), saved.name_id.clone())
+            (
+                (NAME_CODE, name.code.as_str()),
+                (NAME_ID, saved.name_id.as_str()),
+            )
         };
-        let column = row.reference_column(code_column, id_column);
-        let saved_key = if column == code_column {
-            saved_code
-        } else {
-            saved_id
-        };
-        Ok(row.error(
-            column,
-            record_conflict(
-                column,
-                &record(&name, store),
-                &saved_key,
-                &saved.id,
-                &row.text(column).unwrap_or_default(),
-                id,
-            ),
+        Ok(reference_conflict(
+            row,
+            code,
+            reference_id,
+            &record(&name, store),
+            &saved.id,
+            id,
         ))
     }
 
@@ -394,7 +381,13 @@ impl NameStoreJoinSheet {
         };
         let name = name_with_id(connection, found_name, &saved.name_id)?.unwrap_or_default();
         let store = self.stores.get(&saved.store_id);
-        check_delete(row, COLUMNS, cells(&saved, &name, store), errors)?;
+        check_delete(
+            row,
+            COLUMNS,
+            &[NAME_TYPE],
+            cells(&saved, &name, store),
+            errors,
+        )?;
 
         delete_name_store_join(connection, &saved.id)?;
         Ok(RowOutcome {

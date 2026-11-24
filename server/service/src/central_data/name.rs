@@ -308,6 +308,17 @@ impl SheetImport for NameSheet {
                 id.as_deref(),
             )? {
                 Ok(store_id) => Some(store_id),
+                // Without a store sheet, a store no code or id finds is saved by its id, as sync
+                // saves it: the store may arrive later.
+                Err((true, _))
+                    if !self.store_sheet_follows
+                        && id.is_some()
+                        && code.as_deref().is_none_or(|code| {
+                            self.references.stores.with_key(code).is_empty()
+                        }) =>
+                {
+                    Some(id.clone())
+                }
                 Err((true, _)) if !delete && self.store_sheet_follows => {
                     later_store = Some((code, id));
                     None
@@ -513,7 +524,13 @@ impl NameSheet {
         let Some(saved) = existing.filter(|saved| saved.deleted_datetime.is_none()) else {
             return already_deleted(row, CODE, errors);
         };
-        check_delete(row, COLUMNS, cells(&saved, &self.references), errors)?;
+        check_delete(
+            row,
+            COLUMNS,
+            &[TYPE],
+            cells(&saved, &self.references),
+            errors,
+        )?;
 
         let record = name_with_code(&saved.name, &saved.code);
         delete_name(connection, &saved.id).map_err(|error| match error {
@@ -629,7 +646,6 @@ fn upsert_failure(row: &Row, name: &NameRow, error: UpsertNameError) -> RowFailu
             .error(CUSTOM_DATA, "custom_data must be JSON, or blank")
             .into(),
         // Not checked here: `find_reference` finds them among the saved records.
-        UpsertNameError::SupplyingStoreNotFound => row.error(SUPPLYING_STORE_ID, NOT_FOUND).into(),
         UpsertNameError::CurrencyNotFound => row.error(CURRENCY_ID, NOT_FOUND).into(),
         UpsertNameError::DatabaseError(error) => RowFailure::Database(error),
     }

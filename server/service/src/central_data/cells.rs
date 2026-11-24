@@ -33,6 +33,16 @@ pub fn choice_cell<T: PartialEq>(choices: &[(&'static str, T)], value: &T) -> Va
         .map_or(Value::Empty, |(label, _)| Value::Text(label.to_string()))
 }
 
+/// `A`, `A and B`, `A, B and C`, for a message naming several records.
+pub fn and_list(items: &[impl AsRef<str>]) -> String {
+    let items: Vec<&str> = items.iter().map(AsRef::as_ref).collect();
+    match items.as_slice() {
+        [] => String::new(),
+        [only] => only.to_string(),
+        [rest @ .., last] => format!("{} and {last}", rest.join(", ")),
+    }
+}
+
 /// The value, or its default with the error added to `errors`.
 pub fn collect<T: Default>(errors: &mut Vec<RowError>, result: Result<T, RowError>) -> T {
     result.unwrap_or_else(|error| {
@@ -302,6 +312,14 @@ mod tests {
     }
 
     // covers: OMS-REG-CDIO-01.37
+
+    #[test]
+    fn and_list_joins_names_as_a_sentence() {
+        assert_eq!(and_list(&[] as &[&str]), "");
+        assert_eq!(and_list(&["MS"]), "MS");
+        assert_eq!(and_list(&["MS".to_string(), "CL".to_string()]), "MS and CL");
+        assert_eq!(and_list(&["A", "B", "C"]), "A, B and C");
+    }
 
     #[test]
     fn choice_accepts_any_letter_case_and_lists_the_choices() {

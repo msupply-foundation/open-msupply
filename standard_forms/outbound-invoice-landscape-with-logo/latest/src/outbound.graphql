@@ -12,6 +12,9 @@ query InvoiceQuery(
       shippedDatetime
       otherPartyName
       pricing {
+        stockTotalBeforeTax
+        serviceTotalBeforeTax
+        totalBeforeTax
         totalAfterTax
       }
       otherParty(storeId: $storeId) {
@@ -40,6 +43,7 @@ query InvoiceQuery(
     ... on InvoiceLineConnector {
       nodes {
         id
+        type
         itemId
         itemCode
         itemName
@@ -53,6 +57,7 @@ query InvoiceQuery(
         packSize
         sellPricePerPack
         costPricePerPack
+        totalBeforeTax
       }
     }
   }

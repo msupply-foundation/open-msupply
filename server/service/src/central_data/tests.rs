@@ -13,6 +13,10 @@ use crate::{
 };
 use chrono::NaiveDate;
 use repository::{
+    ContextRow, ContextRowRepository, PermissionType, UserPermissionRow,
+    UserPermissionRowRepository,
+};
+use repository::{
     CurrencyRow, CurrencyRowRepository, EqualFilter, InvoiceRow, InvoiceRowRepository, ItemRow,
     ItemRowRepository, ItemType, ItemVariantRow, ItemVariantRowRepository, KeyType,
     KeyValueStoreRepository, LanguageType, LocationTypeRow, LocationTypeRowRepository,
@@ -27,7 +31,6 @@ use repository::{
     },
     test_db::setup_all,
 };
-use repository::{PermissionType, UserPermissionRow, UserPermissionRowRepository};
 use std::{
     path::{Path, PathBuf},
     sync::{Arc, RwLock},
@@ -2998,7 +3001,7 @@ async fn item_references_are_found_by_code_or_id() {
             (
                 2,
                 Some("unit_name"),
-                "code and id conflict: Vial resolves to vial but id column contains tab"
+                "unit_name and unit_id conflict: Vial resolves to vial but unit_id contains tab"
             ),
             (3, Some("unit_name"), "referenced record not found"),
             (
@@ -3556,6 +3559,13 @@ fn all_users() -> ExportTable {
 #[actix_rt::test]
 async fn users_export_without_passwords_then_import_makes_no_changes() {
     let (connection, service_provider, dir, _) = user_setup("central_data_user_round_trip").await;
+    // Sorted in any letter case, so after anna.
+    UserAccountRowRepository::new(&connection)
+        .upsert_one(&UserAccountRow {
+            username: "Ben".to_string(),
+            ..ben()
+        })
+        .unwrap();
     let before = UserAccountRowRepository::new(&connection)
         .find_all()
         .unwrap();
@@ -3575,7 +3585,7 @@ async fn users_export_without_passwords_then_import_makes_no_changes() {
         .iter()
         .map(|row| (row.cells[1].as_str(), row.cells[2].as_str()))
         .collect();
-    assert_eq!(cells, [("anna", ""), ("ben", "")]);
+    assert_eq!(cells, [("anna", ""), ("Ben", "")]);
 
     let summary = CentralDataService
         .import(&ctx, &path, &no_sessions(), today())
@@ -5319,7 +5329,7 @@ async fn name_references_are_found_by_code_or_id() {
                 Some("supplying_store_code"),
                 "referenced record not found"
             ),
-            (3, Some("supplying_store_id"), "referenced record not found"),
+            // Row 3's id alone is saved as given, as sync saves it.
             (4, Some("supplying_store_id"), "referenced record not found"),
             (5, Some("currency_code"), "referenced record not found"),
             (6, Some("custom_data"), "custom_data must be JSON, or blank"),
@@ -5333,16 +5343,27 @@ async fn name_references_are_found_by_code_or_id() {
 
     let path = write_file(
         dir.path(),
-        name_sheet(vec![new(&[
-            ("code", "G"),
-            ("supplying_store_code", "MS"),
-            ("currency_code", "NZD"),
-        ])]),
+        name_sheet(vec![
+            new(&[
+                ("code", "G"),
+                ("supplying_store_code", "MS"),
+                ("currency_code", "NZD"),
+            ]),
+            new(&[("code", "H"), ("supplying_store_id", "not_synced_yet")]),
+        ]),
     );
     let summary = CentralDataService
         .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
+    let waiting = NameRowRepository::new(&connection)
+        .find_by_trimmed_code("H")
+        .unwrap()
+        .remove(0);
+    assert_eq!(
+        waiting.supplying_store_id.as_deref(),
+        Some("not_synced_yet")
+    );
     let added = NameRowRepository::new(&connection)
         .find_by_trimmed_code("G")
         .unwrap()
@@ -6197,6 +6218,13 @@ async fn a_name_finds_a_supplying_store_the_store_sheet_adds() {
                     ("supplying_store_code", "NEW2"),
                     ("delete", "DELETE"),
                 ]),
+                // With a store sheet, an id alone is checked too.
+                new_name_row(&[
+                    ("code", "CL6"),
+                    ("type", "FACILITY"),
+                    ("name", "Waiting clinic"),
+                    ("supplying_store_id", "not_synced_yet"),
+                ]),
             ],
             vec![new_store_row(&[("code", "NEW2"), ("name_code", "MAIN")])],
         ),
@@ -6219,11 +6247,12 @@ async fn a_name_finds_a_supplying_store_the_store_sheet_adds() {
                 Some("supplying_store_code"),
                 "referenced record not found"
             ),
+            (4, Some("supplying_store_id"), "referenced record not found"),
         ]
     );
     // Counted against the name sheet, though found after the store sheet ran.
     assert_eq!(summary.tables[0].table, CentralDataTable::Name);
-    assert_eq!(summary.tables[0].error_count, 3);
+    assert_eq!(summary.tables[0].error_count, 4);
     // A row with errors writes nothing, so CL8 isn't counted or listed as added.
     assert_eq!(
         (summary.tables[0].inserted, summary.tables[0].deleted),
@@ -6235,7 +6264,7 @@ async fn a_name_finds_a_supplying_store_the_store_sheet_adds() {
 // covers: OMS-REG-CDIO-01.143
 
 #[actix_rt::test]
-async fn without_a_store_sheet_a_missing_supplying_store_is_an_error_at_once() {
+async fn without_a_store_sheet_a_missing_supplying_store_is_saved_by_its_id() {
     let (_, service_provider, dir) = store_setup("central_data_name_no_store_sheet").await;
     let ctx = service_provider.basic_context().unwrap();
     let path = write_file(
@@ -6248,9 +6277,18 @@ async fn without_a_store_sheet_a_missing_supplying_store_is_an_error_at_once() {
                 ("supplying_store_code", "GONE"),
             ]),
             new_name_row(&[("code", "CL7"), ("type", "FACILITY"), ("name", "Clinic")]),
+            // A store the code and id don't find is saved by its id, as sync saves it.
+            new_name_row(&[
+                ("code", "CL6"),
+                ("type", "FACILITY"),
+                ("name", "Waiting clinic"),
+                ("supplying_store_code", "LATER"),
+                ("supplying_store_id", "later_store"),
+            ]),
         ]),
     );
     let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    // A code alone has no id to save.
     assert_eq!(
         row_errors(&summary),
         vec![(
@@ -6259,15 +6297,14 @@ async fn without_a_store_sheet_a_missing_supplying_store_is_an_error_at_once() {
             "referenced record not found"
         )]
     );
-    // Only CL7 is added.
-    assert_eq!(summary.tables[0].inserted, 1);
+    assert_eq!(summary.tables[0].inserted, 2);
     assert_eq!(
         summary
             .changes
             .iter()
             .map(|change| change.row)
             .collect::<Vec<_>>(),
-        [3]
+        [3, 4]
     );
 }
 
@@ -6863,8 +6900,8 @@ async fn a_name_store_join_row_cannot_change_its_store_or_name() {
             ),
             (
                 3,
-                Some("name_code"),
-                "name_code and id conflict: Main store (MAIN) in store MS has name_code MAIN and id join_own, but this row has name_code MAIN and id copied"
+                Some("id"),
+                "id conflict: Main store (MAIN) in store MS has id join_own, but this row has id copied"
             ),
             (
                 4,
@@ -6991,8 +7028,8 @@ async fn another_servers_join_for_a_new_stores_own_name_takes_the_place_of_the_o
         row_errors(&summary),
         vec![(
             3,
-            Some("name_code"),
-            "name_code and id conflict: Main store (MAIN) in store MS has name_code MAIN and id join_own, but this row has name_code MAIN and id copied"
+            Some("id"),
+            "id conflict: Main store (MAIN) in store MS has id join_own, but this row has id copied"
         )]
     );
 
@@ -7046,4 +7083,1846 @@ async fn another_servers_join_for_a_new_stores_own_name_takes_the_place_of_the_o
         .unwrap();
     assert_eq!(summary.errors, vec![]);
     assert_eq!(summary.changes, vec![]);
+}
+
+// User permissions
+
+const PERMISSION_HEADERS: [&str; 9] = [
+    "id",
+    "username",
+    "user_id",
+    "store_code",
+    "store_id",
+    "permission",
+    "context_name",
+    "context_id",
+    "delete",
+];
+
+fn permission_sheet_data(rows: Vec<Vec<Value>>) -> SheetData {
+    sheet_data("user_permission", &PERMISSION_HEADERS, rows)
+}
+
+fn permission_sheet(rows: Vec<Vec<Value>>) -> Vec<u8> {
+    sheet::write(vec![permission_sheet_data(rows)]).unwrap()
+}
+
+/// Other cells blank.
+fn permission_row(cells: &[(&str, &str)]) -> Vec<Value> {
+    PERMISSION_HEADERS
+        .iter()
+        .map(
+            |header| match cells.iter().find(|(column, _)| column == header) {
+                Some((_, cell)) if !cell.is_empty() => Value::Text(cell.to_string()),
+                _ => Value::Empty,
+            },
+        )
+        .collect()
+}
+
+fn add_permission(
+    connection: &StorageConnection,
+    id: &str,
+    user_id: &str,
+    permission: PermissionType,
+    context_id: Option<&str>,
+) {
+    UserPermissionRowRepository::new(connection)
+        .upsert_one(&UserPermissionRow {
+            id: id.to_string(),
+            user_id: user_id.to_string(),
+            store_id: Some("store_ms".to_string()),
+            permission,
+            context_id: context_id.map(str::to_string),
+        })
+        .unwrap();
+}
+
+/// (id, store id, permission, context id), in id order.
+fn permissions_of(
+    connection: &StorageConnection,
+    user_id: &str,
+) -> Vec<(String, String, PermissionType, Option<String>)> {
+    let mut permissions: Vec<_> = repository::UserPermissionRepository::new(connection)
+        .query_by_filter(
+            repository::UserPermissionFilter::new()
+                .user_id(EqualFilter::equal_to(user_id.to_string())),
+        )
+        .unwrap()
+        .into_iter()
+        .map(|p| {
+            (
+                p.id,
+                p.store_id.unwrap_or_default(),
+                p.permission,
+                p.context_id,
+            )
+        })
+        .collect();
+    permissions.sort_by(|a, b| a.0.cmp(&b.0));
+    permissions
+}
+
+/// (store id, default).
+fn store_joins_of(connection: &StorageConnection, user_id: &str) -> Vec<(String, bool)> {
+    let mut joins: Vec<_> = UserStoreJoinRowRepository::new(connection)
+        .find_many_by_user_id(user_id)
+        .unwrap()
+        .into_iter()
+        .map(|join| (join.store_id, join.is_default))
+        .collect();
+    joins.sort();
+    joins
+}
+
+fn permissions_containing(contains: Option<&str>) -> ExportTable {
+    ExportTable {
+        table: CentralDataTable::UserPermission,
+        filter: ExportFilter {
+            contains: contains.map(str::to_string),
+            ..Default::default()
+        },
+    }
+}
+
+/// `user_setup`, plus store MS, the Immunisation program and the patient context. On MS: Anna has store access, stocktake and documents in both contexts, plus an unknown
+/// permission; Ben, deleted Carl and the setup admin each have one.
+async fn permission_setup(name: &str) -> (StorageConnection, ServiceProvider, TempDir) {
+    let (connection, service_provider, dir, _) = user_setup(name).await;
+    NameRowRepository::new(&connection)
+        .upsert_one(&NameRow {
+            id: "ms_name".to_string(),
+            code: "MS".to_string(),
+            name: "Main store".to_string(),
+            r#type: NameRowType::Store,
+            ..Default::default()
+        })
+        .unwrap();
+    StoreRowRepository::new(&connection)
+        .upsert_one(&StoreRow {
+            id: "store_ms".to_string(),
+            code: "MS".to_string(),
+            name_id: "ms_name".to_string(),
+            ..Default::default()
+        })
+        .unwrap();
+    for (id, name) in [("immunisation", "Immunisation"), ("Patient", "Patient")] {
+        ContextRowRepository::new(&connection)
+            .upsert_one(&ContextRow {
+                id: id.to_string(),
+                name: name.to_string(),
+            })
+            .unwrap();
+    }
+    let users = UserAccountRowRepository::new(&connection);
+    for (id, deleted) in [("carl", true), ("admin", false)] {
+        users
+            .upsert_one(&UserAccountRow {
+                id: id.to_string(),
+                username: id.to_string(),
+                deleted_datetime: deleted.then(|| datetime(2026, 1, 1)).flatten(),
+                ..Default::default()
+            })
+            .unwrap();
+    }
+    KeyValueStoreRepository::new(&connection)
+        .set_string(
+            KeyType::StandaloneCentralAdminUserId,
+            Some("admin".to_string()),
+        )
+        .unwrap();
+    UserStoreJoinRowRepository::new(&connection)
+        .upsert_one(&UserStoreJoinRow {
+            id: "anna_store_ms".to_string(),
+            user_id: "anna".to_string(),
+            store_id: "store_ms".to_string(),
+            is_default: false,
+        })
+        .unwrap();
+    for (id, user_id, permission, context_id) in [
+        ("anna_access", "anna", PermissionType::StoreAccess, None),
+        (
+            "anna_stocktake",
+            "anna",
+            PermissionType::StocktakeQuery,
+            None,
+        ),
+        (
+            "anna_documents",
+            "anna",
+            PermissionType::DocumentQuery,
+            Some("immunisation"),
+        ),
+        (
+            "anna_patients",
+            "anna",
+            PermissionType::DocumentQuery,
+            Some("Patient"),
+        ),
+        (
+            "anna_future",
+            "anna",
+            PermissionType::Unknown("FUTURE".to_string()),
+            None,
+        ),
+        ("ben_report", "ben", PermissionType::Report, None),
+        ("carl_report", "carl", PermissionType::Report, None),
+        ("admin_report", "admin", PermissionType::Report, None),
+    ] {
+        add_permission(&connection, id, user_id, permission, context_id);
+    }
+    (connection, service_provider, dir)
+}
+
+// covers: OMS-REG-CDIO-01.10, .11, .152
+
+#[actix_rt::test]
+async fn user_permissions_export_then_import_makes_no_changes() {
+    let (connection, service_provider, dir) =
+        permission_setup("central_data_permission_round_trip").await;
+    let ctx = as_user(&service_provider, IMPORTER);
+    let before = permissions_of(&connection, "anna");
+    // Sorted in any letter case, so after anna.
+    UserAccountRowRepository::new(&connection)
+        .upsert_one(&UserAccountRow {
+            username: "Ben".to_string(),
+            ..ben()
+        })
+        .unwrap();
+
+    let bytes = CentralDataService
+        .export(&ctx, &[permissions_containing(None)])
+        .unwrap();
+    let path = write_file(dir.path(), bytes);
+    let Ok(sheets) = sheet::read(&path, MAX_IMPORT_ROWS) else {
+        panic!("the export reads back")
+    };
+    let sheet = &sheets[0];
+    assert_eq!(
+        sheet.headers,
+        [PERMISSION_HEADERS.as_slice(), &["store_name"]].concat()
+    );
+    // Not the unknown permission, Carl's, the setup admin's or the importer's (no user row). By
+    // username, store code, permission, then context name.
+    let rows: Vec<&[String]> = sheet.rows.iter().map(|row| row.cells.as_slice()).collect();
+    let row = |id, username, permission, context_name, context_id| {
+        [
+            id,
+            username,
+            username,
+            "MS",
+            "store_ms",
+            permission,
+            context_name,
+            context_id,
+            "",
+            "Main store",
+        ]
+        .map(String::from)
+    };
+    assert_eq!(
+        rows,
+        [
+            row(
+                "anna_documents",
+                "anna",
+                "DOCUMENT_QUERY",
+                "Immunisation",
+                "immunisation"
+            ),
+            row(
+                "anna_patients",
+                "anna",
+                "DOCUMENT_QUERY",
+                "Patient",
+                "Patient"
+            ),
+            row("anna_stocktake", "anna", "STOCKTAKE_QUERY", "", ""),
+            row("anna_access", "anna", "STORE_ACCESS", "", ""),
+            [
+                "ben_report",
+                "Ben",
+                "ben",
+                "MS",
+                "store_ms",
+                "REPORT",
+                "",
+                "",
+                "",
+                "Main store"
+            ]
+            .map(String::from),
+        ]
+    );
+
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].unchanged, 5);
+    assert_eq!(summary.changes, vec![]);
+    assert_eq!(permissions_of(&connection, "anna"), before);
+}
+
+// covers: OMS-REG-CDIO-01.46, .153
+
+#[actix_rt::test]
+async fn a_user_permission_export_searches_username_and_store_code() {
+    let (_, service_provider, _) = permission_setup("central_data_permission_filter").await;
+    let ctx = as_user(&service_provider, IMPORTER);
+    let count = |contains: Option<&str>| {
+        CentralDataService
+            .export_counts(&ctx, &[permissions_containing(contains)])
+            .unwrap()[0]
+            .count
+    };
+
+    assert_eq!(
+        count(None),
+        RecordCount {
+            matching: 5,
+            total: 5
+        }
+    );
+    assert_eq!(count(Some(" ANNA ")).matching, 4);
+    assert_eq!(count(Some("ben")).matching, 1);
+    assert_eq!(count(Some("ms")).matching, 5);
+    // Not the store's name or the permission.
+    assert_eq!(count(Some("Main")).matching, 0);
+    assert_eq!(count(Some("REPORT")).matching, 0);
+}
+
+// covers: OMS-REG-CDIO-01.12, .25, .36, .154, .155
+
+#[actix_rt::test]
+async fn user_permission_rows_add_and_delete_by_user_store_permission_and_context() {
+    let (connection, service_provider, dir) =
+        permission_setup("central_data_permission_upsert").await;
+    let ctx = as_user(&service_provider, IMPORTER);
+
+    let path = write_file(
+        dir.path(),
+        permission_sheet(vec![
+            permission_row(&[("username", "anna")]),
+            permission_row(&[("store_code", "MS"), ("permission", "REPORT")]),
+            permission_row(&[
+                ("username", "anna"),
+                ("store_code", "MS"),
+                ("permission", "STOCKTAKE_QUERY"),
+                ("delete", "x"),
+            ]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                2,
+                Some("store_code"),
+                "store_code is required for a new user permission"
+            ),
+            (
+                2,
+                Some("permission"),
+                "permission is required for a new user permission"
+            ),
+            (
+                3,
+                Some("username"),
+                "username is required for a new user permission"
+            ),
+            (
+                4,
+                Some("delete"),
+                "\"x\" is not valid. Type DELETE to delete this row, or leave it blank"
+            ),
+        ]
+    );
+
+    let path = write_file(
+        dir.path(),
+        permission_sheet(vec![
+            permission_row(&[
+                ("username", "anna"),
+                ("store_code", "MS"),
+                ("permission", "report"),
+            ]),
+            permission_row(&[
+                ("username", "ANNA"),
+                ("store_code", "MS"),
+                ("permission", "STOCKTAKE_QUERY"),
+            ]),
+            permission_row(&[
+                ("username", "anna"),
+                ("store_code", "MS"),
+                ("permission", "DOCUMENT_QUERY"),
+                ("context_name", "Immunisation"),
+            ]),
+            // Ben can now log in to MS.
+            permission_row(&[
+                ("username", "ben"),
+                ("store_code", "MS"),
+                ("permission", "STORE_ACCESS"),
+            ]),
+            // And Anna no longer can.
+            permission_row(&[("id", "anna_access"), ("delete", "DELETE")]),
+            // Already gone: unchanged.
+            permission_row(&[("id", "gone"), ("delete", "DELETE")]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(
+        summary.tables,
+        vec![TableChanges {
+            table: CentralDataTable::UserPermission,
+            inserted: 2,
+            updated: 0,
+            deleted: 1,
+            unchanged: 3,
+            error_count: 0,
+        }]
+    );
+    assert_eq!(
+        summary
+            .changes
+            .iter()
+            .map(|change| (change.record.as_str(), change.change))
+            .collect::<Vec<_>>(),
+        [
+            ("anna: REPORT in store MS", Change::Inserted),
+            ("ben: STORE_ACCESS in store MS", Change::Inserted),
+            ("anna: STORE_ACCESS in store MS", Change::Deleted),
+        ]
+    );
+    // Without a context, the id sync and login give it.
+    let report_id =
+        UserPermissionRow::deterministic_id("anna", Some("store_ms"), &PermissionType::Report);
+    let ids: Vec<String> = permissions_of(&connection, "anna")
+        .into_iter()
+        .map(|(id, ..)| id)
+        .collect();
+    let mut expected = vec![
+        "anna_documents".to_string(),
+        "anna_future".to_string(),
+        "anna_patients".to_string(),
+        "anna_stocktake".to_string(),
+        report_id,
+    ];
+    expected.sort();
+    assert_eq!(ids, expected);
+    assert_eq!(
+        store_joins_of(&connection, "anna"),
+        [(mock_store_a().id, true)]
+    );
+    // Ben's first store, so his default.
+    assert_eq!(
+        store_joins_of(&connection, "ben"),
+        [("store_ms".to_string(), true)]
+    );
+}
+
+// covers: OMS-REG-CDIO-01.23, .24, .156
+
+#[actix_rt::test]
+async fn a_user_permission_finds_its_references_and_cannot_change_them() {
+    let (connection, service_provider, dir) =
+        permission_setup("central_data_permission_references").await;
+    let ctx = as_user(&service_provider, IMPORTER);
+    let before = permissions_of(&connection, "anna");
+
+    let path = write_file(
+        dir.path(),
+        permission_sheet(vec![
+            // By ids alone.
+            permission_row(&[
+                ("user_id", "anna"),
+                ("store_id", "store_ms"),
+                ("permission", "DOCUMENT_QUERY"),
+                ("context_id", "Patient"),
+            ]),
+            // By name, the patient context too.
+            permission_row(&[
+                ("username", "anna"),
+                ("store_code", "MS"),
+                ("permission", "DOCUMENT_QUERY"),
+                ("context_name", "Patient"),
+            ]),
+            // Blank store keeps the saved one.
+            permission_row(&[("id", "anna_stocktake"), ("username", "anna")]),
+            // A DELETE row's blank context isn't compared.
+            permission_row(&[
+                ("id", "anna_documents"),
+                ("username", "anna"),
+                ("permission", "DOCUMENT_QUERY"),
+                ("context_name", ""),
+                ("context_id", ""),
+                ("delete", "DELETE"),
+            ]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(
+        (summary.tables[0].unchanged, summary.tables[0].deleted),
+        (3, 1)
+    );
+    assert_eq!(
+        summary.changes[0].record,
+        "anna: DOCUMENT_QUERY for Immunisation in store MS"
+    );
+
+    let path = write_file(
+        dir.path(),
+        permission_sheet(vec![
+            permission_row(&[
+                ("username", "anna"),
+                ("store_code", "MS"),
+                ("permission", "DOCUMENT_QUERY"),
+                ("context_name", "Immunisation"),
+                ("context_id", "Patient"),
+            ]),
+            permission_row(&[
+                ("id", "anna_stocktake"),
+                ("username", "ben"),
+                ("store_code", "MS"),
+                ("permission", "STOCKTAKE_QUERY"),
+            ]),
+            // A new id beside a saved key.
+            permission_row(&[
+                ("id", "copy"),
+                ("username", "anna"),
+                ("store_code", "MS"),
+                ("permission", "STOCKTAKE_QUERY"),
+            ]),
+            // A blank context is none.
+            permission_row(&[
+                ("id", "anna_documents"),
+                ("username", "anna"),
+                ("permission", "DOCUMENT_QUERY"),
+                ("context_name", ""),
+            ]),
+            permission_row(&[
+                ("username", "anna"),
+                ("store_code", "XX"),
+                ("permission", "REPORT"),
+            ]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                2,
+                Some("context_name"),
+                "context_name and context_id conflict: Immunisation resolves to immunisation but context_id contains Patient"
+            ),
+            (
+                3,
+                Some("username"),
+                "username and id conflict: anna: STOCKTAKE_QUERY in store MS has username anna and id anna_stocktake, but this row has username ben and id anna_stocktake"
+            ),
+            (
+                4,
+                Some("id"),
+                "id conflict: anna: STOCKTAKE_QUERY in store MS has id anna_stocktake, but this row has id copy"
+            ),
+            (
+                5,
+                Some("context_id"),
+                "context_id and id conflict: anna: DOCUMENT_QUERY for Immunisation in store MS has context_id immunisation and id anna_documents, but this row has a blank context_id and id anna_documents"
+            ),
+            (6, Some("store_code"), "referenced record not found"),
+        ]
+    );
+    assert_eq!(permissions_of(&connection, "anna"), before);
+}
+
+// covers: OMS-REG-CDIO-01.157
+
+#[actix_rt::test]
+async fn a_user_permission_row_cannot_touch_a_protected_or_deleted_user_or_lock_you_out() {
+    let (connection, service_provider, dir) =
+        permission_setup("central_data_permission_protected").await;
+    grant_server_admin(&connection, "anna");
+    add_permission(
+        &connection,
+        "anna_edit",
+        "anna",
+        PermissionType::EditCentralData,
+        None,
+    );
+    // MS is Anna's only store on this site.
+    KeyValueStoreRepository::new(&connection)
+        .set_i32(KeyType::SettingsSyncSiteId, Some(0))
+        .unwrap();
+    let ctx = as_user(&service_provider, "anna");
+
+    let path = write_file(
+        dir.path(),
+        permission_sheet(vec![
+            permission_row(&[
+                ("username", "admin"),
+                ("store_code", "MS"),
+                ("permission", "STOCKTAKE_QUERY"),
+            ]),
+            permission_row(&[("id", "admin_report"), ("delete", "DELETE")]),
+            permission_row(&[
+                ("username", "carl"),
+                ("store_code", "MS"),
+                ("permission", "STOCKTAKE_QUERY"),
+            ]),
+            permission_row(&[("id", "anna_server_admin"), ("delete", "DELETE")]),
+            permission_row(&[("id", "anna_edit"), ("delete", "DELETE")]),
+            permission_row(&[("id", "anna_access"), ("delete", "DELETE")]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                2,
+                Some("username"),
+                "admin is protected, as the server needs it, so import can't change their permissions"
+            ),
+            (
+                3,
+                Some("id"),
+                "admin is protected, as the server needs it, so import can't change their permissions"
+            ),
+            (
+                4,
+                Some("username"),
+                "carl is deleted, so they can't be given a permission"
+            ),
+            (
+                5,
+                Some("delete"),
+                "This is your last server-admin permission. You can't take it away, or you couldn't give it back"
+            ),
+            (
+                6,
+                Some("delete"),
+                "This is your last central-data edit permission. You can't take it away, or you couldn't import again to give it back"
+            ),
+            (
+                7,
+                Some("delete"),
+                "This is your access to your last store on this server. You can't take it away, or you couldn't log in again"
+            ),
+        ]
+    );
+    assert_eq!(permissions_of(&connection, "admin").len(), 1);
+    assert!(
+        permissions_of(&connection, "anna")
+            .iter()
+            .any(|(id, ..)| id == "anna_server_admin")
+    );
+}
+
+// covers: OMS-REG-CDIO-01.158
+
+#[actix_rt::test]
+async fn only_a_server_admin_can_import_or_export_user_permissions() {
+    let (connection, service_provider, dir) =
+        permission_setup("central_data_permission_admin_only").await;
+    let ctx = as_user(&service_provider, "anna");
+    assert!(matches!(
+        CentralDataService.export(&ctx, &[permissions_containing(None)]),
+        Err(ExportError::ServerAdminOnly)
+    ));
+    assert!(matches!(
+        CentralDataService.export_counts(&ctx, &[permissions_containing(None)]),
+        Err(ExportError::ServerAdminOnly)
+    ));
+
+    // Anna would give herself server admin.
+    let path = write_file(
+        dir.path(),
+        permission_sheet(vec![permission_row(&[
+            ("username", "anna"),
+            ("store_code", "MS"),
+            ("permission", "SERVER_ADMIN"),
+        ])]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    let errors: Vec<_> = summary
+        .errors
+        .iter()
+        .map(|error| (error.sheet.as_str(), error.row, error.message.as_str()))
+        .collect();
+    assert_eq!(
+        errors,
+        [(
+            "user_permission",
+            None,
+            "Only a server admin can import this sheet"
+        )]
+    );
+    assert!(
+        !permissions_of(&connection, "anna")
+            .iter()
+            .any(|(_, _, permission, _)| *permission == PermissionType::ServerAdmin)
+    );
+}
+
+// covers: OMS-REG-CDIO-01.159
+
+#[actix_rt::test]
+async fn a_user_permission_finds_a_user_the_user_sheet_adds() {
+    let (connection, service_provider, dir) =
+        permission_setup("central_data_permission_new_user").await;
+    let ctx = as_user(&service_provider, IMPORTER);
+    let users = sheet_data(
+        "user",
+        &USER_HEADERS,
+        vec![user_row("", "dina", &[(2, "secret"), (4, "ENGLISH")])],
+    );
+    let permissions = permission_sheet_data(vec![permission_row(&[
+        ("username", "dina"),
+        ("store_code", "MS"),
+        ("permission", "STORE_ACCESS"),
+    ])]);
+    // Sheets run in table order, not file order.
+    let path = write_file(dir.path(), sheet::write(vec![permissions, users]).unwrap());
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    let dina = UserAccountRowRepository::new(&connection)
+        .find_by_trimmed_username_any_case("dina")
+        .unwrap()
+        .remove(0);
+    assert_eq!(
+        store_joins_of(&connection, &dina.id),
+        [("store_ms".to_string(), true)]
+    );
+    assert_eq!(permissions_of(&connection, &dina.id).len(), 1);
+}
+
+// covers: OMS-REG-CDIO-01.26, .155
+
+#[actix_rt::test]
+async fn a_delete_row_matches_a_permission_and_username_in_any_letter_case() {
+    let (connection, service_provider, dir) =
+        permission_setup("central_data_permission_delete_any_case").await;
+    let ctx = as_user(&service_provider, IMPORTER);
+    let path = write_file(
+        dir.path(),
+        permission_sheet(vec![permission_row(&[
+            ("id", "anna_stocktake"),
+            ("username", "ANNA"),
+            ("store_code", "MS"),
+            ("permission", "stocktake_query"),
+            ("delete", "DELETE"),
+        ])]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].deleted, 1);
+    assert!(
+        !permissions_of(&connection, "anna")
+            .iter()
+            .any(|(id, ..)| id == "anna_stocktake")
+    );
+}
+
+// covers: OMS-REG-CDIO-01.36, .160
+
+#[actix_rt::test]
+async fn a_delete_row_with_a_missing_reference_applies_nothing() {
+    let (connection, service_provider, dir) =
+        permission_setup("central_data_permission_delete_missing_reference").await;
+    let ctx = as_user(&service_provider, IMPORTER);
+    let before = permissions_of(&connection, "anna");
+    let path = write_file(
+        dir.path(),
+        permission_sheet(vec![
+            permission_row(&[("id", "anna_stocktake"), ("delete", "DELETE")]),
+            permission_row(&[
+                ("username", "nobody"),
+                ("store_code", "MS"),
+                ("permission", "REPORT"),
+                ("delete", "DELETE"),
+            ]),
+            permission_row(&[
+                ("username", "anna"),
+                ("store_code", "NOPE"),
+                ("permission", "REPORT"),
+                ("delete", "DELETE"),
+            ]),
+            permission_row(&[
+                ("username", "anna"),
+                ("store_code", "MS"),
+                ("permission", "DOCUMENT_QUERY"),
+                ("context_name", "No such program"),
+                ("delete", "DELETE"),
+            ]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (3, Some("username"), "referenced record not found"),
+            (4, Some("store_code"), "referenced record not found"),
+            (5, Some("context_name"), "referenced record not found"),
+        ]
+    );
+    // Row 2's delete is rolled back with the rest.
+    assert_eq!(permissions_of(&connection, "anna"), before);
+}
+
+// covers: OMS-REG-CDIO-01.36
+
+#[actix_rt::test]
+async fn a_name_delete_row_with_a_missing_reference_applies_nothing() {
+    let (connection, service_provider, dir) =
+        name_setup("central_data_name_delete_missing_reference").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let path = write_file(
+        dir.path(),
+        name_sheet(vec![
+            name_row(&[("id", "clinic"), ("delete", "DELETE")]),
+            // Neither finds a name, but their references are looked up first.
+            name_row(&[
+                ("code", "GONE"),
+                ("type", "FACILITY"),
+                ("currency_code", "XXX"),
+                ("delete", "DELETE"),
+            ]),
+            name_row(&[
+                ("code", "GONE"),
+                ("type", "FACILITY"),
+                ("supplying_store_code", "NOPE"),
+                ("delete", "DELETE"),
+            ]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (3, Some("currency_code"), "referenced record not found"),
+            (
+                4,
+                Some("supplying_store_code"),
+                "referenced record not found"
+            ),
+        ]
+    );
+    // Row 2's delete is rolled back with the rest.
+    assert_eq!(find_name(&connection, "clinic"), Some(central_clinic()));
+}
+
+// User stores
+
+const USER_STORE_HEADERS: [&str; 7] = [
+    "id",
+    "username",
+    "user_id",
+    "store_code",
+    "store_id",
+    "is_default",
+    "delete",
+];
+
+fn user_store_sheet_data(rows: Vec<Vec<Value>>) -> SheetData {
+    sheet_data("user_store_join", &USER_STORE_HEADERS, rows)
+}
+
+fn user_store_sheet(rows: Vec<Vec<Value>>) -> Vec<u8> {
+    sheet::write(vec![user_store_sheet_data(rows)]).unwrap()
+}
+
+/// Other cells blank.
+fn user_store_row(cells: &[(&str, &str)]) -> Vec<Value> {
+    USER_STORE_HEADERS
+        .iter()
+        .map(
+            |header| match cells.iter().find(|(column, _)| column == header) {
+                Some((_, cell)) if !cell.is_empty() => Value::Text(cell.to_string()),
+                _ => Value::Empty,
+            },
+        )
+        .collect()
+}
+
+fn user_stores_containing(contains: Option<&str>) -> ExportTable {
+    ExportTable {
+        table: CentralDataTable::UserStoreJoin,
+        filter: ExportFilter {
+            contains: contains.map(str::to_string),
+            ..Default::default()
+        },
+    }
+}
+
+/// The stores the user has store access on, in order.
+fn store_access_of(connection: &StorageConnection, user_id: &str) -> Vec<String> {
+    let mut stores: Vec<_> = permissions_of(connection, user_id)
+        .into_iter()
+        .filter(|(_, _, permission, _)| *permission == PermissionType::StoreAccess)
+        .map(|(_, store_id, ..)| store_id)
+        .collect();
+    stores.sort();
+    stores
+}
+
+/// `permission_setup`: Anna has store a, her default, and MS; deleted Carl and the setup admin
+/// have MS too. Each with store access there, as sync and login give it.
+async fn user_store_setup(name: &str) -> (StorageConnection, ServiceProvider, TempDir) {
+    let (connection, service_provider, dir) = permission_setup(name).await;
+    for user_id in ["carl", "admin"] {
+        UserStoreJoinRowRepository::new(&connection)
+            .upsert_one(&UserStoreJoinRow {
+                id: format!("{user_id}_store_ms"),
+                user_id: user_id.to_string(),
+                store_id: "store_ms".to_string(),
+                is_default: true,
+            })
+            .unwrap();
+        add_permission(
+            &connection,
+            &format!("{user_id}_access"),
+            user_id,
+            PermissionType::StoreAccess,
+            None,
+        );
+    }
+    UserPermissionRowRepository::new(&connection)
+        .upsert_one(&UserPermissionRow {
+            id: "anna_access_a".to_string(),
+            user_id: "anna".to_string(),
+            store_id: Some(mock_store_a().id),
+            permission: PermissionType::StoreAccess,
+            context_id: None,
+        })
+        .unwrap();
+    (connection, service_provider, dir)
+}
+
+// covers: OMS-REG-CDIO-01.10, .11, .161
+
+#[actix_rt::test]
+async fn user_stores_export_then_import_makes_no_changes() {
+    let (connection, service_provider, dir) =
+        user_store_setup("central_data_user_store_round_trip").await;
+    let ctx = as_user(&service_provider, IMPORTER);
+    let before = store_joins_of(&connection, "anna");
+
+    let bytes = CentralDataService
+        .export(&ctx, &[user_stores_containing(None)])
+        .unwrap();
+    let path = write_file(dir.path(), bytes);
+    let Ok(sheets) = sheet::read(&path, MAX_IMPORT_ROWS) else {
+        panic!("the export reads back")
+    };
+    let sheet = &sheets[0];
+    assert_eq!(sheet.name, "user_store_join");
+    assert_eq!(
+        sheet.headers,
+        [USER_STORE_HEADERS.as_slice(), &["store_name"]].concat()
+    );
+    // Not deleted Carl's or the setup admin's. By username, then store code.
+    let rows: Vec<&[String]> = sheet.rows.iter().map(|row| row.cells.as_slice()).collect();
+    assert_eq!(
+        rows,
+        [
+            [
+                "anna_store_ms",
+                "anna",
+                "anna",
+                "MS",
+                "store_ms",
+                "false",
+                "",
+                "Main store"
+            ]
+            .map(String::from),
+            [
+                "anna_store_a",
+                "anna",
+                "anna",
+                "code",
+                "store_a",
+                "true",
+                "",
+                "Store A"
+            ]
+            .map(String::from),
+        ]
+    );
+
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].unchanged, 2);
+    assert_eq!(summary.changes, vec![]);
+    assert_eq!(store_joins_of(&connection, "anna"), before);
+}
+
+// covers: OMS-REG-CDIO-01.46, .162
+
+#[actix_rt::test]
+async fn a_user_store_export_searches_username_and_store_code() {
+    let (connection, service_provider, _) =
+        user_store_setup("central_data_user_store_filter").await;
+    UserStoreJoinRowRepository::new(&connection)
+        .upsert_one(&UserStoreJoinRow {
+            id: "ben_store_ms".to_string(),
+            user_id: "ben".to_string(),
+            store_id: "store_ms".to_string(),
+            is_default: true,
+        })
+        .unwrap();
+    let ctx = as_user(&service_provider, IMPORTER);
+    let count = |contains: Option<&str>| {
+        CentralDataService
+            .export_counts(&ctx, &[user_stores_containing(contains)])
+            .unwrap()[0]
+            .count
+    };
+
+    assert_eq!(
+        count(None),
+        RecordCount {
+            matching: 3,
+            total: 3
+        }
+    );
+    assert_eq!(count(Some(" ANNA ")).matching, 2);
+    assert_eq!(count(Some("ms")).matching, 2);
+    // Not the store's name.
+    assert_eq!(count(Some("Main")).matching, 0);
+}
+
+// covers: OMS-REG-CDIO-01.12, .25, .163, .164
+
+#[actix_rt::test]
+async fn user_store_rows_give_take_and_change_a_users_stores() {
+    let (connection, service_provider, dir) =
+        user_store_setup("central_data_user_store_upsert").await;
+    let ctx = as_user(&service_provider, IMPORTER);
+
+    let path = write_file(
+        dir.path(),
+        user_store_sheet(vec![
+            user_store_row(&[("username", "ben"), ("store_code", "MS")]),
+            user_store_row(&[("store_code", "MS"), ("is_default", "TRUE")]),
+            user_store_row(&[("id", "anna_store_ms"), ("is_default", "maybe")]),
+            user_store_row(&[("id", "anna_store_ms"), ("delete", "Delete")]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                2,
+                Some("is_default"),
+                "is_default is required for a new user's store"
+            ),
+            (
+                3,
+                Some("username"),
+                "username is required for a new user's store"
+            ),
+            (
+                4,
+                Some("is_default"),
+                "\"maybe\" must be TRUE, FALSE, 1 or 0"
+            ),
+            (
+                5,
+                Some("delete"),
+                "\"Delete\" is not valid. Type DELETE to delete this row, or leave it blank"
+            ),
+        ]
+    );
+
+    let path = write_file(
+        dir.path(),
+        user_store_sheet(vec![
+            // Ben can now log in to MS, his default.
+            user_store_row(&[
+                ("username", "BEN"),
+                ("store_code", "MS"),
+                ("is_default", "TRUE"),
+            ]),
+            // Anna no longer can.
+            user_store_row(&[
+                ("username", "anna"),
+                ("store_code", "MS"),
+                ("delete", "DELETE"),
+            ]),
+            // Store a is no longer her default.
+            user_store_row(&[("id", "anna_store_a"), ("is_default", "FALSE")]),
+            // Already gone: unchanged.
+            user_store_row(&[("id", "gone"), ("delete", "DELETE")]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(
+        summary.tables,
+        vec![TableChanges {
+            table: CentralDataTable::UserStoreJoin,
+            inserted: 1,
+            updated: 1,
+            deleted: 1,
+            unchanged: 1,
+            error_count: 0,
+        }]
+    );
+    let changes: Vec<_> = summary
+        .changes
+        .iter()
+        .map(|change| (change.record.as_str(), change.change, &change.fields))
+        .collect();
+    assert_eq!(
+        changes,
+        [
+            ("ben in store MS", Change::Inserted, &vec![]),
+            ("anna in store MS", Change::Deleted, &vec![]),
+            (
+                "anna in store code",
+                Change::Updated,
+                &vec![FieldChange {
+                    column: "is_default",
+                    from: "TRUE".to_string(),
+                    to: "FALSE".to_string(),
+                }]
+            ),
+        ]
+    );
+    assert_eq!(
+        store_joins_of(&connection, "ben"),
+        [("store_ms".to_string(), true)]
+    );
+    assert_eq!(store_access_of(&connection, "ben"), ["store_ms"]);
+    assert_eq!(
+        store_joins_of(&connection, "anna"),
+        [(mock_store_a().id, false)]
+    );
+    // Her store access on MS is gone; her other permissions there are kept.
+    assert_eq!(store_access_of(&connection, "anna"), [mock_store_a().id]);
+    assert!(
+        permissions_of(&connection, "anna")
+            .iter()
+            .any(|(id, ..)| id == "anna_stocktake")
+    );
+}
+
+// covers: OMS-REG-CDIO-01.165
+
+#[actix_rt::test]
+async fn a_row_that_gives_a_user_a_second_default_store_is_a_row_error() {
+    let (connection, service_provider, dir) =
+        user_store_setup("central_data_user_store_default").await;
+    let ctx = as_user(&service_provider, IMPORTER);
+    let before = store_joins_of(&connection, "anna");
+
+    let path = write_file(
+        dir.path(),
+        user_store_sheet(vec![user_store_row(&[
+            ("id", "anna_store_ms"),
+            ("is_default", "TRUE"),
+        ])]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(
+            2,
+            Some("is_default"),
+            "MS would be anna's default store, and so would code, but a user has only one. Set is_default to FALSE for all but one"
+        )]
+    );
+    // Counted only as an error.
+    assert_eq!(
+        (summary.tables[0].updated, summary.tables[0].error_count),
+        (0, 1)
+    );
+    assert_eq!(store_joins_of(&connection, "anna"), before);
+
+    // Moving it, in either order, leaves one.
+    let path = write_file(
+        dir.path(),
+        user_store_sheet(vec![
+            user_store_row(&[("id", "anna_store_ms"), ("is_default", "TRUE")]),
+            user_store_row(&[("id", "anna_store_a"), ("is_default", "FALSE")]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(
+        store_joins_of(&connection, "anna"),
+        [(mock_store_a().id, false), ("store_ms".to_string(), true)]
+    );
+
+    // A user who already has two, as legacy mSupply can send them: a row that gives them another
+    // store must leave them one.
+    UserStoreJoinRowRepository::new(&connection)
+        .upsert_one(&UserStoreJoinRow {
+            id: "anna_store_a".to_string(),
+            user_id: "anna".to_string(),
+            store_id: mock_store_a().id,
+            is_default: true,
+        })
+        .unwrap();
+    let another_store = || {
+        user_store_row(&[
+            ("username", "anna"),
+            ("store_id", "store_b"),
+            ("is_default", "FALSE"),
+        ])
+    };
+    let path = write_file(dir.path(), user_store_sheet(vec![another_store()]));
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(
+            2,
+            Some("is_default"),
+            "anna's default stores are MS and code, but a user has only one. Set is_default to FALSE for all but one"
+        )]
+    );
+    let path = write_file(
+        dir.path(),
+        user_store_sheet(vec![
+            another_store(),
+            user_store_row(&[("id", "anna_store_a"), ("is_default", "FALSE")]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(
+        (summary.tables[0].inserted, summary.tables[0].updated),
+        (1, 1)
+    );
+}
+
+// covers: OMS-REG-CDIO-01.23, .24, .166
+
+#[actix_rt::test]
+async fn a_user_store_finds_its_references_and_cannot_change_them() {
+    let (connection, service_provider, dir) =
+        user_store_setup("central_data_user_store_references").await;
+    let ctx = as_user(&service_provider, IMPORTER);
+    let before = store_joins_of(&connection, "anna");
+
+    let path = write_file(
+        dir.path(),
+        user_store_sheet(vec![
+            // By ids alone.
+            user_store_row(&[("user_id", "anna"), ("store_id", "store_ms")]),
+            user_store_row(&[
+                ("username", "anna"),
+                ("user_id", "ben"),
+                ("store_code", "MS"),
+            ]),
+            user_store_row(&[
+                ("id", "anna_store_ms"),
+                ("username", "ben"),
+                ("store_code", "MS"),
+            ]),
+            user_store_row(&[
+                ("id", "anna_store_ms"),
+                ("username", "anna"),
+                ("store_id", "store_a"),
+            ]),
+            // A new id beside a saved user and store.
+            user_store_row(&[("id", "copy"), ("username", "anna"), ("store_code", "MS")]),
+            user_store_row(&[
+                ("username", "anna"),
+                ("store_code", "XX"),
+                ("is_default", "FALSE"),
+            ]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                3,
+                Some("username"),
+                "username and user_id conflict: anna resolves to anna but user_id contains ben"
+            ),
+            (
+                4,
+                Some("username"),
+                "username and id conflict: anna in store MS has username anna and id anna_store_ms, but this row has username ben and id anna_store_ms"
+            ),
+            (
+                5,
+                Some("store_id"),
+                "store_id and id conflict: anna in store MS has store_id store_ms and id anna_store_ms, but this row has store_id store_a and id anna_store_ms"
+            ),
+            (
+                6,
+                Some("id"),
+                "id conflict: anna in store MS has id anna_store_ms, but this row has id copy"
+            ),
+            (7, Some("store_code"), "referenced record not found"),
+        ]
+    );
+    assert_eq!(summary.tables[0].unchanged, 1);
+    assert_eq!(store_joins_of(&connection, "anna"), before);
+}
+
+// covers: OMS-REG-CDIO-01.167
+
+#[actix_rt::test]
+async fn a_user_store_row_cannot_touch_a_protected_user_give_a_deleted_user_a_store_or_lock_you_out()
+ {
+    let (connection, service_provider, dir) =
+        user_store_setup("central_data_user_store_protected").await;
+    grant_server_admin(&connection, "anna");
+    // MS is Anna's only store on this site.
+    KeyValueStoreRepository::new(&connection)
+        .set_i32(KeyType::SettingsSyncSiteId, Some(0))
+        .unwrap();
+    let ctx = as_user(&service_provider, "anna");
+
+    let path = write_file(
+        dir.path(),
+        user_store_sheet(vec![
+            user_store_row(&[
+                ("username", "admin"),
+                ("store_id", "store_a"),
+                ("is_default", "FALSE"),
+            ]),
+            user_store_row(&[("id", "admin_store_ms"), ("delete", "DELETE")]),
+            user_store_row(&[
+                ("username", "carl"),
+                ("store_id", "store_a"),
+                ("is_default", "FALSE"),
+            ]),
+            user_store_row(&[("id", "anna_store_ms"), ("delete", "DELETE")]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                2,
+                Some("username"),
+                "admin is protected, as the server needs it, so import can't change their stores"
+            ),
+            (
+                3,
+                Some("id"),
+                "admin is protected, as the server needs it, so import can't change their stores"
+            ),
+            (
+                4,
+                Some("username"),
+                "carl is deleted, so they can't be given a store"
+            ),
+            (
+                5,
+                Some("delete"),
+                "This is your last store on this server. You can't take it away, or you couldn't log in again"
+            ),
+        ]
+    );
+    assert_eq!(store_joins_of(&connection, "admin").len(), 1);
+    assert_eq!(store_joins_of(&connection, "carl").len(), 1);
+    assert_eq!(store_joins_of(&connection, "anna").len(), 2);
+}
+
+// covers: OMS-REG-CDIO-01.171
+
+#[actix_rt::test]
+async fn a_deleted_users_store_is_kept_and_a_row_can_change_or_remove_it() {
+    let (connection, service_provider, dir) =
+        user_store_setup("central_data_user_store_deleted_user").await;
+    let ctx = as_user(&service_provider, IMPORTER);
+    UserStoreJoinRowRepository::new(&connection)
+        .upsert_one(&UserStoreJoinRow {
+            id: "carl_store_a".to_string(),
+            user_id: "carl".to_string(),
+            store_id: mock_store_a().id,
+            is_default: false,
+        })
+        .unwrap();
+
+    let path = write_file(
+        dir.path(),
+        user_store_sheet(vec![
+            user_store_row(&[("id", "carl_store_a")]),
+            user_store_row(&[("id", "carl_store_ms"), ("is_default", "FALSE")]),
+            user_store_row(&[("id", "carl_store_a"), ("delete", "DELETE")]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    // Rows that find a deleted user's record, changed or not, aren't errors.
+    assert_eq!(summary.errors, vec![]);
+
+    let path = write_file(
+        dir.path(),
+        user_store_sheet(vec![
+            user_store_row(&[("id", "carl_store_ms"), ("is_default", "FALSE")]),
+            user_store_row(&[
+                ("username", "carl"),
+                ("store_id", "store_a"),
+                ("delete", "DELETE"),
+            ]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(
+        (summary.tables[0].updated, summary.tables[0].deleted),
+        (1, 1)
+    );
+    assert_eq!(
+        store_joins_of(&connection, "carl"),
+        [("store_ms".to_string(), false)]
+    );
+}
+
+// covers: OMS-REG-CDIO-01.172
+
+#[actix_rt::test]
+async fn a_store_a_row_writes_must_come_with_store_access_once_the_file_has_run() {
+    let (connection, service_provider, dir) =
+        user_store_setup("central_data_user_store_needs_access").await;
+    let ctx = as_user(&service_provider, IMPORTER);
+    // Made by hand, without store access.
+    UserStoreJoinRowRepository::new(&connection)
+        .upsert_one(&UserStoreJoinRow {
+            id: "ben_store_ms".to_string(),
+            user_id: "ben".to_string(),
+            store_id: "store_ms".to_string(),
+            is_default: false,
+        })
+        .unwrap();
+    let make_default = || user_store_row(&[("id", "ben_store_ms"), ("is_default", "TRUE")]);
+
+    // A row that leaves it as it is isn't checked.
+    let path = write_file(
+        dir.path(),
+        user_store_sheet(vec![user_store_row(&[("id", "ben_store_ms")])]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(summary.errors, vec![]);
+
+    let path = write_file(dir.path(), user_store_sheet(vec![make_default()]));
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(
+            2,
+            Some("store_code"),
+            "ben has no store access on MS, so they couldn't log in to it. Add a STORE_ACCESS row for it on the user_permission sheet"
+        )]
+    );
+    assert_eq!(summary.tables[0].updated, 0);
+    assert_eq!(
+        store_joins_of(&connection, "ben"),
+        [("store_ms".to_string(), false)]
+    );
+
+    // With the store access in the same file, it imports.
+    let access = permission_sheet_data(vec![permission_row(&[
+        ("username", "ben"),
+        ("store_code", "MS"),
+        ("permission", "STORE_ACCESS"),
+    ])]);
+    let path = write_file(
+        dir.path(),
+        sheet::write(vec![user_store_sheet_data(vec![make_default()]), access]).unwrap(),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(
+        store_joins_of(&connection, "ben"),
+        [("store_ms".to_string(), true)]
+    );
+    assert_eq!(store_access_of(&connection, "ben"), ["store_ms"]);
+
+    // A later sheet taking the store access away would take the store with it.
+    let path = write_file(
+        dir.path(),
+        sheet::write(vec![
+            user_store_sheet_data(vec![user_store_row(&[
+                ("username", "dina"),
+                ("store_code", "MS"),
+                ("is_default", "TRUE"),
+            ])]),
+            sheet_data(
+                "user",
+                &USER_HEADERS,
+                vec![user_row("dina", "dina", &[(2, "secret"), (4, "ENGLISH")])],
+            ),
+            permission_sheet_data(vec![permission_row(&[
+                ("username", "dina"),
+                ("store_code", "MS"),
+                ("permission", "STORE_ACCESS"),
+                ("delete", "DELETE"),
+            ])]),
+        ])
+        .unwrap(),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(
+            2,
+            Some("store_code"),
+            "This row gives dina store MS, but the user_permission sheet takes their STORE_ACCESS there away, which takes the store away too. Clear that row's DELETE, or mark this row DELETE"
+        )]
+    );
+    assert_eq!(find_user(&connection, "dina"), None);
+}
+
+// covers: OMS-REG-CDIO-01.173
+
+#[actix_rt::test]
+async fn a_user_store_delete_row_the_user_permission_sheet_would_undo_is_a_row_error() {
+    let (connection, service_provider, dir) =
+        user_store_setup("central_data_user_store_delete_undone").await;
+    let ctx = as_user(&service_provider, IMPORTER);
+    let before = store_joins_of(&connection, "anna");
+    let file = |access_delete: &str| {
+        sheet::write(vec![
+            user_store_sheet_data(vec![user_store_row(&[
+                ("id", "anna_store_ms"),
+                ("username", "anna"),
+                ("store_code", "MS"),
+                ("delete", "DELETE"),
+            ])]),
+            // As exported: her store access on MS, left as it is or marked DELETE.
+            permission_sheet_data(vec![permission_row(&[
+                ("id", "anna_access"),
+                ("username", "anna"),
+                ("store_code", "MS"),
+                ("permission", "STORE_ACCESS"),
+                ("delete", access_delete),
+            ])]),
+        ])
+        .unwrap()
+    };
+
+    let path = write_file(dir.path(), file(""));
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(
+            2,
+            Some("delete"),
+            "This row takes MS away from anna, but the user_permission sheet gives them STORE_ACCESS there, which gives it back. Mark that row DELETE too, or remove it from the file"
+        )]
+    );
+    assert_eq!(summary.tables[0].deleted, 0);
+    assert_eq!(store_joins_of(&connection, "anna"), before);
+
+    // Taking both away agrees.
+    let path = write_file(dir.path(), file("DELETE"));
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(
+        store_joins_of(&connection, "anna"),
+        [(mock_store_a().id, true)]
+    );
+    assert_eq!(store_access_of(&connection, "anna"), [mock_store_a().id]);
+}
+
+// covers: OMS-REG-CDIO-01.174
+
+#[actix_rt::test]
+async fn deleting_one_of_two_duplicate_user_stores_keeps_the_store() {
+    let (connection, service_provider, dir) =
+        user_store_setup("central_data_user_store_duplicate").await;
+    let ctx = as_user(&service_provider, IMPORTER);
+    // A duplicate, as legacy mSupply can send.
+    UserStoreJoinRowRepository::new(&connection)
+        .upsert_one(&UserStoreJoinRow {
+            id: "anna_store_ms_again".to_string(),
+            user_id: "anna".to_string(),
+            store_id: "store_ms".to_string(),
+            is_default: false,
+        })
+        .unwrap();
+
+    // Her store access on MS left as it is: the duplicate keeps it, so it's no contradiction.
+    let path = write_file(
+        dir.path(),
+        sheet::write(vec![
+            user_store_sheet_data(vec![user_store_row(&[
+                ("id", "anna_store_ms_again"),
+                ("delete", "DELETE"),
+            ])]),
+            permission_sheet_data(vec![permission_row(&[
+                ("id", "anna_access"),
+                ("username", "anna"),
+                ("store_code", "MS"),
+                ("permission", "STORE_ACCESS"),
+            ])]),
+        ])
+        .unwrap(),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].deleted, 1);
+    assert_eq!(
+        store_joins_of(&connection, "anna"),
+        [(mock_store_a().id, true), ("store_ms".to_string(), false)]
+    );
+    assert!(store_access_of(&connection, "anna").contains(&"store_ms".to_string()));
+}
+
+// covers: OMS-REG-CDIO-01.21
+
+#[actix_rt::test]
+async fn a_store_a_later_row_deletes_is_blamed_on_that_row_alone() {
+    let (connection, service_provider, dir) =
+        user_store_setup("central_data_user_store_update_then_delete").await;
+    let ctx = as_user(&service_provider, IMPORTER);
+    let before = store_joins_of(&connection, "anna");
+    let path = write_file(
+        dir.path(),
+        user_store_sheet(vec![
+            user_store_row(&[("id", "anna_store_ms"), ("is_default", "TRUE")]),
+            user_store_row(&[("id", "anna_store_ms"), ("delete", "DELETE")]),
+            user_store_row(&[("id", "anna_store_a"), ("is_default", "FALSE")]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    // Not that another sheet took the store away: the file has no other sheet.
+    assert_eq!(
+        row_errors(&summary),
+        vec![(3, None, "Row 2 already changes this record")]
+    );
+    assert_eq!(store_joins_of(&connection, "anna"), before);
+}
+
+// covers: OMS-REG-CDIO-01.173
+
+#[actix_rt::test]
+async fn a_store_a_later_row_gives_back_is_not_blamed_on_another_sheet() {
+    let (connection, service_provider, dir) =
+        user_store_setup("central_data_user_store_delete_then_add").await;
+    let ctx = as_user(&service_provider, IMPORTER);
+    let path = write_file(
+        dir.path(),
+        user_store_sheet(vec![
+            user_store_row(&[("id", "anna_store_ms"), ("delete", "DELETE")]),
+            user_store_row(&[
+                ("username", "anna"),
+                ("store_code", "MS"),
+                ("is_default", "FALSE"),
+            ]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    // The file has no user_permission sheet to blame: the later row gives the store back.
+    assert_eq!(summary.errors, vec![]);
+    // Through a new record: the first row deleted hers.
+    assert_eq!(
+        UserStoreJoinRowRepository::new(&connection)
+            .find_one_by_id("anna_store_ms")
+            .unwrap(),
+        None
+    );
+    assert_eq!(
+        store_joins_of(&connection, "anna"),
+        [(mock_store_a().id, true), ("store_ms".to_string(), false)]
+    );
+    assert!(store_access_of(&connection, "anna").contains(&"store_ms".to_string()));
+}
+
+// covers: OMS-REG-CDIO-01.168
+
+#[actix_rt::test]
+async fn only_a_server_admin_can_import_or_export_user_stores() {
+    let (connection, service_provider, dir) =
+        user_store_setup("central_data_user_store_admin_only").await;
+    let ctx = as_user(&service_provider, "ben");
+    assert!(matches!(
+        CentralDataService.export(&ctx, &[user_stores_containing(None)]),
+        Err(ExportError::ServerAdminOnly)
+    ));
+    assert!(matches!(
+        CentralDataService.export_counts(&ctx, &[user_stores_containing(None)]),
+        Err(ExportError::ServerAdminOnly)
+    ));
+
+    let path = write_file(
+        dir.path(),
+        user_store_sheet(vec![user_store_row(&[
+            ("username", "ben"),
+            ("store_code", "MS"),
+            ("is_default", "TRUE"),
+        ])]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    let errors: Vec<_> = summary
+        .errors
+        .iter()
+        .map(|error| (error.sheet.as_str(), error.row, error.message.as_str()))
+        .collect();
+    assert_eq!(
+        errors,
+        [(
+            "user_store_join",
+            None,
+            "Only a server admin can import this sheet"
+        )]
+    );
+    assert_eq!(store_joins_of(&connection, "ben"), []);
+}
+
+// covers: OMS-REG-CDIO-01.36, .169
+
+#[actix_rt::test]
+async fn a_user_store_delete_row_with_a_missing_reference_applies_nothing() {
+    let (connection, service_provider, dir) =
+        user_store_setup("central_data_user_store_delete_missing_reference").await;
+    let ctx = as_user(&service_provider, IMPORTER);
+    let before = store_joins_of(&connection, "anna");
+    let path = write_file(
+        dir.path(),
+        user_store_sheet(vec![
+            user_store_row(&[("id", "anna_store_ms"), ("delete", "DELETE")]),
+            user_store_row(&[
+                ("username", "nobody"),
+                ("store_code", "MS"),
+                ("delete", "DELETE"),
+            ]),
+            user_store_row(&[
+                ("username", "anna"),
+                ("store_code", "NOPE"),
+                ("delete", "DELETE"),
+            ]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (3, Some("username"), "referenced record not found"),
+            (4, Some("store_code"), "referenced record not found"),
+        ]
+    );
+    // Row 2's delete is rolled back with the rest.
+    assert_eq!(store_joins_of(&connection, "anna"), before);
+}
+
+// covers: OMS-REG-CDIO-01.163, .170
+
+#[actix_rt::test]
+async fn a_user_store_finds_a_user_the_user_sheet_adds_who_can_then_log_in() {
+    let (connection, service_provider, dir) =
+        user_store_setup("central_data_user_store_new_user").await;
+    let ctx = as_user(&service_provider, IMPORTER);
+    let users = sheet_data(
+        "user",
+        &USER_HEADERS,
+        vec![user_row("", "dina", &[(2, "secret"), (4, "ENGLISH")])],
+    );
+    let stores = user_store_sheet_data(vec![user_store_row(&[
+        ("username", "dina"),
+        ("store_code", "MS"),
+        ("is_default", "TRUE"),
+    ])]);
+    // A permission row for the store access the join gives finds it.
+    let permissions = permission_sheet_data(vec![permission_row(&[
+        ("username", "dina"),
+        ("store_code", "MS"),
+        ("permission", "STORE_ACCESS"),
+    ])]);
+    // Sheets run in table order, not file order.
+    let path = write_file(
+        dir.path(),
+        sheet::write(vec![permissions, stores, users]).unwrap(),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    let counts: Vec<_> = summary
+        .tables
+        .iter()
+        .map(|table| (table.table, table.inserted, table.unchanged))
+        .collect();
+    assert_eq!(
+        counts,
+        [
+            (CentralDataTable::User, 1, 0),
+            (CentralDataTable::UserStoreJoin, 1, 0),
+            (CentralDataTable::UserPermission, 0, 1),
+        ]
+    );
+    let dina = UserAccountRowRepository::new(&connection)
+        .find_by_trimmed_username_any_case("dina")
+        .unwrap()
+        .remove(0);
+    // Login offers her MS, and her store access lets her in.
+    KeyValueStoreRepository::new(&connection)
+        .set_i32(KeyType::SettingsSyncSiteId, Some(0))
+        .unwrap();
+    let user = UserAccountService::new(&connection)
+        .find_user_active_on_this_site(&dina.id)
+        .unwrap()
+        .unwrap();
+    let offered: Vec<_> = user
+        .stores
+        .iter()
+        .map(|store| store.store_row.id.as_str())
+        .collect();
+    assert_eq!(offered, ["store_ms"]);
+    assert_eq!(store_access_of(&connection, &dina.id), ["store_ms"]);
 }
