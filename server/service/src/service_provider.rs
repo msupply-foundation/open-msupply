@@ -6,6 +6,7 @@ use crate::{
     barcode::{BarcodeService, BarcodeServiceTrait},
     campaign::{CampaignService, CampaignServiceTrait},
     catalogue::{AssetCatalogueServiceTrait, CatalogueService},
+    central_data::{CentralDataService, CentralDataServiceTrait},
     clinician::{ClinicianService, ClinicianServiceTrait},
     cold_chain::{ColdChainService, ColdChainServiceTrait},
     contact::{ContactService, ContactServiceTrait},
@@ -159,6 +160,7 @@ pub struct ServiceProvider {
     pub site_auth_service: Box<dyn SiteAuthTrait>,
     pub sync_status_service: Box<dyn SyncStatusTrait>,
     pub standalone_central_service: Box<dyn StandaloneCentralServiceTrait>,
+    pub central_data_service: Box<dyn CentralDataServiceTrait>,
     // Triggers
     processors_trigger: ProcessorsTrigger,
     pub sync_trigger: SyncTrigger,
@@ -315,6 +317,7 @@ impl ServiceProvider {
             site_auth_service: Box::new(SiteAuthService),
             sync_status_service: Box::new(SyncStatusService),
             standalone_central_service: Box::new(StandaloneCentralService),
+            central_data_service: Box::new(CentralDataService),
             processors_trigger,
             sync_trigger,
             site_is_initialised_trigger,

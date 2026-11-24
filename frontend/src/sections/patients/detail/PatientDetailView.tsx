@@ -5,7 +5,8 @@ import {
   Suspense,
   type Component,
 } from 'solid-js';
-import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
+import { useNavigate, useParams } from '@solidjs/router';
+import { useUrlTab } from '../../../list/urlTab';
 import { reportPermissionDenied } from '../../../api/graphql';
 import { gated, notFound } from '../../../api/gated';
 import { t, localisedDate, getDisplayAge } from '../../../intl';
@@ -110,11 +111,16 @@ import { hasPermission, patientPreferences } from '../../../store/storeContext';
 const PatientDetailView: Component = () => {
   const params = useParams<{ storeId: string; patientId: string }>();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams<{ tab?: string }>();
-
-  const activeTab = () => searchParams.tab ?? 'details';
-  const setActiveTab = (value: string) =>
-    setSearchParams({ tab: value === 'details' ? undefined : value });
+  // Every tab the screen can show; which of them it does depends on the store.
+  const { tab: activeTab, setTab: setActiveTab } = useUrlTab([
+    'details',
+    'programs',
+    'encounters',
+    'vaccinations',
+    'insurance',
+    'custom-fields',
+    'log',
+  ]);
 
   // The patient read and the Details tab, on the plain path or the document
   // path as the store's Patient registry entry says (spec/patients rules ›
@@ -136,7 +142,7 @@ const PatientDetailView: Component = () => {
   const { patient: data, refetch } = patientDetails;
   const node = () => data.latest ?? undefined;
   // "Patient created", when the create flow opened this patient
-  // (OMS-REG-DIS-01.54): shown once the patient has loaded, in the footer.
+  // (OMS-REG-DIS-01.86): shown once the patient has loaded, in the footer.
   // Read through `gated`: this effect sits above the screen's Suspense, where
   // a first pending `.latest` would suspend the whole section.
   const created = createArrivalFlash(() => gated(data)?.id);

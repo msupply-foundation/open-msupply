@@ -391,7 +391,7 @@ export const repricedLines = (
 
 /**
  * The batch save for a visit: the record, one line per batch taken (packs
- * split where needed, first expiry first), and the move to Picked.
+ * split where needed, in allocation order), and the move to Picked.
  */
 export const dispenseInput = (
   prescriptionId: string,
@@ -482,8 +482,56 @@ export const visitWasSaved = (
  */
 export interface VisitRecord {
   id: string;
-  sentFor?: { id: string; name: string };
+  sentFor?: DispensedTo;
 }
+
+/**
+ * Who a visit is dispensed to: a registered patient, or the store's unnamed
+ * patient (rules › the unnamed patient), whose record the server gives once
+ * Dispense is pressed.
+ */
+export interface DispensedTo {
+  id: string;
+  name: string;
+  isUnnamed?: boolean;
+}
+
+/** The two dispensing preferences that decide who a visit starts with. */
+interface UnnamedPreferences {
+  useUnnamedPatient: boolean;
+  startWithUnnamedPatient: boolean;
+}
+
+/**
+ * Whether a new visit starts with the unnamed patient chosen (rules › the
+ * unnamed patient): "Start with Unnamed patient" does nothing while "Use the
+ * unnamed patient" is off.
+ */
+export const startsWithUnnamed = (prefs: UnnamedPreferences): boolean =>
+  prefs.useUnnamedPatient && prefs.startWithUnnamedPatient;
+
+/**
+ * Whether the unnamed patient picked for this visit still counts as chosen
+ * (rules › the unnamed patient): not once the store stops using it, as sync
+ * can turn the setting off while a visit is open.
+ */
+export const unnamedStillChosen = (
+  picked: boolean,
+  prefs: UnnamedPreferences
+): boolean => picked && prefs.useUnnamedPatient;
+
+/**
+ * Whether the unnamed patient is chosen once a visit is dispensed (rules ›
+ * the unnamed patient): it stays chosen after a visit to it, so a run of
+ * walk-ins needs no press each time; after a registered patient, the next
+ * visit starts as any new one does.
+ */
+export const unnamedAfterDispense = (
+  to: DispensedTo,
+  prefs: UnnamedPreferences
+): boolean =>
+  prefs.useUnnamedPatient &&
+  (to.isUnnamed === true || prefs.startWithUnnamedPatient);
 
 /** What became of a save, as far as the screen can tell. */
 export type SaveReply =
@@ -528,7 +576,7 @@ export interface DispenseCalls {
  * - `unsure`: a save may have gone through and the screen can't tell.
  */
 export type DispenseEnd =
-  | { kind: 'saved'; patient: { id: string; name: string } }
+  | { kind: 'saved'; patient: DispensedTo }
   | { kind: 'stopped'; checked: MedicineCard[]; repriced: string[] }
   | { kind: 'failed'; checked?: MedicineCard[]; missing?: string[] }
   | { kind: 'unsure' };
@@ -558,7 +606,7 @@ const lookFirst = async (
  */
 export const dispenseVisit = async (
   visit: { current?: VisitRecord },
-  patient: { id: string; name: string },
+  patient: DispensedTo,
   listed: readonly ListLine[],
   calls: DispenseCalls,
   retried = false

@@ -1,6 +1,7 @@
-import { createSignal, splitProps, type JSX } from 'solid-js';
+import { createSignal, Show, splitProps, type JSX } from 'solid-js';
 import { t } from '../../../intl';
 import { UploadIcon } from '../../icons';
+import { Spinner } from '../feedback/Spinner';
 import {
   partitionFiles,
   type FileRejection,
@@ -29,6 +30,12 @@ export interface UploadZoneProps extends PartitionOptions {
    */
   multiple?: boolean;
   disabled?: boolean;
+  /**
+   * Working on a picked file, such as uploading it: takes no other file, and
+   * shows a spinner in place of its icon and a busy Browse button, as a
+   * loading `Button` does.
+   */
+  loading?: boolean;
   class?: string;
   /**
    * `data-testid` for the hidden `<input type="file">` (locale-stable test
@@ -55,6 +62,7 @@ export const UploadZone = (props: UploadZoneProps): JSX.Element => {
     'onPick',
     'multiple',
     'disabled',
+    'loading',
     'accept',
     'maxSize',
     'class',
@@ -67,6 +75,7 @@ export const UploadZone = (props: UploadZoneProps): JSX.Element => {
   // content doesn't flicker the highlight off.
   let dragDepth = 0;
   let inputRef: HTMLInputElement | undefined;
+  const inactive = () => local.disabled || local.loading;
 
   const dispatch = (fileList: FileList | null) => {
     if (!fileList || fileList.length === 0) return;
@@ -80,14 +89,14 @@ export const UploadZone = (props: UploadZoneProps): JSX.Element => {
   };
 
   const openPicker = () => {
-    if (!local.disabled) inputRef?.click();
+    if (!inactive()) inputRef?.click();
   };
 
   const onDrop: JSX.EventHandler<HTMLDivElement, DragEvent> = event => {
     event.preventDefault();
     dragDepth = 0;
     setDragging(false);
-    if (local.disabled) return;
+    if (inactive()) return;
     dispatch(event.dataTransfer?.files ?? null);
   };
 
@@ -97,10 +106,11 @@ export const UploadZone = (props: UploadZoneProps): JSX.Element => {
       data-testid={local.testId}
       data-dragging={dragging() ? '' : undefined}
       data-disabled={local.disabled ? '' : undefined}
+      data-loading={local.loading ? '' : undefined}
       onClick={openPicker}
       onDragEnter={event => {
         event.preventDefault();
-        if (local.disabled) return;
+        if (inactive()) return;
         dragDepth += 1;
         setDragging(true);
       }}
@@ -120,7 +130,7 @@ export const UploadZone = (props: UploadZoneProps): JSX.Element => {
         class={styles.hiddenInput}
         accept={local.accept}
         multiple={local.multiple ?? true}
-        disabled={local.disabled}
+        disabled={inactive()}
         tabindex={-1}
         aria-hidden="true"
         data-testid={local.inputTestId}
@@ -130,12 +140,21 @@ export const UploadZone = (props: UploadZoneProps): JSX.Element => {
           event.currentTarget.value = '';
         }}
       />
-      <UploadIcon class={styles.icon} />
+      <Show when={local.loading} fallback={<UploadIcon class={styles.icon} />}>
+        <span class={styles.busy}>
+          <Spinner sizeRem={2.25} />
+        </span>
+      </Show>
       <p class={styles.invite}>{t('messages.upload-invite')}</p>
       <p class={styles.or}>{t('messages.upload-or')}</p>
       {/* The keyboard-operable control; its click bubbles to the zone's
           onClick to open the picker (single handler). */}
-      <button type="button" class={styles.browse} disabled={local.disabled}>
+      <button
+        type="button"
+        class={styles.browse}
+        disabled={inactive()}
+        aria-busy={local.loading || undefined}
+      >
         {t('button.browse-files')}
       </button>
     </div>

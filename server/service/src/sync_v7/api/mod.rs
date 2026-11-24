@@ -8,6 +8,7 @@ use reqwest::{
     header::{AUTHORIZATION, HeaderMap, HeaderValue, IntoHeaderName},
 };
 use serde::{Serialize, de::DeserializeOwned};
+use thiserror::Error;
 use util::{RetrySeconds, format_error, with_retries};
 
 pub mod download_file;
@@ -117,6 +118,24 @@ fn insert_header<K: IntoHeaderName>(
 
 pub type ApiResponse<O> = Result<O, SyncError>;
 
+/// The longest a request from `request_interactive` may take. Longer than the
+/// connect attempts (2 + 5 + 10s), so a central that can't be reached fails as
+/// `Sync` first, and a slow link that connects on the last attempt still has
+/// about 13s for the answer.
+const INTERACTIVE_LIMIT: std::time::Duration = std::time::Duration::from_secs(30);
+
+/// Why a request from `request_interactive` failed.
+#[derive(Error, Debug)]
+pub enum InteractiveError {
+    #[error(transparent)]
+    Sync(#[from] SyncError),
+    /// Connected, but no answer inside `INTERACTIVE_LIMIT`. Connecting gives up
+    /// as sync does, before the limit, so a central that can't be reached fails as
+    /// `Sync`: reaching the limit means central is slow to answer.
+    #[error("No answer from the central server {url} in {seconds}s")]
+    NoAnswer { url: String, seconds: u64 },
+}
+
 #[derive(Clone)]
 pub(crate) struct SyncApiV7 {
     pub(crate) url: reqwest::Url,
@@ -159,8 +178,38 @@ impl SyncApiV7 {
         }
     }
 
+    /// POST `input` to `route` for someone waiting on screen (a patient search): connects
+    /// as sync does (about 17s before a central that can't be reached fails), but the whole
+    /// request is given up after `INTERACTIVE_LIMIT`. Without it, a central that accepts but
+    /// never answers is waited on for 5 minutes per attempt, about 15 minutes in all, and
+    /// each retry starts the search again on central.
+    pub(crate) async fn request_interactive<I: Serialize, O: DeserializeOwned>(
+        &self,
+        route: &str,
+        input: I,
+    ) -> Result<O, InteractiveError> {
+        let request = self.attempt_with(RetrySeconds::default(), route, &input);
+        match tokio::time::timeout(INTERACTIVE_LIMIT, request).await {
+            Ok(result) => Ok(result.map_err(SyncError::from)?),
+            Err(_) => Err(InteractiveError::NoAnswer {
+                url: self.url.to_string(),
+                seconds: INTERACTIVE_LIMIT.as_secs(),
+            }),
+        }
+    }
+
     async fn attempt<I: Serialize, O: DeserializeOwned>(
         &self,
+        route: &str,
+        input: &I,
+    ) -> Result<O, RequestError> {
+        self.attempt_with(RetrySeconds::default(), route, input)
+            .await
+    }
+
+    async fn attempt_with<I: Serialize, O: DeserializeOwned>(
+        &self,
+        retries: RetrySeconds,
         route: &str,
         input: &I,
     ) -> Result<O, RequestError> {
@@ -172,7 +221,7 @@ impl SyncApiV7 {
             .unwrap();
         let auth_headers = self.auth_headers.clone();
 
-        let result = with_retries(RetrySeconds::default(), |client| {
+        let result = with_retries(retries, |client| {
             client
                 .post(url.clone())
                 .headers(auth_headers.clone())
@@ -319,6 +368,56 @@ mod tests {
             content_length: 1000,
             body: r#"{"Ok": {"siteId": 1, "cen"#,
         }
+    }
+
+    /// A central that accepts the connection but never answers fails a patient search
+    /// within the interactive limit, as no answer rather than unreachable, not after the
+    /// 5-minute idle read timeout sync uses.
+    #[actix_rt::test]
+    async fn patient_search_gives_up_on_a_silent_central() {
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let url = format!("http://{}/", listener.local_addr().unwrap());
+        // Accept and hold each connection, sending nothing.
+        std::thread::spawn(move || {
+            let mut held = Vec::new();
+            for stream in listener.incoming() {
+                held.push(stream);
+            }
+        });
+
+        let started = std::time::Instant::now();
+        let result = api(&url)
+            .patient_search(patient_search::Input::default())
+            .await;
+
+        assert!(
+            matches!(result, Err(InteractiveError::NoAnswer { .. })),
+            "Expected no answer, got {result:#?}"
+        );
+        assert!(started.elapsed() < INTERACTIVE_LIMIT + std::time::Duration::from_secs(2));
+    }
+
+    /// A central that refuses the connection fails a patient search as unreachable,
+    /// straight away rather than at the interactive limit.
+    #[actix_rt::test]
+    async fn patient_search_reports_an_unreachable_central() {
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let url = format!("http://{}/", listener.local_addr().unwrap());
+        drop(listener);
+
+        let started = std::time::Instant::now();
+        let result = api(&url)
+            .patient_search(patient_search::Input::default())
+            .await;
+
+        assert!(
+            matches!(
+                result,
+                Err(InteractiveError::Sync(SyncError::ConnectionError { .. }))
+            ),
+            "Expected a connection error, got {result:#?}"
+        );
+        assert!(started.elapsed() < INTERACTIVE_LIMIT);
     }
 
     /// Reads other than pull use `request_with_body_retry` too, so they get the same retry.

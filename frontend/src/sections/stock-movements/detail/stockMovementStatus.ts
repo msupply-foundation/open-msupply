@@ -16,16 +16,18 @@ export const statusIndex = (status: MovementStatus): number =>
   STATUS_FLOW.indexOf(status);
 
 // Translated status labels, lazily read so a language switch re-labels
-// (same getter shape as the return/stocktake status maps).
+// (same getter shape as the return/stocktake status maps). The `status.*`
+// keys, not `label.*`: `label.confirmed` is the "Confirmed" date heading,
+// which French reads as "Date de confirmation".
 export const STATUS_LABELS: Record<string, string> = {
   get NEW() {
-    return t('label.new');
+    return t('status.new');
   },
   get CONFIRMED() {
-    return t('label.confirmed');
+    return t('status.confirmed');
   },
   get FINALISED() {
-    return t('label.finalised');
+    return t('status.finalised');
   },
 };
 

@@ -1308,6 +1308,193 @@ type CannotReverseInvoiceStatus implements UpdateErrorInterface & UpdateInboundS
 	description: String!
 }
 
+type CentralDataCannotReadFile implements CentralDataImportErrorInterface {
+	description: String!
+}
+
+enum CentralDataChangeNode {
+	INSERTED
+	UPDATED
+	"""
+	Counted as updated.
+	"""
+	RESTORED
+	DELETED
+	UNCHANGED
+}
+
+union CentralDataErrorsFileResponse = CentralDataImportError | CentralDataExportNode
+
+type CentralDataExportCountNode {
+	table: CentralDataTableNode!
+	matching: Int!
+	total: Int!
+}
+
+type CentralDataExportCountsNode {
+	tables: [CentralDataExportCountNode!]!
+	"""
+	Across all tables, as for an import.
+	"""
+	maxRows: Int!
+}
+
+type CentralDataExportError {
+	error: CentralDataExportErrorInterface!
+}
+
+interface CentralDataExportErrorInterface {
+	description: String!
+}
+
+type CentralDataExportNode {
+	fileId: String!
+}
+
+union CentralDataExportResponse = CentralDataExportError | CentralDataExportNode
+
+input CentralDataExportTableInput {
+	table: CentralDataTableNode!
+	"""
+	Any letter case.
+	"""
+	contains: String
+	"""
+	Ignored by a table with no active flag.
+	"""
+	isActive: Boolean
+}
+
+type CentralDataFieldChangeNode {
+	column: String!
+	from: String!
+	to: String!
+}
+
+type CentralDataImportError {
+	error: CentralDataImportErrorInterface!
+}
+
+interface CentralDataImportErrorInterface {
+	description: String!
+}
+
+type CentralDataImportNode {
+	tables: [CentralDataTableChangesNode!]!
+	"""
+	The first 100; `tables` counts them all.
+	"""
+	changes: [CentralDataRowChangeNode!]!
+	"""
+	The first 100.
+	"""
+	errors: [CentralDataRowErrorNode!]!
+	"""
+	With any, nothing was applied.
+	"""
+	errorCount: Int!
+}
+
+union CentralDataImportResponse = CentralDataImportError | CentralDataImportNode
+
+type CentralDataMutations {
+	"""
+	Returns a file id for /files. Refused over the import cap.
+	"""
+	export(tables: [CentralDataExportTableInput!]!): CentralDataExportResponse!
+	"""
+	The upload with each row's errors in an `error` column, as a file id for /files.
+	"""
+	errorsFile(fileId: String!): CentralDataErrorsFileResponse!
+	"""
+	Applies nothing if any row has an error.
+	"""
+	import(		fileId: String!,
+		"""
+		The user's date in their own time zone, for dates the server sets. Without it, the server's local date
+		"""
+		today: NaiveDate
+	): CentralDataImportResponse!
+}
+
+type CentralDataQueries {
+	"""
+	Writes nothing.
+	"""
+	importPreview(fileId: String!): CentralDataImportResponse!
+	exportCounts(tables: [CentralDataExportTableInput!]!): CentralDataExportCountsNode!
+}
+
+type CentralDataRowChangeNode {
+	sheet: String!
+	"""
+	As Excel shows it.
+	"""
+	row: Int!
+	"""
+	E.g. the unit's name.
+	"""
+	record: String!
+	change: CentralDataChangeNode!
+	"""
+	For an update, the columns that change.
+	"""
+	fields: [CentralDataFieldChangeNode!]!
+}
+
+type CentralDataRowErrorNode {
+	sheet: String!
+	"""
+	As Excel shows it. Null on a sheet name, which has no row.
+	"""
+	row: Int
+	column: String
+	message: String!
+}
+
+type CentralDataTableChangesNode {
+	table: CentralDataTableNode!
+	inserted: Int!
+	updated: Int!
+	deleted: Int!
+	unchanged: Int!
+	"""
+	Heading errors included.
+	"""
+	errorCount: Int!
+}
+
+enum CentralDataTableNode {
+	UNIT
+	LOCATION_TYPE
+	CURRENCY
+	NAME
+	STORE
+	USER
+	ITEM
+	MASTER_LIST
+	MASTER_LIST_LINE
+	NAME_STORE_JOIN
+	USER_STORE_JOIN
+	USER_PERMISSION
+}
+
+type CentralDataTooManyCells implements CentralDataImportErrorInterface {
+	description: String!
+	cellCount: Int!
+	maxCells: Int!
+}
+
+type CentralDataTooManyRows implements CentralDataImportErrorInterface & CentralDataExportErrorInterface {
+	description: String!
+	rowCount: Int!
+	maxRows: Int!
+}
+
+type CentralDataUploadExpired implements CentralDataImportErrorInterface {
+	description: String!
+}
+
 type CentralGeneralMutations {
 	configureNameProperties(input: [ConfigureNamePropertyInput!]!): ConfigureNamePropertiesResponse!
 	"""
@@ -1337,6 +1524,15 @@ type CentralPatientNode {
 	dateOfBirth: NaiveDate
 	gender: GenderTypeNode
 	isDeceased: Boolean!
+	phone: String
+	"""
+	Not filled by legacy mSupply or an older central
+	"""
+	address1: String
+	"""
+	Not filled by legacy mSupply or an older central
+	"""
+	nextOfKinName: String
 }
 
 type CentralPatientSearchConnector {
@@ -1354,12 +1550,34 @@ interface CentralPatientSearchErrorInterface {
 
 input CentralPatientSearchInput {
 	"""
-	Patient code
+	Patient code: the start of the code or code 2, ignoring case. Exactly
+	the code on legacy mSupply.
 	"""
 	code: String
 	firstName: String
 	lastName: String
+	"""
+	An exact date of birth
+	"""
 	dateOfBirth: NaiveDate
+	"""
+	The earliest date of birth, for a year or a month (not on legacy mSupply)
+	"""
+	dateOfBirthFrom: NaiveDate
+	"""
+	The latest date of birth, for a year or a month (not on legacy mSupply)
+	"""
+	dateOfBirthTo: NaiveDate
+	"""
+	Max number of returned patients, in name order. There's no total: ask
+	for one more than you show to know whether there are more. Not on
+	legacy mSupply, which returns every match.
+	"""
+	first: Int
+	"""
+	First returned patient is at this position in the name order
+	"""
+	offset: Int
 }
 
 union CentralPatientSearchResponse = CentralPatientSearchConnector | CentralPatientSearchError
@@ -1404,12 +1622,18 @@ type CentralServerMutationNode {
 	customField: CustomFieldMutations!
 	reports: CentralReportMutations!
 	site: CentralSiteMutations!
+	centralData: CentralDataMutations!
+}
+
+type CentralServerNoAnswer implements CentralPatientSearchErrorInterface {
+	description: String!
 }
 
 type CentralServerQueryNode {
 	plugin: CentralPluginQueries!
 	syncMessage: SyncMessageQueries!
 	site: CentralSiteQueries!
+	centralData: CentralDataQueries!
 	customField: CustomFieldConfigQueries!
 }
 
@@ -4102,6 +4326,13 @@ input InsertInboundShipmentLineInput {
 	and its stock. Doesn't propose a barcode (see `proposeBarcode`).
 	"""
 	barcode: String
+	"""
+	The new line's authorisation state, on a purchase-order-linked shipment
+	whose store requires line authorisation (omitted: Pending); ignored on
+	any other line. Passed or Rejected needs the authorise permission on any
+	external line, including one that ignores it.
+	"""
+	status: InvoiceLineStatusType
 }
 
 union InsertInboundShipmentLineResponse = InsertInboundShipmentLineError | InvoiceLineNode
@@ -5015,6 +5246,11 @@ input InvoiceFilterInput {
 	requisitionId: EqualFilterStringInput
 	linkedInvoiceId: EqualFilterStringInput
 	isProgramInvoice: Boolean
+	"""
+	Whether the other party is a store's unnamed patient: false leaves
+	its dispensing records out, as the patient search's recent patients do
+	"""
+	isForUnnamedPatient: Boolean
 	purchaseOrderId: EqualFilterStringInput
 	prescriptionRequestId: EqualFilterStringInput
 	purchaseOrderNumber: EqualFilterBigNumberInput
@@ -5197,6 +5433,12 @@ type InvoiceNode {
 	id: String!
 	otherPartyName: String!
 	otherPartyId: String!
+	"""
+	Whether the invoice is for a store's unnamed patient, so a list can show
+	its translated label without loading each row's patient
+	(spec/prescriptions rules › the unnamed patient)
+	"""
+	isForUnnamedPatient: Boolean!
 	"""
 	User that last edited invoice, if user is not found in system default unknown user is returned
 	Null is returned for transfers, where inbound has not been edited yet
@@ -6282,6 +6524,12 @@ type Mutations {
 	"""
 	insertPatient(storeId: String!, input: InsertPatientInput!): InsertPatientResponse!
 	"""
+	The store's unnamed patient, the one record its walk-in visits are
+	dispensed to: created on the first call, the same record after.
+	Refused where the store's "Use the unnamed patient" is off.
+	"""
+	getOrCreateUnnamedPatient(storeId: String!): PatientNode!
+	"""
 	Updates a new patient (without document data)
 	"""
 	updatePatient(storeId: String!, input: UpdatePatientInput!): UpdatePatientResponse!
@@ -6789,6 +7037,10 @@ input PatientFilterInput {
 	country: StringFilterInput
 	email: StringFilterInput
 	identifier: StringFilterInput
+	"""
+	Matches the code or the secondary code (code 2)
+	"""
+	codeOrCode2: StringFilterInput
 	dateOfDeath: DateFilterInput
 	programEnrolmentName: StringFilterInput
 	nextOfKinName: StringFilterInput
@@ -6798,12 +7050,24 @@ input PatientFilterInput {
 	`{"And": [{"CustomField": {"key": "k", "filter": {"Text": {"Like": "abc"}}}}]}`
 	"""
 	dynamicFilter: JSON
+	"""
+	Only patients visible in the queried store (it has a visible
+	name_store_join for them), or with false only those that aren't.
+	Unset, patients are returned whichever store they belong to. Read by
+	the `patients` query only.
+	"""
+	isVisible: Boolean
 }
 
 type PatientNode {
 	id: String!
 	name: String!
 	code: String!
+	"""
+	Whether this is a store's unnamed patient, the one record its walk-in
+	visits are dispensed to. Search never returns it.
+	"""
+	isUnnamed: Boolean!
 	code2: String
 	firstName: String
 	lastName: String
@@ -8563,7 +8827,12 @@ type Queries {
 		name: String!
 	): DocumentHistoryResponse!
 	documentRegistries(filter: DocumentRegistryFilterInput, sort: [DocumentRegistrySortInput!], storeId: String!): DocumentRegistryResponse!
-	patients(storeId: String!, page: PaginationInput, filter: PatientFilterInput, sort: [PatientSortInput!]): PatientResponse!
+	patients(		storeId: String!,		page: PaginationInput,		filter: PatientFilterInput,		sort: [PatientSortInput!],
+		"""
+		Stop counting at this many: totalCount is then at most this. For a search: the page is also sorted from only the first 1000 matches found, so past that paging may repeat or miss a patient
+		"""
+		countLimit: Int
+	): PatientResponse!
 	patient(storeId: String!, patientId: String!): PatientNode
 	patientSearch(storeId: String!, input: PatientSearchInput!): PatientSearchResponse!
 	centralPatientSearch(storeId: String!, input: CentralPatientSearchInput!): CentralPatientSearchResponse!
@@ -10129,6 +10398,7 @@ input StocktakeLineFilterInput {
 	donorId: EqualFilterStringInput
 	campaignId: EqualFilterStringInput
 	batch: StringFilterInput
+	expiryDate: DateFilterInput
 	manufactureDate: DateFilterInput
 	campaignName: StringFilterInput
 }
@@ -10357,6 +10627,10 @@ input StringFilterInput {
 	Search term must be included in search candidate (case insensitive)
 	"""
 	like: String
+	"""
+	Search candidate must start with the search term (case insensitive)
+	"""
+	startsWith: String
 }
 
 input StringStorePrefInput {

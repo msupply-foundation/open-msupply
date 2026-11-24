@@ -35,7 +35,8 @@ export type NavCapability =
   | 'programModule'
   | 'vaccineModule'
   | 'central'
-  | 'centralAdmin';
+  | 'centralAdmin'
+  | 'standaloneCentralAdmin';
 
 export type NavItem = {
   labelKey: LocaleKey;
@@ -316,6 +317,11 @@ export const navConfig: NavItem[] = [
         gate: 'centralAdmin',
       },
       { labelKey: 'sites', path: 'manage/sites', gate: 'centralAdmin' },
+      {
+        labelKey: 'central-data',
+        path: 'manage/central-data',
+        gate: 'standaloneCentralAdmin',
+      },
       {
         labelKey: 'reports',
         path: 'manage/reports',

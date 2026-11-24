@@ -8,7 +8,9 @@ use crate::{
     processors::transfer::requisition::RequisitionTransferOutput,
 };
 
-use super::{RequisitionTransferProcessor, RequisitionTransferProcessorRecord};
+use super::{
+    RequisitionTransferProcessor, RequisitionTransferProcessorRecord, lock_requisition_row,
+};
 
 const DESCRIPTION: &str = "Update request requisition status to finalised";
 
@@ -49,8 +51,13 @@ impl RequisitionTransferProcessor for UpdateRequestRequisitionStatusProcessor {
             Some(linked_requisition) => linked_requisition,
             None => return Ok(RequisitionTransferOutput::NoLinkedRequisition),
         };
+        // The record's copy of the request can be out of date, see `try_process_record`
+        let Some(request_requisition_row) = lock_requisition_row(connection, request_requisition)?
+        else {
+            return Ok(RequisitionTransferOutput::NoLinkedRequisition);
+        };
         // 4.
-        if request_requisition.requisition_row.status == RequisitionStatus::Finalised {
+        if request_requisition_row.status == RequisitionStatus::Finalised {
             return Ok(RequisitionTransferOutput::RequestNotFinalised);
         }
         // 5.
@@ -63,7 +70,7 @@ impl RequisitionTransferProcessor for UpdateRequestRequisitionStatusProcessor {
             // 6.
             status: RequisitionStatus::Finalised,
             finalised_datetime: response_requisition.requisition_row.finalised_datetime,
-            ..request_requisition.requisition_row.clone()
+            ..request_requisition_row
         };
 
         RequisitionRowRepository::new(connection).upsert_one(&updated_request_requisition)?;

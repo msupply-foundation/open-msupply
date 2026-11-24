@@ -19,7 +19,8 @@ const processStockLines = (nodes, sort, dir) => {
     if (!!stockAtRisk) {
       line.stockAtRisk = stockAtRisk;
     }
-    line.daysUntilExpired = roundDaysToInteger(daysUntilExpiredFloat);
+    // null rather than undefined when there's no expiry date, so the template can tell it from 0
+    line.daysUntilExpired = roundDaysToInteger(daysUntilExpiredFloat) ?? null;
     line.averageMonthlyConsumption =
       Math.round((line?.item?.stats?.averageMonthlyConsumption ?? 0) * 10) / 10;
   });
@@ -28,13 +29,15 @@ const processStockLines = (nodes, sort, dir) => {
   return sortedNodes;
 };
 
+// Whole days from today to the expiry date. Today is the local date, which on the server is the
+// report's timezone: subtracting now from the expiry date's UTC midnight gave the day before or
+// after, depending on the hour and the timezone.
 const calculateDaysUntilExpired = expiryDateString => {
-  let daysUntilExpired = undefined;
-  if (!!expiryDateString) {
-    let now = Date.now();
-    daysUntilExpired = (new Date(expiryDateString) - now) / 1000 / 60 / 60 / 24;
-  }
-  return daysUntilExpired;
+  if (!expiryDateString) return undefined;
+  const [year, month, day] = expiryDateString.split('-').map(Number);
+  const now = new Date();
+  const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  return (Date.UTC(year, month - 1, day) - today) / 1000 / 60 / 60 / 24;
 };
 
 const calculateExpectedUsage = (daysUntilExpired, line) => {
@@ -42,7 +45,7 @@ const calculateExpectedUsage = (daysUntilExpired, line) => {
   let totalStock = line?.totalNumberOfPacks * line?.packSize;
 
   let expectedUsage = undefined;
-  if (!!daysUntilExpired && !!averageMonthlyConsumption && !!totalStock) {
+  if (daysUntilExpired != null && !!averageMonthlyConsumption && !!totalStock) {
     if (daysUntilExpired >= 0) {
       const usage = Math.round(
         daysUntilExpired * (averageMonthlyConsumption / (365.25 / 12.0))
@@ -60,7 +63,7 @@ const calculateStockAtRisk = (
   daysUntilExpired
 ) => {
   let stockAtRisk = undefined;
-  if (!!packSize && !!totalNumberOfPacks && !!daysUntilExpired) {
+  if (!!packSize && !!totalNumberOfPacks && daysUntilExpired != null) {
     const totalStock = packSize * totalNumberOfPacks;
     if (!!averageMonthlyConsumption) {
       if (daysUntilExpired >= 0) {
@@ -86,7 +89,7 @@ const calculateStockAtRisk = (
 
 const roundDaysToInteger = daysUntilExpired => {
   let rounded = undefined;
-  if (!!daysUntilExpired) {
+  if (daysUntilExpired != null) {
     rounded = Math.round(daysUntilExpired);
   }
   return rounded;

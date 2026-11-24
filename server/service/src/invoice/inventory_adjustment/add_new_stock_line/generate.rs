@@ -104,6 +104,7 @@ pub fn generate(
 
     let invoice_line_id = uuid();
     let stock_in_line = InsertStockInLine {
+        status: None,
         id: invoice_line_id.clone(),
         invoice_id,
         item_id,

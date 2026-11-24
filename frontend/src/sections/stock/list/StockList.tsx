@@ -310,7 +310,7 @@ const StockList: Component = () => {
       header: () => t('label.location-code'),
       cardGroup: 'more',
       // 'locationCode', not 'location': this column's header is the longer
-      // "Location code", which needs its own width and no growth cap (#601).
+      // "Location code", which needs its own width.
       ...getCellDefinition('locationCode'),
     },
     {

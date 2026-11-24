@@ -1,10 +1,16 @@
-use super::{StorageConnection, name_link_row::name_link, name_row::name, store_row::store};
+use super::{
+    StorageConnection,
+    name_link_row::name_link,
+    name_row::{name, system_name_filter},
+    store_row::store,
+};
 use crate::db_diesel::changelog::changelog::RowOrId;
 use crate::diesel_macros::define_linked_tables;
 use crate::{ChangelogRepository, RowActionType};
 use crate::{ChangelogSyncType, Delete, SourceSiteId, Upsert};
 use crate::{
-    DBType, EqualFilter, NameRow, diesel_macros::apply_equal_filter,
+    DBType, EqualFilter, NameRow, NameRowType, StringFilter,
+    diesel_macros::{apply_equal_filter, apply_string_filter},
     repository_error::RepositoryError,
 };
 
@@ -77,6 +83,11 @@ pub struct NameStoreJoinFilter {
     pub id: Option<EqualFilter<String>>,
     pub name_id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
+    pub name_type: Option<EqualFilter<NameRowType>>,
+    /// As `NameRow::is_system_name`.
+    pub is_system_name: Option<bool>,
+    /// The name's code or the store's code.
+    pub name_or_store_code: Option<StringFilter>,
 }
 pub struct NameStoreJoinRepository<'a> {
     connection: &'a StorageConnection,
@@ -155,6 +166,12 @@ impl<'a> NameStoreJoinRepository<'a> {
         Ok(result.into_iter().map(to_domain).collect())
     }
 
+    pub fn count(&self, filter: Option<NameStoreJoinFilter>) -> Result<i64, RepositoryError> {
+        Ok(create_filtered_query(filter)
+            .count()
+            .get_result(self.connection.lock().connection())?)
+    }
+
     pub fn find_many_by_id(
         &self,
         ids: &[String],
@@ -180,9 +197,25 @@ fn create_filtered_query(filter: Option<NameStoreJoinFilter>) -> BoxedQuery {
             id,
             name_id,
             store_id,
+            name_type,
+            is_system_name,
+            name_or_store_code,
         } = f;
 
+        // (name code OR store code). MUST be applied FIRST: or_filter ORs against the query's
+        // entire existing where clause, so this pair only groups as (name code OR store code)
+        // while the clause is still empty; every later filter then ANDs onto it.
+        if let Some(code) = name_or_store_code {
+            let mut stores = store::table.into_boxed::<DBType>();
+            apply_string_filter!(stores, Some(code.clone()), store::code);
+            apply_string_filter!(query, Some(code), name::code);
+            query = query.or_filter(name_store_join::store_id.eq_any(stores.select(store::id)));
+        }
         apply_equal_filter!(query, id, name_store_join::id);
+        apply_equal_filter!(query, name_type, name::type_);
+        if let Some(is_system_name) = is_system_name {
+            query = query.filter(system_name_filter(is_system_name));
+        }
         apply_equal_filter!(query, name_id, name_store_join::name_id);
         apply_equal_filter!(query, store_id, name_store_join::store_id);
     }

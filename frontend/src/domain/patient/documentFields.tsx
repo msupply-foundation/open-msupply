@@ -18,11 +18,12 @@
  * other fields with the form library on their first-item paths
  * (`contactDetails.0.region`).
  */
-import type { JSX } from 'solid-js';
+import { Show, type JSX } from 'solid-js';
 import { t } from '../../intl';
 import { FormColumns } from '../../ui/layout/Form/FormColumns';
 import { FormColumn } from '../../ui/layout/Form/FormColumn';
 import { FormSection } from '../../ui/layout/Form/FormSection';
+import { InsetPanel } from '../../ui/layout/InsetPanel/InsetPanel';
 import { TextField } from '../../ui/elements/inputs/TextField';
 import { currentStoreId } from '../../store/storeContext';
 import type { Patient } from '../../plugin-sdk/documents';
@@ -33,6 +34,7 @@ import {
   GenderControl,
   NextOfKinControl,
   PatientCodeControl,
+  createShowCode2,
 } from './PatientControls';
 import { withFirstContact, type ContactField } from './contactDetails';
 
@@ -123,6 +125,7 @@ export const PatientCode2Field = <T extends Patient>(
       required={required(d(), 'code2')}
       error={d().errorFor('code2')}
       disabled={disabled(props)}
+      data-testid="patient-code2"
     />
   );
 };
@@ -308,27 +311,64 @@ export const PatientDeceasedFields = <T extends Patient>(
  */
 export const DefaultPatientForm = (
   props: PatientFieldProps<Patient>
-): JSX.Element => (
-  <FormColumns>
-    <FormColumn>
-      <FormSection title={t('heading.patient-details')}>
-        <PatientCodeField draft={props.draft} />
-        <PatientCode2Field draft={props.draft} />
-        <PatientFirstNameField draft={props.draft} />
-        <PatientLastNameField draft={props.draft} />
-        <PatientDateOfBirthField draft={props.draft} />
-        <PatientGenderField draft={props.draft} />
-      </FormSection>
-    </FormColumn>
-    <FormColumn>
-      <FormSection title={t('label.contact')}>
-        <PatientAddressField draft={props.draft} />
-        <PatientPhoneField draft={props.draft} />
-        <PatientNextOfKinField draft={props.draft} />
-      </FormSection>
-      <FormSection title={t('label.status')}>
-        <PatientDeceasedFields draft={props.draft} />
-      </FormSection>
-    </FormColumn>
-  </FormColumns>
-);
+): JSX.Element => {
+  const showCode2 = createShowCode2(
+    () => props.draft.data.id,
+    () => props.draft.data.code2
+  );
+  return (
+    // Four panes (#631 spike, after Ling's "Dispensary: new patient"
+    // prototype): identifiers and the person on the left, how to reach them and
+    // whether they're alive on the right.
+    <FormColumns>
+      <FormColumn>
+        <InsetPanel>
+          <FormSection
+            title={t('heading.identifiers')}
+            headingLevel="h3"
+            heading="group"
+          >
+            <PatientCodeField draft={props.draft} />
+            <Show when={showCode2()}>
+              <PatientCode2Field draft={props.draft} />
+            </Show>
+          </FormSection>
+        </InsetPanel>
+        <InsetPanel>
+          <FormSection
+            title={t('heading.patient-details')}
+            headingLevel="h3"
+            heading="group"
+          >
+            <PatientFirstNameField draft={props.draft} />
+            <PatientLastNameField draft={props.draft} />
+            <PatientDateOfBirthField draft={props.draft} />
+            <PatientGenderField draft={props.draft} />
+          </FormSection>
+        </InsetPanel>
+      </FormColumn>
+      <FormColumn>
+        <InsetPanel>
+          <FormSection
+            title={t('label.contact')}
+            headingLevel="h3"
+            heading="group"
+          >
+            <PatientAddressField draft={props.draft} />
+            <PatientPhoneField draft={props.draft} />
+            <PatientNextOfKinField draft={props.draft} />
+          </FormSection>
+        </InsetPanel>
+        <InsetPanel>
+          <FormSection
+            title={t('label.status')}
+            headingLevel="h3"
+            heading="group"
+          >
+            <PatientDeceasedFields draft={props.draft} />
+          </FormSection>
+        </InsetPanel>
+      </FormColumn>
+    </FormColumns>
+  );
+};

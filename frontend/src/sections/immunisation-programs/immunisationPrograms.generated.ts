@@ -15,6 +15,7 @@ export type ImmunisationProgramsVariables = {
     name?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     contextId?: {
     equalTo?: string | null;
@@ -108,6 +109,7 @@ export type VaccineCourseRowsVariables = {
     name?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     programId?: {
     equalTo?: string | null;

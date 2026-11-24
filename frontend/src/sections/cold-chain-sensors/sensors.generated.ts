@@ -37,10 +37,12 @@ export type SensorsListVariables = {
     serial?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     name?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     isActive?: boolean | null;
     id?: {
@@ -59,6 +61,7 @@ export type SensorsListVariables = {
     locationCode?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
   } | null;
   sort?: Array<{

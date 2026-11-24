@@ -46,7 +46,7 @@ import { createAddAction } from '../../../ui/utils/keyActions';
 import { ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { NotFoundNotice } from '../../../ui/elements/feedback/NotFoundNotice';
-import { RowStatusBadges, uncapped } from './RowStatusBadges';
+import { RowStatusBadges } from './RowStatusBadges';
 import {
   AlertCircleIcon,
   AlertTriangleIcon,
@@ -817,12 +817,7 @@ const OutboundDetailView: Component = () => {
         },
         sortKey: 'batch',
         header: () => t('label.batch'),
-        // Mono, per the spec's line-table column 3 — but WITHOUT the `code`
-        // kind's 7rem growth cap: this column doesn't only hold a code, it
-        // renders the word "Unallocated" for a placeholder line, which fills
-        // the cap exactly and pins the column there so it can't be dragged
-        // wider at all. Same reasoning (and fix) as the `locationCode` key's
-        // "own size, NO cap" note in _globalColumnConfig (#601).
+        // Mono, per the spec's line-table column 3.
         //
         // NOT user-hideable (hideFromColumnSettings), unlike every other data
         // column here: this cell carries the WORD behind the placeholder
@@ -831,9 +826,7 @@ const OutboundDetailView: Component = () => {
         // colour alone — the one thing the marking is never allowed to be
         // (styling principle 9 / WCAG 1.4.1). The column stays draggable and
         // sortable; it just can't be switched off.
-        ...uncapped(
-          getCellDefinition<Line>('batch', { hideFromColumnSettings: true })
-        ),
+        ...getCellDefinition<Line>('batch', { hideFromColumnSettings: true }),
         // A placeholder has no batch, and the word standing in for one must
         // not be readable AS one: in this mono column "Unallocated" set in
         // Monaco alongside e2e-030062-a is just another code at a glance. The
@@ -1110,11 +1103,12 @@ const OutboundDetailView: Component = () => {
                   edit={edit}
                   onSaveField={async patch => {
                     await saveField(patch);
-                    // A backdate DELETES the shipment's lines server-side
-                    // (OMS-REG-DIST-04.24) — the visible page must follow,
-                    // like any other line-level change.
+                    // A backdate follows deleting all the shipment's lines
+                    // (OMS-REG-DIST-04.24, PickedDateField) — the visible
+                    // page must follow, like any other line-level change.
                     if ('backdatedDatetime' in patch) await refetchAfterSave();
                   }}
+                  onLinesChanged={refetchAfterSave}
                 />
               }
               header={

@@ -1,8 +1,8 @@
 use super::StorageConnection;
 
 use crate::{
-    ChangelogRepository, ChangelogSyncType, Delete, RowActionType, SourceSiteId, Upsert, lower,
-    repository_error::RepositoryError,
+    ChangelogRepository, ChangelogSyncType, Delete, RowActionType, SourceSiteId, StringFilter,
+    Upsert, lower, repository_error::RepositoryError, trim, trim_spaces,
 };
 
 use chrono::NaiveDateTime;
@@ -22,13 +22,68 @@ table! {
         job_title -> Nullable<Text>,
         last_successful_sync -> Nullable<Timestamp>,
         is_active -> Bool,
+        deleted_datetime -> Nullable<Timestamp>,
     }
 }
 
+/// Narrows records that belong to a user on a store, such as permissions and store joins.
+#[derive(Clone, Default)]
+pub struct UserOnStoreFilter {
+    pub user_is_deleted: Option<bool>,
+    /// The user's username or the store's code.
+    pub username_or_store_code: Option<StringFilter>,
+}
+
+/// Applies a `UserOnStoreFilter` to `$query`, whose rows name their user in `$user_id` and their
+/// store in `$store_id`, a non-null expression.
+macro_rules! apply_user_on_store_filter {
+    ($query:ident, $filter:expr, $user_id:expr, $store_id:expr) => {{
+        use $crate::db_diesel::{store_row::store, user_row::user_account};
+        let $crate::UserOnStoreFilter {
+            user_is_deleted,
+            username_or_store_code,
+        } = $filter;
+        if let Some(text) = username_or_store_code {
+            let mut users = user_account::table.into_boxed::<$crate::DBType>();
+            $crate::diesel_macros::apply_string_filter!(
+                users,
+                Some(text.clone()),
+                user_account::username
+            );
+            let mut stores = store::table.into_boxed::<$crate::DBType>();
+            $crate::diesel_macros::apply_string_filter!(stores, Some(text), store::code);
+            $query = $query.filter(
+                $user_id
+                    .eq_any(users.select(user_account::id))
+                    .or($store_id.eq_any(stores.select(store::id))),
+            );
+        }
+        if let Some(is_deleted) = user_is_deleted {
+            let users = user_account::table.into_boxed::<$crate::DBType>();
+            let users = if is_deleted {
+                users.filter(user_account::deleted_datetime.is_not_null())
+            } else {
+                users.filter(user_account::deleted_datetime.is_null())
+            };
+            $query = $query.filter($user_id.eq_any(users.select(user_account::id)));
+        }
+    }};
+}
+pub(crate) use apply_user_on_store_filter;
+
+// EnumIter outside tests too, so central data import can check it names every language.
 #[derive(
-    DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default, serde::Serialize, serde::Deserialize,
+    DbEnum,
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    Hash,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+    strum::EnumIter,
 )]
-#[cfg_attr(test, derive(strum::EnumIter))]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum LanguageType {
     #[default]
@@ -54,6 +109,7 @@ pub enum LanguageType {
     serde::Deserialize,
 )]
 #[diesel(table_name = user_account)]
+#[diesel(treat_none_as_null = true)]
 pub struct UserAccountRow {
     pub id: String,
     pub username: String,
@@ -66,6 +122,9 @@ pub struct UserAccountRow {
     pub job_title: Option<String>,
     pub last_successful_sync: Option<NaiveDateTime>,
     pub is_active: bool,
+    /// Set by central data import, which can't use `is_active`: that is mSupply's `active`.
+    /// A deleted user can't log in.
+    pub deleted_datetime: Option<NaiveDateTime>,
 }
 
 impl Default for UserAccountRow {
@@ -82,6 +141,7 @@ impl Default for UserAccountRow {
             job_title: Default::default(),
             last_successful_sync: Default::default(),
             is_active: true,
+            deleted_datetime: Default::default(),
         }
     }
 }
@@ -146,6 +206,7 @@ impl<'a> UserAccountRowRepository<'a> {
         let result: Result<UserAccountRow, diesel::result::Error> = user_account::table
             .filter(lower(user_account::username).eq(lower(username)))
             .filter(user_account::is_active.eq(true))
+            .filter(user_account::deleted_datetime.is_null())
             .filter(user_account::hashed_password.ne(""))
             .first(self.connection.lock().connection());
 
@@ -156,6 +217,22 @@ impl<'a> UserAccountRowRepository<'a> {
                 _ => Err(RepositoryError::from(err)),
             },
         }
+    }
+
+    pub fn find_all(&self) -> Result<Vec<UserAccountRow>, RepositoryError> {
+        Ok(user_account::table.load(self.connection.lock().connection())?)
+    }
+
+    /// In any letter case, as login matches a username, and deleted users included.
+    pub fn find_by_trimmed_username_any_case(
+        &self,
+        username: &str,
+    ) -> Result<Vec<UserAccountRow>, RepositoryError> {
+        let result = user_account::table
+            .filter(lower(trim(user_account::username)).eq(lower(trim_spaces(username))))
+            .order(user_account::id.asc())
+            .load(self.connection.lock().connection())?;
+        Ok(result)
     }
 
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<UserAccountRow>, RepositoryError> {

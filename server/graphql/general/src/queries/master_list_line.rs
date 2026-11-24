@@ -115,6 +115,7 @@ impl MasterListLineFilterInput {
             item_type: None,
             master_list: self.master_list.map(|f| f.to_domain()),
             ignore_for_orders: self.ignore_for_orders,
+            master_list_name_or_item_code: None,
         }
     }
 }

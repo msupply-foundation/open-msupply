@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   customDate,
   exportDate,
+  exportTime,
   getDisplayAge,
   loadDateFnsLocale,
   localeDateFormat,
@@ -234,6 +235,16 @@ describe('digit systems match the numbers beside them', () => {
     setLocale('ar');
     expect(localisedDate(AT)).not.toMatch(/[0-9]/);
     expect(exportDate(AT)).toBe('06/09/2026');
+  });
+
+  it('keeps a time bound for a FILE in Latin digits, as its date is', async () => {
+    // A dispensing record's Dispensed column joins the two: one cell must not
+    // read in two digit systems.
+    await loadDateFnsLocale('ar');
+    setLocale('ar');
+    expect(localisedTime(AT)).not.toMatch(/[0-9]/);
+    expect(exportTime(AT)).toMatch(/[0-9]/);
+    expect(exportTime(AT)).not.toMatch(/[\u0660-\u0669\u06F0-\u06F9]/);
   });
 
   it('reads one digit system across every rung of “how long ago”', async () => {

@@ -21,7 +21,6 @@ pub const INTEGRATION_ORDER: &[ChangelogTableName] = &[
     ChangelogTableName::InsuranceProvider,
     ChangelogTableName::LocationType,
     ChangelogTableName::MasterList,
-    ChangelogTableName::NameOmsFields,
     ChangelogTableName::NameTag,
     ChangelogTableName::PeriodSchedule,
     ChangelogTableName::Printer,
@@ -45,6 +44,8 @@ pub const INTEGRATION_ORDER: &[ChangelogTableName] = &[
     ChangelogTableName::DocumentRegistry,
     ChangelogTableName::Item,
     ChangelogTableName::Name,
+    // Updates the name row's properties column, so must follow Name. No FK records this.
+    ChangelogTableName::NameOmsFields,
     ChangelogTableName::NameProperty,
     ChangelogTableName::Period,
     ChangelogTableName::Program,
@@ -136,6 +137,15 @@ mod tests {
 
     // ---- Report type and checker under test ----
 
+    /// Synced tables with no table of their own: (alias, the table whose rows it updates).
+    const ALIASES: &[(&str, &str)] = &[("name_oms_fields", "name")];
+
+    #[derive(QueryableByName)]
+    struct TableRow {
+        #[diesel(sql_type = diesel::sql_types::Text)]
+        table_name: String,
+    }
+
     #[derive(QueryableByName, Debug, Clone)]
     struct FkRow {
         #[diesel(sql_type = diesel::sql_types::Text)]
@@ -157,26 +167,35 @@ mod tests {
         /// Topologically sorted order (FK parents before children). Only
         /// populated when `fk_violations` is non-empty.
         suggested_order: Vec<String>,
+        /// Tables in `tables_in_order` with no table in the schema and no
+        /// entry in `aliases`. Sorted.
+        undeclared_aliases: Vec<String>,
     }
 
     impl IntegrationOrderReport {
         fn is_ok(&self) -> bool {
-            self.duplicates.is_empty() && self.missing.is_empty() && self.fk_violations.is_empty()
+            self.duplicates.is_empty()
+                && self.missing.is_empty()
+                && self.fk_violations.is_empty()
+                && self.undeclared_aliases.is_empty()
         }
     }
 
-    /// Validates `tables_in_order` against three rules:
+    /// Validates `tables_in_order` against these rules:
     /// 1. No duplicates within `tables_in_order`.
     /// 2. Every `all_tables` entry is in `tables_in_order` or `skipped`.
     /// 3. `tables_in_order` respects every FK constraint in the `public`
     ///    schema, traversing through non-listed intermediates (e.g. `_link`
     ///    tables) so `invoice_line -> item_link -> item` is treated as
     ///    `invoice_line` depending on `item`.
+    /// 4. Every table with no table in the schema is in `aliases`, and comes
+    ///    after the table it updates.
     fn check_integration_order(
         connection: &StorageConnection,
         tables_in_order: &[&str],
         all_tables: &[&str],
         skipped: &[&str],
+        aliases: &[(&str, &str)],
     ) -> IntegrationOrderReport {
         let mut report = IntegrationOrderReport::default();
 
@@ -257,6 +276,34 @@ mod tests {
             }
         }
 
+        // (4) Aliases.
+        let schema_tables: HashSet<String> = diesel::sql_query(
+            "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'",
+        )
+        .load::<TableRow>(connection.lock().connection())
+        .expect("failed to query information_schema for tables")
+        .into_iter()
+        .map(|t| t.table_name)
+        .collect();
+        for t in tables_in_order {
+            if schema_tables.contains(*t) {
+                continue;
+            }
+            match aliases.iter().find(|(alias, _)| alias == t) {
+                Some((alias, table)) if in_order_set.contains(*table) => {
+                    deps.push((alias.to_string(), table.to_string()))
+                }
+                // An alias whose target is no table, such as a misspelled one.
+                Some((_, table)) if !schema_tables.contains(*table) => {
+                    report.undeclared_aliases.push(t.to_string())
+                }
+                // A table missing from the order is already reported as missing.
+                Some(_) => {}
+                None => report.undeclared_aliases.push(t.to_string()),
+            }
+        }
+        report.undeclared_aliases.sort();
+
         let position: HashMap<String, usize> = tables_in_order
             .iter()
             .enumerate()
@@ -316,7 +363,13 @@ mod tests {
         let in_order_refs: Vec<&str> = in_order.iter().map(String::as_str).collect();
         let all_refs: Vec<&str> = all_tables.iter().map(String::as_str).collect();
         let skipped_refs: Vec<&str> = skipped.iter().map(String::as_str).collect();
-        let report = check_integration_order(&connection, &in_order_refs, &all_refs, &skipped_refs);
+        let report = check_integration_order(
+            &connection,
+            &in_order_refs,
+            &all_refs,
+            &skipped_refs,
+            ALIASES,
+        );
         if report.is_ok() {
             return;
         }
@@ -334,8 +387,14 @@ mod tests {
                 report.missing,
             ));
         }
+        if !report.undeclared_aliases.is_empty() {
+            msg.push_str(&format!(
+                "\nINTEGRATION_ORDER entries with no table (add each to ALIASES with the table it updates): {:?}",
+                report.undeclared_aliases,
+            ));
+        }
         if !report.fk_violations.is_empty() {
-            msg.push_str("\nINTEGRATION_ORDER violates FK constraints:");
+            msg.push_str("\nINTEGRATION_ORDER violates FK or alias dependencies:");
             for (c, p) in &report.fk_violations {
                 msg.push_str(&format!("\n  - {c} depends on {p} (but appears before it)"));
             }
@@ -477,6 +536,7 @@ mod tests {
             &["_parent_", "_middle_", "_child_"],
             &["_parent_", "_middle_", "_child_", "_later_", "_forgotten_"],
             &["_later_", "_forgotten_"],
+            &[],
         );
 
         assert!(report.is_ok(), "expected ok report, got {:?}", report);
@@ -491,6 +551,7 @@ mod tests {
             &["_parent_", "_middle_", "_child_"],
             &["_parent_", "_middle_", "_child_", "_later_", "_forgotten_"],
             &["_later_"], // _forgotten_ intentionally omitted
+            &[],
         );
 
         assert_eq!(report.missing, ["_forgotten_"]);
@@ -507,6 +568,7 @@ mod tests {
             &["_parent_", "_middle_", "_middle_", "_child_"],
             &["_parent_", "_middle_", "_child_", "_later_", "_forgotten_"],
             &["_later_", "_forgotten_"],
+            &[],
         );
 
         assert_eq!(report.duplicates, ["_middle_"]);
@@ -524,6 +586,7 @@ mod tests {
             &["_child_", "_middle_", "_parent_"],
             &["_parent_", "_middle_", "_child_", "_later_", "_forgotten_"],
             &["_later_", "_forgotten_"],
+            &[],
         );
         assert_eq!(
             report.fk_violations,
@@ -540,6 +603,7 @@ mod tests {
             &["_parent_", "_child_", "_middle_"],
             &["_parent_", "_middle_", "_child_", "_later_", "_forgotten_"],
             &["_later_", "_forgotten_"],
+            &[],
         );
         assert_eq!(
             report.fk_violations,
@@ -557,6 +621,7 @@ mod tests {
             &["_child_", "_middle_", "_middle_", "_parent_"],
             &["_parent_", "_middle_", "_child_", "_later_", "_forgotten_"],
             &[], // nothing skipped -> _later_ + _forgotten_ both missing
+            &[],
         );
 
         assert_eq!(report.duplicates, ["_middle_"]);
@@ -567,6 +632,45 @@ mod tests {
                 ("_child_".to_string(), "_middle_".to_string()),
                 ("_middle_".to_string(), "_parent_".to_string()),
             ],
+        );
+    }
+
+    #[actix_rt::test]
+    async fn check_integration_order_detects_undeclared_aliases() {
+        let connection = setup_meta_schema("test_sync_v7_meta_undeclared_alias").await;
+
+        let report = check_integration_order(
+            &connection,
+            &["_parent_", "_alias_", "_middle_", "_child_"],
+            &["_parent_", "_alias_", "_middle_", "_child_"],
+            &[],
+            &[],
+        );
+
+        assert_eq!(report.undeclared_aliases, ["_alias_"]);
+        assert_eq!(report.fk_violations.len(), 0);
+    }
+
+    #[actix_rt::test]
+    async fn check_integration_order_detects_alias_before_its_table() {
+        let connection = setup_meta_schema("test_sync_v7_meta_alias_order").await;
+
+        let report = check_integration_order(
+            &connection,
+            &["_alias_", "_parent_", "_middle_", "_child_"],
+            &["_parent_", "_alias_", "_middle_", "_child_"],
+            &[],
+            &[("_alias_", "_parent_")],
+        );
+
+        assert_eq!(report.undeclared_aliases.len(), 0);
+        assert_eq!(
+            report.fk_violations,
+            [("_alias_".to_string(), "_parent_".to_string())],
+        );
+        assert_eq!(
+            report.suggested_order,
+            ["_parent_", "_alias_", "_middle_", "_child_"],
         );
     }
 

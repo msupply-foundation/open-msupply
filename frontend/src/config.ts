@@ -6,6 +6,10 @@ export const GRAPHQL_WS_PATH = '/graphql/ws';
 // to the backend in dev (see the dev server proxy in vite.config.ts).
 export const FILES_URL = '/files';
 
+/** A stored file's download address under FILES_URL. */
+export const fileUrl = (fileId: string) =>
+  `${FILES_URL}?id=${encodeURIComponent(fileId)}`;
+
 // Sync-file store: per-record document attachments (an inbound shipment's
 // documents, etc.) live behind a REST endpoint, not GraphQL —
 // POST   /sync_files/<tableName>/<recordId>          (multipart, field
@@ -58,8 +62,9 @@ export const PRINT_LABEL_TEST_URL = '/print/label-test';
 // Staged upload (spec/plugin-management/contract.md § file upload,
 // spec/manage-reports/contract.md § installing): POST multipart (part
 // "files") → `{ "file-id" }` (hyphenated — the Rust struct is kebab-cased),
-// which a later GraphQL call consumes. Shared by the plugin install and the
-// report-bundle install, so a change here reaches both. Session auth only, no
+// which a later GraphQL call consumes. Shared, through api/postFiles.ts's
+// `uploadFile`, by the plugin install, the report-bundle install and the
+// central data import, so a change here reaches all three. Session auth only, no
 // permission, and it answers HTTP 500 — not 401 — when not signed in, so a
 // status check must not read 401 as the signed-out signal. The server's form
 // caps the body at 50 MB. Proxied to the backend in dev (see vite.config.ts).
