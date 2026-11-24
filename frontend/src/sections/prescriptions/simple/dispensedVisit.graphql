@@ -1,0 +1,63 @@
+# A dispensed visit, open on the Simple screen (spec/prescriptions contract ›
+# a dispensed visit): when, who for, and what it gave. The record screen's own
+# read, pinned to type PRESCRIPTION (which also picks the permission), with
+# only what the screen shows.
+query simpleDispensedRecord($storeId: String!, $id: String!) {
+  invoice(storeId: $storeId, id: $id, type: PRESCRIPTION) {
+    __typename
+    ... on InvoiceNode {
+      id
+      status
+      isCancellation
+      createdDatetime
+      backdatedDatetime
+      cancelledDatetime
+      patient {
+        id
+        name
+        code
+        isUnnamed
+      }
+      pricing {
+        totalAfterTax
+      }
+      lines {
+        nodes {
+          id
+          type
+          itemId
+          itemName
+          packSize
+          numberOfPacks
+          totalAfterTax
+          item {
+            id
+            unitName
+          }
+        }
+      }
+    }
+    ... on NodeError {
+      error {
+        __typename
+      }
+    }
+  }
+}
+
+# Cancel a finished visit (contract › a dispensed visit): the record screen's
+# cancel, the move to CANCELLED. Only whether it worked is read: the screen
+# reads the visit again after.
+mutation simpleCancelDispense($storeId: String!, $id: String!) {
+  updatePrescription(storeId: $storeId, input: { id: $id, status: CANCELLED }) {
+    __typename
+    ... on InvoiceNode {
+      id
+    }
+    ... on UpdatePrescriptionError {
+      error {
+        __typename
+      }
+    }
+  }
+}

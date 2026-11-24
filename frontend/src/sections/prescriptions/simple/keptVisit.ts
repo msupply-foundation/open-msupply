@@ -36,7 +36,12 @@ import type {
 // storage (contract › Dispensing records). One per signed-in user and store;
 // signing out drops them all.
 
-export type Notice = { severity: 'success' | 'error'; text: string };
+export type Notice = {
+  severity: 'success' | 'error';
+  text: string;
+  /** The visit the message is about, once dispensed: View opens it. */
+  dispensedId?: string;
+};
 
 export interface KeptVisit {
   /**

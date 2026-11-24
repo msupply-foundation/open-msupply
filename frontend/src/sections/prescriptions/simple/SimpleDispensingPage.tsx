@@ -1,9 +1,11 @@
 import {
+  createEffect,
   createMemo,
   createResource,
   createSignal,
   For,
   Match,
+  on,
   onCleanup,
   Show,
   Switch,
@@ -24,10 +26,11 @@ import {
   getCurrencyInfo,
   homeCurrency,
   locale,
+  localisedDateTime,
   localisedTime,
   t,
 } from '@/intl';
-import { prescriptionPreferences } from '@/store/storeContext';
+import { hasPermission, prescriptionPreferences } from '@/store/storeContext';
 import { fetchPatientOptionById, minimalPatientOption } from '@/domain/patient';
 import { ItemSearch } from '@/domain/item';
 import { round9 } from '@/domain/allocation';
@@ -39,7 +42,8 @@ import { CardGrid } from '@/ui/layout/CardGrid/CardGrid';
 import { Button } from '@/ui/elements/buttons/Button';
 import { LinkButton } from '@/ui/elements/buttons/LinkButton';
 import { EmptyState } from '@/ui/elements/feedback/EmptyState';
-import { ClockIcon } from '@/ui/icons';
+import { ConfirmDialog } from '@/ui/elements/feedback/ConfirmDialog';
+import { ClockIcon, MinusCircleIcon, PlusCircleIcon } from '@/ui/icons';
 import { useIsCompact } from '@/ui/utils/createMediaQuery';
 import { generateUUID } from '@/uuid';
 import { SimpleDispensingItems } from './simpleDispensing.generated';
@@ -71,11 +75,24 @@ import {
   type DispensedTo,
   type SaveReply,
 } from './simpleDispensingLogic';
+import {
+  SimpleCancelDispense,
+  SimpleDispensedRecord,
+} from './dispensedVisit.generated';
+import {
+  canCancelVisit,
+  cannotEditReason,
+  dispensedAt,
+  visitHeading,
+  visitLines,
+  type DispensedRecord,
+} from './dispensedVisit';
+import { shownPatientName } from '../patientName';
 import { MedicineCardView } from './MedicineCard';
-import { DispensingList } from './DispensingList';
+import { DispensingList, type OpenVisit } from './DispensingList';
 import { StepHeading } from './StepHeading';
 import { WhoIsItFor } from './WhoIsItFor';
-import { leaveVisit, visitFor } from './keptVisit';
+import { leaveVisit, visitFor, type Notice } from './keptVisit';
 import styles from './SimpleDispensing.module.css';
 
 /*
@@ -86,13 +103,14 @@ import styles from './SimpleDispensing.module.css';
  * reach past records through Dispensing records.
  */
 const SimpleDispensingPage: Component = () => {
-  const params = useParams<{ storeId: string }>();
+  const params = useParams<{ storeId: string; prescriptionId?: string }>();
   // The store the screen opened in, read once: a store switch remounts the
   // screen. Every request uses it, never the route's params, which are the
   // router's and follow the address: a save still out when staff switch
   // store must still go to the store it was dispensed in.
   const storeOpened = untrack(() => params.storeId);
   const recordsHref = `/${storeOpened}/dispensary/dispensing/records`;
+  const simpleHref = `/${storeOpened}/dispensary/dispensing/simple`;
 
   // The visit in progress, kept while staff go elsewhere (rules › Dispensing
   // records). A new visit starts with the unnamed patient where the store
@@ -394,6 +412,8 @@ const SimpleDispensingPage: Component = () => {
 
   /** The visit is saved: ready the screen for the next person. */
   const finished = (who: DispensedTo, settings: Settings): void => {
+    // The record just saved, for the message's View.
+    const dispensedId = visit.current?.id;
     visit.current = undefined;
     setUnconfirmed(false);
     setChecked([]);
@@ -413,6 +433,7 @@ const SimpleDispensingPage: Component = () => {
       text: who.isUnnamed
         ? t('messages.dispensed-at', { time: localisedTime(new Date()) })
         : t('messages.dispensed-to', { name: who.name }),
+      dispensedId,
     });
     // The cards read their stock again, on whichever screen shows the visit
     // now: this one, or one opened while the save was out.
@@ -589,6 +610,177 @@ const SimpleDispensingPage: Component = () => {
     }
   };
 
+  // A dispensed visit open in the list's place (rules › a dispensed visit),
+  // by the record id after the screen's address. The visit in progress waits
+  // behind it, untouched. Read in the background, and never suspending: the
+  // screen is already open, a visit may be on it, and the app's error dialog
+  // would offer a reload that loses that visit.
+  const viewingId = () => params.prescriptionId;
+  type OpenRead =
+    | { id: string; kind: 'read'; record: DispensedRecord }
+    | { id: string; kind: 'notFound' }
+    | { id: string; kind: 'unread' };
+  const [opened, { refetch: readOpenedAgain }] = createResource<
+    OpenRead,
+    string
+  >(
+    () => viewingId() ?? false,
+    async id => {
+      const result = await graphqlFetch(
+        SimpleDispensedRecord,
+        { storeId: storeOpened, id },
+        { background: true }
+      );
+      if (result.kind !== 'success') return { id, kind: 'unread' };
+      const node = result.data.invoice;
+      return node.__typename === 'InvoiceNode'
+        ? { id, kind: 'read', record: node }
+        : { id, kind: 'notFound' };
+    }
+  );
+  // Only the read for the visit open now: opening another shows it loading,
+  // not the last one.
+  const openedNow = () => {
+    const read = gated(opened);
+    return read && read.id === viewingId() ? read : undefined;
+  };
+  const openedRecord = () => {
+    const read = openedNow();
+    return read?.kind === 'read' ? read.record : undefined;
+  };
+
+  // What the open visit's cancel did; gone once another visit opens, or the
+  // screen goes back to the list.
+  const [visitNotice, setVisitNotice] = createSignal<Notice>();
+  createEffect(on(viewingId, () => setVisitNotice(undefined), { defer: true }));
+  const [confirmingCancel, setConfirmingCancel] = createSignal(false);
+  const [cancelling, setCancelling] = createSignal(false);
+  // Cancel a finished visit (rules › a dispensed visit): in the background,
+  // so a failure is this screen's message and not the app's error dialog.
+  const cancelOpened = async (id: string): Promise<void> => {
+    setVisitNotice(undefined);
+    setCancelling(true);
+    const result = await graphqlFetch(
+      SimpleCancelDispense,
+      { storeId: storeOpened, id },
+      { returnGraphqlErrors: true, background: true }
+    ).finally(() => setCancelling(false));
+    if (
+      result.kind === 'success' &&
+      result.data.updatePrescription.__typename === 'InvoiceNode'
+    ) {
+      setVisitNotice({
+        severity: 'success',
+        text: t('messages.dispense-cancelled'),
+      });
+      // The visit now reads cancelled, and its stock is back on the cards.
+      void readOpenedAgain();
+      void refetchItems();
+      return;
+    }
+    if (result.kind === 'graphqlError' && isForbidden(result.errors))
+      reportPermissionDenied(missingPermissions(result.errors));
+    setVisitNotice({
+      severity: 'error',
+      text: t('error.dispense-not-cancelled'),
+    });
+  };
+
+  /** Who a dispensed visit was for, with their code where they have one. */
+  const whoFor = (record: DispensedRecord): string | undefined => {
+    const who = record.patient;
+    if (!who) return undefined;
+    if (who.isUnnamed) return shownPatientName(who.name, true);
+    return who.code ? `${who.name} · ${who.code}` : who.name;
+  };
+  const headingOf = (record: DispensedRecord): string => {
+    const heading = visitHeading(record);
+    if (heading.kind === 'cancelled')
+      return t('heading.cancelled-dispense', {
+        cancelled: localisedDateTime(heading.cancelledAt),
+        dispensed: localisedDateTime(heading.at),
+      });
+    return t(
+      heading.kind === 'created'
+        ? 'heading.created-datetime'
+        : 'heading.dispensed-datetime',
+      { datetime: localisedDateTime(heading.at) }
+    );
+  };
+
+  // What is in the list's place while a visit is open. A memo: the panel
+  // reads it more than once, and the elements in it can only be placed once.
+  // The cancel button reads `cancelling` itself, so pressing it doesn't
+  // rebuild the visit.
+  const openVisit = createMemo<OpenVisit | undefined>(() => {
+    if (viewingId() === undefined) return undefined;
+    const read = openedNow();
+    if (read?.kind !== 'read')
+      return {
+        heading: t('heading.dispensing-record'),
+        forName: undefined,
+        lines: undefined,
+        total: undefined,
+        message:
+          read === undefined ? (
+            <EmptyState
+              graphic={false}
+              message={t('loading')}
+              data-testid="dispensed-visit-loading"
+            />
+          ) : read.kind === 'notFound' ? (
+            <EmptyState
+              graphic={false}
+              message={t('error.prescription-not-found')}
+              data-testid="dispensed-visit-not-found"
+            />
+          ) : (
+            <EmptyState
+              graphic={false}
+              message={t('error.dispensed-visit-not-read')}
+              data-testid="dispensed-visit-not-read"
+            >
+              <Button
+                variant="ghost"
+                data-testid="dispensed-visit-read-again-button"
+                onClick={() => void readOpenedAgain()}
+              >
+                {t('button.try-again')}
+              </Button>
+            </EmptyState>
+          ),
+      };
+    const record = read.record;
+    const reason = cannotEditReason(record);
+    const mayCancel = hasPermission('CANCEL_FINALISED_INVOICES');
+    return {
+      heading: headingOf(record),
+      forName: whoFor(record),
+      lines: visitLines(record.lines.nodes),
+      total: record.pricing.totalAfterTax,
+      reason: reason ? t(reason) : undefined,
+      action: canCancelVisit(record) ? (
+        // Shown without the permission too, disabled, saying why (rules ›
+        // a dispensed visit), as the record screen's cancel is.
+        <Button
+          variant="danger"
+          icon={<MinusCircleIcon />}
+          data-testid="cancel-prescription-button"
+          title={
+            mayCancel
+              ? undefined
+              : t('messages.cancel-prescription-not-allowed')
+          }
+          disabled={!mayCancel || cancelling()}
+          loading={cancelling()}
+          onClick={() => setConfirmingCancel(true)}
+        >
+          {t('label.cancel-prescription')}
+        </Button>
+      ) : undefined,
+    };
+  });
+
   // Lines holding more than the stock now shows, and lines whose price
   // changed. While there are any (and Dispense isn't checking again), the
   // notice that the visit wasn't dispensed, naming each of them.
@@ -617,6 +809,27 @@ const SimpleDispensingPage: Component = () => {
     };
   };
 
+  // The list's notice place: what the open visit's cancel did while a visit
+  // is open, else the visit in progress's own, with View on the message that
+  // a visit was dispensed.
+  const listNotice = () => {
+    if (viewingId() !== undefined) return visitNotice();
+    const notice = shownNotice();
+    if (!notice || !('dispensedId' in notice) || !notice.dispensedId)
+      return notice;
+    return { ...notice, viewHref: `${simpleHref}/${notice.dispensedId}` };
+  };
+
+  /** The breadcrumb's last crumb: who the open visit was for, and when. */
+  const crumbOf = (record: DispensedRecord | undefined): string => {
+    if (!record) return t('heading.dispensing-record');
+    const who = record.patient
+      ? shownPatientName(record.patient.name, record.patient.isUnnamed)
+      : undefined;
+    const when = localisedDateTime(dispensedAt(record));
+    return who ? `${who} · ${when}` : when;
+  };
+
   return (
     <Page
       // The cards and the list fill the body and own its scroll, so the list
@@ -624,30 +837,68 @@ const SimpleDispensingPage: Component = () => {
       fillBody
       header={
         <Header>
-          <Breadcrumb crumbs={[{ label: t('dispensing') }]} />
-          <WhoIsItFor
-            storeId={storeOpened}
-            patient={patient()}
-            useUnnamed={prescriptionPreferences().useUnnamedPatient}
-            unnamed={unnamed()}
-            disabled={locked()}
-            onSelect={chosen => {
-              setNotice(undefined);
-              setUnnamed(false);
-              setPatient(minimalPatientOption(chosen.id, chosen.name));
-              void showDetails(chosen.id);
-            }}
-            onClear={() => {
-              setNotice(undefined);
-              setPatient(null);
-            }}
-            onUnnamed={() => chooseUnnamed(true)}
-            onChange={() => chooseUnnamed(false)}
-          />
+          <Show
+            when={viewingId() === undefined}
+            fallback={
+              // A dispensed visit: back to the screen, or to the records it
+              // was found in (ui-surface S9 › a dispensed visit).
+              <Breadcrumb
+                crumbs={[
+                  { label: t('dispensing'), to: simpleHref },
+                  { label: t('button.dispensing-records'), to: recordsHref },
+                  { label: crumbOf(openedRecord()) },
+                ]}
+              />
+            }
+          >
+            <Breadcrumb crumbs={[{ label: t('dispensing') }]} />
+          </Show>
+          {/* Not while a dispensed visit is open: the header would name the
+              visit in progress over another person's record. It is still
+              chosen when the visit comes back. */}
+          <Show when={viewingId() === undefined}>
+            <WhoIsItFor
+              storeId={storeOpened}
+              patient={patient()}
+              useUnnamed={prescriptionPreferences().useUnnamedPatient}
+              unnamed={unnamed()}
+              disabled={locked()}
+              onSelect={chosen => {
+                setNotice(undefined);
+                setUnnamed(false);
+                setPatient(minimalPatientOption(chosen.id, chosen.name));
+                void showDetails(chosen.id);
+              }}
+              onClear={() => {
+                setNotice(undefined);
+                setPatient(null);
+              }}
+              onUnnamed={() => chooseUnnamed(true)}
+              onChange={() => chooseUnnamed(false)}
+            />
+          </Show>
           {/* Staff can't switch screens (rules › the Simple screen): the list
               is where past records are found. Nothing on this screen's list
               goes with it: none of it was saved. */}
           <HeaderButtons>
+            {/* The way back from a dispensed visit, first: to the visit in
+                progress, or a new one when there is nothing on the list. */}
+            <Show when={viewingId() !== undefined}>
+              <LinkButton
+                href={simpleHref}
+                variant="secondary"
+                icon={lines.length > 0 ? undefined : <PlusCircleIcon />}
+                data-testid={
+                  lines.length > 0
+                    ? 'back-to-list-button'
+                    : 'new-dispense-button'
+                }
+              >
+                {lines.length > 0
+                  ? t('button.back-to-list')
+                  : t('button.new-dispense')}
+              </LinkButton>
+            </Show>
             <LinkButton
               href={recordsHref}
               variant="secondary"
@@ -666,10 +917,14 @@ const SimpleDispensingPage: Component = () => {
             n={2}
             heading
             label={t('heading.choose-medicines')}
+            // No hint over a dispensed visit: there is no one to choose and
+            // nothing to press (ui-surface S9).
             hint={
-              !chosen()
-                ? t('messages.choose-who-first')
-                : t('messages.press-an-amount')
+              viewingId() !== undefined
+                ? undefined
+                : !chosen()
+                  ? t('messages.choose-who-first')
+                  : t('messages.press-an-amount')
             }
             testId="choose-medicines-hint"
           />
@@ -683,7 +938,7 @@ const SimpleDispensingPage: Component = () => {
               includeHiddenWithStock
               width="full"
               clearable={false}
-              disabled={!chosen() || locked()}
+              disabled={!chosen() || locked() || viewingId() !== undefined}
               value={searchValue()}
               onSelect={item => {
                 if (!item) return;
@@ -729,7 +984,11 @@ const SimpleDispensingPage: Component = () => {
                       available={available(card)}
                       listed={unitsListed(lines, card.item.id)}
                       oneRow={isPhone()}
-                      canAdd={chosen() && !locked()}
+                      // Not while a dispensed visit is open: a press would
+                      // read as adding to it (rules › a dispensed visit).
+                      canAdd={
+                        chosen() && !locked() && viewingId() === undefined
+                      }
                       onAmount={(_, amount) => addToList(card, amount)}
                       onAskAmount={() => askAmount(card.item.id)}
                     />
@@ -786,9 +1045,21 @@ const SimpleDispensingPage: Component = () => {
           dispensing={dispensing()}
           looking={looking()}
           locked={locked()}
-          notice={shownNotice()}
+          notice={listNotice()}
+          visit={openVisit()}
         />
       </div>
+      <ConfirmDialog
+        open={confirmingCancel()}
+        onClose={() => setConfirmingCancel(false)}
+        title={t('heading.are-you-sure')}
+        message={t('messages.confirm-cancel-prescription')}
+        confirmVariant="danger"
+        onConfirm={() => {
+          const record = openedRecord();
+          if (record) void cancelOpened(record.id);
+        }}
+      />
       {/* Opens once its medicine's batches are in: at once from a card, a
           moment after the search for a medicine with no card. */}
       <Show when={asking() ? cardOf(asking()!) : undefined}>
