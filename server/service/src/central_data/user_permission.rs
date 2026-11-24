@@ -8,7 +8,7 @@ use super::{
         key_or, new_id_conflict, read_contexts, record_conflict, reference_conflict,
     },
     sheet::Value,
-    stores_with_names,
+    sorted_by, stores_with_names,
     user_refs::{
         ID, STORE_CODE, STORE_ID, USER_ID, USERNAME, check_not_protected, exportable_users,
         protected_error, users_by_id,
@@ -93,7 +93,7 @@ impl ImportTable for UserPermissionTable {
         let permissions = UserPermissionRepository::new(connection)
             .query_by_filter(exportable(connection, filter)?)?;
         let records = References::read(connection)?;
-        let mut rows: Vec<_> = permissions
+        let rows = permissions
             .iter()
             .map(|permission| {
                 let user = records.users.get(&permission.user_id);
@@ -117,8 +117,7 @@ impl ImportTable for UserPermissionTable {
                 (order, cells)
             })
             .collect();
-        rows.sort_by(|(a, _), (b, _)| a.cmp(b));
-        Ok(rows.into_iter().map(|(_, cells)| cells).collect())
+        Ok(sorted_by(rows))
     }
 
     fn count(

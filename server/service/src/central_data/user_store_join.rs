@@ -9,7 +9,7 @@ use super::{
         new_id_conflict, reference_conflict,
     },
     sheet::Value,
-    stores_with_names,
+    sorted_by, stores_with_names,
     user_refs::{
         ID, STORE_CODE, STORE_ID, USER_ID, USERNAME, check_not_protected, exportable_users,
         protected_error, user_column, users_by_id,
@@ -84,7 +84,7 @@ impl ImportTable for UserStoreJoinTable {
             .query_by_filter(exportable(connection, filter)?)?;
         let users = users_by_id(connection)?;
         let stores = stores_with_names(connection)?;
-        let mut rows: Vec<_> = joins
+        let rows = joins
             .into_iter()
             .map(|join| {
                 let user = users.get(&join.user_id);
@@ -103,8 +103,7 @@ impl ImportTable for UserStoreJoinTable {
                 (order, cells)
             })
             .collect();
-        rows.sort_by(|(a, _), (b, _)| a.cmp(b));
-        Ok(rows.into_iter().map(|(_, cells)| cells).collect())
+        Ok(sorted_by(rows))
     }
 
     fn count(

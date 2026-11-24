@@ -377,6 +377,12 @@ pub fn field_changes(
         .collect()
 }
 
+/// An export's rows in key order, each built with its sort key beside it.
+pub(crate) fn sorted_by<K: Ord>(mut rows: Vec<(K, Vec<sheet::Value>)>) -> Vec<Vec<sheet::Value>> {
+    rows.sort_by(|(a, _), (b, _)| a.cmp(b));
+    rows.into_iter().map(|(_, cells)| cells).collect()
+}
+
 #[derive(Debug, PartialEq)]
 pub struct RowChange {
     pub sheet: String,

@@ -74,15 +74,14 @@ impl<'a> MasterListLineRepository<'a> {
         Ok(result.into_iter().map(to_domain).collect())
     }
 
-    /// Each line with its item's code and name, in id order. Reads no other item column, so not
-    /// the item's legacy record.
+    /// Each line with its item's code and name, in no set order. Reads no other item column, so
+    /// not the item's legacy record.
     pub fn query_with_item_code_and_name(
         &self,
         filter: MasterListLineFilter,
     ) -> Result<Vec<(MasterListLineRow, String, String)>, RepositoryError> {
         Ok(Self::create_filtered_query(Some(filter), None)?
             .select((master_list_line::all_columns, item::code, item::name))
-            .order(master_list_line::id.asc())
             .load(self.connection.lock().connection())?)
     }
 

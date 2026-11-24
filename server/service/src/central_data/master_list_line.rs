@@ -10,6 +10,7 @@ use super::{
     },
     name_with_code,
     sheet::Value,
+    sorted_by,
 };
 use crate::{
     i64_to_u32,
@@ -82,7 +83,7 @@ impl ImportTable for MasterListLineTable {
             .query_with_item_code_and_name(line_filter(filter))?;
         // Few, so read whole.
         let master_lists = InMemory::new(MasterListRowRepository::new(connection).find_all()?);
-        let mut rows: Vec<_> = lines
+        let rows = lines
             .into_iter()
             .map(|(line, item_code, item_name)| {
                 let master_list = master_lists.get(&line.master_list_id);
@@ -99,8 +100,7 @@ impl ImportTable for MasterListLineTable {
                 (order, cells)
             })
             .collect();
-        rows.sort_by(|(a, _), (b, _)| a.cmp(b));
-        Ok(rows.into_iter().map(|(_, cells)| cells).collect())
+        Ok(sorted_by(rows))
     }
 
     fn count(
