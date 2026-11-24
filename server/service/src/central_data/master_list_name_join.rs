@@ -188,14 +188,17 @@ impl SheetImport for MasterListNameJoinSheet {
             return Err(error.into());
         }
         if delete {
-            // Named by the row's master list and name, as found.
-            let missing = match (&master_list_id, &name_id) {
-                (Some(master_list_id), Some(name_id)) => {
-                    self.record(master_list_id, name.as_ref(), name_id)
-                }
-                _ => id.clone().unwrap_or_default(),
+            let Some(saved) = existing else {
+                // Named by the row's master list and name, as found.
+                let missing = match (&master_list_id, &name_id) {
+                    (Some(master_list_id), Some(name_id)) => {
+                        self.record(master_list_id, name.as_ref(), name_id)
+                    }
+                    _ => id.unwrap_or_default(),
+                };
+                return already_deleted_as(row, missing, Vec::new());
             };
-            return self.delete(connection, row, existing, name.as_ref(), missing);
+            return self.delete(connection, row, saved, name.as_ref());
         }
         // `find_join` makes another master list or name a conflict, so a saved join is kept as
         // it is.
@@ -287,13 +290,9 @@ impl MasterListNameJoinSheet {
         &self,
         connection: &StorageConnection,
         row: &Row,
-        existing: Option<MasterListNameJoinRow>,
+        saved: MasterListNameJoinRow,
         name: Option<&NameRow>,
-        missing: String,
     ) -> Result<RowOutcome, RowFailure> {
-        let Some(saved) = existing else {
-            return already_deleted_as(row, missing, Vec::new());
-        };
         check_delete(
             row,
             COLUMNS,

@@ -188,14 +188,17 @@ impl SheetImport for MasterListLineSheet {
             (None, None) => None,
         };
         if delete {
-            // Named by the row's master list and item, as found.
-            let missing = match (&master_list_id, &item_id) {
-                (Some(master_list_id), Some(item_id)) => {
-                    self.record(master_list_id, item_id, item.as_ref())
-                }
-                _ => id.clone().unwrap_or_default(),
+            let Some(saved) = existing else {
+                // Named by the row's master list and item, as found.
+                let missing = match (&master_list_id, &item_id) {
+                    (Some(master_list_id), Some(item_id)) => {
+                        self.record(master_list_id, item_id, item.as_ref())
+                    }
+                    _ => id.unwrap_or_default(),
+                };
+                return already_deleted_as(row, missing, Vec::new());
             };
-            return self.delete(connection, row, existing, item.as_ref(), missing);
+            return self.delete(connection, row, saved, item.as_ref());
         }
 
         let master_list_id = master_list_id.or(saved.map(|line| line.master_list_id.clone()));
@@ -307,13 +310,9 @@ impl MasterListLineSheet {
         &self,
         connection: &StorageConnection,
         row: &Row,
-        existing: Option<MasterListLineRow>,
+        saved: MasterListLineRow,
         item: Option<&ItemRow>,
-        missing: String,
     ) -> Result<RowOutcome, RowFailure> {
-        let Some(saved) = existing else {
-            return already_deleted_as(row, missing, Vec::new());
-        };
         check_delete(
             row,
             COLUMNS,

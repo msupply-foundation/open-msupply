@@ -233,18 +233,22 @@ impl SheetImport for ItemStoreJoinSheet {
             (None, None) => None,
         };
         if delete {
-            // Named by the row's item and store, as found.
-            let missing = match (&item_id, &store_id) {
-                (Some(item_id), Some(store_id)) => self.record(item_id, store_id, item.as_ref()),
-                _ => id.clone().unwrap_or_default(),
+            let Some(saved) = existing else {
+                // Named by the row's item and store, as found.
+                let missing = match (&item_id, &store_id) {
+                    (Some(item_id), Some(store_id)) => {
+                        self.record(item_id, store_id, item.as_ref())
+                    }
+                    _ => id.unwrap_or_default(),
+                };
+                return already_deleted_as(row, missing, Vec::new());
             };
             return self.delete(
                 connection,
                 row,
-                existing,
+                saved,
                 item.as_ref(),
                 saved_location.as_ref(),
-                missing,
             );
         }
 
@@ -376,14 +380,10 @@ impl ItemStoreJoinSheet {
         &self,
         connection: &StorageConnection,
         row: &Row,
-        existing: Option<ItemStoreJoinRow>,
+        saved: ItemStoreJoinRow,
         item: Option<&ItemRow>,
         saved_location: Option<&LocationRow>,
-        missing: String,
     ) -> Result<RowOutcome, RowFailure> {
-        let Some(saved) = existing else {
-            return already_deleted_as(row, missing, Vec::new());
-        };
         check_delete(
             row,
             COLUMNS,
