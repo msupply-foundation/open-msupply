@@ -18,9 +18,9 @@ impact you expect.
 
 ## What to expect
 
-- We will acknowledge valid reports within 5 working days.
+- We will acknowledge your report within 5 working days.
 - We will keep you updated while we investigate and fix it.
-- We will credit you in the release notes, unless you prefer not.
+- We will credit you in the release notes, unless you'd rather we didn't.
 
 ## Supported versions
 
@@ -31,3 +31,5 @@ for serious issues, depending on how widely they are deployed.
 
 - Test against live production sites or real patient or stock data
 - Access, change or delete data that isn't yours
+- Share the details publicly until a fix is released or 90 days have passed
+  since your report, whichever comes first, unless we agree otherwise
