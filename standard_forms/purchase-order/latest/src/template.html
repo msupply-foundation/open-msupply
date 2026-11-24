@@ -120,7 +120,7 @@
     <tr class="comment" excel-type="ignore">
       <td></td>
       {# Spans every column after # - keep in step with the header row #}
-      <td colspan="{% if po.hasSupplierItemCodes %}9{% else %}8{% endif %}"><span class="comment-label">{{ t(k="label.note", f="Note") }}:</span> {{ line.comment }}</td>
+      <td colspan="{% if po.hasSupplierItemCodes %}9{% else %}8{% endif %}"><span class="comment-label">{{ t(k="label.comment", f="Comment") }}:</span> {{ line.comment }}</td>
     </tr>
     {% endif %}
   </tbody>
