@@ -1,7 +1,7 @@
 //! What the two user sheets, `user_store_join` and `user_permission`, share: their columns, refusing
 //! a protected user, and which records they export.
 use super::{ExportFilter, cells::Row, cells::RowError, lookup::InMemory};
-use crate::user_account::upsert::protected_user_ids;
+use crate::user_account::upsert::server_user_ids;
 use repository::{
     EqualFilter, RepositoryError, StorageConnection, StringFilter, UserAccountRow,
     UserAccountRowRepository, UserOnStoreFilter,
@@ -23,28 +23,43 @@ pub(super) fn user_column(row: &Row) -> &'static str {
     }
 }
 
-/// `what` is what the sheet would change, such as `stores` or `permissions`.
-pub(super) fn protected_error(row: &Row, username: &str, what: &str) -> RowError {
+/// `change` is what the row would do, such as `change their stores` or `take away their stores`.
+pub(super) fn protected_error(row: &Row, username: &str, change: &str) -> RowError {
     row.error(
         user_column(row),
-        format!(
-            "{username} is protected, as the server needs it, so import can't change their {what}"
-        ),
+        format!("{username} is protected, as the server needs it, so import can't {change}"),
     )
 }
 
-/// Refuses a row for a protected user. `what` is as for `protected_error`.
+/// Refuses a row for a user in `protected`. `change` is as for `protected_error`.
 pub(super) fn check_not_protected(
     row: &Row,
     protected: &[String],
     users: &InMemory<UserAccountRow>,
     user_id: &str,
-    what: &str,
+    change: &str,
 ) -> Result<(), RowError> {
     if protected.iter().any(|protected| protected == user_id) {
-        return Err(protected_error(row, users.key_or_id(user_id), what));
+        return Err(protected_error(row, users.key_or_id(user_id), change));
     }
     Ok(())
+}
+
+/// Who a row MUST NOT touch, and what it would do to them: on a `DELETE` row every protected user,
+/// so an import can't lock the setup admin out; otherwise only the users the server records its
+/// own work as, so the setup admin can be given stores and permissions. `what` is `stores` or
+/// `permissions`.
+pub(super) fn locked_users<'a>(
+    protected: &'a [String],
+    server_users: &'a [String],
+    delete: bool,
+    what: &str,
+) -> (&'a [String], String) {
+    if delete {
+        (protected, format!("take away their {what}"))
+    } else {
+        (server_users, format!("change their {what}"))
+    }
 }
 
 /// Every user by id, for an export to name them. Few, so read whole, as the import does.
@@ -58,23 +73,21 @@ pub(super) fn users_by_id(
         .collect())
 }
 
-/// The user filters an export applies, in SQL as records can be many: no protected or deleted
-/// user's, and those whose username or store code `filter` searches for.
-pub(super) fn exportable_users(
-    connection: &StorageConnection,
-    filter: &ExportFilter,
-) -> Result<(EqualFilter<String>, UserOnStoreFilter), RepositoryError> {
+/// The user filters an export applies, in SQL as records can be many: none of the users the server
+/// records its own work as, no deleted user's, and those whose username or store code `filter`
+/// searches for. The setup admin's are exported, as a row can give them stores and permissions.
+pub(super) fn exportable_users(filter: &ExportFilter) -> (EqualFilter<String>, UserOnStoreFilter) {
     let search = filter
         .contains
         .as_deref()
         .map(str::trim)
         .filter(|text| !text.is_empty())
         .map(StringFilter::like);
-    Ok((
-        EqualFilter::not_equal_all(protected_user_ids(connection)?),
+    (
+        EqualFilter::not_equal_all(server_user_ids()),
         UserOnStoreFilter {
             user_is_deleted: Some(false),
             username_or_store_code: search,
         },
-    ))
+    )
 }

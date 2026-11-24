@@ -66,15 +66,21 @@ impl From<RepositoryError> for DeleteUserError {
 }
 
 /// Users the server records its own work as, and the admin a standalone central server made at
-/// setup. The server needs them, so they can't be changed or deleted.
+/// setup. The server needs them, so they can't be changed or deleted, and an import can't take
+/// their stores or permissions away.
 pub fn protected_user_ids(connection: &StorageConnection) -> Result<Vec<String>, RepositoryError> {
     let admin = KeyValueStoreRepository::new(connection)
         .get_string(KeyType::StandaloneCentralAdminUserId)?;
-    Ok([SYSTEM_USER_ID, PLUGIN_USER_ID]
+    Ok(server_user_ids().into_iter().chain(admin).collect())
+}
+
+/// The users the server records its own work as. They never log in, so an import gives them no
+/// stores or permissions either. The setup admin, the other protected user, can be given them.
+pub fn server_user_ids() -> Vec<String> {
+    [SYSTEM_USER_ID, PLUGIN_USER_ID]
         .into_iter()
         .map(str::to_string)
-        .chain(admin)
-        .collect())
+        .collect()
 }
 
 /// Whether saving `user` over `saved` must end the user's open sessions: they were made inactive

@@ -7340,7 +7340,10 @@ async fn user_permissions_export_then_import_makes_no_changes() {
     let (connection, service_provider, dir) =
         permission_setup("central_data_permission_round_trip").await;
     let ctx = as_user(&service_provider, IMPORTER);
-    let before = permissions_of(&connection, "anna");
+    let before = (
+        permissions_of(&connection, "anna"),
+        permissions_of(&connection, "admin"),
+    );
     // Sorted in any letter case, so after anna.
     UserAccountRowRepository::new(&connection)
         .upsert_one(&UserAccountRow {
@@ -7361,7 +7364,7 @@ async fn user_permissions_export_then_import_makes_no_changes() {
         sheet.headers,
         [PERMISSION_HEADERS.as_slice(), &["store_name"]].concat()
     );
-    // Not the unknown permission, Carl's, the setup admin's or the importer's (no user row). By
+    // The setup admin's, but not the unknown permission, Carl's or the importer's (no user row). By
     // username, store code, permission, then context name.
     let rows: Vec<&[String]> = sheet.rows.iter().map(|row| row.cells.as_slice()).collect();
     let row = |id, username, permission, context_name, context_id| {
@@ -7382,6 +7385,7 @@ async fn user_permissions_export_then_import_makes_no_changes() {
     assert_eq!(
         rows,
         [
+            row("admin_report", "admin", "REPORT", "", ""),
             row(
                 "anna_documents",
                 "anna",
@@ -7418,9 +7422,15 @@ async fn user_permissions_export_then_import_makes_no_changes() {
         .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
-    assert_eq!(summary.tables[0].unchanged, 5);
+    assert_eq!(summary.tables[0].unchanged, 6);
     assert_eq!(summary.changes, vec![]);
-    assert_eq!(permissions_of(&connection, "anna"), before);
+    assert_eq!(
+        (
+            permissions_of(&connection, "anna"),
+            permissions_of(&connection, "admin"),
+        ),
+        before
+    );
 }
 
 // covers: OMS-REG-CDIO-01.46, .153
@@ -7436,16 +7446,18 @@ async fn a_user_permission_export_searches_username_and_store_code() {
             .count
     };
 
+    // The setup admin's too.
     assert_eq!(
         count(None),
         RecordCount {
-            matching: 5,
-            total: 5
+            matching: 6,
+            total: 6
         }
     );
     assert_eq!(count(Some(" ANNA ")).matching, 4);
     assert_eq!(count(Some("ben")).matching, 1);
-    assert_eq!(count(Some("ms")).matching, 5);
+    assert_eq!(count(Some("admin")).matching, 1);
+    assert_eq!(count(Some("ms")).matching, 6);
     // Not the store's name or the permission.
     assert_eq!(count(Some("Main")).matching, 0);
     assert_eq!(count(Some("REPORT")).matching, 0);
@@ -7731,10 +7743,57 @@ async fn a_user_permission_finds_its_references_and_cannot_change_them() {
     assert_eq!(permissions_of(&connection, "anna"), before);
 }
 
+// covers: OMS-REG-CDIO-01.157, .205
+
+#[actix_rt::test]
+async fn a_user_permission_row_can_give_the_setup_admin_a_permission_but_not_take_one_away() {
+    let (connection, service_provider, dir) =
+        permission_setup("central_data_permission_setup_admin").await;
+    let ctx = as_user(&service_provider, IMPORTER);
+
+    let path = write_file(
+        dir.path(),
+        permission_sheet(vec![permission_row(&[
+            ("username", "admin"),
+            ("store_code", "MS"),
+            ("permission", "STOCKTAKE_QUERY"),
+        ])]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].inserted, 1);
+    assert_eq!(permissions_of(&connection, "admin").len(), 2);
+
+    let path = write_file(
+        dir.path(),
+        permission_sheet(vec![
+            permission_row(&[("id", "admin_report"), ("delete", "DELETE")]),
+            permission_row(&[
+                ("username", "admin"),
+                ("store_code", "MS"),
+                ("permission", "STOCKTAKE_QUERY"),
+                ("delete", "DELETE"),
+            ]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    let message =
+        "admin is protected, as the server needs it, so import can't take away their permissions";
+    assert_eq!(
+        row_errors(&summary),
+        vec![(2, Some("id"), message), (3, Some("username"), message)]
+    );
+    assert_eq!(permissions_of(&connection, "admin").len(), 2);
+}
+
 // covers: OMS-REG-CDIO-01.157
 
 #[actix_rt::test]
-async fn a_user_permission_row_cannot_touch_a_protected_or_deleted_user_or_lock_you_out() {
+async fn a_user_permission_row_cannot_touch_a_server_user_or_deleted_user_or_lock_you_out() {
     let (connection, service_provider, dir) =
         permission_setup("central_data_permission_protected").await;
     grant_server_admin(&connection, "anna");
@@ -7755,11 +7814,10 @@ async fn a_user_permission_row_cannot_touch_a_protected_or_deleted_user_or_lock_
         dir.path(),
         permission_sheet(vec![
             permission_row(&[
-                ("username", "admin"),
+                ("user_id", SYSTEM_USER_ID),
                 ("store_code", "MS"),
                 ("permission", "STOCKTAKE_QUERY"),
             ]),
-            permission_row(&[("id", "admin_report"), ("delete", "DELETE")]),
             permission_row(&[
                 ("username", "carl"),
                 ("store_code", "MS"),
@@ -7773,42 +7831,42 @@ async fn a_user_permission_row_cannot_touch_a_protected_or_deleted_user_or_lock_
     let summary = CentralDataService
         .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
+    let errors = row_errors(&summary);
+    // The users the server records its own work as get no permissions.
+    assert_eq!((errors[0].0, errors[0].1), (2, Some("user_id")));
+    assert!(
+        errors[0].2.ends_with(
+            "is protected, as the server needs it, so import can't change their permissions"
+        ),
+        "{}",
+        errors[0].2
+    );
     assert_eq!(
-        row_errors(&summary),
-        vec![
-            (
-                2,
-                Some("username"),
-                "admin is protected, as the server needs it, so import can't change their permissions"
-            ),
+        errors[1..],
+        [
             (
                 3,
-                Some("id"),
-                "admin is protected, as the server needs it, so import can't change their permissions"
-            ),
-            (
-                4,
                 Some("username"),
                 "carl is deleted, so they can't be given a permission"
             ),
             (
-                5,
+                4,
                 Some("delete"),
                 "This is your last server-admin permission. You can't take it away, or you couldn't give it back"
             ),
             (
-                6,
+                5,
                 Some("delete"),
                 "This is your last central-data edit permission. You can't take it away, or you couldn't import again to give it back"
             ),
             (
-                7,
+                6,
                 Some("delete"),
                 "This is your access to your last store on this server. You can't take it away, or you couldn't log in again"
             ),
         ]
     );
-    assert_eq!(permissions_of(&connection, "admin").len(), 1);
+    assert!(permissions_of(&connection, SYSTEM_USER_ID).is_empty());
     assert!(
         permissions_of(&connection, "anna")
             .iter()
@@ -8113,7 +8171,10 @@ async fn user_stores_export_then_import_makes_no_changes() {
     let (connection, service_provider, dir) =
         user_store_setup("central_data_user_store_round_trip").await;
     let ctx = as_user(&service_provider, IMPORTER);
-    let before = store_joins_of(&connection, "anna");
+    let before = (
+        store_joins_of(&connection, "anna"),
+        store_joins_of(&connection, "admin"),
+    );
 
     let bytes = CentralDataService
         .export(&ctx, &[user_stores_containing(None)])
@@ -8128,11 +8189,22 @@ async fn user_stores_export_then_import_makes_no_changes() {
         sheet.headers,
         [USER_STORE_HEADERS.as_slice(), &["store_name"]].concat()
     );
-    // Not deleted Carl's or the setup admin's. By username, then store code.
+    // The setup admin's, but not deleted Carl's. By username, then store code.
     let rows: Vec<&[String]> = sheet.rows.iter().map(|row| row.cells.as_slice()).collect();
     assert_eq!(
         rows,
         [
+            [
+                "admin_store_ms",
+                "admin",
+                "admin",
+                "MS",
+                "store_ms",
+                "true",
+                "",
+                "Main store"
+            ]
+            .map(String::from),
             [
                 "anna_store_ms",
                 "anna",
@@ -8162,9 +8234,15 @@ async fn user_stores_export_then_import_makes_no_changes() {
         .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
-    assert_eq!(summary.tables[0].unchanged, 2);
+    assert_eq!(summary.tables[0].unchanged, 3);
     assert_eq!(summary.changes, vec![]);
-    assert_eq!(store_joins_of(&connection, "anna"), before);
+    assert_eq!(
+        (
+            store_joins_of(&connection, "anna"),
+            store_joins_of(&connection, "admin"),
+        ),
+        before
+    );
 }
 
 // covers: OMS-REG-CDIO-01.46, .162
@@ -8189,15 +8267,17 @@ async fn a_user_store_export_searches_username_and_store_code() {
             .count
     };
 
+    // The setup admin's join too, but not deleted Carl's.
     assert_eq!(
         count(None),
         RecordCount {
-            matching: 3,
-            total: 3
+            matching: 4,
+            total: 4
         }
     );
     assert_eq!(count(Some(" ANNA ")).matching, 2);
-    assert_eq!(count(Some("ms")).matching, 2);
+    assert_eq!(count(Some("admin")).matching, 1);
+    assert_eq!(count(Some("ms")).matching, 3);
     // Not the store's name.
     assert_eq!(count(Some("Main")).matching, 0);
 }
@@ -8485,11 +8565,60 @@ async fn a_user_store_finds_its_references_and_cannot_change_them() {
     assert_eq!(store_joins_of(&connection, "anna"), before);
 }
 
+// covers: OMS-REG-CDIO-01.167, .204
+
+#[actix_rt::test]
+async fn a_user_store_row_can_give_the_setup_admin_a_store_but_not_take_one_away() {
+    let (connection, service_provider, dir) =
+        user_store_setup("central_data_user_store_setup_admin").await;
+    let ctx = as_user(&service_provider, IMPORTER);
+
+    let path = write_file(
+        dir.path(),
+        user_store_sheet(vec![user_store_row(&[
+            ("username", "admin"),
+            ("store_id", "store_a"),
+            ("is_default", "FALSE"),
+        ])]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].inserted, 1);
+    // With store access there, so they can log in to it.
+    assert_eq!(
+        store_access_of(&connection, "admin"),
+        [mock_store_a().id, "store_ms".to_string()]
+    );
+
+    let path = write_file(
+        dir.path(),
+        user_store_sheet(vec![
+            user_store_row(&[("id", "admin_store_ms"), ("delete", "DELETE")]),
+            user_store_row(&[
+                ("username", "admin"),
+                ("store_id", "store_a"),
+                ("delete", "DELETE"),
+            ]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    let message =
+        "admin is protected, as the server needs it, so import can't take away their stores";
+    assert_eq!(
+        row_errors(&summary),
+        vec![(2, Some("id"), message), (3, Some("username"), message)]
+    );
+    assert_eq!(store_joins_of(&connection, "admin").len(), 2);
+}
+
 // covers: OMS-REG-CDIO-01.167
 
 #[actix_rt::test]
-async fn a_user_store_row_cannot_touch_a_protected_user_give_a_deleted_user_a_store_or_lock_you_out()
- {
+async fn a_user_store_row_cannot_touch_a_server_user_give_a_deleted_user_a_store_or_lock_you_out() {
     let (connection, service_provider, dir) =
         user_store_setup("central_data_user_store_protected").await;
     grant_server_admin(&connection, "anna");
@@ -8503,11 +8632,15 @@ async fn a_user_store_row_cannot_touch_a_protected_user_give_a_deleted_user_a_st
         dir.path(),
         user_store_sheet(vec![
             user_store_row(&[
-                ("username", "admin"),
+                ("user_id", SYSTEM_USER_ID),
                 ("store_id", "store_a"),
                 ("is_default", "FALSE"),
             ]),
-            user_store_row(&[("id", "admin_store_ms"), ("delete", "DELETE")]),
+            user_store_row(&[
+                ("user_id", PLUGIN_USER_ID),
+                ("store_id", "store_a"),
+                ("is_default", "FALSE"),
+            ]),
             user_store_row(&[
                 ("username", "carl"),
                 ("store_id", "store_a"),
@@ -8519,19 +8652,10 @@ async fn a_user_store_row_cannot_touch_a_protected_user_give_a_deleted_user_a_st
     let summary = CentralDataService
         .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
+    let errors = row_errors(&summary);
     assert_eq!(
-        row_errors(&summary),
-        vec![
-            (
-                2,
-                Some("username"),
-                "admin is protected, as the server needs it, so import can't change their stores"
-            ),
-            (
-                3,
-                Some("id"),
-                "admin is protected, as the server needs it, so import can't change their stores"
-            ),
+        errors[2..],
+        [
             (
                 4,
                 Some("username"),
@@ -8544,7 +8668,18 @@ async fn a_user_store_row_cannot_touch_a_protected_user_give_a_deleted_user_a_st
             ),
         ]
     );
-    assert_eq!(store_joins_of(&connection, "admin").len(), 1);
+    // The users the server records its own work as get no stores.
+    for (error, row) in errors[..2].iter().zip([2, 3]) {
+        assert_eq!((error.0, error.1), (row, Some("user_id")));
+        assert!(
+            error.2.ends_with(
+                "is protected, as the server needs it, so import can't change their stores"
+            ),
+            "{}",
+            error.2
+        );
+    }
+    assert_eq!(store_joins_of(&connection, SYSTEM_USER_ID).len(), 0);
     assert_eq!(store_joins_of(&connection, "carl").len(), 1);
     assert_eq!(store_joins_of(&connection, "anna").len(), 2);
 }
