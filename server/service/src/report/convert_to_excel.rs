@@ -425,9 +425,10 @@ impl Selectors {
     fn rows_and_cells<'a>(&'a self) -> Vec<Vec<ElementRef<'a>>> {
         // `total-row` is laid out separately (see `total_rows`); `ignore` is a row that exists
         // only in the printed form (e.g. a line's comment row) and has no place in the sheet.
-        let rows_selector =
-            Selector::parse("tbody tr:not([excel-type=\"total-row\"]):not([excel-type=\"ignore\"])")
-                .unwrap();
+        let rows_selector = Selector::parse(
+            "tbody tr:not([excel-type=\"total-row\"]):not([excel-type=\"ignore\"])",
+        )
+        .unwrap();
         let cells_selector = Selector::parse("td").unwrap();
         self.html
             .select(&rows_selector)
