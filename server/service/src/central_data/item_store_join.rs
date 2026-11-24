@@ -19,7 +19,7 @@ use crate::{
 use repository::{
     ItemRow, ItemRowRepository, ItemStoreJoinFilter, ItemStoreJoinRow, ItemStoreJoinRowRepository,
     ItemStoreJoinRowRepositoryTrait, ItemStoreJoinWithNames, LocationRow, LocationRowRepository,
-    RepositoryError, StorageConnection, StoreRow, StoreRowRepository, StringFilter,
+    RepositoryError, StorageConnection, StoreRow, StoreRowRepository, StringFilter, trim_spaces,
 };
 use util::uuid::uuid;
 
@@ -200,20 +200,31 @@ impl SheetImport for ItemStoreJoinSheet {
         // `find_join` makes another item or store a conflict, so these are the saved join's.
         let item_id = item_id.or(saved.map(|join| join.item_id.clone()));
         let store_id = store_id.or(saved.map(|join| join.store_id.clone()));
-        // Among the store's locations, so it needs the store; a new row without one is an error
-        // for its store below. For a `DELETE` row too, so a missing location stops the import.
-        let row_location = match &store_id {
-            Some(store_id) => find_reference_record(
-                &LocationsOfStore {
-                    repo: LocationRowRepository::new(connection),
-                    store_id,
-                },
-                row,
-                LOCATION_CODE,
-                LOCATION_ID,
-                |locations| locations,
-            )??,
-            None => None,
+        let saved_location = location(
+            connection,
+            saved.and_then(|join| join.default_location_id.as_deref()),
+        )?;
+        let row_location = if repeats_location(row, saved_location.as_ref()) {
+            // Kept as it is, even one of another store, as legacy mSupply can send it, so an
+            // unedited export imports and a `DELETE` row for it runs.
+            Some(saved_location.clone())
+        } else {
+            // Among the store's locations, so it needs the store; a new row without one is an
+            // error for its store below. For a `DELETE` row too, so a missing location stops the
+            // import.
+            match &store_id {
+                Some(store_id) => find_reference_record(
+                    &LocationsOfStore {
+                        repo: LocationRowRepository::new(connection),
+                        store_id,
+                    },
+                    row,
+                    LOCATION_CODE,
+                    LOCATION_ID,
+                    |locations| locations,
+                )??,
+                None => None,
+            }
         };
         // Read only when the row leaves its item blank, as a row with only an id does.
         let item = match (item, &item_id) {
@@ -221,10 +232,6 @@ impl SheetImport for ItemStoreJoinSheet {
             (None, Some(item_id)) => ItemRowRepository::new(connection).find_by_id(item_id)?,
             (None, None) => None,
         };
-        let saved_location = location(
-            connection,
-            saved.and_then(|join| join.default_location_id.as_deref()),
-        )?;
         if delete {
             // Named by the row's item and store, as found.
             let missing = match (&item_id, &store_id) {
@@ -448,6 +455,16 @@ impl ItemStoreJoinSheet {
             UpsertItemStoreJoinError::DatabaseError(error) => RowFailure::Database(error),
         }
     }
+}
+
+/// The row gives the saved default location's id, and its code or none, as an export writes them.
+fn repeats_location(row: &Row, saved: Option<&LocationRow>) -> bool {
+    saved.is_some_and(|saved| {
+        row.text(LOCATION_ID).as_deref() == Some(saved.id.as_str())
+            && row
+                .text(LOCATION_CODE)
+                .is_none_or(|code| code == trim_spaces(&saved.code))
+    })
 }
 
 fn code_of(location: Option<&LocationRow>) -> Option<&str> {

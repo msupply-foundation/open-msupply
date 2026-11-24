@@ -11177,6 +11177,83 @@ async fn an_item_store_join_finds_its_default_location_among_its_stores() {
     assert_eq!(item_store_joins_of(&connection, "store_main"), before);
 }
 
+// covers: OMS-REG-CDIO-01.203
+
+#[actix_rt::test]
+async fn a_saved_default_location_of_another_store_imports_unchanged_and_can_be_deleted() {
+    let (connection, service_provider, dir) =
+        item_store_setup("central_data_item_store_other_store_location").await;
+    let ctx = service_provider.basic_context().unwrap();
+    // As legacy mSupply can send it: Ward 1's join, on Main store's fridge.
+    let ward_ibu = ItemStoreJoinRow {
+        id: "isj_ward_ibu".to_string(),
+        item_id: "ibuprofen".to_string(),
+        store_id: "store_ward".to_string(),
+        default_sell_price_per_pack: 1.0,
+        ignore_for_orders: false,
+        margin: 0.0,
+        default_location_id: Some("fridge_main".to_string()),
+    };
+    add_item_store_join(&connection, ward_ibu.clone());
+    let find = || {
+        ItemStoreJoinRowRepository::new(&connection)
+            .find_one_by_id("isj_ward_ibu")
+            .unwrap()
+    };
+
+    // An unedited export imports unchanged.
+    let bytes = CentralDataService
+        .export(&ctx, &[item_stores_containing(None)])
+        .unwrap();
+    let path = write_file(dir.path(), bytes);
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].unchanged, 4);
+
+    // A row that keeps the location can change the rest.
+    let exported = [
+        ("id", "isj_ward_ibu"),
+        ("item_code", "IBU"),
+        ("store_code", "W1"),
+        ("default_location_code", "FRIDGE"),
+        ("default_location_id", "fridge_main"),
+    ];
+    let path = write_file(
+        dir.path(),
+        item_store_sheet(vec![item_store_row(
+            &[exported.as_slice(), &[("margin", "5")]].concat(),
+        )]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].updated, 1);
+    assert_eq!(
+        find(),
+        Some(ItemStoreJoinRow {
+            margin: 5.0,
+            ..ward_ibu
+        })
+    );
+
+    // A DELETE row as exported deletes it.
+    let path = write_file(
+        dir.path(),
+        item_store_sheet(vec![item_store_row(
+            &[exported.as_slice(), &[("delete", "DELETE")]].concat(),
+        )]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].deleted, 1);
+    assert_eq!(find(), None);
+}
+
 // covers: OMS-REG-CDIO-01.199
 
 #[actix_rt::test]
