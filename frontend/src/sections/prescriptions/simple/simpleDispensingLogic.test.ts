@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { AllocationPreferences } from '@/domain/allocation';
+import { round9, type AllocationPreferences } from '@/domain/allocation';
 import {
   addAmount,
   amountLimit,
@@ -1516,6 +1516,24 @@ describe('correcting the stock', () => {
     expect(correctionPacks(50, 20, 10)).toBe(3);
     expect(correctionPacks(25, 20, 10)).toBe(0.5);
     expect(correctionPacks(0.3, 0.1, 0.1)).toBe(2);
+  });
+
+  it('OMS-REG-DIS-12.252: the stock afterwards is the count exactly, even where the pack size does not divide the difference', () => {
+    // [count, figure, pack size]: packs of 30 or 28 tablets are common.
+    const cases: [number, number, number][] = [
+      [10, 0, 30],
+      [50, 40, 30],
+      [1, 0, 3],
+      [5, 0, 6],
+      [7, 2.5, 28],
+      [13, 0, 7],
+      [100, 0, 0.5],
+    ];
+    for (const [count, figure, packSize] of cases) {
+      const packs = correctionPacks(count, figure, packSize);
+      // What the screen then has: the batch's packs back in units.
+      expect(round9(figure + packs * packSize)).toBe(count);
+    }
   });
 
   it('OMS-REG-DIS-12.256: with several positive reasons, staff choose', () => {

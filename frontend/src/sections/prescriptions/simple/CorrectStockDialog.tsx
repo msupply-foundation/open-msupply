@@ -88,14 +88,15 @@ export const CorrectStockDialog = (props: {
   const [reasonId, setReasonId] = createSignal<string | undefined>();
   const [saving, setSaving] = createSignal(false);
   const [error, setError] = createSignal<string | undefined>();
+  // A save lost its reply and the stock couldn't be read after it, so it may
+  // have landed: saving again could add the stock twice.
+  const [unsure, setUnsure] = createSignal(false);
   const countField = createFocusTarget();
 
-  // Read when the dialog opens, so the figure is the system's at that moment.
-  // Opened by a press on an open screen, so read without suspending (gated):
-  // a suspend would remount the screen under it and lose the visit's inputs.
-  // Background: an unread stock is this dialog's to say, and the app's error
-  // dialog would offer a reload that loses the visit.
-  const [batches] = createResource(async () => {
+  // The medicine's batches, or null when they couldn't be read. Background:
+  // an unread stock is this dialog's to say, and the app's error dialog would
+  // offer a reload that loses the visit.
+  const readBatches = async () => {
     const result = await graphqlFetch(
       SimpleCorrectionBatches,
       { storeId: props.storeId, itemId: props.itemId },
@@ -104,7 +105,13 @@ export const CorrectStockDialog = (props: {
     if (result.kind !== 'success') return null;
     const lines = result.data.stockLines;
     return lines.__typename === 'StockLineConnector' ? lines.nodes : null;
-  });
+  };
+
+  // Read when the dialog opens, and again at Save, so the difference saved is
+  // from the system's figure at that moment. Opened by a press on an open
+  // screen, so read without suspending (gated): a suspend would remount the
+  // screen under it and lose the visit's inputs.
+  const [batches, { mutate: setBatches }] = createResource(readBatches);
   const read = () => gated(batches);
   const unread = () => batches.state === 'ready' && read() === null;
   const figure = () => systemFigure(read() ?? [], prescriptionPreferences());
@@ -123,6 +130,7 @@ export const CorrectStockDialog = (props: {
 
   const canSave = () =>
     !saving() &&
+    !unsure() &&
     !!batch() &&
     // A store's reasons still loading would send none, which the server
     // refuses where some exist.
@@ -132,11 +140,28 @@ export const CorrectStockDialog = (props: {
 
   const save = async () => {
     const counted = count();
-    const target = batch();
-    if (!canSave() || counted === undefined || !target) return;
+    if (!canSave() || counted === undefined) return;
     setSaving(true);
     setError(undefined);
-    const shown = figure();
+    try {
+      await saveCount(counted);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const saveCount = async (counted: number) => {
+    // The stock again, as it is now: the counter may have given some out, or
+    // stock come in, since the dialog opened. The dialog then shows this
+    // figure, and if the count is no longer above it, the count field says
+    // why, and nothing is saved.
+    const now = await readBatches();
+    if (now === null) return setError(t('error.correct-stock-not-read'));
+    setBatches(now);
+    const prefs = prescriptionPreferences();
+    const shown = systemFigure(now, prefs);
+    const target = correctionBatch(now, prefs);
+    if (!target || !canSaveCount(counted, shown)) return;
     const result = await graphqlFetch(
       SimpleCorrectStock,
       {
@@ -150,7 +175,6 @@ export const CorrectStockDialog = (props: {
       },
       { returnGraphqlErrors: true, background: true }
     );
-    setSaving(false);
     if (result.kind === 'success') {
       const reply = result.data.createInventoryAdjustment;
       if (reply.__typename === 'InvoiceNode') return props.onSaved(counted);
@@ -169,6 +193,18 @@ export const CorrectStockDialog = (props: {
       );
       return;
     }
+    // No reply (a timeout, a dropped connection): the save may have landed.
+    // Find out from the stock before saying it failed or letting it be saved
+    // again, which would add the difference twice (rules › correcting the
+    // stock).
+    const after = await readBatches();
+    if (after === null) {
+      setUnsure(true);
+      return setError(t('error.correct-stock-unsure'));
+    }
+    setBatches(after);
+    if (!canSaveCount(counted, systemFigure(after, prefs)))
+      return props.onSaved(counted);
     setError(t('error.correct-stock-failed'));
   };
 
@@ -260,6 +296,9 @@ export const CorrectStockDialog = (props: {
                   : undefined
               }
               warningTestId="correct-stock-count-same"
+              // What to count: the figure leaves out stock dispensing can't
+              // take, so counting it would add stock that isn't there to give.
+              helperText={t('messages.correct-stock-what-to-count')}
               data-testid="correct-stock-count-input"
             />
             <Show when={reason().ask}>

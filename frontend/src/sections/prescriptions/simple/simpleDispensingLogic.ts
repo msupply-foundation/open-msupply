@@ -431,13 +431,21 @@ export const countTooLow = (
 
 /**
  * The packs a count adds to its batch: the difference in units, in that
- * batch's packs, fractional where a pack splits.
+ * batch's packs, fractional where a pack splits. The stock afterwards must be
+ * the count exactly, or the counted amount still can't be given. So the packs
+ * are rounded only where the rounded packs still make the difference: 10 units
+ * on packs of 30 is 1/3 of a pack, and 0.333333333 packs would make 9.99999999.
  */
 export const correctionPacks = (
   count: number,
   figure: number,
   packSize: number
-): number => round9((count - figure) / packSize);
+): number => {
+  const difference = count - figure;
+  const packs = difference / packSize;
+  const rounded = round9(packs);
+  return round9(rounded * packSize) === round9(difference) ? rounded : packs;
+};
 
 /**
  * The reason a correction carries (rules › correcting the stock): with
