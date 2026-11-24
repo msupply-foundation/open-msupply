@@ -281,42 +281,48 @@ impl MasterListLineSheet {
             |line| &line.id,
             |id| MasterListLineRowRepository::new(connection).find_one_by_id(id),
             |saved, found, id| {
-                let by_id = found == Found::ById;
-                let master_list_differs = by_id
-                    && master_list_id
-                        .is_some_and(|master_list_id| master_list_id != saved.master_list_id);
-                let item_differs = by_id && item_id.is_some_and(|item_id| item_id != saved.item_id);
-                if by_id && !master_list_differs && !item_differs {
-                    return Ok(None);
-                }
-                // Read only to describe the conflict.
-                let saved_item = find_item(connection, &saved.item_id)?;
-                let record =
-                    self.record(&saved.master_list_id, &saved.item_id, saved_item.as_ref());
-                Ok(Some(if !by_id {
-                    new_id_conflict(row, &record, &saved.id, id)
-                } else if master_list_differs {
-                    reference_conflict(
-                        row,
-                        (
-                            MASTER_LIST_NAME,
-                            self.master_lists.key_or_id(&saved.master_list_id),
-                        ),
-                        (MASTER_LIST_ID, &saved.master_list_id),
-                        &record,
-                        &saved.id,
-                        id,
-                    )
-                } else {
-                    reference_conflict(
-                        row,
-                        (ITEM_CODE, key_or(saved_item.as_ref(), &saved.item_id)),
-                        (ITEM_ID, &saved.item_id),
-                        &record,
-                        &saved.id,
-                        id,
-                    )
-                }))
+                // The saved line's item and name, read only to describe a conflict.
+                let describe = || -> Result<(Option<ItemRow>, String), RepositoryError> {
+                    let item = find_item(connection, &saved.item_id)?;
+                    let record = self.record(&saved.master_list_id, &saved.item_id, item.as_ref());
+                    Ok((item, record))
+                };
+                Ok(match found {
+                    Found::ById
+                        if master_list_id.is_some_and(|master_list_id| {
+                            master_list_id != saved.master_list_id
+                        }) =>
+                    {
+                        let (_, record) = describe()?;
+                        Some(reference_conflict(
+                            row,
+                            (
+                                MASTER_LIST_NAME,
+                                self.master_lists.key_or_id(&saved.master_list_id),
+                            ),
+                            (MASTER_LIST_ID, &saved.master_list_id),
+                            &record,
+                            &saved.id,
+                            id,
+                        ))
+                    }
+                    Found::ById if item_id.is_some_and(|item_id| item_id != saved.item_id) => {
+                        let (item, record) = describe()?;
+                        Some(reference_conflict(
+                            row,
+                            (ITEM_CODE, key_or(item.as_ref(), &saved.item_id)),
+                            (ITEM_ID, &saved.item_id),
+                            &record,
+                            &saved.id,
+                            id,
+                        ))
+                    }
+                    Found::ById => None,
+                    Found::NewIdBesideKey => {
+                        let (_, record) = describe()?;
+                        Some(new_id_conflict(row, &record, &saved.id, id))
+                    }
+                })
             },
         )
     }
