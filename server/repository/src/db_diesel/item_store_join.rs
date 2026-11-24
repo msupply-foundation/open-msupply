@@ -96,17 +96,16 @@ impl<'a> ItemStoreJoinRowRepositoryTrait<'a> for ItemStoreJoinRowRepository<'a> 
         Ok(result)
     }
 
+    /// The first in id order, when legacy mSupply sent more than one or merging two items left
+    /// both.
     fn find_one_by_item_and_store_id(
         &self,
-        item_id_param: &str,
+        item_id: &str,
         store_id: &str,
     ) -> Result<Option<ItemStoreJoinRow>, RepositoryError> {
-        let result = item_store_join::table
-            .filter(item_store_join::item_id.eq(item_id_param))
-            .filter(item_store_join::store_id.eq(store_id))
+        Ok(by_item_and_store(item_id, store_id)
             .first(self.connection.lock().connection())
-            .optional()?;
-        Ok(result)
+            .optional()?)
     }
 
     fn upsert_one(&self, row: &ItemStoreJoinRow) -> Result<(), RepositoryError> {
@@ -141,11 +140,7 @@ impl<'a> ItemStoreJoinRowRepository<'a> {
         item_id: &str,
         store_id: &str,
     ) -> Result<Vec<ItemStoreJoinRow>, RepositoryError> {
-        Ok(item_store_join::table
-            .filter(item_store_join::item_id.eq(item_id))
-            .filter(item_store_join::store_id.eq(store_id))
-            .order(item_store_join::id.asc())
-            .load(self.connection.lock().connection())?)
+        Ok(by_item_and_store(item_id, store_id).load(self.connection.lock().connection())?)
     }
 
     /// Each join with its item's and default location's code and name, in id order. Reads no
@@ -208,6 +203,18 @@ impl<'a> ItemStoreJoinRowRepository<'a> {
             .load(self.connection.lock().connection())?;
         Ok(result)
     }
+}
+
+/// The joins between the item and the store, in id order.
+fn by_item_and_store<'a>(
+    item_id: &'a str,
+    store_id: &'a str,
+) -> item_store_join::BoxedQuery<'a, DBType> {
+    item_store_join::table
+        .filter(item_store_join::item_id.eq(item_id))
+        .filter(item_store_join::store_id.eq(store_id))
+        .order(item_store_join::id.asc())
+        .into_boxed()
 }
 
 #[diesel::dsl::auto_type]
