@@ -82,7 +82,8 @@ impl<'a> MasterListNameJoinRepository<'a> {
         Ok(result)
     }
 
-    /// The joins that give the master list to the name, in id order. With no name join.
+    /// The joins that give the master list to the name, in id order. Reads only the joins, not
+    /// their names.
     pub fn find_by_master_list_and_name(
         &self,
         list_id: &str,

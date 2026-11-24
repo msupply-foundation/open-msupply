@@ -68,7 +68,8 @@ impl<'a> MasterListLineRowRepository<'a> {
         Ok(result)
     }
 
-    /// The lines that put the item on the master list, in id order. With no item join.
+    /// The lines that put the item on the master list, in id order. Reads only the lines, not
+    /// their items.
     pub fn find_by_master_list_and_item(
         &self,
         list_id: &str,

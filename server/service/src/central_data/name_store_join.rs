@@ -12,7 +12,7 @@ use super::{
     name_refs::{NAME_CODE, NAME_ID, NAME_NAME, NAME_TYPE, find_name, name_error, name_part},
     name_with_code,
     sheet::Value,
-    stores_with_names,
+    sorted_by, stores_with_names,
 };
 use crate::{
     i64_to_u32,
@@ -84,23 +84,9 @@ impl ImportTable for NameStoreJoinTable {
     ) -> Result<Vec<Vec<Value>>, RepositoryError> {
         let stores = stores_with_names(connection)?;
         // Read whole, not paged: the export has already checked the row cap.
-        let mut joins =
+        let joins =
             NameStoreJoinRepository::new(connection).query_by_filter(join_filter(filter))?;
-        let store_code = |join: &NameStoreJoin| {
-            stores
-                .get(&join.name_store_join.store_id)
-                .map(|(store, _)| store.code.clone())
-                .unwrap_or_default()
-        };
-        joins.sort_by_cached_key(|join| {
-            (
-                store_code(join),
-                join.name.code.clone(),
-                type_label(&join.name.r#type),
-                join.name_store_join.id.clone(),
-            )
-        });
-        Ok(joins
+        let rows = joins
             .into_iter()
             .map(
                 |NameStoreJoin {
@@ -108,14 +94,23 @@ impl ImportTable for NameStoreJoinTable {
                      name,
                  }| {
                     let store = stores.get(&name_store_join.store_id);
-                    let mut row =
+                    let mut cells =
                         cells(&name_store_join, Some(&name), store.map(|(store, _)| store));
-                    row.push(store.map(|(_, name)| name.clone()).into());
-                    row.push(name.name.into());
-                    row
+                    cells.push(store.map(|(_, name)| name.clone()).into());
+                    cells.push(name.name.into());
+                    let order = (
+                        store
+                            .map(|(store, _)| store.code.clone())
+                            .unwrap_or_default(),
+                        name.code,
+                        type_label(&name.r#type),
+                        name_store_join.id,
+                    );
+                    (order, cells)
                 },
             )
-            .collect())
+            .collect();
+        Ok(sorted_by(rows))
     }
 
     fn count(
