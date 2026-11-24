@@ -5,8 +5,8 @@ use super::{
     delete::{DELETE_COLUMN, already_deleted_as, check_delete, is_delete},
     field_changes,
     lookup::{
-        Found, InMemory, NOT_FOUND, active_first, find_by_id_or_composite_key, find_reference,
-        key_or, new_id_conflict, reference_conflict,
+        Found, InMemory, KeyedTable, NOT_FOUND, active_first, find_by_id_or_composite_key,
+        find_reference, key_or, new_id_conflict, reference_conflict,
     },
     name_with_code,
     sheet::Value,
@@ -184,7 +184,7 @@ impl SheetImport for MasterListLineSheet {
         // Read once: a row never changes its item, as `find_line` makes that a conflict.
         let item_id = item_id.or(saved.map(|line| line.item_id.clone()));
         let item = match &item_id {
-            Some(item_id) => find_item(connection, item_id)?,
+            Some(item_id) => ItemRowRepository::new(connection).find_by_id(item_id)?,
             None => None,
         };
         if delete {
@@ -283,7 +283,7 @@ impl MasterListLineSheet {
             |saved, found, id| {
                 // The saved line's item and name, read only to describe a conflict.
                 let describe = || -> Result<(Option<ItemRow>, String), RepositoryError> {
-                    let item = find_item(connection, &saved.item_id)?;
+                    let item = ItemRowRepository::new(connection).find_by_id(&saved.item_id)?;
                     let record = self.record(&saved.master_list_id, &saved.item_id, item.as_ref());
                     Ok((item, record))
                 };
@@ -396,11 +396,6 @@ impl MasterListLineSheet {
             UpsertMasterListLineError::DatabaseError(error) => RowFailure::Database(error),
         }
     }
-}
-
-/// Without its `legacy_record`, which the sheet never reads.
-fn find_item(connection: &StorageConnection, id: &str) -> Result<Option<ItemRow>, RepositoryError> {
-    ItemRowRepository::new(connection).find_one_by_id_without_legacy_record(id)
 }
 
 /// On the column the row found the master list by.
