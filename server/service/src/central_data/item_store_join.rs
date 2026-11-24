@@ -414,7 +414,7 @@ impl ItemStoreJoinSheet {
     ) -> RowFailure {
         let location_column = row.reference_column(LOCATION_CODE, LOCATION_ID);
         match error {
-            // Not reached here: `find_reference` finds them among the saved records.
+            // Not reached here: the row's references are found among the saved records.
             UpsertItemStoreJoinError::ItemNotFound => row
                 .error(row.reference_column(ITEM_CODE, ITEM_ID), NOT_FOUND)
                 .into(),
