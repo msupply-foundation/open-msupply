@@ -1842,6 +1842,8 @@
   "label.mark-as-status": "Mark as {{status}}",
   "label.mark-as-visited": "Mark as visited",
   "label.master-list": "Master list",
+  "label.master-list-lines": "Master list lines",
+  "label.master-list-name-or-item-code-contains": "Master list name or item code contains",
   "label.master-list-none": "None – blank order",
   "label.master-lists": "Master lists",
   "label.max": "Max",
