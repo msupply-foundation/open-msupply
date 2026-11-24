@@ -2,7 +2,7 @@ use super::{
     CentralDataTable, Change, ExportFilter, ImportTable, RecordCount, RowFailure, RowOutcome,
     SheetImport, SheetStart,
     cells::{Row, RowError, choice_cell, collect},
-    delete::{DELETE_COLUMN, already_deleted_as, check_delete, is_delete},
+    delete::{DELETE_COLUMN, already_deleted_by, check_delete, is_delete},
     lookup::{InMemory, NOT_FOUND, find_by_id_or_composite_key, key_conflict},
     master_list_refs::{
         MASTER_LIST_ID, MASTER_LIST_NAME, check_not_placeholder, find_master_list,
@@ -190,13 +190,11 @@ impl SheetImport for MasterListNameJoinSheet {
         if delete {
             let Some(saved) = existing else {
                 // Named by the row's master list and name, as found.
-                let missing = match (&master_list_id, &name_id) {
-                    (Some(master_list_id), Some(name_id)) => {
-                        self.record(master_list_id, name.as_ref(), name_id)
-                    }
-                    _ => id.unwrap_or_default(),
-                };
-                return already_deleted_as(row, missing, Vec::new());
+                return already_deleted_by(
+                    row,
+                    master_list_id.as_ref().zip(name_id.as_ref()),
+                    |(master_list_id, name_id)| self.record(master_list_id, name.as_ref(), name_id),
+                );
             };
             return self.delete(connection, row, saved, name.as_ref());
         }

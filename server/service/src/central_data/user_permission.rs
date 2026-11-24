@@ -2,7 +2,7 @@ use super::{
     CentralDataTable, Change, ExportFilter, ImportTable, RecordCount, RowFailure, RowOutcome,
     SheetImport, SheetStart,
     cells::{Row, RowError, collect},
-    delete::{DELETE_COLUMN, already_deleted_as, check_delete, is_delete},
+    delete::{DELETE_COLUMN, already_deleted_by, check_delete, is_delete},
     lookup::{
         InMemory, KeyPart, NOT_FOUND, SavedCode, active_first, differs,
         find_by_id_or_composite_key, find_reference, key_conflict, key_or, read_contexts,
@@ -203,11 +203,11 @@ impl SheetImport for UserPermissionSheet {
             check_not_protected(row, &self.protected, &self.users, user_id, "permissions")?;
         }
         if delete {
-            // Named by the row's user, store, permission and context, as found.
-            let missing = key
-                .record()
-                .map_or_else(|| id.clone().unwrap_or_default(), |key| self.record(&key));
-            return self.delete(connection, row, existing, missing);
+            let Some(saved) = existing else {
+                // Named by the row's user, store, permission and context, as found.
+                return already_deleted_by(row, key.record(), |key| self.record(&key));
+            };
+            return self.delete(connection, row, saved);
         }
         if let Some(saved) = existing {
             return Ok(RowOutcome {
@@ -348,12 +348,8 @@ impl UserPermissionSheet {
         &self,
         connection: &StorageConnection,
         row: &Row,
-        existing: Option<UserPermissionRow>,
-        missing: String,
+        saved: UserPermissionRow,
     ) -> Result<RowOutcome, RowFailure> {
-        let Some(saved) = existing else {
-            return already_deleted_as(row, missing, Vec::new());
-        };
         check_delete(
             row,
             COLUMNS,

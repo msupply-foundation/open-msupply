@@ -2,7 +2,7 @@ use super::{
     CentralDataTable, Change, ExportFilter, ImportTable, RecordCount, RowFailure, RowOutcome,
     SheetImport, SheetStart,
     cells::{Row, RowError, and_list, collect},
-    delete::{DELETE_COLUMN, already_deleted_as, check_delete, is_delete},
+    delete::{DELETE_COLUMN, already_deleted_by, check_delete, is_delete},
     field_changes,
     lookup::{
         InMemory, KeyPart, NOT_FOUND, active_first, differs, find_by_id_or_composite_key,
@@ -198,12 +198,15 @@ impl SheetImport for UserStoreJoinSheet {
             check_not_protected(row, &self.protected, &self.users, user_id, "stores")?;
         }
         if delete {
-            // Named by the row's user and store, as found.
-            let missing = match (&user_id, &store_id) {
-                (Some(user_id), Some(store_id)) => self.record(user_id, store_id),
-                _ => id.clone().unwrap_or_default(),
+            let Some(saved) = existing else {
+                // Named by the row's user and store, as found.
+                return already_deleted_by(
+                    row,
+                    user_id.as_ref().zip(store_id.as_ref()),
+                    |(user_id, store_id)| self.record(user_id, store_id),
+                );
             };
-            return self.delete(connection, row, existing, missing);
+            return self.delete(connection, row, saved);
         }
 
         let saved = existing.as_ref();
@@ -444,12 +447,8 @@ impl UserStoreJoinSheet {
         &mut self,
         connection: &StorageConnection,
         row: &Row,
-        existing: Option<UserStoreJoinRow>,
-        missing: String,
+        saved: UserStoreJoinRow,
     ) -> Result<RowOutcome, RowFailure> {
-        let Some(saved) = existing else {
-            return already_deleted_as(row, missing, Vec::new());
-        };
         check_delete(
             row,
             COLUMNS,

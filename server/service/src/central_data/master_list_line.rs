@@ -2,7 +2,7 @@ use super::{
     CentralDataTable, Change, ExportFilter, ImportTable, RecordCount, RowFailure, RowOutcome,
     SheetImport, SheetStart,
     cells::{Row, RowError, collect},
-    delete::{DELETE_COLUMN, already_deleted_as, check_delete, is_delete},
+    delete::{DELETE_COLUMN, already_deleted_by, check_delete, is_delete},
     field_changes,
     lookup::{
         InMemory, KeyPart, KeyedTable, NOT_FOUND, SavedCode, differs, find_by_id_or_composite_key,
@@ -190,13 +190,11 @@ impl SheetImport for MasterListLineSheet {
         if delete {
             let Some(saved) = existing else {
                 // Named by the row's master list and item, as found.
-                let missing = match (&master_list_id, &item_id) {
-                    (Some(master_list_id), Some(item_id)) => {
-                        self.record(master_list_id, item_id, item.as_ref())
-                    }
-                    _ => id.unwrap_or_default(),
-                };
-                return already_deleted_as(row, missing, Vec::new());
+                return already_deleted_by(
+                    row,
+                    master_list_id.as_ref().zip(item_id.as_ref()),
+                    |(master_list_id, item_id)| self.record(master_list_id, item_id, item.as_ref()),
+                );
             };
             return self.delete(connection, row, saved, item.as_ref());
         }

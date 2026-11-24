@@ -2,7 +2,7 @@ use super::{
     CentralDataTable, Change, ExportFilter, ImportTable, RecordCount, RowFailure, RowOutcome,
     SheetImport, SheetStart,
     cells::{Row, RowError, collect},
-    delete::{DELETE_COLUMN, already_deleted_as, check_delete, is_delete},
+    delete::{DELETE_COLUMN, already_deleted_by, check_delete, is_delete},
     field_changes,
     lookup::{
         InMemory, KeyPart, KeyedTable, LocationsOfStore, NOT_FOUND, SavedCode, differs,
@@ -235,13 +235,11 @@ impl SheetImport for ItemStoreJoinSheet {
         if delete {
             let Some(saved) = existing else {
                 // Named by the row's item and store, as found.
-                let missing = match (&item_id, &store_id) {
-                    (Some(item_id), Some(store_id)) => {
-                        self.record(item_id, store_id, item.as_ref())
-                    }
-                    _ => id.unwrap_or_default(),
-                };
-                return already_deleted_as(row, missing, Vec::new());
+                return already_deleted_by(
+                    row,
+                    item_id.as_ref().zip(store_id.as_ref()),
+                    |(item_id, store_id)| self.record(item_id, store_id, item.as_ref()),
+                );
             };
             return self.delete(
                 connection,

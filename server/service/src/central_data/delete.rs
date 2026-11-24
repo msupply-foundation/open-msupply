@@ -36,8 +36,19 @@ pub(crate) fn already_deleted(
     already_deleted_as(row, key, errors)
 }
 
-/// As `already_deleted`, named `record`, for a table whose lookup key is several columns.
-pub(crate) fn already_deleted_as(
+/// As `already_deleted`, for a table whose lookup key is several references: named by `name` given
+/// the row's whole key, as found, else by the row's id.
+pub(crate) fn already_deleted_by<K>(
+    row: &Row,
+    key: Option<K>,
+    name: impl FnOnce(K) -> String,
+) -> Result<RowOutcome, RowFailure> {
+    let record = key.map_or_else(|| row.text(ID).unwrap_or_default(), name);
+    already_deleted_as(row, record, Vec::new())
+}
+
+/// As `already_deleted`, named `record`.
+fn already_deleted_as(
     row: &Row,
     record: String,
     errors: Vec<RowError>,
@@ -133,6 +144,38 @@ mod tests {
             headers: &headers,
             cells: &cells,
         });
+    }
+
+    #[test]
+    fn a_missing_record_is_named_by_its_whole_key_else_its_id() {
+        let headers: Vec<String> = ["id", "delete"].map(String::from).to_vec();
+        let outcome = |id: &str, key: Option<(&str, &str)>| {
+            let cells: Vec<String> = [id, "DELETE"].map(String::from).to_vec();
+            let row = Row {
+                sheet: "item_store_join",
+                number: 4,
+                headers: &headers,
+                cells: &cells,
+            };
+            let Ok(outcome) = already_deleted_by(&row, key, |(item, store)| {
+                format!("{item} in store {store}")
+            }) else {
+                panic!("a DELETE row that finds no record isn't an error")
+            };
+            (outcome.record, outcome.record_id, outcome.change)
+        };
+        assert_eq!(
+            outcome("", Some(("PARA", "MS"))),
+            (
+                "PARA in store MS".to_string(),
+                "PARA in store MS".to_string(),
+                Change::Unchanged
+            )
+        );
+        assert_eq!(
+            outcome("isj_1", None),
+            ("isj_1".to_string(), "isj_1".to_string(), Change::Unchanged)
+        );
     }
 
     #[test]
