@@ -230,6 +230,14 @@ impl ChangelogTableName {
                 transport: V7_ONLY,
                 multi_device_site: false,
             },
+            // OMS-native: the medicines a store shows as cards on the Simple dispensing
+            // screen (#2188), written at the store's own site, over v7 only.
+            CommonMedicine => SyncStyle {
+                authoring: vec![RemoteOwned],
+                distribution: vec![D::RemoteOwned],
+                transport: V7_ONLY,
+                multi_device_site: false,
+            },
             VVMStatusLog => SyncStyle {
                 authoring: vec![RemoteOwned],
                 distribution: vec![D::RemoteOwned],

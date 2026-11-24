@@ -12,9 +12,8 @@ use repository::{GenderType, InvoiceStatus};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     preference::{
-        BackdatingData, CommonMedicine, DispensingScreenOption, StoreOverrideUpdate,
-        StorePrefUpdate, UpsertPreferenceError, UpsertPreferences,
-        WarnWhenMissingRecentStocktakeData,
+        BackdatingData, DispensingScreenOption, StoreOverrideUpdate, StorePrefUpdate,
+        UpsertPreferenceError, UpsertPreferences, WarnWhenMissingRecentStocktakeData,
     },
 };
 
@@ -80,18 +79,6 @@ pub struct WarnWhenMissingRecentStocktakeInput {
 }
 
 #[derive(InputObject)]
-pub struct CommonMedicineInput {
-    pub item_id: String,
-    pub amounts: Vec<f64>,
-}
-
-#[derive(InputObject)]
-pub struct CommonMedicinesInput {
-    pub store_id: String,
-    pub value: Vec<CommonMedicineInput>,
-}
-
-#[derive(InputObject)]
 pub struct InvoiceStatusOptionsInput {
     pub store_id: String,
     pub value: Vec<InvoiceNodeStatus>,
@@ -154,7 +141,6 @@ pub struct UpsertPreferencesInput {
     pub show_indicative_price_in_requisitions: Option<Vec<BoolStorePrefInput>>,
     pub do_not_print_placeholder_line_labels: Option<Vec<BoolStorePrefInput>>,
     pub prompt_for_batch_and_expiry_on_inbound_shipments: Option<Vec<BoolStorePrefInput>>,
-    pub common_medicines: Option<Vec<CommonMedicinesInput>>,
     // Dispensing (#2188): the global value, and a store's own value
     pub dispensing_screen: Option<DispensingScreenNode>,
     pub dispensing_screen_store_override: Option<Vec<DispensingScreenStoreOverrideInput>>,
@@ -248,7 +234,6 @@ impl UpsertPreferencesInput {
             show_indicative_price_in_requisitions,
             do_not_print_placeholder_line_labels,
             prompt_for_batch_and_expiry_on_inbound_shipments,
-            common_medicines,
             dispensing_screen,
             dispensing_screen_store_override,
             use_unnamed_patient,
@@ -377,9 +362,6 @@ impl UpsertPreferencesInput {
                 prompt_for_batch_and_expiry_on_inbound_shipments
                     .as_ref()
                     .map(|i| i.iter().map(|i| i.to_domain()).collect()),
-            common_medicines: common_medicines
-                .as_ref()
-                .map(|i| i.iter().map(|i| i.to_domain()).collect()),
             dispensing_screen: dispensing_screen.map(DispensingScreenOption::from),
             dispensing_screen_store_override: dispensing_screen_store_override
                 .as_ref()
@@ -478,22 +460,6 @@ impl InvoiceStatusOptionsInput {
         StorePrefUpdate {
             store_id: self.store_id.clone(),
             value: self.value.iter().map(|s| (*s).into()).collect(),
-        }
-    }
-}
-
-impl CommonMedicinesInput {
-    pub fn to_domain(&self) -> StorePrefUpdate<Vec<CommonMedicine>> {
-        StorePrefUpdate {
-            store_id: self.store_id.clone(),
-            value: self
-                .value
-                .iter()
-                .map(|medicine| CommonMedicine {
-                    item_id: medicine.item_id.clone(),
-                    amounts: medicine.amounts.clone(),
-                })
-                .collect(),
         }
     }
 }

@@ -6,16 +6,18 @@ import {
   round9,
   type AllocationPreferences,
 } from '@/domain/allocation';
-import type { StoreContextResult } from '../../../store/storeContext.generated';
-import type { SimpleDispensingItemsResult } from './simpleDispensing.generated';
+import type {
+  SimpleCommonMedicinesResult,
+  SimpleDispensingItemsResult,
+} from './simpleDispensing.generated';
 import type {
   SimpleDispensedVisitResult,
   SimpleDispenseResult,
 } from './simpleDispense.generated';
 
-/** One of the store's common medicines, as the preference holds it. */
+/** One of the store's common medicines, as the screen reads it. */
 export type CommonMedicine =
-  StoreContextResult['preferences']['commonMedicines'][number];
+  SimpleCommonMedicinesResult['commonMedicines'][number];
 
 type ItemsResult = Extract<
   SimpleDispensingItemsResult['items'],

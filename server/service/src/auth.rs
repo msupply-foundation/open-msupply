@@ -133,6 +133,9 @@ pub enum Resource {
     ManualSync,
     QueryReasonOptions,
     QueryStorePreferences,
+    /// A store's common medicines, the Simple dispensing screen's cards (#2188)
+    QueryCommonMedicines,
+    MutateCommonMedicines,
     ColdChainApi,
     // assets
     AddAsset,
@@ -219,6 +222,8 @@ impl Resource {
             | Resource::MutateCustomerReturn
             | Resource::MutatePrescription
             | Resource::MutatePrescriptionRequest
+            // Written at the store's own site and synced as `RemoteOwned` (#2188)
+            | Resource::MutateCommonMedicines
             | Resource::MutateRnRForms
             | Resource::MutateVvmStatus
             | Resource::MutatePurchaseOrder
@@ -274,6 +279,7 @@ impl Resource {
             | Resource::SyncInfo
             | Resource::QueryReasonOptions
             | Resource::QueryStorePreferences
+            | Resource::QueryCommonMedicines
             | Resource::QueryAsset
             | Resource::QueryDemographic
             | Resource::QueryVaccineCourse
@@ -878,6 +884,19 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     map.insert(
         Resource::QueryStorePreferences,
         PermissionDSL::HasStoreAccess,
+    );
+    // Whoever works in the store reads its cards; whoever dispenses there sets
+    // them up (#2188)
+    map.insert(
+        Resource::QueryCommonMedicines,
+        PermissionDSL::HasStoreAccess,
+    );
+    map.insert(
+        Resource::MutateCommonMedicines,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::PrescriptionMutate),
+        ]),
     );
 
     map.insert(
@@ -2274,5 +2293,68 @@ mod import_export_central_data_test {
         // Server admin alone only shows the menu entry.
         assert!(validate(PermissionType::ServerAdmin).is_err());
         assert!(validate(PermissionType::EditCentralData).is_ok());
+    }
+}
+
+#[cfg(test)]
+mod common_medicines_permission_test {
+    use repository::{PermissionType, UserPermissionRow};
+
+    use super::{Resource, ResourceAccessRequest, all_permissions, validate_resource_permissions};
+
+    fn permission(permission: PermissionType) -> UserPermissionRow {
+        UserPermissionRow {
+            id: format!("{permission:?}"),
+            user_id: "test_user_id".to_string(),
+            permission,
+            store_id: Some("store_a".to_string()),
+            context_id: None,
+        }
+    }
+
+    fn validate(resource: Resource, permissions: Vec<PermissionType>) -> Result<(), String> {
+        let required = all_permissions()
+            .get(&resource)
+            .expect("resource must be mapped")
+            .clone();
+        validate_resource_permissions(
+            "test_user_id",
+            &permissions.into_iter().map(permission).collect::<Vec<_>>(),
+            &ResourceAccessRequest {
+                resource,
+                store_id: Some("store_a".to_string()),
+                require_central_standalone: false,
+            },
+            &required,
+            &mut Vec::new(),
+        )
+    }
+
+    // OMS-REG-DIS-12.237, .238: whoever can change dispensing records at the
+    // store saves its common medicines, and only at the store's own site;
+    // anyone with access to the store reads them
+    #[test]
+    fn common_medicines_permissions() {
+        use PermissionType::*;
+
+        assert!(
+            validate(
+                Resource::MutateCommonMedicines,
+                vec![StoreAccess, PrescriptionMutate]
+            )
+            .is_ok()
+        );
+        assert!(validate(Resource::MutateCommonMedicines, vec![StoreAccess]).is_err());
+        assert!(
+            validate(
+                Resource::MutateCommonMedicines,
+                vec![StoreAccess, EditCentralData]
+            )
+            .is_err()
+        );
+        assert!(Resource::MutateCommonMedicines.requires_store_active_on_site());
+
+        assert!(validate(Resource::QueryCommonMedicines, vec![StoreAccess]).is_ok());
+        assert!(!Resource::QueryCommonMedicines.requires_store_active_on_site());
     }
 }

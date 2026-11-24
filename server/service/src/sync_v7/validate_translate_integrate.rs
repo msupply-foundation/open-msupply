@@ -99,6 +99,7 @@ fn translate_delete(
         ChangelogTableName::BackendPlugin => Box::new(BackendPluginRowDelete(id)),
         ChangelogTableName::ClinicianStoreJoin => Box::new(ClinicianStoreJoinRowDelete(id)),
         ChangelogTableName::BarcodeProposal => Box::new(BarcodeProposalRowDelete(id)),
+        ChangelogTableName::CommonMedicine => Box::new(CommonMedicineRowDelete(id)),
         ChangelogTableName::ConsumptionEstimate => Box::new(ConsumptionEstimateRowDelete(id)),
         ChangelogTableName::Contact => Box::new(ContactRowDelete(id)),
         ChangelogTableName::Diagnosis => Box::new(DiagnosisRowDelete(id)),
@@ -1000,6 +1001,64 @@ mod test {
         );
         let (result, error) = buffer_result(&connection, 1);
         assert_eq!(result, Some(IntegrationResult::Success), "{error:?}");
+    }
+
+    // OMS-REG-DIS-12.238: central takes a site's common medicines for that
+    // site's own store, and ignores any for a store that isn't the site's
+    #[actix_rt::test]
+    async fn central_takes_a_sites_common_medicines_for_its_own_stores() {
+        use repository::{CommonMedicineRow, CommonMedicineRowRepository, mock::mock_store_b};
+
+        let connection = setup(
+            "v7_central_takes_a_sites_common_medicines",
+            MockDataInserts::all(),
+        )
+        .await;
+        // The pushing site holds store b; store a is central's own
+        let pushed = |id: &str, store_id: &str| {
+            let row = CommonMedicineRow {
+                id: id.to_string(),
+                store_id: store_id.to_string(),
+                sort_order: 0,
+                amounts: "[10.0]".to_string(),
+                item_id: repository::mock::mock_item_a().id,
+            };
+            SyncBufferRowInsert {
+                table_name: "common_medicine".to_string(),
+                store_id: Some(store_id.to_string()),
+                ..buffer_row(id, SyncAction::Upsert, serde_json::to_value(&row).unwrap())
+            }
+        };
+        SyncBufferRepository::new(&connection)
+            .insert_many(&[
+                pushed("own", &mock_store_b().id),
+                pushed("not_the_sites", &mock_store_a().id),
+            ])
+            .unwrap();
+
+        validate_translate_integrate(
+            &connection,
+            None,
+            SOURCE_SITE_ID,
+            None,
+            SyncContext::Central {
+                source_site_active_store_ids: vec![mock_store_b().id],
+                is_multi_device: false,
+            },
+            false,
+        )
+        .unwrap();
+
+        let (result, error) = buffer_result(&connection, 1);
+        assert_eq!(result, Some(IntegrationResult::Success), "{error:?}");
+        assert_eq!(
+            buffer_result(&connection, 2).0,
+            Some(IntegrationResult::Ignored)
+        );
+
+        let repo = CommonMedicineRowRepository::new(&connection);
+        assert!(repo.find_one_by_id("own").unwrap().is_some());
+        assert_eq!(repo.find_one_by_id("not_the_sites").unwrap(), None);
     }
 
     #[actix_rt::test]

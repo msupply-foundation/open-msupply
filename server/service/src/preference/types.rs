@@ -64,7 +64,6 @@ pub enum PrefKey {
     ShowIndicativePriceInRequisitions,
     DoNotPrintPlaceholderLineLabels,
     PromptForBatchAndExpiryOnInboundShipments,
-    CommonMedicines,
 
     // Dispensing (#2188): global, and a store may have its own value
     DispensingScreen,
@@ -102,8 +101,6 @@ pub enum PreferenceValueType {
     String,
     Colour,
     Image,
-    // Specific type for the CommonMedicines preference
-    CommonMedicines,
     // Specific type for the DispensingScreen preference: STANDARD or SIMPLE
     DispensingScreen,
     // MultilineString,

@@ -56,7 +56,9 @@ use graphql_location::{LocationMutations, LocationQueries};
 use graphql_plugin::{
     CentralPluginMutations, CentralPluginQueries, PluginMutations, PluginQueries,
 };
-use graphql_preference::{PreferenceMutations, PreferenceQueries};
+use graphql_preference::{
+    CommonMedicineMutations, CommonMedicineQueries, PreferenceMutations, PreferenceQueries,
+};
 use graphql_prescription_request::{PrescriptionRequestMutations, PrescriptionRequestQueries};
 use graphql_printer::{PrinterMutations, PrinterQueries};
 use graphql_programs::{ProgramsMutations, ProgramsQueries};
@@ -245,6 +247,7 @@ pub struct Queries(
     pub VaccineCourseQueries,
     pub ItemVariantQueries,
     pub PreferenceQueries,
+    pub CommonMedicineQueries,
     pub CentralServerQueries,
     pub VVMQueries,
     pub CampaignQueries,
@@ -285,6 +288,7 @@ impl Queries {
             VaccineCourseQueries,
             ItemVariantQueries,
             PreferenceQueries,
+            CommonMedicineQueries,
             CentralServerQueries,
             VVMQueries,
             CampaignQueries,
@@ -325,6 +329,7 @@ pub struct Mutations(
     pub PurchaseOrderMutations,
     pub PurchaseOrderLineMutations,
     pub SyncMessageMutations,
+    pub CommonMedicineMutations,
 );
 
 impl Mutations {
@@ -358,6 +363,7 @@ impl Mutations {
             PurchaseOrderMutations,
             PurchaseOrderLineMutations,
             SyncMessageMutations,
+            CommonMedicineMutations,
         )
     }
 }
@@ -1120,5 +1126,28 @@ mod tests {
                 .nth(first_difference)
                 .unwrap_or("<end of file>"),
         );
+    }
+}
+
+#[cfg(test)]
+mod common_medicine_schema_test {
+    /// The body of one `type <name> { ... }` block in the schema's SDL.
+    fn type_block(sdl: &str, name: &str) -> String {
+        let start = sdl
+            .find(&format!("type {name} {{"))
+            .unwrap_or_else(|| panic!("no type {name} in the schema"));
+        let end = sdl[start..].find("\n}").expect("an unclosed type") + start;
+        sdl[start..end].to_string()
+    }
+
+    // OMS-REG-DIS-12.237: a store's own site reads and saves its common
+    // medicines, so both are root fields. Everything under `centralServer`
+    // refuses with "Not a central server" anywhere else.
+    #[test]
+    fn common_medicines_are_root_fields() {
+        let sdl = super::operational_schema_sdl();
+
+        assert!(type_block(&sdl, "Queries").contains("commonMedicines("));
+        assert!(type_block(&sdl, "Mutations").contains("upsertCommonMedicines("));
     }
 }

@@ -183,6 +183,9 @@ pub use self::shipping_method::*;
 pub mod pref_nodes;
 pub use self::pref_nodes::*;
 
+pub mod common_medicine;
+pub use self::common_medicine::*;
+
 pub mod help_document;
 pub use self::help_document::*;
 

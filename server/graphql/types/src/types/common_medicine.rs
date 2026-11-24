@@ -1,7 +1,7 @@
 use async_graphql::*;
-use service::preference::CommonMedicine;
+use service::common_medicine::CommonMedicine;
 
-/// One medicine card on the Simple dispensing screen.
+/// One medicine card on the Simple dispensing screen (#2188).
 pub struct CommonMedicineNode {
     pub data: CommonMedicine,
 }

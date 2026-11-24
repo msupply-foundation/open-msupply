@@ -82,8 +82,6 @@ pub mod do_not_print_placeholder_line_labels;
 pub use do_not_print_placeholder_line_labels::*;
 pub mod prompt_for_batch_and_expiry_on_inbound_shipments;
 pub use prompt_for_batch_and_expiry_on_inbound_shipments::*;
-pub mod common_medicines;
-pub use common_medicines::*;
 pub mod dispensing_screen;
 pub use dispensing_screen::*;
 pub mod use_unnamed_patient;
@@ -154,7 +152,6 @@ pub struct PreferenceProvider {
     pub show_indicative_price_in_requisitions: ShowIndicativePriceInRequisitions,
     pub do_not_print_placeholder_line_labels: DoNotPrintPlaceholderLineLabels,
     pub prompt_for_batch_and_expiry_on_inbound_shipments: PromptForBatchAndExpiryOnInboundShipments,
-    pub common_medicines: CommonMedicines,
 
     // Dispensing (#2188): global, and a store may have its own value
     pub dispensing_screen: DispensingScreen,
@@ -219,7 +216,6 @@ pub fn get_preference_provider() -> PreferenceProvider {
         show_indicative_price_in_requisitions: ShowIndicativePriceInRequisitions,
         do_not_print_placeholder_line_labels: DoNotPrintPlaceholderLineLabels,
         prompt_for_batch_and_expiry_on_inbound_shipments: PromptForBatchAndExpiryOnInboundShipments,
-        common_medicines: CommonMedicines,
         dispensing_screen: DispensingScreen,
         use_unnamed_patient: UseUnnamedPatient,
         start_with_unnamed_patient: StartWithUnnamedPatient,
