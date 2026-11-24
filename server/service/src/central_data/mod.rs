@@ -25,6 +25,7 @@ pub mod lookup;
 mod master_list;
 mod master_list_line;
 mod name;
+mod name_refs;
 mod name_store_join;
 pub mod sheet;
 mod store;

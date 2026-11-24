@@ -5,10 +5,11 @@ use super::{
     delete::{DELETE_COLUMN, already_deleted, check_delete, is_delete},
     field_changes,
     lookup::{
-        Found, InMemory, NOT_FOUND, NamesOfType, active_first, find_by_id_or_composite_key,
-        find_reference, key_or, new_id_conflict, reference_conflict,
+        Found, InMemory, NOT_FOUND, find_by_id_or_composite_key, find_reference, key_or,
+        new_id_conflict, reference_conflict,
     },
     name::{TYPES as NAME_TYPES, type_label},
+    name_refs::{NAME_CODE, NAME_ID, NAME_NAME, NAME_TYPE, find_name, name_error},
     name_with_code,
     sheet::Value,
     stores_with_names,
@@ -28,13 +29,9 @@ use util::uuid::uuid;
 const ID: &str = "id";
 const STORE_CODE: &str = "store_code";
 const STORE_ID: &str = "store_id";
-const NAME_CODE: &str = "name_code";
-const NAME_TYPE: &str = "name_type";
-const NAME_ID: &str = "name_id";
 const NAME_IS_CUSTOMER: &str = "name_is_customer";
 const NAME_IS_SUPPLIER: &str = "name_is_supplier";
 const STORE_NAME: &str = "store_name";
-const NAME_NAME: &str = "name_name";
 
 const COLUMNS: &[&str] = &[
     ID,
@@ -111,7 +108,8 @@ impl ImportTable for NameStoreJoinTable {
                      name,
                  }| {
                     let store = stores.get(&name_store_join.store_id);
-                    let mut row = cells(&name_store_join, &name, store.map(|(store, _)| store));
+                    let mut row =
+                        cells(&name_store_join, Some(&name), store.map(|(store, _)| store));
                     row.push(store.map(|(_, name)| name.clone()).into());
                     row.push(name.name.into());
                     row
@@ -172,19 +170,6 @@ impl SheetImport for NameStoreJoinSheet {
         let name_type = collect(&mut errors, name_type);
         let name_id = collect(&mut errors, name_id).flatten();
 
-        let names = NameRowRepository::new(connection);
-        let found_name = match &name_id {
-            Some(name_id) => names.find_one_by_id(name_id)?,
-            None => None,
-        };
-        if let Some(error) = found_name
-            .as_ref()
-            .and_then(|name| name_error(row, name, name_type.as_ref()))
-        {
-            errors.push(error);
-            return Err(RowFailure::Invalid(errors));
-        }
-
         let id = row.text(ID);
         // Without its record, the row's other checks would treat it as a new join.
         let existing = match self.find_join(
@@ -200,8 +185,22 @@ impl SheetImport for NameStoreJoinSheet {
                 return Err(RowFailure::Invalid(errors));
             }
         };
+        // The saved join's when the row leaves it blank, so a row with only an id can't change a
+        // patient's or a system name's join. Read once: `find_join` makes another name a conflict.
+        let name_id = name_id.or(existing.as_ref().map(|join| join.name_id.clone()));
+        let name = match &name_id {
+            Some(name_id) => NameRowRepository::new(connection).find_one_by_id(name_id)?,
+            None => None,
+        };
+        if let Some(error) = name
+            .as_ref()
+            .and_then(|name| name_error(row, name, name_type.as_ref(), "which stores see"))
+        {
+            errors.push(error);
+            return Err(RowFailure::Invalid(errors));
+        }
         if delete {
-            return self.delete(connection, row, existing, found_name, errors);
+            return self.delete(connection, row, existing, name.as_ref(), errors);
         }
         // Found by store and name beside a new id: the join a store this import adds got for its
         // own name. The row's takes its place, so a whole export imports into another server.
@@ -212,7 +211,6 @@ impl SheetImport for NameStoreJoinSheet {
         let saved = existing.as_ref();
 
         let store_id = store_id.or(saved.map(|join| join.store_id.clone()));
-        let name_id = name_id.or(saved.map(|join| join.name_id.clone()));
         let is_customer = is_customer.or(saved.map(|join| join.name_is_customer));
         let is_supplier = is_supplier.or(saved.map(|join| join.name_is_supplier));
         row.require_for_new(
@@ -242,8 +240,6 @@ impl SheetImport for NameStoreJoinSheet {
             visible: saved.is_none_or(|join| join.visible),
         };
 
-        // The same for the saved join: a row never changes its store or name.
-        let name = name_with_id(connection, found_name, &new.name_id)?;
         let store = self.stores.get(&new.store_id);
         let change = Change::between_upserts(saved, &new);
         if let Some(replaced) = &replaced {
@@ -253,18 +249,17 @@ impl SheetImport for NameStoreJoinSheet {
             upsert_name_store_join(connection, &new)
                 .map_err(|error| upsert_failure(row, &new, name.as_ref(), store, error))?;
         }
-        let name = name.unwrap_or_default();
         Ok(RowOutcome {
             fields: existing
                 .map(|saved| {
                     field_changes(
                         COLUMNS,
-                        cells(&saved, &name, store),
-                        cells(&new, &name, store),
+                        cells(&saved, name.as_ref(), store),
+                        cells(&new, name.as_ref(), store),
                     )
                 })
                 .unwrap_or_default(),
-            record: record(&name, store),
+            record: record(&new, name.as_ref(), store),
             record_id: new.id,
             change,
         })
@@ -314,10 +309,9 @@ impl NameStoreJoinSheet {
                     Found::ById => None,
                     Found::NewIdBesideKey if self.added_own_name(saved) => None,
                     Found::NewIdBesideKey => {
-                        let name = NameRowRepository::new(connection)
-                            .find_one_by_id(&saved.name_id)?
-                            .unwrap_or_default();
-                        let record = record(&name, self.stores.get(&saved.store_id));
+                        let name =
+                            NameRowRepository::new(connection).find_one_by_id(&saved.name_id)?;
+                        let record = record(saved, name.as_ref(), self.stores.get(&saved.store_id));
                         Some(new_id_conflict(row, &record, &saved.id, id))
                     }
                 })
@@ -344,17 +338,15 @@ impl NameStoreJoinSheet {
         on_store: bool,
     ) -> Result<RowError, RepositoryError> {
         let store = self.stores.get(&saved.store_id);
-        let name = NameRowRepository::new(connection)
-            .find_one_by_id(&saved.name_id)?
-            .unwrap_or_default();
+        let name = NameRowRepository::new(connection).find_one_by_id(&saved.name_id)?;
         let (code, reference_id) = if on_store {
             (
-                (STORE_CODE, store.map_or("", |store| store.code.as_str())),
+                (STORE_CODE, key_or(store, &saved.store_id)),
                 (STORE_ID, saved.store_id.as_str()),
             )
         } else {
             (
-                (NAME_CODE, name.code.as_str()),
+                (NAME_CODE, key_or(name.as_ref(), &saved.name_id)),
                 (NAME_ID, saved.name_id.as_str()),
             )
         };
@@ -362,7 +354,7 @@ impl NameStoreJoinSheet {
             row,
             code,
             reference_id,
-            &record(&name, store),
+            &record(saved, name.as_ref(), store),
             &saved.id,
             id,
         ))
@@ -373,92 +365,28 @@ impl NameStoreJoinSheet {
         connection: &StorageConnection,
         row: &Row,
         existing: Option<NameStoreJoinRow>,
-        found_name: Option<NameRow>,
+        name: Option<&NameRow>,
         errors: Vec<RowError>,
     ) -> Result<RowOutcome, RowFailure> {
         let Some(saved) = existing else {
             return already_deleted(row, NAME_CODE, errors);
         };
-        let name = name_with_id(connection, found_name, &saved.name_id)?.unwrap_or_default();
         let store = self.stores.get(&saved.store_id);
         check_delete(
             row,
             COLUMNS,
             &[NAME_TYPE],
-            cells(&saved, &name, store),
+            cells(&saved, name, store),
             errors,
         )?;
 
         delete_name_store_join(connection, &saved.id)?;
         Ok(RowOutcome {
-            record: record(&name, store),
+            record: record(&saved, name, store),
             record_id: saved.id,
             change: Change::Deleted,
             fields: Vec::new(),
         })
-    }
-}
-
-/// As `find_reference`. `name_code` finds the name within `r#type`, or among every type when it's
-/// blank. A code alone never finds a patient or a system name, and finds a live name before a
-/// deleted one.
-fn find_name(
-    connection: &StorageConnection,
-    row: &Row,
-    r#type: Option<NameRowType>,
-) -> Result<Result<Option<Option<String>>, RowError>, RepositoryError> {
-    let names = NamesOfType {
-        repo: NameRowRepository::new(connection),
-        r#type,
-    };
-    find_reference(&names, row, NAME_CODE, NAME_ID, |names| {
-        let names = names
-            .into_iter()
-            .filter(|name| name.r#type != NameRowType::Patient && !name.is_system_name())
-            .collect();
-        active_first(names, |name| name.deleted_datetime.is_none())
-    })
-}
-
-/// `found`, the name the row's cells found, when it's the one with `id`, as it is unless the row
-/// leaves its name blank; else read.
-fn name_with_id(
-    connection: &StorageConnection,
-    found: Option<NameRow>,
-    id: &str,
-) -> Result<Option<NameRow>, RepositoryError> {
-    match found.filter(|name| name.id == id) {
-        Some(name) => Ok(Some(name)),
-        None => NameRowRepository::new(connection).find_one_by_id(id),
-    }
-}
-
-/// A patient or a system name the row found by id, or a name whose type isn't the row's.
-fn name_error(row: &Row, name: &NameRow, r#type: Option<&NameRowType>) -> Option<RowError> {
-    let column = row.reference_column(NAME_CODE, NAME_ID);
-    let label = name_with_code(&name.name, &name.code);
-    if name.r#type == NameRowType::Patient {
-        return Some(row.error(
-            column,
-            format!("{label} is a patient. Which stores see a patient isn't imported"),
-        ));
-    }
-    if name.is_system_name() {
-        return Some(row.error(
-            column,
-            format!("{label} is a system name, as the server needs it, so import can't change which stores see it"),
-        ));
-    }
-    match r#type {
-        Some(r#type) if *r#type != name.r#type => Some(row.error(
-            NAME_TYPE,
-            format!(
-                "{label} is of type {}, not {}",
-                type_label(&name.r#type),
-                type_label(r#type)
-            ),
-        )),
-        _ => None,
     }
 }
 
@@ -500,13 +428,14 @@ fn upsert_failure(
     }
 }
 
-/// How the preview and messages name a join.
-fn record(name: &NameRow, store: Option<&StoreRow>) -> String {
-    format!(
-        "{} in store {}",
-        name_with_code(&name.name, &name.code),
-        store.map_or("", |store| store.code.as_str())
-    )
+/// How the preview and messages name a join. `name` and `store` are the join's, if found; each
+/// falls back to its id.
+fn record(join: &NameStoreJoinRow, name: Option<&NameRow>, store: Option<&StoreRow>) -> String {
+    let name = name.map_or_else(
+        || join.name_id.clone(),
+        |name| name_with_code(&name.name, &name.code),
+    );
+    format!("{name} in store {}", key_or(store, &join.store_id))
 }
 
 /// Neither a patient's nor a system name's.
@@ -534,13 +463,13 @@ fn join_filter(filter: &ExportFilter) -> NameStoreJoinFilter {
 
 /// One per column, as the export writes them and the preview shows them. The export adds
 /// `store_name` and `name_name`.
-fn cells(join: &NameStoreJoinRow, name: &NameRow, store: Option<&StoreRow>) -> Vec<Value> {
+fn cells(join: &NameStoreJoinRow, name: Option<&NameRow>, store: Option<&StoreRow>) -> Vec<Value> {
     vec![
         join.id.clone().into(),
         store.map(|store| store.code.clone()).into(),
         join.store_id.clone().into(),
-        name.code.clone().into(),
-        choice_cell(NAME_TYPES, &name.r#type),
+        name.map(|name| name.code.clone()).into(),
+        name.map_or(Value::Empty, |name| choice_cell(NAME_TYPES, &name.r#type)),
         join.name_id.clone().into(),
         join.name_is_customer.into(),
         join.name_is_supplier.into(),

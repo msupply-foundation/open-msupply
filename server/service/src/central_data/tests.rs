@@ -6822,7 +6822,7 @@ async fn a_name_store_join_finds_its_store_and_name_by_code_or_id() {
             (
                 4,
                 Some("name_id"),
-                "Moreau, Anna (P001) is a patient. Which stores see a patient isn't imported"
+                "Moreau, Anna (P001) is a patient, so import doesn't change which stores see a patient"
             ),
             (
                 5,
@@ -6915,6 +6915,42 @@ async fn a_name_store_join_row_cannot_change_its_store_or_name() {
         ]
     );
     assert_eq!(summary.tables[0].updated, 1);
+}
+
+// covers: OMS-REG-CDIO-01.148
+
+#[actix_rt::test]
+async fn a_name_store_join_row_with_only_an_id_cannot_touch_a_patients_or_system_names_record() {
+    let (connection, service_provider, dir) = join_setup("central_data_join_id_only_patient").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let before = joins_of(&connection, "store_main");
+
+    let path = write_file(
+        dir.path(),
+        join_sheet(vec![
+            join_row(&[("id", "join_patient"), ("delete", "DELETE")]),
+            join_row(&[("id", "join_invad"), ("delete", "DELETE")]),
+            join_row(&[("id", "join_patient"), ("name_is_supplier", "TRUE")]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    let patient =
+        "Moreau, Anna (P001) is a patient, so import doesn't change which stores see a patient";
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (2, Some("name_id"), patient),
+            (
+                3,
+                Some("name_id"),
+                "Inventory adjustments (invad) is a system name, as the server needs it, so import can't change which stores see it"
+            ),
+            (4, Some("name_id"), patient),
+        ]
+    );
+    assert_eq!(joins_of(&connection, "store_main"), before);
 }
 
 // covers: OMS-REG-CDIO-01.150
