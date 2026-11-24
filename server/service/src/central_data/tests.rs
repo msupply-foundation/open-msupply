@@ -11135,7 +11135,7 @@ async fn an_item_store_join_finds_its_default_location_among_its_stores() {
             (
                 5,
                 Some("default_location_id"),
-                "fridge_main is a location of store MS, not of store W1"
+                "FRIDGE is a location of store MS, not of store W1"
             ),
             (
                 6,

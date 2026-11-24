@@ -11,6 +11,7 @@ pub enum UpsertItemStoreJoinError {
     LocationNotFound,
     /// The default location belongs to another store.
     LocationInAnotherStore {
+        location_code: String,
         location_store_id: String,
     },
     NegativePrice,
@@ -85,6 +86,7 @@ fn validate(
             .ok_or(UpsertItemStoreJoinError::LocationNotFound)?;
         if location.store_id != row.store_id {
             return Err(UpsertItemStoreJoinError::LocationInAnotherStore {
+                location_code: location.code,
                 location_store_id: location.store_id,
             });
         }
@@ -207,6 +209,7 @@ mod tests {
                 }
             ),
             Err(UpsertItemStoreJoinError::LocationInAnotherStore {
+                location_code: "OTHER_SHELF".to_string(),
                 location_store_id: "other".to_string()
             })
         );

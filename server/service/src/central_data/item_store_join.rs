@@ -417,12 +417,14 @@ impl ItemStoreJoinSheet {
             UpsertItemStoreJoinError::LocationNotFound => {
                 row.error(location_column, NOT_FOUND).into()
             }
-            UpsertItemStoreJoinError::LocationInAnotherStore { location_store_id } => row
+            UpsertItemStoreJoinError::LocationInAnotherStore {
+                location_code,
+                location_store_id,
+            } => row
                 .error(
                     location_column,
                     format!(
-                        "{} is a location of store {}, not of store {}",
-                        join.default_location_id.as_deref().unwrap_or_default(),
+                        "{location_code} is a location of store {}, not of store {}",
                         self.stores.key_or_id(&location_store_id),
                         self.stores.key_or_id(&join.store_id),
                     ),
