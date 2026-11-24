@@ -20,7 +20,9 @@ class TimezoneEnvironment extends TestEnvironment {
   }
 
   async teardown() {
-    process.env.TZ = this.previousTimezone;
+    // Assigning undefined would set TZ to the string "undefined", which Node reads as UTC
+    if (this.previousTimezone === undefined) delete process.env.TZ;
+    else process.env.TZ = this.previousTimezone;
     await super.teardown();
   }
 }
