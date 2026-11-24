@@ -734,15 +734,16 @@ pub fn lookup_reference_record<T: KeyedTable>(
     });
     let id_exists = by_id.is_some();
     Ok(match resolve(id, id_exists, matched_ids.as_deref()) {
+        Ok(resolved) => Ok(resolved.and_then(|resolved| {
+            by_id
+                .into_iter()
+                .chain(code_matches.into_iter().flatten())
+                .find(|record| record.id() == resolved)
+        })),
         Err(error) => Err(ReferenceError {
             error,
             unknown_id: id.is_some() && !id_exists,
         }),
-        Ok(None) => Ok(None),
-        // `resolve` returns a given id only when it finds a record, and otherwise the one record
-        // the code matched.
-        Ok(Some(_)) if by_id.is_some() => Ok(by_id),
-        Ok(Some(_)) => Ok(code_matches.and_then(|mut matches| matches.pop())),
     })
 }
 
