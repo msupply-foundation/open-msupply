@@ -98,7 +98,11 @@ fn generate_batch_update(
         update_batch.stock_line_row.total_volume -=
             update_batch.stock_line_row.volume_per_pack * reduction;
     }
-    update_batch.stock_line_row.vvm_status_id = input.vvm_status_id.clone();
+    // Only a VVM status given changes the batch's: a prescription line update
+    // takes none, and an amount change must not clear it.
+    if input.vvm_status_id.is_some() {
+        update_batch.stock_line_row.vvm_status_id = input.vvm_status_id.clone();
+    }
 
     update_batch
 }

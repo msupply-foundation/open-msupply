@@ -167,7 +167,7 @@ mod test {
             mock_outbound_shipment_c_invoice_lines, mock_outbound_shipment_no_stock_line,
             mock_patient, mock_prescription_a_invoice_lines, mock_stock_line_b,
             mock_stock_line_location_is_on_hold, mock_stock_line_on_hold, mock_store_a,
-            mock_store_b, mock_store_c, stock_line_with_volume,
+            mock_store_b, mock_store_c, mock_vvm_status_a, stock_line_with_volume,
         },
         test_db::setup_all,
     };
@@ -1039,6 +1039,75 @@ mod test {
         assert_eq!(
             updated_invoice_line.prescribed_quantity,
             updated_prescribed_quantity
+        );
+    }
+
+    // spec/prescriptions contract › editing a dispensed visit: changing a
+    // prescription line's amount (which takes no VVM status) keeps its
+    // batch's VVM status.
+    #[actix_rt::test]
+    async fn update_stock_out_line_keeps_batch_vvm_status() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "update_stock_out_line_keeps_batch_vvm_status",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_b().id, "".to_string())
+            .unwrap();
+        let invoice_line_service = service_provider.invoice_line_service;
+        let stock_line_repo = StockLineRowRepository::new(&connection);
+
+        let batch = StockLineRow {
+            vvm_status_id: Some(mock_vvm_status_a().id),
+            ..mock_stock_line_b()
+        };
+        stock_line_repo.upsert_one(&batch).unwrap();
+
+        let prescription = InvoiceRow {
+            id: "prescription_vvm".to_string(),
+            name_id: mock_name_store_a().id,
+            r#type: InvoiceType::Prescription,
+            store_id: context.store_id.clone(),
+            status: InvoiceStatus::Picked,
+            ..Default::default()
+        };
+        InvoiceRowRepository::new(&context.connection)
+            .upsert_one(&prescription)
+            .unwrap();
+        invoice_line_service
+            .insert_stock_out_line(
+                &context,
+                InsertStockOutLine {
+                    id: "prescription_vvm-1".to_string(),
+                    r#type: StockOutType::Prescription,
+                    invoice_id: prescription.id.clone(),
+                    stock_line_id: batch.id.clone(),
+                    number_of_packs: 1.0,
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        invoice_line_service
+            .update_stock_out_line(
+                &context,
+                UpdateStockOutLine {
+                    id: "prescription_vvm-1".to_string(),
+                    r#type: Some(StockOutType::Prescription),
+                    number_of_packs: Some(2.0),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let after = stock_line_repo.find_one_by_id(&batch.id).unwrap().unwrap();
+        assert_eq!(after.vvm_status_id, Some(mock_vvm_status_a().id));
+        assert_eq!(
+            after.available_number_of_packs,
+            batch.available_number_of_packs - 2.0
         );
     }
 }
