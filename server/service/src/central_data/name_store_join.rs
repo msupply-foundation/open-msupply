@@ -5,8 +5,8 @@ use super::{
     delete::{DELETE_COLUMN, already_deleted, check_delete, is_delete},
     field_changes,
     lookup::{
-        Found, InMemory, NOT_FOUND, find_by_id_or_composite_key, find_reference, key_or,
-        new_id_conflict, reference_conflict,
+        Found, InMemory, KeyPart, NOT_FOUND, SavedCode, find_by_id_or_composite_key,
+        find_reference, key_conflict, key_or,
     },
     name::{TYPES as NAME_TYPES, type_label},
     name_refs::{NAME_CODE, NAME_ID, NAME_NAME, NAME_TYPE, find_name, name_error},
@@ -299,21 +299,32 @@ impl NameStoreJoinSheet {
             |join| &join.id,
             |id| repo.find_one_by_id(id),
             |saved, found, id| {
-                Ok(match found {
-                    Found::ById if store_id.is_some_and(|store_id| store_id != saved.store_id) => {
-                        Some(self.conflict(connection, row, saved, id, true)?)
-                    }
-                    Found::ById if name_id.is_some_and(|name_id| name_id != saved.name_id) => {
-                        Some(self.conflict(connection, row, saved, id, false)?)
-                    }
-                    Found::ById => None,
-                    Found::NewIdBesideKey if self.added_own_name(saved) => None,
-                    Found::NewIdBesideKey => {
-                        let name =
-                            NameRowRepository::new(connection).find_one_by_id(&saved.name_id)?;
-                        let record = record(saved, name.as_ref(), self.stores.get(&saved.store_id));
-                        Some(new_id_conflict(row, &record, &saved.id, id))
-                    }
+                if found == Found::NewIdBesideKey && self.added_own_name(saved) {
+                    return Ok(None);
+                }
+                let store = self.stores.get(&saved.store_id);
+                let parts = [
+                    KeyPart {
+                        changed: store_id.is_some_and(|store_id| store_id != saved.store_id),
+                        code_column: STORE_CODE,
+                        id_column: STORE_ID,
+                        saved_id: &saved.store_id,
+                        saved_code: SavedCode::Known(key_or(store, &saved.store_id)),
+                    },
+                    KeyPart {
+                        changed: name_id.is_some_and(|name_id| name_id != saved.name_id),
+                        code_column: NAME_CODE,
+                        id_column: NAME_ID,
+                        saved_id: &saved.name_id,
+                        saved_code: SavedCode::Read(&|name: &Option<NameRow>| {
+                            key_or(name.as_ref(), &saved.name_id).to_string()
+                        }),
+                    },
+                ];
+                // The saved join's name, read only to describe a conflict.
+                key_conflict(row, found, &saved.id, id, &parts, || {
+                    let name = NameRowRepository::new(connection).find_one_by_id(&saved.name_id)?;
+                    Ok((record(saved, name.as_ref(), store), name))
                 })
             },
         )
@@ -326,38 +337,6 @@ impl NameStoreJoinSheet {
                 .stores
                 .get(&join.store_id)
                 .is_some_and(|store| store.name_id == join.name_id)
-    }
-
-    /// On the store's columns when `on_store`, else the name's, whichever the row fills.
-    fn conflict(
-        &self,
-        connection: &StorageConnection,
-        row: &Row,
-        saved: &NameStoreJoinRow,
-        id: &str,
-        on_store: bool,
-    ) -> Result<RowError, RepositoryError> {
-        let store = self.stores.get(&saved.store_id);
-        let name = NameRowRepository::new(connection).find_one_by_id(&saved.name_id)?;
-        let (code, reference_id) = if on_store {
-            (
-                (STORE_CODE, key_or(store, &saved.store_id)),
-                (STORE_ID, saved.store_id.as_str()),
-            )
-        } else {
-            (
-                (NAME_CODE, key_or(name.as_ref(), &saved.name_id)),
-                (NAME_ID, saved.name_id.as_str()),
-            )
-        };
-        Ok(reference_conflict(
-            row,
-            code,
-            reference_id,
-            &record(saved, name.as_ref(), store),
-            &saved.id,
-            id,
-        ))
     }
 
     fn delete(

@@ -4,8 +4,8 @@ use super::{
     cells::{Row, RowError, collect},
     delete::{DELETE_COLUMN, already_deleted_as, check_delete, is_delete},
     lookup::{
-        Found, InMemory, NOT_FOUND, active_first, find_by_id_or_composite_key, find_reference,
-        key_or, new_id_conflict, read_contexts, record_conflict, reference_conflict,
+        InMemory, KeyPart, NOT_FOUND, SavedCode, active_first, find_by_id_or_composite_key,
+        find_reference, key_conflict, key_or, read_contexts,
     },
     sheet::Value,
     sorted_by, stores_with_names,
@@ -300,88 +300,54 @@ impl UserPermissionSheet {
             |permission| &permission.id,
             |id| UserPermissionRowRepository::new(connection).find_one_by_id(id),
             |saved, found, id| {
-                let column = match found {
-                    Found::NewIdBesideKey => {
-                        return Ok(Some(new_id_conflict(
-                            row,
-                            &self.record(saved),
-                            &saved.id,
-                            id,
-                        )));
-                    }
-                    Found::ById
-                        if key
+                let saved_store = saved.store_id.as_deref().unwrap_or_default();
+                let saved_context = saved.context_id.as_deref().unwrap_or_default();
+                let parts = [
+                    KeyPart {
+                        changed: key
                             .user_id
                             .as_ref()
-                            .is_some_and(|user| *user != saved.user_id) =>
-                    {
-                        Some(USERNAME)
-                    }
-                    Found::ById if differs(&key.store_id, &saved.store_id, true) => {
-                        Some(STORE_CODE)
-                    }
-                    Found::ById
-                        if key
+                            .is_some_and(|user| *user != saved.user_id),
+                        code_column: USERNAME,
+                        id_column: USER_ID,
+                        saved_id: &saved.user_id,
+                        saved_code: SavedCode::Known(self.users.key_or_id(&saved.user_id)),
+                    },
+                    KeyPart {
+                        changed: differs(&key.store_id, &saved.store_id, true),
+                        code_column: STORE_CODE,
+                        id_column: STORE_ID,
+                        saved_id: saved_store,
+                        saved_code: SavedCode::Known(self.stores.key_or_id(saved_store)),
+                    },
+                    // No id column: a permission is its own code.
+                    KeyPart {
+                        changed: key
                             .permission
                             .as_ref()
-                            .is_some_and(|permission| *permission != saved.permission) =>
-                    {
-                        Some(PERMISSION)
-                    }
-                    Found::ById if differs(&key.context_id, &saved.context_id, delete) => {
-                        Some(CONTEXT_NAME)
-                    }
-                    Found::ById => None,
-                };
-                Ok(column.map(|column| self.conflict(row, saved, id, column)))
+                            .is_some_and(|permission| *permission != saved.permission),
+                        code_column: PERMISSION,
+                        id_column: PERMISSION,
+                        saved_id: saved.permission.as_ref(),
+                        saved_code: SavedCode::Known(saved.permission.as_ref()),
+                    },
+                    KeyPart {
+                        changed: differs(&key.context_id, &saved.context_id, delete),
+                        code_column: CONTEXT_NAME,
+                        id_column: CONTEXT_ID,
+                        saved_id: saved_context,
+                        saved_code: SavedCode::Known(
+                            self.contexts
+                                .get(saved_context)
+                                .map_or("", |context| context.name.as_str()),
+                        ),
+                    },
+                ];
+                key_conflict(row, found, &saved.id, id, &parts, || {
+                    Ok((self.record(saved), ()))
+                })
             },
         )
-    }
-
-    /// On `key_column`, or its id column when the row fills only that.
-    fn conflict(
-        &self,
-        row: &Row,
-        saved: &UserPermissionRow,
-        id: &str,
-        key_column: &str,
-    ) -> RowError {
-        let record = self.record(saved);
-        let conflict = |code, reference_id| {
-            reference_conflict(row, code, reference_id, &record, &saved.id, id)
-        };
-        let saved_store = saved.store_id.as_deref().unwrap_or_default();
-        let saved_context = saved.context_id.as_deref().unwrap_or_default();
-        match key_column {
-            USERNAME => conflict(
-                (USERNAME, self.users.key_or_id(&saved.user_id)),
-                (USER_ID, &saved.user_id),
-            ),
-            STORE_CODE => conflict(
-                (STORE_CODE, self.stores.key_or_id(saved_store)),
-                (STORE_ID, saved_store),
-            ),
-            CONTEXT_NAME => conflict(
-                (
-                    CONTEXT_NAME,
-                    self.contexts
-                        .get(saved_context)
-                        .map_or("", |context| context.name.as_str()),
-                ),
-                (CONTEXT_ID, saved_context),
-            ),
-            _ => row.error(
-                PERMISSION,
-                record_conflict(
-                    PERMISSION,
-                    &record,
-                    saved.permission.as_ref(),
-                    &saved.id,
-                    &row.text(PERMISSION).unwrap_or_default(),
-                    id,
-                ),
-            ),
-        }
     }
 
     fn delete(

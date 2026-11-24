@@ -345,7 +345,7 @@ pub fn record_conflict(
 
 /// A row's reference that differs from its record's, in a lookup key. On the code column if the
 /// row fills it, else the id column; each is (column, saved value).
-pub fn reference_conflict(
+fn reference_conflict(
     row: &Row,
     code: (&str, &str),
     reference_id: (&str, &str),
@@ -372,7 +372,7 @@ pub fn reference_conflict(
 }
 
 /// For `Found::NewIdBesideKey`: the row repeats `record`'s whole key with another id.
-pub fn new_id_conflict(row: &Row, record: &str, saved_id: &str, id: &str) -> RowError {
+fn new_id_conflict(row: &Row, record: &str, saved_id: &str, id: &str) -> RowError {
     row.error(
         "id",
         format!("id conflict: {record} has id {saved_id}, but this row has id {id}"),
@@ -386,6 +386,62 @@ pub enum Found {
     ById,
     /// By key, beside an id no record has: a copied row with one column edited.
     NewIdBesideKey,
+}
+
+/// A reference in a record's lookup key, which a row with the record's id MUST NOT change. `D` is
+/// what `key_conflict`'s `describe` reads.
+pub struct KeyPart<'a, D> {
+    /// The row gives another than the saved record's.
+    pub changed: bool,
+    pub code_column: &'a str,
+    pub id_column: &'a str,
+    /// The saved record's value in `id_column`.
+    pub saved_id: &'a str,
+    /// The saved record's value in `code_column`.
+    pub saved_code: SavedCode<'a, D>,
+}
+
+pub enum SavedCode<'a, D> {
+    /// Already known, such as from a table read once.
+    Known(&'a str),
+    /// From what `key_conflict`'s `describe` read, such as an item's code.
+    Read(&'a dyn Fn(&D) -> String),
+}
+
+/// `check` for `find_by_id_or_composite_key`, for a table keyed by references: the conflict on the
+/// first of `parts` the row changes, or for a new id beside the record's key; `None` takes the
+/// record, `record_id`. `describe` names the record and reads what `saved_code` needs, only for a
+/// conflict.
+pub fn key_conflict<D>(
+    row: &Row,
+    found: Found,
+    record_id: &str,
+    id: &str,
+    parts: &[KeyPart<D>],
+    describe: impl FnOnce() -> Result<(String, D), RepositoryError>,
+) -> Result<Option<RowError>, RepositoryError> {
+    let changed = parts.iter().find(|part| part.changed);
+    if found == Found::ById && changed.is_none() {
+        return Ok(None);
+    }
+    let (record, described) = describe()?;
+    Ok(Some(match (found, changed) {
+        (Found::ById, Some(part)) => reference_conflict(
+            row,
+            (
+                part.code_column,
+                &match part.saved_code {
+                    SavedCode::Known(code) => code.to_string(),
+                    SavedCode::Read(code) => code(&described),
+                },
+            ),
+            (part.id_column, part.saved_id),
+            &record,
+            record_id,
+            id,
+        ),
+        _ => new_id_conflict(row, &record, record_id, id),
+    }))
 }
 
 /// The saved record a row changes: by `id`, else among `by_key`, the records its key finds, read

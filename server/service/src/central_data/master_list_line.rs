@@ -5,8 +5,12 @@ use super::{
     delete::{DELETE_COLUMN, already_deleted_as, check_delete, is_delete},
     field_changes,
     lookup::{
-        Found, InMemory, KeyedTable, NOT_FOUND, active_first, find_by_id_or_composite_key,
-        find_reference, key_or, new_id_conflict, reference_conflict,
+        InMemory, KeyPart, KeyedTable, NOT_FOUND, SavedCode, find_by_id_or_composite_key,
+        find_reference, key_conflict, key_or,
+    },
+    master_list_refs::{
+        MASTER_LIST_ID, MASTER_LIST_NAME, check_not_placeholder, find_master_list,
+        master_list_part, not_found_error, not_placeholder, protected_error, read_master_lists,
     },
     name_with_code,
     sheet::Value,
@@ -20,15 +24,14 @@ use crate::{
     },
 };
 use repository::{
-    EqualFilter, ItemRow, ItemRowRepository, MasterListLineFilter, MasterListLineRepository,
-    MasterListLineRow, MasterListLineRowRepository, MasterListRow, MasterListRowRepository,
-    RepositoryError, StorageConnection, StringFilter,
+    ItemRow, ItemRowRepository, MasterListLineFilter, MasterListLineRepository, MasterListLineRow,
+    MasterListLineRowRepository, MasterListRow, RepositoryError, StorageConnection, StringFilter,
 };
-use util::{constants::MISSING_PROGRAM, uuid::uuid};
+use util::uuid::uuid;
 
 const ID: &str = "id";
-const MASTER_LIST_NAME: &str = "master_list_name";
-const MASTER_LIST_ID: &str = "master_list_id";
+/// What a row on the placeholder master list would change.
+const PROTECTED: &str = "its items";
 const ITEM_CODE: &str = "item_code";
 const ITEM_ID: &str = "item_id";
 const PRICE_PER_UNIT: &str = "price_per_unit";
@@ -82,7 +85,7 @@ impl ImportTable for MasterListLineTable {
         let lines = MasterListLineRepository::new(connection)
             .query_with_item_code_and_name(line_filter(filter))?;
         // Few, so read whole.
-        let master_lists = InMemory::new(MasterListRowRepository::new(connection).find_all()?);
+        let master_lists = read_master_lists(connection)?;
         let rows = lines
             .into_iter()
             .map(|(line, item_code, item_name)| {
@@ -122,7 +125,7 @@ impl ImportTable for MasterListLineTable {
     ) -> Result<Box<dyn SheetImport>, RepositoryError> {
         // Runs after the item and master list sheets, so their new records are found.
         Ok(Box::new(MasterListLineSheet {
-            master_lists: InMemory::new(MasterListRowRepository::new(connection).find_all()?),
+            master_lists: read_master_lists(connection)?,
         }))
     }
 }
@@ -144,13 +147,7 @@ impl SheetImport for MasterListLineSheet {
         let delete = collect(&mut errors, is_delete(row));
         let price_per_unit = collect(&mut errors, row.number(PRICE_PER_UNIT));
         // For a `DELETE` row too, so a missing reference stops the import.
-        let master_list_id = find_reference(
-            &self.master_lists,
-            row,
-            MASTER_LIST_NAME,
-            MASTER_LIST_ID,
-            |master_lists| active_first(master_lists, |master_list| master_list.is_active),
-        )?;
+        let master_list_id = find_master_list(&self.master_lists, row)?;
         let item_id = find_reference(
             &ItemRowRepository::new(connection),
             row,
@@ -174,13 +171,12 @@ impl SheetImport for MasterListLineSheet {
             item_id.as_deref(),
         )??;
         let saved = existing.as_ref();
-        if saved
-            .map(|line| line.master_list_id.as_str())
-            .or(master_list_id.as_deref())
-            == Some(MISSING_PROGRAM)
-        {
-            return Err(protected_error(row).into());
-        }
+        check_not_placeholder(
+            row,
+            saved.map(|line| line.master_list_id.as_str()),
+            master_list_id.as_deref(),
+            PROTECTED,
+        )?;
         // Read once: a row never changes its item, as `find_line` makes that a conflict.
         let item_id = item_id.or(saved.map(|line| line.item_id.clone()));
         let item = match &item_id {
@@ -281,47 +277,23 @@ impl MasterListLineSheet {
             |line| &line.id,
             |id| MasterListLineRowRepository::new(connection).find_one_by_id(id),
             |saved, found, id| {
-                // The saved line's item and name, read only to describe a conflict.
-                let describe = || -> Result<(Option<ItemRow>, String), RepositoryError> {
+                let parts = [
+                    master_list_part(&self.master_lists, master_list_id, &saved.master_list_id),
+                    KeyPart {
+                        changed: item_id.is_some_and(|item_id| item_id != saved.item_id),
+                        code_column: ITEM_CODE,
+                        id_column: ITEM_ID,
+                        saved_id: &saved.item_id,
+                        saved_code: SavedCode::Read(&|item: &Option<ItemRow>| {
+                            key_or(item.as_ref(), &saved.item_id).to_string()
+                        }),
+                    },
+                ];
+                // The saved line's item, read only to describe a conflict.
+                key_conflict(row, found, &saved.id, id, &parts, || {
                     let item = ItemRowRepository::new(connection).find_by_id(&saved.item_id)?;
                     let record = self.record(&saved.master_list_id, &saved.item_id, item.as_ref());
-                    Ok((item, record))
-                };
-                Ok(match found {
-                    Found::ById
-                        if master_list_id.is_some_and(|master_list_id| {
-                            master_list_id != saved.master_list_id
-                        }) =>
-                    {
-                        let (_, record) = describe()?;
-                        Some(reference_conflict(
-                            row,
-                            (
-                                MASTER_LIST_NAME,
-                                self.master_lists.key_or_id(&saved.master_list_id),
-                            ),
-                            (MASTER_LIST_ID, &saved.master_list_id),
-                            &record,
-                            &saved.id,
-                            id,
-                        ))
-                    }
-                    Found::ById if item_id.is_some_and(|item_id| item_id != saved.item_id) => {
-                        let (item, record) = describe()?;
-                        Some(reference_conflict(
-                            row,
-                            (ITEM_CODE, key_or(item.as_ref(), &saved.item_id)),
-                            (ITEM_ID, &saved.item_id),
-                            &record,
-                            &saved.id,
-                            id,
-                        ))
-                    }
-                    Found::ById => None,
-                    Found::NewIdBesideKey => {
-                        let (_, record) = describe()?;
-                        Some(new_id_conflict(row, &record, &saved.id, id))
-                    }
+                    Ok((record, item))
                 })
             },
         )
@@ -367,12 +339,7 @@ impl MasterListLineSheet {
     ) -> RowFailure {
         match error {
             // Not reached here: `find_reference` finds them among the saved records.
-            UpsertMasterListLineError::MasterListNotFound => row
-                .error(
-                    row.reference_column(MASTER_LIST_NAME, MASTER_LIST_ID),
-                    NOT_FOUND,
-                )
-                .into(),
+            UpsertMasterListLineError::MasterListNotFound => not_found_error(row).into(),
             UpsertMasterListLineError::ItemNotFound => row
                 .error(row.reference_column(ITEM_CODE, ITEM_ID), NOT_FOUND)
                 .into(),
@@ -380,7 +347,7 @@ impl MasterListLineSheet {
                 .error(PRICE_PER_UNIT, "price_per_unit can't be negative")
                 .into(),
             // Unreachable here: `import_row` refuses it first.
-            UpsertMasterListLineError::Protected => protected_error(row).into(),
+            UpsertMasterListLineError::Protected => protected_error(row, PROTECTED).into(),
             // Unreachable here: `find_line` turns a saved master list and item into a match or a
             // conflict.
             UpsertMasterListLineError::DuplicateLine { other_id } => row
@@ -398,23 +365,10 @@ impl MasterListLineSheet {
     }
 }
 
-/// On the column the row found the master list by.
-fn protected_error(row: &Row) -> RowError {
-    row.error(
-        row.reference_column(MASTER_LIST_NAME, MASTER_LIST_ID),
-        format!(
-            "{MISSING_PROGRAM} is protected, as the server needs it, so import can't change its items"
-        ),
-    )
-}
-
 /// Not the placeholder master list's.
 fn exportable() -> MasterListLineFilter {
     MasterListLineFilter {
-        master_list_id: Some(EqualFilter {
-            not_equal_to: Some(MISSING_PROGRAM.to_string()),
-            ..Default::default()
-        }),
+        master_list_id: not_placeholder(),
         ..Default::default()
     }
 }

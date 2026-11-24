@@ -4,8 +4,11 @@ use super::{
     cells::{Row, RowError, choice_cell, collect},
     delete::{DELETE_COLUMN, already_deleted_as, check_delete, is_delete},
     lookup::{
-        Found, InMemory, NOT_FOUND, active_first, find_by_id_or_composite_key, find_reference,
-        key_or, new_id_conflict, reference_conflict,
+        InMemory, KeyPart, NOT_FOUND, SavedCode, find_by_id_or_composite_key, key_conflict, key_or,
+    },
+    master_list_refs::{
+        MASTER_LIST_ID, MASTER_LIST_NAME, check_not_placeholder, find_master_list,
+        master_list_part, not_found_error, not_placeholder, protected_error, read_master_lists,
     },
     name::{TYPES as NAME_TYPES, type_label},
     name_refs::{NAME_CODE, NAME_ID, NAME_NAME, NAME_TYPE, find_name, name_error},
@@ -22,14 +25,14 @@ use crate::{
 };
 use repository::{
     EqualFilter, MasterListNameJoinFilter, MasterListNameJoinRepository, MasterListNameJoinRow,
-    MasterListRow, MasterListRowRepository, NameRow, NameRowRepository, NameRowType,
-    RepositoryError, StorageConnection, StringFilter,
+    MasterListRow, NameRow, NameRowRepository, NameRowType, RepositoryError, StorageConnection,
+    StringFilter,
 };
-use util::{constants::MISSING_PROGRAM, uuid::uuid};
+use util::uuid::uuid;
 
 const ID: &str = "id";
-const MASTER_LIST_NAME: &str = "master_list_name";
-const MASTER_LIST_ID: &str = "master_list_id";
+/// What a row on the placeholder master list would change.
+const PROTECTED: &str = "which names it's given to";
 
 const COLUMNS: &[&str] = &[
     ID,
@@ -81,7 +84,7 @@ impl ImportTable for MasterListNameJoinTable {
         let joins =
             MasterListNameJoinRepository::new(connection).query_by_filter(join_filter(filter))?;
         // Few, so read whole.
-        let master_lists = InMemory::new(MasterListRowRepository::new(connection).find_all()?);
+        let master_lists = read_master_lists(connection)?;
         let rows = joins
             .into_iter()
             .map(|(join, name)| {
@@ -122,7 +125,7 @@ impl ImportTable for MasterListNameJoinTable {
     ) -> Result<Box<dyn SheetImport>, RepositoryError> {
         // Runs after the name and master list sheets, so their new records are found.
         Ok(Box::new(MasterListNameJoinSheet {
-            master_lists: InMemory::new(MasterListRowRepository::new(connection).find_all()?),
+            master_lists: read_master_lists(connection)?,
         }))
     }
 }
@@ -143,13 +146,7 @@ impl SheetImport for MasterListNameJoinSheet {
         let mut errors = Vec::new();
         let delete = collect(&mut errors, is_delete(row));
         // For a `DELETE` row too, so a missing reference stops the import.
-        let master_list_id = find_reference(
-            &self.master_lists,
-            row,
-            MASTER_LIST_NAME,
-            MASTER_LIST_ID,
-            |master_lists| active_first(master_lists, |master_list| master_list.is_active),
-        )?;
+        let master_list_id = find_master_list(&self.master_lists, row)?;
         let name_type = row.choice(NAME_TYPE, NAME_TYPES);
         let name_id = find_name(connection, row, name_type.clone().ok().flatten())?;
         let master_list_id = collect(&mut errors, master_list_id).flatten();
@@ -169,13 +166,12 @@ impl SheetImport for MasterListNameJoinSheet {
             name_id.as_deref(),
         )??;
         let saved = existing.as_ref();
-        if saved
-            .map(|join| join.master_list_id.as_str())
-            .or(master_list_id.as_deref())
-            == Some(MISSING_PROGRAM)
-        {
-            return Err(protected_error(row).into());
-        }
+        check_not_placeholder(
+            row,
+            saved.map(|join| join.master_list_id.as_str()),
+            master_list_id.as_deref(),
+            PROTECTED,
+        )?;
         // The saved join's when the row leaves it blank, so a row with only an id can't change a
         // patient's or a system name's join. Read once: `find_join` makes another name a conflict.
         let name_id = name_id.or(saved.map(|join| join.name_id.clone()));
@@ -275,47 +271,23 @@ impl MasterListNameJoinSheet {
             |join| &join.id,
             |id| MasterListNameJoinRepository::new(connection).find_one_by_id(id),
             |saved, found, id| {
-                // The saved join's name and how it's named, read only to describe a conflict.
-                let describe = || -> Result<(Option<NameRow>, String), RepositoryError> {
+                let parts = [
+                    master_list_part(&self.master_lists, master_list_id, &saved.master_list_id),
+                    KeyPart {
+                        changed: name_id.is_some_and(|name_id| name_id != saved.name_id),
+                        code_column: NAME_CODE,
+                        id_column: NAME_ID,
+                        saved_id: &saved.name_id,
+                        saved_code: SavedCode::Read(&|name: &Option<NameRow>| {
+                            key_or(name.as_ref(), &saved.name_id).to_string()
+                        }),
+                    },
+                ];
+                // The saved join's name, read only to describe a conflict.
+                key_conflict(row, found, &saved.id, id, &parts, || {
                     let name = NameRowRepository::new(connection).find_one_by_id(&saved.name_id)?;
                     let record = self.record(&saved.master_list_id, name.as_ref(), &saved.name_id);
-                    Ok((name, record))
-                };
-                Ok(match found {
-                    Found::ById
-                        if master_list_id.is_some_and(|master_list_id| {
-                            master_list_id != saved.master_list_id
-                        }) =>
-                    {
-                        let (_, record) = describe()?;
-                        Some(reference_conflict(
-                            row,
-                            (
-                                MASTER_LIST_NAME,
-                                self.master_lists.key_or_id(&saved.master_list_id),
-                            ),
-                            (MASTER_LIST_ID, &saved.master_list_id),
-                            &record,
-                            &saved.id,
-                            id,
-                        ))
-                    }
-                    Found::ById if name_id.is_some_and(|name_id| name_id != saved.name_id) => {
-                        let (name, record) = describe()?;
-                        Some(reference_conflict(
-                            row,
-                            (NAME_CODE, key_or(name.as_ref(), &saved.name_id)),
-                            (NAME_ID, &saved.name_id),
-                            &record,
-                            &saved.id,
-                            id,
-                        ))
-                    }
-                    Found::ById => None,
-                    Found::NewIdBesideKey => {
-                        let (_, record) = describe()?;
-                        Some(new_id_conflict(row, &record, &saved.id, id))
-                    }
+                    Ok((record, name))
                 })
             },
         )
@@ -363,12 +335,7 @@ impl MasterListNameJoinSheet {
         match error {
             // Not reached here: `find_reference` and `find_name` find them among the saved
             // records.
-            UpsertMasterListNameJoinError::MasterListNotFound => row
-                .error(
-                    row.reference_column(MASTER_LIST_NAME, MASTER_LIST_ID),
-                    NOT_FOUND,
-                )
-                .into(),
+            UpsertMasterListNameJoinError::MasterListNotFound => not_found_error(row).into(),
             UpsertMasterListNameJoinError::NameNotFound => row.error(name_column, NOT_FOUND).into(),
             UpsertMasterListNameJoinError::NameDeleted => row
                 .error(
@@ -377,7 +344,7 @@ impl MasterListNameJoinSheet {
                 )
                 .into(),
             // Unreachable here: `import_row` refuses it first.
-            UpsertMasterListNameJoinError::Protected => protected_error(row).into(),
+            UpsertMasterListNameJoinError::Protected => protected_error(row, PROTECTED).into(),
             // Unreachable here: `find_join` turns a saved master list and name into a match or a
             // conflict.
             UpsertMasterListNameJoinError::DuplicateJoin { other_id } => row
@@ -394,23 +361,10 @@ impl MasterListNameJoinSheet {
     }
 }
 
-/// On the column the row found the master list by.
-fn protected_error(row: &Row) -> RowError {
-    row.error(
-        row.reference_column(MASTER_LIST_NAME, MASTER_LIST_ID),
-        format!(
-            "{MISSING_PROGRAM} is protected, as the server needs it, so import can't change which names it's given to"
-        ),
-    )
-}
-
 /// Not the placeholder master list's, nor a patient's or a system name's.
 fn exportable() -> MasterListNameJoinFilter {
     MasterListNameJoinFilter {
-        master_list_id: Some(EqualFilter {
-            not_equal_to: Some(MISSING_PROGRAM.to_string()),
-            ..Default::default()
-        }),
+        master_list_id: not_placeholder(),
         name_type: Some(EqualFilter {
             not_equal_to: Some(NameRowType::Patient),
             ..Default::default()

@@ -5,8 +5,8 @@ use super::{
     delete::{DELETE_COLUMN, already_deleted_as, check_delete, is_delete},
     field_changes,
     lookup::{
-        Found, InMemory, NOT_FOUND, active_first, find_by_id_or_composite_key, find_reference,
-        new_id_conflict, reference_conflict,
+        InMemory, KeyPart, NOT_FOUND, SavedCode, active_first, find_by_id_or_composite_key,
+        find_reference, key_conflict,
     },
     sheet::Value,
     sorted_by, stores_with_names,
@@ -417,30 +417,24 @@ impl UserStoreJoinSheet {
             |join| &join.id,
             |id| UserStoreJoinRowRepository::new(connection).find_one_by_id(id),
             |saved, found, id| {
-                let record = self.record(&saved.user_id, &saved.store_id);
-                Ok(match found {
-                    Found::NewIdBesideKey => Some(new_id_conflict(row, &record, &saved.id, id)),
-                    Found::ById if user_id.is_some_and(|user_id| user_id != saved.user_id) => {
-                        Some(reference_conflict(
-                            row,
-                            (USERNAME, self.users.key_or_id(&saved.user_id)),
-                            (USER_ID, &saved.user_id),
-                            &record,
-                            &saved.id,
-                            id,
-                        ))
-                    }
-                    Found::ById if store_id.is_some_and(|store_id| store_id != saved.store_id) => {
-                        Some(reference_conflict(
-                            row,
-                            (STORE_CODE, self.stores.key_or_id(&saved.store_id)),
-                            (STORE_ID, &saved.store_id),
-                            &record,
-                            &saved.id,
-                            id,
-                        ))
-                    }
-                    Found::ById => None,
+                let parts = [
+                    KeyPart {
+                        changed: user_id.is_some_and(|user_id| user_id != saved.user_id),
+                        code_column: USERNAME,
+                        id_column: USER_ID,
+                        saved_id: &saved.user_id,
+                        saved_code: SavedCode::Known(self.users.key_or_id(&saved.user_id)),
+                    },
+                    KeyPart {
+                        changed: store_id.is_some_and(|store_id| store_id != saved.store_id),
+                        code_column: STORE_CODE,
+                        id_column: STORE_ID,
+                        saved_id: &saved.store_id,
+                        saved_code: SavedCode::Known(self.stores.key_or_id(&saved.store_id)),
+                    },
+                ];
+                key_conflict(row, found, &saved.id, id, &parts, || {
+                    Ok((self.record(&saved.user_id, &saved.store_id), ()))
                 })
             },
         )
