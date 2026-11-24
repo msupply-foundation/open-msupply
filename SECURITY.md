@@ -20,7 +20,6 @@ impact you expect.
 
 - We will acknowledge your report within 5 working days.
 - We will keep you updated while we investigate and fix it.
-- We will credit you in the release notes, unless you'd rather we didn't.
 
 ## Supported versions
 
