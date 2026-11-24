@@ -31,6 +31,10 @@ use repository::{
     },
     test_db::setup_all,
 };
+use repository::{
+    ItemLinkRow, ItemLinkRowRepository, MasterListLineFilter, MasterListLineRepository,
+    MasterListLineRow, MasterListLineRowRepository,
+};
 use std::{
     path::{Path, PathBuf},
     sync::{Arc, RwLock},
@@ -8925,4 +8929,768 @@ async fn a_user_store_finds_a_user_the_user_sheet_adds_who_can_then_log_in() {
         .collect();
     assert_eq!(offered, ["store_ms"]);
     assert_eq!(store_access_of(&connection, &dina.id), ["store_ms"]);
+}
+
+// Master list lines
+
+const LINE_HEADERS: [&str; 7] = [
+    "id",
+    "master_list_name",
+    "master_list_id",
+    "item_code",
+    "item_id",
+    "price_per_unit",
+    "delete",
+];
+
+fn line_sheet_data(rows: Vec<Vec<Value>>) -> SheetData {
+    sheet_data("master_list_line", &LINE_HEADERS, rows)
+}
+
+fn line_sheet(rows: Vec<Vec<Value>>) -> Vec<u8> {
+    sheet::write(vec![line_sheet_data(rows)]).unwrap()
+}
+
+/// A row of `LINE_HEADERS` with the given cells; the others are blank.
+fn line_row(cells: &[(&str, &str)]) -> Vec<Value> {
+    LINE_HEADERS
+        .iter()
+        .map(
+            |header| match cells.iter().find(|(column, _)| column == header) {
+                Some((_, cell)) if !cell.is_empty() => Value::Text(cell.to_string()),
+                _ => Value::Empty,
+            },
+        )
+        .collect()
+}
+
+fn add_line(
+    connection: &StorageConnection,
+    id: &str,
+    master_list_id: &str,
+    item_id: &str,
+    price_per_unit: Option<f64>,
+) {
+    MasterListLineRowRepository::new(connection)
+        .upsert_one(&MasterListLineRow {
+            id: id.to_string(),
+            master_list_id: master_list_id.to_string(),
+            price_per_unit,
+            item_id: item_id.to_string(),
+        })
+        .unwrap();
+}
+
+/// Each of the master list's lines, as (id, item id, price), in id order.
+fn lines_of(
+    connection: &StorageConnection,
+    master_list_id: &str,
+) -> Vec<(String, String, Option<f64>)> {
+    MasterListLineRepository::new(connection)
+        .query_by_filter(
+            MasterListLineFilter::new()
+                .master_list_id(EqualFilter::equal_to(master_list_id.to_string())),
+            None,
+        )
+        .unwrap()
+        .into_iter()
+        .map(|line| (line.id, line.item_id, line.price_per_unit))
+        .collect()
+}
+
+fn lines_containing(contains: Option<&str>) -> ExportTable {
+    ExportTable {
+        table: CentralDataTable::MasterListLine,
+        filter: ExportFilter {
+            contains: contains.map(str::to_string),
+            ..Default::default()
+        },
+    }
+}
+
+/// `item_setup`, with Ibuprofen, the master lists Essential medicines and Clinic list, and lines
+/// putting Paracetamol on both, Ibuprofen on Essential medicines, and Ibuprofen on the placeholder
+/// master list.
+async fn line_setup(name: &str) -> (StorageConnection, ServiceProvider, TempDir) {
+    let (connection, service_provider, dir) = item_setup(name).await;
+    ItemRowRepository::new(&connection)
+        .upsert_one(&ItemRow {
+            id: "ibuprofen".to_string(),
+            code: "IBU".to_string(),
+            name: "Ibuprofen".to_string(),
+            is_active: true,
+            ..Default::default()
+        })
+        .unwrap();
+    let master_lists = MasterListRowRepository::new(&connection);
+    master_lists.upsert_one(&essential_medicines()).unwrap();
+    master_lists
+        .upsert_one(&MasterListRow {
+            id: "clinic".to_string(),
+            name: "Clinic list".to_string(),
+            is_active: true,
+            ..Default::default()
+        })
+        .unwrap();
+    add_line(
+        &connection,
+        "line_eml_para",
+        "eml",
+        "paracetamol",
+        Some(2.5),
+    );
+    add_line(&connection, "line_eml_ibu", "eml", "ibuprofen", None);
+    add_line(
+        &connection,
+        "line_clinic_para",
+        "clinic",
+        "paracetamol",
+        Some(3.0),
+    );
+    add_line(
+        &connection,
+        "line_missing",
+        MISSING_PROGRAM,
+        "ibuprofen",
+        None,
+    );
+    (connection, service_provider, dir)
+}
+
+// covers: OMS-REG-CDIO-01.10, .11, .175, .180
+
+#[actix_rt::test]
+async fn master_list_lines_export_then_import_makes_no_changes() {
+    let (connection, service_provider, dir) = line_setup("central_data_line_round_trip").await;
+    let ctx = service_provider.basic_context().unwrap();
+    // A lower-case name, which sorts after Essential medicines when letter case counts.
+    MasterListRowRepository::new(&connection)
+        .upsert_one(&MasterListRow {
+            id: "antenatal".to_string(),
+            name: "antenatal".to_string(),
+            is_active: true,
+            ..Default::default()
+        })
+        .unwrap();
+    add_line(
+        &connection,
+        "line_antenatal_para",
+        "antenatal",
+        "paracetamol",
+        None,
+    );
+    let before = (
+        lines_of(&connection, "antenatal"),
+        lines_of(&connection, "eml"),
+        lines_of(&connection, "clinic"),
+    );
+
+    let bytes = CentralDataService
+        .export(&ctx, &[lines_containing(None)])
+        .unwrap();
+    let path = write_file(dir.path(), bytes);
+    let Ok(sheets) = sheet::read(&path, MAX_IMPORT_ROWS) else {
+        panic!("the export reads back")
+    };
+    let sheet = &sheets[0];
+    assert_eq!(
+        sheet.headers,
+        [LINE_HEADERS.as_slice(), &["item_name"]].concat()
+    );
+    // By master list name in any letter case, then item code; not the placeholder master list's.
+    let rows: Vec<&[String]> = sheet.rows.iter().map(|row| row.cells.as_slice()).collect();
+    assert_eq!(
+        rows,
+        [
+            [
+                "line_antenatal_para",
+                "antenatal",
+                "antenatal",
+                "PARA",
+                "paracetamol",
+                "",
+                "",
+                "Paracetamol"
+            ],
+            [
+                "line_clinic_para",
+                "Clinic list",
+                "clinic",
+                "PARA",
+                "paracetamol",
+                "3",
+                "",
+                "Paracetamol"
+            ],
+            [
+                "line_eml_ibu",
+                "Essential medicines",
+                "eml",
+                "IBU",
+                "ibuprofen",
+                "",
+                "",
+                "Ibuprofen"
+            ],
+            [
+                "line_eml_para",
+                "Essential medicines",
+                "eml",
+                "PARA",
+                "paracetamol",
+                "2.5",
+                "",
+                "Paracetamol"
+            ],
+        ]
+    );
+
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].unchanged, 4);
+    assert_eq!(summary.changes, vec![]);
+    assert_eq!(
+        (
+            lines_of(&connection, "antenatal"),
+            lines_of(&connection, "eml"),
+            lines_of(&connection, "clinic")
+        ),
+        before
+    );
+}
+
+// covers: OMS-REG-CDIO-01.46, .176
+
+#[actix_rt::test]
+async fn a_master_list_line_export_searches_master_list_name_and_item_code() {
+    let (_, service_provider, _) = line_setup("central_data_line_filter").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let count = |contains: Option<&str>| {
+        CentralDataService
+            .export_counts(&ctx, &[lines_containing(contains)])
+            .unwrap()[0]
+            .count
+    };
+
+    assert_eq!(
+        count(None),
+        RecordCount {
+            matching: 3,
+            total: 3
+        }
+    );
+    assert_eq!(count(Some(" para ")).matching, 2);
+    assert_eq!(count(Some("essential")).matching, 2);
+    assert_eq!(count(Some("clinic")).matching, 1);
+    // Not the placeholder master list's line, whose item has the code too: the search's two
+    // sides are grouped, so the placeholder is left out whichever side matches.
+    assert_eq!(count(Some("IBU")).matching, 1);
+    // Not the item's name, nor the master list's code.
+    assert_eq!(count(Some("ibuprofen")).matching, 0);
+    assert_eq!(count(Some("EML")).matching, 0);
+}
+
+// covers: OMS-REG-CDIO-01.12, .25, .26, .36, .55, .177
+
+#[actix_rt::test]
+async fn master_list_line_rows_add_update_and_delete_by_master_list_and_item() {
+    let (connection, service_provider, dir) = line_setup("central_data_line_upsert").await;
+    let ctx = service_provider.basic_context().unwrap();
+
+    let path = write_file(
+        dir.path(),
+        line_sheet(vec![
+            line_row(&[("master_list_name", "Clinic list")]),
+            line_row(&[("item_code", "IBU"), ("price_per_unit", "1.5")]),
+            line_row(&[
+                ("master_list_name", "Clinic list"),
+                ("item_code", "PARA"),
+                ("delete", "delete"),
+            ]),
+            line_row(&[
+                ("master_list_name", "Clinic list"),
+                ("item_code", "IBU"),
+                ("price_per_unit", "cheap"),
+            ]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                2,
+                Some("item_code"),
+                "item_code is required for a new master list line"
+            ),
+            (
+                3,
+                Some("master_list_name"),
+                "master_list_name is required for a new master list line"
+            ),
+            (
+                4,
+                Some("delete"),
+                "\"delete\" is not valid. Type DELETE to delete this row, or leave it blank"
+            ),
+            (5, Some("price_per_unit"), "\"cheap\" must be a number"),
+        ]
+    );
+
+    let path = write_file(
+        dir.path(),
+        line_sheet(vec![
+            // A new line, with no price.
+            line_row(&[("master_list_name", "Clinic list"), ("item_code", "IBU")]),
+            // No id: found by its master list and item.
+            line_row(&[
+                ("master_list_name", "Essential medicines"),
+                ("item_code", "PARA"),
+                ("price_per_unit", "2.75"),
+            ]),
+            line_row(&[
+                ("id", "line_clinic_para"),
+                ("master_list_name", "Clinic list"),
+                ("item_code", "PARA"),
+                ("price_per_unit", "3"),
+                ("delete", "DELETE"),
+            ]),
+            // Already gone: unchanged.
+            line_row(&[("id", "gone"), ("delete", "DELETE")]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(
+        summary.tables,
+        vec![TableChanges {
+            table: CentralDataTable::MasterListLine,
+            inserted: 1,
+            updated: 1,
+            deleted: 1,
+            unchanged: 1,
+            error_count: 0,
+        }]
+    );
+    assert_eq!(
+        summary
+            .changes
+            .iter()
+            .map(|change| (change.record.as_str(), change.change))
+            .collect::<Vec<_>>(),
+        [
+            ("Ibuprofen (IBU) on Clinic list", Change::Inserted),
+            ("Paracetamol (PARA) on Essential medicines", Change::Updated),
+            ("Paracetamol (PARA) on Clinic list", Change::Deleted),
+        ]
+    );
+    assert_eq!(
+        summary.changes[1].fields,
+        vec![FieldChange {
+            column: "price_per_unit",
+            from: "2.5".to_string(),
+            to: "2.75".to_string(),
+        }]
+    );
+    let clinic = lines_of(&connection, "clinic");
+    assert_eq!(clinic.len(), 1);
+    assert_eq!((clinic[0].1.as_str(), clinic[0].2), ("ibuprofen", None));
+    assert_eq!(
+        lines_of(&connection, "eml"),
+        [
+            ("line_eml_ibu".to_string(), "ibuprofen".to_string(), None),
+            (
+                "line_eml_para".to_string(),
+                "paracetamol".to_string(),
+                Some(2.75)
+            ),
+        ]
+    );
+
+    // A blank price clears it; a DELETE row may keep the saved values, but not change them.
+    let path = write_file(
+        dir.path(),
+        line_sheet(vec![
+            line_row(&[("id", "line_eml_para"), ("price_per_unit", "")]),
+            line_row(&[
+                ("master_list_name", "Essential medicines"),
+                ("item_code", "IBU"),
+                ("price_per_unit", "4"),
+                ("delete", "DELETE"),
+            ]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(
+            3,
+            Some("delete"),
+            "A row marked DELETE can't also change price_per_unit. Clear it or put back the saved value"
+        )]
+    );
+    assert_eq!(summary.tables[0].updated, 1);
+}
+
+// covers: OMS-REG-CDIO-01.183
+
+#[actix_rt::test]
+async fn a_master_list_line_price_cannot_be_negative() {
+    let (connection, service_provider, dir) = line_setup("central_data_line_negative_price").await;
+    let ctx = service_provider.basic_context().unwrap();
+    // A saved negative price, as legacy mSupply could send it.
+    add_line(
+        &connection,
+        "line_clinic_ibu",
+        "clinic",
+        "ibuprofen",
+        Some(-1.0),
+    );
+
+    let path = write_file(
+        dir.path(),
+        line_sheet(vec![
+            line_row(&[("id", "line_eml_para"), ("price_per_unit", "-0.5")]),
+            // 0 is a price.
+            line_row(&[("id", "line_eml_ibu"), ("price_per_unit", "0")]),
+            // A saved negative price stays editable while the row leaves it as it is.
+            line_row(&[
+                ("id", "line_clinic_ibu"),
+                ("master_list_name", "Clinic list"),
+                ("price_per_unit", "-1"),
+            ]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(
+            2,
+            Some("price_per_unit"),
+            "price_per_unit can't be negative"
+        )]
+    );
+    assert_eq!(
+        (summary.tables[0].updated, summary.tables[0].unchanged),
+        (1, 1)
+    );
+}
+
+// covers: OMS-REG-CDIO-01.184
+
+#[actix_rt::test]
+async fn two_saved_lines_for_one_master_list_and_item_are_found_by_id() {
+    let (connection, service_provider, dir) = line_setup("central_data_line_shared_pair").await;
+    let ctx = service_provider.basic_context().unwrap();
+    // A line for another item, merged into Paracetamol since: both lines now hold Paracetamol.
+    ItemRowRepository::new(&connection)
+        .upsert_one(&ItemRow {
+            id: "old_para".to_string(),
+            code: "PARA-OLD".to_string(),
+            name: "Paracetamol (old)".to_string(),
+            is_active: true,
+            ..Default::default()
+        })
+        .unwrap();
+    add_line(
+        &connection,
+        "line_eml_old_para",
+        "eml",
+        "old_para",
+        Some(3.0),
+    );
+    ItemLinkRowRepository::new(&connection)
+        .upsert_one(&ItemLinkRow {
+            id: "old_para".to_string(),
+            item_id: "paracetamol".to_string(),
+        })
+        .unwrap();
+    let ids = |connection: &StorageConnection| -> Vec<(String, String)> {
+        lines_of(connection, "eml")
+            .into_iter()
+            .map(|(id, item_id, _)| (id, item_id))
+            .collect()
+    };
+    let shared = |id: &str| (id.to_string(), "paracetamol".to_string());
+    assert_eq!(
+        ids(&connection),
+        [
+            ("line_eml_ibu".to_string(), "ibuprofen".to_string()),
+            shared("line_eml_old_para"),
+            shared("line_eml_para"),
+        ]
+    );
+
+    // An export writes both, and imports unchanged.
+    let bytes = CentralDataService
+        .export(&ctx, &[lines_containing(None)])
+        .unwrap();
+    let path = write_file(dir.path(), bytes);
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].unchanged, 4);
+
+    let path = write_file(
+        dir.path(),
+        line_sheet(vec![
+            // Without an id, the pair finds both.
+            line_row(&[
+                ("master_list_name", "Essential medicines"),
+                ("item_code", "PARA"),
+                ("price_per_unit", "9"),
+            ]),
+            line_row(&[
+                ("master_list_name", "Essential medicines"),
+                ("item_code", "PARA"),
+                ("delete", "DELETE"),
+            ]),
+            // With one, it settles which.
+            line_row(&[
+                ("id", "line_eml_old_para"),
+                ("master_list_name", "Essential medicines"),
+                ("item_code", "PARA"),
+                ("price_per_unit", "4"),
+            ]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    let ambiguous = "ambiguous reference, please provide id instead";
+    assert_eq!(
+        row_errors(&summary),
+        vec![(2, Some("id"), ambiguous), (3, Some("id"), ambiguous)]
+    );
+    assert_eq!(summary.tables[0].updated, 1);
+
+    // A DELETE row with an id removes that line alone.
+    let path = write_file(
+        dir.path(),
+        line_sheet(vec![line_row(&[
+            ("id", "line_eml_old_para"),
+            ("delete", "DELETE"),
+        ])]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].deleted, 1);
+    assert_eq!(
+        ids(&connection),
+        [
+            ("line_eml_ibu".to_string(), "ibuprofen".to_string()),
+            shared("line_eml_para"),
+        ]
+    );
+}
+
+// covers: OMS-REG-CDIO-01.24, .39, .178, .179
+
+#[actix_rt::test]
+async fn a_master_list_line_finds_its_references_and_cannot_change_them() {
+    let (connection, service_provider, dir) = line_setup("central_data_line_references").await;
+    let ctx = service_provider.basic_context().unwrap();
+    // An inactive list with an active one's name doesn't make the name ambiguous; two active
+    // ones sharing a name, as legacy mSupply can send them, do.
+    let master_lists = MasterListRowRepository::new(&connection);
+    master_lists
+        .upsert_one(&MasterListRow {
+            id: "old_clinic".to_string(),
+            name: "Clinic list".to_string(),
+            is_active: false,
+            ..Default::default()
+        })
+        .unwrap();
+    for id in ["ward_a", "ward_b"] {
+        master_lists
+            .upsert_one(&MasterListRow {
+                id: id.to_string(),
+                name: "Ward list".to_string(),
+                is_active: true,
+                ..Default::default()
+            })
+            .unwrap();
+    }
+
+    let path = write_file(
+        dir.path(),
+        line_sheet(vec![
+            line_row(&[("master_list_name", "Nope"), ("item_code", "IBU")]),
+            line_row(&[("master_list_name", "Ward list"), ("item_code", "IBU")]),
+            line_row(&[("master_list_id", "clinic"), ("item_code", "NOPE")]),
+            line_row(&[
+                ("id", "line_eml_para"),
+                ("master_list_name", "Clinic list"),
+                ("item_code", "PARA"),
+            ]),
+            line_row(&[("id", "line_eml_para"), ("item_id", "ibuprofen")]),
+            line_row(&[
+                ("id", "copied"),
+                ("master_list_name", "Essential medicines"),
+                ("item_code", "PARA"),
+            ]),
+            line_row(&[
+                ("master_list_name", "Clinic list"),
+                ("item_code", "PARA"),
+                ("item_id", "ibuprofen"),
+            ]),
+            // The id settles the ambiguous name.
+            line_row(&[
+                ("master_list_name", "Ward list"),
+                ("master_list_id", "ward_b"),
+                ("item_code", "IBU"),
+            ]),
+            // The same item on the same list again changes the record the row above added.
+            line_row(&[
+                ("master_list_id", "ward_b"),
+                ("item_code", "IBU"),
+                ("price_per_unit", "1"),
+            ]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (2, Some("master_list_name"), "referenced record not found"),
+            (
+                3,
+                Some("master_list_name"),
+                "ambiguous reference, please provide id instead"
+            ),
+            (4, Some("item_code"), "referenced record not found"),
+            (
+                5,
+                Some("master_list_name"),
+                "master_list_name and id conflict: Paracetamol (PARA) on Essential medicines has master_list_name Essential medicines and id line_eml_para, but this row has master_list_name Clinic list and id line_eml_para"
+            ),
+            (
+                6,
+                Some("item_id"),
+                "item_id and id conflict: Paracetamol (PARA) on Essential medicines has item_id paracetamol and id line_eml_para, but this row has item_id ibuprofen and id line_eml_para"
+            ),
+            (
+                7,
+                Some("id"),
+                "id conflict: Paracetamol (PARA) on Essential medicines has id line_eml_para, but this row has id copied"
+            ),
+            (
+                8,
+                Some("item_code"),
+                "item_code and item_id conflict: PARA resolves to paracetamol but item_id contains ibuprofen"
+            ),
+            (10, None, "Row 9 already changes this record"),
+        ]
+    );
+    assert_eq!(summary.tables[0].inserted, 1);
+}
+
+// covers: OMS-REG-CDIO-01.180
+
+#[actix_rt::test]
+async fn a_master_list_line_row_cannot_touch_the_placeholder_master_list() {
+    let (connection, service_provider, dir) = line_setup("central_data_line_protected").await;
+    let ctx = service_provider.basic_context().unwrap();
+
+    let path = write_file(
+        dir.path(),
+        line_sheet(vec![
+            line_row(&[("master_list_id", MISSING_PROGRAM), ("item_code", "PARA")]),
+            line_row(&[("id", "line_missing"), ("delete", "DELETE")]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    let message =
+        "missing_program is protected, as the server needs it, so import can't change its items";
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (2, Some("master_list_id"), message),
+            (3, Some("master_list_id"), message),
+        ]
+    );
+    assert_eq!(lines_of(&connection, MISSING_PROGRAM).len(), 1);
+}
+
+// covers: OMS-REG-CDIO-01.181
+
+#[actix_rt::test]
+async fn a_master_list_line_delete_row_with_a_missing_reference_applies_nothing() {
+    let (connection, service_provider, dir) = line_setup("central_data_line_delete_missing").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let before = lines_of(&connection, "eml");
+
+    let path = write_file(
+        dir.path(),
+        line_sheet(vec![
+            line_row(&[
+                ("master_list_name", "Essential medicines"),
+                ("item_code", "PARA"),
+                ("delete", "DELETE"),
+            ]),
+            line_row(&[
+                ("master_list_name", "Essential medicines"),
+                ("item_code", "NOPE"),
+                ("delete", "DELETE"),
+            ]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(3, Some("item_code"), "referenced record not found")]
+    );
+    assert_eq!(lines_of(&connection, "eml"), before);
+}
+
+// covers: OMS-REG-CDIO-01.182
+
+#[actix_rt::test]
+async fn a_master_list_line_finds_a_master_list_and_item_earlier_sheets_add() {
+    let (connection, service_provider, dir) = line_setup("central_data_line_earlier_sheets").await;
+    let ctx = service_provider.basic_context().unwrap();
+
+    // Sheets run in table order, not file order.
+    let path = write_file(
+        dir.path(),
+        sheet::write(vec![
+            line_sheet_data(vec![line_row(&[
+                ("master_list_name", "Hospital list"),
+                ("item_code", "AMOX"),
+                ("price_per_unit", "0.5"),
+            ])]),
+            sheet_data(
+                "master_list",
+                &MASTER_LIST_HEADERS,
+                vec![master_list_row([
+                    "hospital",
+                    "",
+                    "Hospital list",
+                    "",
+                    "TRUE",
+                    "FALSE",
+                    "",
+                ])],
+            ),
+            sheet_data("item", &ITEM_HEADERS, vec![new_item("AMOX", "Tab", "", "")]),
+        ])
+        .unwrap(),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    let amoxicillin = find_item(&connection, "AMOX");
+    let lines = lines_of(&connection, "hospital");
+    assert_eq!(lines.len(), 1);
+    assert_eq!((&lines[0].1, lines[0].2), (&amoxicillin.id, Some(0.5)));
 }
