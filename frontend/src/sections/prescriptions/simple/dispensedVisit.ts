@@ -4,6 +4,7 @@ import {
   asPrescriptionStatus,
   canCancelPrescription,
 } from '../prescriptionStatus';
+import { itemsGiven } from '../list/medicinesGiven';
 import type { SimpleDispensedRecordResult } from './dispensedVisit.generated';
 
 // A dispensed visit, open on the Simple screen (spec/prescriptions rules › a
@@ -30,32 +31,22 @@ export interface VisitLine {
 
 /**
  * The record's lines as the open visit lists them: each medicine once, its
- * amount (in its unit) and price added up over its batches, by name, as
- * Dispensing records lists them. Lines giving nothing — a placeholder awaiting
- * stock, or a line of none — are left out. A service shows its price and no
- * amount. Grouped by item, not name: two items can share a name, and their
- * amounts are in different units.
+ * amount (in its unit) and price added up over its batches, by name, grouped
+ * as Dispensing records groups them (`itemsGiven`), so the two agree. A
+ * service shows its price and no amount.
  */
-export const visitLines = (lines: readonly RecordLine[]): VisitLine[] => {
-  const byName = [...lines].sort((a, b) =>
-    a.itemName.localeCompare(b.itemName)
-  );
-  const given = new Map<string, VisitLine>();
-  for (const line of byName) {
-    const isService = line.type === 'SERVICE';
-    const units = line.numberOfPacks * line.packSize;
-    if (!isService && (line.type !== 'STOCK_OUT' || units <= 0)) continue;
-    const sofar = given.get(line.itemId);
-    given.set(line.itemId, {
-      itemId: line.itemId,
-      name: line.itemName,
-      unit: line.item.unitName,
-      units: isService ? undefined : round9((sofar?.units ?? 0) + units),
-      price: round9((sofar?.price ?? 0) + line.totalAfterTax),
-    });
-  }
-  return [...given.values()];
-};
+export const visitLines = (lines: readonly RecordLine[]): VisitLine[] =>
+  itemsGiven(lines, { services: true }).map(given => {
+    const first = given.lines[0];
+    const isService = first?.type === 'SERVICE';
+    return {
+      itemId: given.itemId,
+      name: given.name,
+      unit: first?.item.unitName ?? null,
+      units: isService ? undefined : given.amount,
+      price: round9(given.lines.reduce((sum, l) => sum + l.totalAfterTax, 0)),
+    };
+  });
 
 /** When the visit was dispensed: the backdated time, else created. */
 export const dispensedAt = (record: DispensedRecord): string =>

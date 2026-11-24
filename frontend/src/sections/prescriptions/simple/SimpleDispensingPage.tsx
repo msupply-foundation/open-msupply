@@ -629,61 +629,104 @@ const SimpleDispensingPage: Component = () => {
       const result = await graphqlFetch(
         SimpleDispensedRecord,
         { storeId: storeOpened, id },
-        { background: true }
+        { returnGraphqlErrors: true, background: true }
       );
+      // Refused for want of a permission: the permission dialog says which,
+      // as on any other screen (a background read opens no dialog itself).
+      if (result.kind === 'graphqlError' && isForbidden(result.errors))
+        reportPermissionDenied(missingPermissions(result.errors));
       if (result.kind !== 'success') return { id, kind: 'unread' };
       const node = result.data.invoice;
-      return node.__typename === 'InvoiceNode'
-        ? { id, kind: 'read', record: node }
-        : { id, kind: 'notFound' };
+      if (node.__typename === 'InvoiceNode')
+        return { id, kind: 'read', record: node };
+      // Not found only when the server says so; anything else it answers
+      // is a read that failed.
+      return node.error.__typename === 'RecordNotFound'
+        ? { id, kind: 'notFound' }
+        : { id, kind: 'unread' };
     }
   );
   // Only the read for the visit open now: opening another shows it loading,
-  // not the last one.
-  const openedNow = () => {
-    const read = gated(opened);
-    return read && read.id === viewingId() ? read : undefined;
-  };
+  // not the last one. A memo that lets through only a change in what was
+  // read: a re-read flips the resource's state twice, and each flip would
+  // otherwise rebuild the open visit, its buttons and their focus with it
+  // (kdd/solid-reactivity-pitfalls §16).
+  const openedNow = createMemo(
+    () => {
+      const read = gated(opened);
+      return read && read.id === viewingId() ? read : undefined;
+    },
+    undefined,
+    {
+      equals: (a, b) =>
+        a?.id === b?.id &&
+        a?.kind === b?.kind &&
+        (a?.kind === 'read' ? a.record : undefined) ===
+          (b?.kind === 'read' ? b.record : undefined),
+    }
+  );
   const openedRecord = () => {
     const read = openedNow();
     return read?.kind === 'read' ? read.record : undefined;
   };
 
-  // What the open visit's cancel did; gone once another visit opens, or the
-  // screen goes back to the list.
-  const [visitNotice, setVisitNotice] = createSignal<Notice>();
-  createEffect(on(viewingId, () => setVisitNotice(undefined), { defer: true }));
-  const [confirmingCancel, setConfirmingCancel] = createSignal(false);
-  const [cancelling, setCancelling] = createSignal(false);
+  // What a cancel did, for the visit it was for: shown only while that
+  // visit is open.
+  const [visitNotice, setVisitNotice] = createSignal<{
+    id: string;
+    notice: Notice;
+  }>();
+  // The visit the confirmation is for. Closed when another visit opens, or
+  // the screen goes back to the list, so OK never cancels a visit it wasn't
+  // opened over.
+  const [confirmingCancel, setConfirmingCancel] = createSignal<string>();
+  createEffect(
+    on(viewingId, () => setConfirmingCancel(undefined), { defer: true })
+  );
+  // The visit being cancelled.
+  const [cancelling, setCancelling] = createSignal<string>();
   // Cancel a finished visit (rules › a dispensed visit): in the background,
   // so a failure is this screen's message and not the app's error dialog.
+  // Busy until the visit has been read again, so Cancel never offers itself
+  // over a visit that is already cancelled.
   const cancelOpened = async (id: string): Promise<void> => {
     setVisitNotice(undefined);
-    setCancelling(true);
-    const result = await graphqlFetch(
-      SimpleCancelDispense,
-      { storeId: storeOpened, id },
-      { returnGraphqlErrors: true, background: true }
-    ).finally(() => setCancelling(false));
-    if (
-      result.kind === 'success' &&
-      result.data.updatePrescription.__typename === 'InvoiceNode'
-    ) {
+    setCancelling(id);
+    try {
+      const result = await graphqlFetch(
+        SimpleCancelDispense,
+        { storeId: storeOpened, id },
+        { returnGraphqlErrors: true, background: true }
+      );
+      if (
+        result.kind === 'success' &&
+        result.data.updatePrescription.__typename === 'InvoiceNode'
+      ) {
+        setVisitNotice({
+          id,
+          notice: {
+            severity: 'success',
+            text: t('messages.dispense-cancelled'),
+          },
+        });
+        // Its stock is back on the cards, and the visit now reads
+        // cancelled: read again only while it is still the one open.
+        void refetchItems();
+        if (viewingId() === id) await readOpenedAgain();
+        return;
+      }
+      if (result.kind === 'graphqlError' && isForbidden(result.errors))
+        reportPermissionDenied(missingPermissions(result.errors));
       setVisitNotice({
-        severity: 'success',
-        text: t('messages.dispense-cancelled'),
+        id,
+        notice: {
+          severity: 'error',
+          text: t('error.dispense-not-cancelled'),
+        },
       });
-      // The visit now reads cancelled, and its stock is back on the cards.
-      void readOpenedAgain();
-      void refetchItems();
-      return;
+    } finally {
+      setCancelling(undefined);
     }
-    if (result.kind === 'graphqlError' && isForbidden(result.errors))
-      reportPermissionDenied(missingPermissions(result.errors));
-    setVisitNotice({
-      severity: 'error',
-      text: t('error.dispense-not-cancelled'),
-    });
   };
 
   /** Who a dispensed visit was for, with their code where they have one. */
@@ -743,6 +786,9 @@ const SimpleDispensingPage: Component = () => {
               <Button
                 variant="ghost"
                 data-testid="dispensed-visit-read-again-button"
+                // Busy while it reads, so a second press sends nothing more.
+                loading={opened.loading}
+                disabled={opened.loading}
                 onClick={() => void readOpenedAgain()}
               >
                 {t('button.try-again')}
@@ -771,9 +817,9 @@ const SimpleDispensingPage: Component = () => {
               ? undefined
               : t('messages.cancel-prescription-not-allowed')
           }
-          disabled={!mayCancel || cancelling()}
-          loading={cancelling()}
-          onClick={() => setConfirmingCancel(true)}
+          disabled={!mayCancel || cancelling() === record.id}
+          loading={cancelling() === record.id}
+          onClick={() => setConfirmingCancel(record.id)}
         >
           {t('label.cancel-prescription')}
         </Button>
@@ -813,7 +859,11 @@ const SimpleDispensingPage: Component = () => {
   // is open, else the visit in progress's own, with View on the message that
   // a visit was dispensed.
   const listNotice = () => {
-    if (viewingId() !== undefined) return visitNotice();
+    const viewing = viewingId();
+    if (viewing !== undefined) {
+      const cancelled = visitNotice();
+      return cancelled?.id === viewing ? cancelled.notice : undefined;
+    }
     const notice = shownNotice();
     if (!notice || !('dispensedId' in notice) || !notice.dispensedId)
       return notice;
@@ -1050,14 +1100,15 @@ const SimpleDispensingPage: Component = () => {
         />
       </div>
       <ConfirmDialog
-        open={confirmingCancel()}
-        onClose={() => setConfirmingCancel(false)}
+        open={confirmingCancel() !== undefined}
+        onClose={() => setConfirmingCancel(undefined)}
         title={t('heading.are-you-sure')}
         message={t('messages.confirm-cancel-prescription')}
         confirmVariant="danger"
         onConfirm={() => {
-          const record = openedRecord();
-          if (record) void cancelOpened(record.id);
+          // The visit Cancel was pressed on, never whichever is open now.
+          const id = confirmingCancel();
+          if (id !== undefined) void cancelOpened(id);
         }}
       />
       {/* Opens once its medicine's batches are in: at once from a card, a

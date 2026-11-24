@@ -27,22 +27,47 @@ export interface GivenLine {
 export const medicinesGiven = (
   lines: readonly GivenLine[],
   amountText: (amount: number) => string = roundedText
-): string => {
-  const given = new Map<string, { name: string; amount: number }>();
+): string =>
+  itemsGiven(lines)
+    .map(({ name, amount }) => `${name} (${amountText(amount)})`)
+    .join(', ');
+
+/** One item a record gives: its name, the amount given, and its lines. */
+export interface ItemGiven<L extends GivenLine> {
+  itemId: string;
+  name: string;
+  /** In the item's unit; 0 for a service, which gives no amount. */
+  amount: number;
+  lines: L[];
+}
+
+/**
+ * A record's lines as the items it gives, each once, by name: the one
+ * grouping behind Dispensing records' Medicines and an open dispensed visit
+ * (rules › a dispensed visit), so the two always agree. Lines giving nothing
+ * (a placeholder awaiting stock, a line of none) are left out, and so are
+ * services unless `services` asks for them.
+ */
+export const itemsGiven = <L extends GivenLine>(
+  lines: readonly L[],
+  { services = false }: { services?: boolean } = {}
+): ItemGiven<L>[] => {
+  const given = new Map<string, ItemGiven<L>>();
   const byName = [...lines].sort((a, b) =>
     a.itemName.localeCompare(b.itemName)
   );
   for (const line of byName) {
-    if (line.type !== 'STOCK_OUT') continue;
-    const units = line.numberOfPacks * line.packSize;
-    if (units <= 0) continue;
+    const isService = line.type === 'SERVICE';
+    const units = isService ? 0 : line.numberOfPacks * line.packSize;
+    if (isService ? !services : line.type !== 'STOCK_OUT' || units <= 0)
+      continue;
     const sofar = given.get(line.itemId);
     given.set(line.itemId, {
+      itemId: line.itemId,
       name: line.itemName,
       amount: round9((sofar?.amount ?? 0) + units),
+      lines: [...(sofar?.lines ?? []), line],
     });
   }
-  return [...given.values()]
-    .map(({ name, amount }) => `${name} (${amountText(amount)})`)
-    .join(', ');
+  return [...given.values()];
 };

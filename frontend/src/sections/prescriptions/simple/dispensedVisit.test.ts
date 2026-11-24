@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { medicinesGiven } from '../list/medicinesGiven';
 import {
   canCancelVisit,
   cannotEditReason,
@@ -114,7 +115,25 @@ describe('visitLines (spec/prescriptions rules › a dispensed visit)', () => {
     ]);
   });
 
-  // Two items can share a name: their amounts are in different units.
+  // OMS-REG-DIS-12.247 and .216: the open visit gives the same medicines, in
+  // the same order and amounts, as the record's row in Dispensing records.
+  it('agrees with Dispensing records on what the record gave', () => {
+    const lines = [
+      line('Zinc 20mg', 1, 50),
+      line('Amoxicillin 250mg', 1.5, 300, { packSize: 10 }),
+      line('Consultation', 1, 10000, { type: 'SERVICE', unitName: null }),
+      line('Ibuprofen 200mg', 3, 0, { type: 'UNALLOCATED_STOCK' }),
+      line('Amoxicillin 250mg', 0.5, 120, { packSize: 10 }),
+    ];
+    const medicines = visitLines(lines)
+      .filter(given => given.units !== undefined)
+      .map(given => `${given.name} (${given.units})`)
+      .join(', ');
+    expect(medicines).toBe(medicinesGiven(lines, String));
+  });
+
+  // OMS-REG-DIS-12.247: two items can share a name, and their amounts are in
+  // different units.
   it('keeps two medicines that share a name apart', () => {
     expect(
       visitLines([
@@ -175,6 +194,7 @@ describe('cannotEditReason (spec/prescriptions rules › a dispensed visit)', ()
     );
   });
 
+  // OMS-REG-DIS-12.256
   it('says nothing for a Picked visit', () => {
     expect(cannotEditReason(record({ status: 'PICKED' }))).toBeUndefined();
   });
