@@ -33,6 +33,8 @@ const line = (
   packSize,
   numberOfPacks,
   totalAfterTax,
+  sellPricePerPack: totalAfterTax / numberOfPacks,
+  stockLine: null,
   item: { id: itemId, unitName },
 });
 

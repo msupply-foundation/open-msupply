@@ -90,6 +90,14 @@ export const cannotEditReason = (
   return undefined;
 };
 
+/**
+ * Only a Picked visit can be edited from the Simple screen (rules › editing a
+ * dispensed visit): a finished one is read only, and a New one isn't
+ * dispensed yet.
+ */
+export const canEditVisit = (record: DispensedRecord): boolean =>
+  record.status === 'PICKED' && !record.isCancellation;
+
 /** Only a finished visit can be cancelled, never a cancellation's mirror. */
 export const canCancelVisit = (record: DispensedRecord): boolean =>
   canCancelPrescription(

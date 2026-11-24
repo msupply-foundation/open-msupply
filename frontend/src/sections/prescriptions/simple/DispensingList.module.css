@@ -205,6 +205,48 @@
   gap: var(--space-1) var(--space-3);
 }
 
+/* The title row's inline end: the count, then (editing) the menu. */
+.titleEnd {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-inline-start: auto;
+}
+
+/* The editing menu's trigger: an icon button's square, quiet until hovered. */
+.moreActions {
+  justify-content: center;
+  inline-size: 2rem;
+  block-size: 2rem;
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+}
+
+.moreActions:hover {
+  background: color-mix(in srgb, var(--text-body) 8%, transparent);
+  color: var(--text-body);
+}
+
+.moreActions > svg {
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+}
+
+@media (pointer: coarse) {
+  .moreActions {
+    inline-size: var(--touch-target);
+    block-size: var(--touch-target);
+  }
+}
+
+/* Delete in the editing menu: the danger colour on a quiet button.
+   `button.deleteAction[data-variant]` outranks the library button's own
+   ghost colour (`.button[data-variant="ghost"]`) whichever stylesheet loads
+   first. */
+button.deleteAction[data-variant] {
+  color: var(--error-main);
+}
+
 /* A dispensed visit's head: when it was dispensed, in the step heading's
    place and size, with no number. */
 .visitHeading {

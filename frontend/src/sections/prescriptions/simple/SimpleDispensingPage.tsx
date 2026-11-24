@@ -13,7 +13,7 @@ import {
 } from 'solid-js';
 import type { Component } from 'solid-js';
 import { produce, reconcile } from 'solid-js/store';
-import { useParams } from '@solidjs/router';
+import { useNavigate, useParams } from '@solidjs/router';
 import {
   graphqlFetch,
   isForbidden,
@@ -43,7 +43,12 @@ import { Button } from '@/ui/elements/buttons/Button';
 import { LinkButton } from '@/ui/elements/buttons/LinkButton';
 import { EmptyState } from '@/ui/elements/feedback/EmptyState';
 import { ConfirmDialog } from '@/ui/elements/feedback/ConfirmDialog';
-import { ClockIcon, MinusCircleIcon, PlusCircleIcon } from '@/ui/icons';
+import {
+  ClockIcon,
+  EditIcon,
+  MinusCircleIcon,
+  PlusCircleIcon,
+} from '@/ui/icons';
 import { useIsCompact } from '@/ui/utils/createMediaQuery';
 import { generateUUID } from '@/uuid';
 import { SimpleDispensingItems } from './simpleDispensing.generated';
@@ -77,19 +82,35 @@ import {
 } from './simpleDispensingLogic';
 import {
   SimpleCancelDispense,
+  SimpleDeleteDispense,
   SimpleDispensedRecord,
+  SimpleSaveChanges,
 } from './dispensedVisit.generated';
 import {
   canCancelVisit,
+  canEditVisit,
   cannotEditReason,
   dispensedAt,
   visitHeading,
   visitLines,
   type DispensedRecord,
 } from './dispensedVisit';
+import {
+  editOutcome,
+  saveChanges,
+  visitListLines,
+  withOwnStock,
+  type EditInput,
+  type RecordLine,
+  type RecordRead,
+} from './editVisit';
 import { shownPatientName } from '../patientName';
 import { MedicineCardView } from './MedicineCard';
-import { DispensingList, type OpenVisit } from './DispensingList';
+import {
+  DispensingList,
+  type EditingVisit,
+  type OpenVisit,
+} from './DispensingList';
 import { StepHeading } from './StepHeading';
 import { WhoIsItFor } from './WhoIsItFor';
 import { leaveVisit, visitFor, type Notice } from './keptVisit';
@@ -111,6 +132,7 @@ const SimpleDispensingPage: Component = () => {
   const storeOpened = untrack(() => params.storeId);
   const recordsHref = `/${storeOpened}/dispensary/dispensing/records`;
   const simpleHref = `/${storeOpened}/dispensary/dispensing/simple`;
+  const navigate = useNavigate();
 
   // The visit in progress, kept while staff go elsewhere (rules › Dispensing
   // records). A new visit starts with the unnamed patient where the store
@@ -146,8 +168,19 @@ const SimpleDispensingPage: Component = () => {
     setUnconfirmed,
     looking,
     setLooking,
+    editing,
+    setEditing,
   } = visitState;
   const visit = visitState.record;
+
+  // While a dispensed visit is being edited, its own stock counts as
+  // available (rules › editing a dispensed visit): every read of the items
+  // goes through this, so the cards, the amount box, the lines and the check
+  // all agree.
+  const withOwn = (fetched: CardItem[]): CardItem[] => {
+    const edited = editing();
+    return edited ? withOwnStock(fetched, edited.lines) : fetched;
+  };
 
   // Undefined until the store context resolves, so "loading" is never shown
   // as "none set up".
@@ -219,7 +252,7 @@ const SimpleDispensingPage: Component = () => {
       // list kept across a trip shows its names, prices and stock at once.
       const fetched = gated(items) ?? cardsRead();
       if (!list || fetched === undefined) return undefined;
-      return buildCards(list, fetched, prescriptionPreferences());
+      return buildCards(list, withOwn(fetched), prescriptionPreferences());
     },
     undefined,
     { equals: sameFetchedValue }
@@ -258,7 +291,7 @@ const SimpleDispensingPage: Component = () => {
       const fetched = searchedRead();
       return buildCards(
         medicinesFor(searchedIds(), []),
-        fetched ?? [],
+        withOwn(fetched ?? []),
         prescriptionPreferences()
       );
     },
@@ -295,6 +328,11 @@ const SimpleDispensingPage: Component = () => {
   const unnamed = () =>
     unnamedStillChosen(unnamedPicked(), prescriptionPreferences());
   const chosen = () => unnamed() || patient() !== null;
+  // Medicines can be added for someone chosen, or to a dispensed visit being
+  // edited, whose patient is fixed.
+  const canPress = () => chosen() || editing() !== undefined;
+  // Something to come back to from an open visit: a list, or an edit.
+  const listWaiting = () => lines.length > 0 || editing() !== undefined;
   const chooseUnnamed = (on: boolean) => {
     setNotice(undefined);
     setPatient(null);
@@ -391,7 +429,10 @@ const SimpleDispensingPage: Component = () => {
   /** The list's medicines as the stock stands now. */
   const freshCards = async (
     listed: readonly ListLine[],
-    settings: Settings
+    settings: Settings,
+    // An edited visit's lines as just read: its own stock counts as
+    // available.
+    own: readonly RecordLine[] = []
   ): Promise<MedicineCard[] | undefined> => {
     const ids = listed.map(line => line.itemId);
     // Background: a failed check is the screen's to report, and the app's
@@ -400,7 +441,7 @@ const SimpleDispensingPage: Component = () => {
     if (!fetched) return undefined;
     return buildCards(
       medicinesFor(ids, settings.medicines),
-      fetched,
+      withOwnStock(fetched, own),
       settings.prefs
     );
   };
@@ -610,6 +651,233 @@ const SimpleDispensingPage: Component = () => {
     }
   };
 
+  // Editing a dispensed visit (rules › editing a dispensed visit): its
+  // medicines on the list, saved to the same record. The edit is the kept
+  // visit's, like the list, so a trip away keeps it.
+
+  /** The record now, for Save changes and Delete; undefined when unread. */
+  const readRecord = async (id: string): Promise<RecordRead | undefined> => {
+    const result = await graphqlFetch(
+      SimpleDispensedRecord,
+      { storeId: storeOpened, id },
+      { returnGraphqlErrors: true, background: true }
+    );
+    if (result.kind !== 'success') return undefined;
+    const node = result.data.invoice;
+    if (node.__typename === 'InvoiceNode')
+      return { kind: 'read', record: node };
+    return node.error.__typename === 'RecordNotFound'
+      ? { kind: 'gone' }
+      : undefined;
+  };
+
+  /** One save of the changes. */
+  const saveEditInput = async (input: EditInput): Promise<SaveReply> => {
+    // Background: a lost reply is this screen's to explain.
+    const result = await graphqlFetch(
+      SimpleSaveChanges,
+      { storeId: storeOpened, input },
+      { returnGraphqlErrors: true, background: true }
+    );
+    if (result.kind === 'unexpectedError') return { kind: 'lost' };
+    if (result.kind === 'success')
+      return {
+        kind: 'reply',
+        outcome: editOutcome(result.data.batchPrescription, input),
+      };
+    return {
+      kind: 'reply',
+      outcome: 'refused',
+      missing:
+        result.kind === 'graphqlError' && isForbidden(result.errors)
+          ? missingPermissions(result.errors)
+          : undefined,
+    };
+  };
+
+  /**
+   * Edit: the visit's medicines onto the list, which must be empty, and the
+   * screen back to the list. Its medicines without a card are read as
+   * searched ones are.
+   */
+  const startEdit = (record: DispensedRecord): void => {
+    if (lines.length > 0 || editing()) return;
+    const listed = visitListLines(record.lines.nodes);
+    const common = new Set((medicines() ?? []).map(m => m.itemId));
+    setSearchedIds(
+      listed.map(line => line.itemId).filter(itemId => !common.has(itemId))
+    );
+    setChecked([]);
+    setNotice(undefined);
+    setEditing({
+      id: record.id,
+      dispensedAt: dispensedAt(record),
+      forName: whoFor(record),
+      patientName: record.patient?.name,
+      unnamed: record.patient?.isUnnamed ?? false,
+      lines: record.lines.nodes,
+      newLineIds: {},
+    });
+    update(listed);
+    navigate(simpleHref);
+  };
+
+  /**
+   * The edit is over: the list is empty, whoever was chosen before Edit is
+   * chosen again, and the message says what happened.
+   */
+  const endEdit = (said: Notice): void => {
+    setEditing(undefined);
+    update([]);
+    setChecked([]);
+    setSearchedIds([]);
+    setSearchedRead(undefined);
+    setNotice(said);
+  };
+
+  /** Discard changes: the record stays as it was. */
+  const discard = (): void => {
+    const edited = editing();
+    if (!edited) return;
+    endEdit({
+      severity: 'info',
+      text: t('messages.changes-discarded'),
+      dispensedId: edited.id,
+    });
+  };
+
+  /** Save changes (rules › editing a dispensed visit). */
+  const saveEdit = async (): Promise<void> => {
+    const edited = editing();
+    if (!edited) return;
+    const settings = settingsNow();
+    setNotice(undefined);
+    markRepriced([]);
+    setDispensing(true);
+    try {
+      const listed = lines.map(line => ({ ...line }));
+      const end = await saveChanges(edited.id, listed, {
+        read: readRecord,
+        check: (listed, own) => freshCards(listed, settings, own),
+        save: saveEditInput,
+        before: cardOf,
+        // Made once per batch and kept: a save repeated after a lost reply
+        // is refused rather than taking the stock twice.
+        lineIdFor: batchId => (edited.newLineIds[batchId] ??= generateUUID()),
+        priceDecimals: settings.priceDecimals,
+      });
+      if (end.kind === 'saved') {
+        endEdit({
+          severity: 'success',
+          text: edited.unnamed
+            ? t('messages.changes-saved-at', {
+                time: localisedTime(new Date()),
+              })
+            : t('messages.changes-saved-to', {
+                name: edited.patientName ?? '',
+              }),
+          dispensedId: edited.id,
+        });
+        // The cards read their stock again.
+        setDispensedCount(n => n + 1);
+        return;
+      }
+      if (end.kind === 'not-editable')
+        return endEdit({
+          severity: 'error',
+          text: t('error.dispense-not-editable'),
+          dispensedId: edited.id,
+        });
+      if (end.kind === 'unsure') {
+        setNotice({ severity: 'error', text: t('error.changes-unconfirmed') });
+        return;
+      }
+      // The record as just read is the visit's own stock from now on, and
+      // the stock as it now is becomes the screen's.
+      if (end.kind === 'stopped' || end.lines)
+        setEditing({ ...edited, lines: end.lines ?? edited.lines });
+      if (end.checked) setChecked(end.checked);
+      if (end.kind === 'stopped') return markRepriced(end.repriced);
+      if (end.missing) reportPermissionDenied(end.missing);
+      setNotice({ severity: 'error', text: t('error.changes-not-saved') });
+    } finally {
+      setDispensing(false);
+    }
+  };
+
+  // Delete dispensing record, for the visit being edited: a Picked record
+  // can't be cancelled, only deleted. Asks first.
+  const [confirmingDelete, setConfirmingDelete] = createSignal<string>();
+  const deleteEdited = async (id: string): Promise<void> => {
+    if (editing()?.id !== id) return;
+    setNotice(undefined);
+    setDispensing(true);
+    try {
+      const result = await graphqlFetch(
+        SimpleDeleteDispense,
+        { storeId: storeOpened, id },
+        { returnGraphqlErrors: true, background: true }
+      );
+      let outcome: 'deleted' | 'generated' | 'not-editable' | 'failed' =
+        'failed';
+      if (result.kind === 'success') {
+        const reply = result.data.deletePrescription;
+        const refused =
+          reply.__typename === 'DeletePrescriptionError'
+            ? reply.error.__typename
+            : undefined;
+        outcome =
+          refused === undefined || refused === 'RecordNotFound'
+            ? 'deleted'
+            : refused === 'CannotDeleteGeneratedDispensation'
+              ? 'generated'
+              : refused === 'CannotEditInvoice'
+                ? 'not-editable'
+                : 'failed';
+      } else if (result.kind === 'unexpectedError') {
+        // The reply was lost: the record says whether it went.
+        const now = await readRecord(id);
+        if (now?.kind === 'gone') outcome = 'deleted';
+        else if (now?.kind === 'read' && now.record.status !== 'PICKED')
+          outcome = 'not-editable';
+      } else if (result.kind === 'graphqlError' && isForbidden(result.errors))
+        reportPermissionDenied(missingPermissions(result.errors));
+      if (outcome === 'deleted') {
+        endEdit({ severity: 'success', text: t('messages.dispense-deleted') });
+        setDispensedCount(n => n + 1);
+      } else if (outcome === 'not-editable')
+        endEdit({
+          severity: 'error',
+          text: t('error.dispense-not-editable'),
+          dispensedId: id,
+        });
+      else
+        setNotice({
+          severity: 'error',
+          text: t(
+            outcome === 'generated'
+              ? 'messages.cant-delete-generated-dispensation'
+              : 'error.dispense-not-deleted'
+          ),
+        });
+    } finally {
+      setDispensing(false);
+    }
+  };
+
+  // What the list shows while a visit is being edited.
+  const editingList = createMemo<EditingVisit | undefined>(() => {
+    const edited = editing();
+    if (!edited) return undefined;
+    return {
+      heading: t('heading.editing-dispense', {
+        datetime: localisedDateTime(edited.dispensedAt),
+      }),
+      forName: edited.forName,
+      onDelete: () => setConfirmingDelete(edited.id),
+    };
+  });
+
   // A dispensed visit open in the list's place (rules › a dispensed visit),
   // by the record id after the screen's address. The visit in progress waits
   // behind it, untouched. Read in the background, and never suspending: the
@@ -799,13 +1067,34 @@ const SimpleDispensingPage: Component = () => {
     const record = read.record;
     const reason = cannotEditReason(record);
     const mayCancel = hasPermission('CANCEL_FINALISED_INVOICES');
+    const mayEdit = hasPermission('PRESCRIPTION_MUTATE');
+    // Read in the button's own bindings, so a list changing behind the open
+    // visit never rebuilds it.
+    const listInProgress = () => lines.length > 0 || editing() !== undefined;
     return {
       heading: headingOf(record),
       forName: whoFor(record),
       lines: visitLines(record.lines.nodes),
       total: record.pricing.totalAfterTax,
       reason: reason ? t(reason) : undefined,
-      action: canCancelVisit(record) ? (
+      action: canEditVisit(record) ? (
+        <Button
+          variant="secondary"
+          icon={<EditIcon />}
+          data-testid="edit-dispense-button"
+          title={
+            !mayEdit
+              ? t('messages.edit-dispense-not-allowed')
+              : listInProgress()
+                ? t('messages.edit-dispense-list-in-progress')
+                : undefined
+          }
+          disabled={!mayEdit || listInProgress()}
+          onClick={() => startEdit(record)}
+        >
+          {t('button.edit')}
+        </Button>
+      ) : canCancelVisit(record) ? (
         // Shown without the permission too, disabled, saying why (rules ›
         // a dispensed visit), as the record screen's cancel is.
         <Button
@@ -905,8 +1194,9 @@ const SimpleDispensingPage: Component = () => {
           </Show>
           {/* Not while a dispensed visit is open: the header would name the
               visit in progress over another person's record. It is still
-              chosen when the visit comes back. */}
-          <Show when={viewingId() === undefined}>
+              chosen when the visit comes back. Nor while one is edited: who
+              it was for can't change, and the list says who. */}
+          <Show when={viewingId() === undefined && !editing()}>
             <WhoIsItFor
               storeId={storeOpened}
               patient={patient()}
@@ -937,14 +1227,12 @@ const SimpleDispensingPage: Component = () => {
               <LinkButton
                 href={simpleHref}
                 variant="secondary"
-                icon={lines.length > 0 ? undefined : <PlusCircleIcon />}
+                icon={listWaiting() ? undefined : <PlusCircleIcon />}
                 data-testid={
-                  lines.length > 0
-                    ? 'back-to-list-button'
-                    : 'new-dispense-button'
+                  listWaiting() ? 'back-to-list-button' : 'new-dispense-button'
                 }
               >
-                {lines.length > 0
+                {listWaiting()
                   ? t('button.back-to-list')
                   : t('button.new-dispense')}
               </LinkButton>
@@ -972,7 +1260,7 @@ const SimpleDispensingPage: Component = () => {
             hint={
               viewingId() !== undefined
                 ? undefined
-                : !chosen()
+                : !canPress()
                   ? t('messages.choose-who-first')
                   : t('messages.press-an-amount')
             }
@@ -988,7 +1276,7 @@ const SimpleDispensingPage: Component = () => {
               includeHiddenWithStock
               width="full"
               clearable={false}
-              disabled={!chosen() || locked() || viewingId() !== undefined}
+              disabled={!canPress() || locked() || viewingId() !== undefined}
               value={searchValue()}
               onSelect={item => {
                 if (!item) return;
@@ -1037,7 +1325,7 @@ const SimpleDispensingPage: Component = () => {
                       // Not while a dispensed visit is open: a press would
                       // read as adding to it (rules › a dispensed visit).
                       canAdd={
-                        chosen() && !locked() && viewingId() === undefined
+                        canPress() && !locked() && viewingId() === undefined
                       }
                       onAmount={(_, amount) => addToList(card, amount)}
                       onAskAmount={() => askAmount(card.item.id)}
@@ -1089,16 +1377,29 @@ const SimpleDispensingPage: Component = () => {
             setNotice(undefined);
             update(removeLine(lines, itemId));
           }}
-          onClear={() => void clear()}
-          onDispense={() => void dispense()}
-          canDispense={chosen()}
+          onClear={() => (editing() ? discard() : void clear())}
+          onDispense={() => void (editing() ? saveEdit() : dispense())}
+          canDispense={canPress()}
           dispensing={dispensing()}
           looking={looking()}
           locked={locked()}
           notice={listNotice()}
           visit={openVisit()}
+          editing={editingList()}
         />
       </div>
+      <ConfirmDialog
+        open={confirmingDelete() !== undefined}
+        onClose={() => setConfirmingDelete(undefined)}
+        title={t('heading.are-you-sure')}
+        message={t('messages.confirm-delete-dispense')}
+        confirmVariant="danger"
+        onConfirm={() => {
+          // The visit being edited when Delete was pressed.
+          const id = confirmingDelete();
+          if (id !== undefined) void deleteEdited(id);
+        }}
+      />
       <ConfirmDialog
         open={confirmingCancel() !== undefined}
         onClose={() => setConfirmingCancel(undefined)}

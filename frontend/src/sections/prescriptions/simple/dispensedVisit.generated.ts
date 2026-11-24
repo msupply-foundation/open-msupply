@@ -35,6 +35,22 @@ export type SimpleDispensedRecordResult = {
   packSize: number;
   numberOfPacks: number;
   totalAfterTax: number;
+  sellPricePerPack: number;
+  stockLine: {
+  id: string;
+  availableNumberOfPacks: number;
+  packSize: number;
+  sellPricePerPack: number;
+  expiryDate: string | null;
+  onHold: boolean;
+  location: {
+  onHold: boolean;
+} | null;
+  vvmStatus: {
+  unusable: boolean;
+  priority: number;
+} | null;
+} | null;
   item: {
   id: string;
   unitName: string | null;
@@ -51,8 +67,134 @@ export type SimpleDispensedRecordResult = {
 };
 
 export const SimpleDispensedRecord = {
-  query: "query simpleDispensedRecord($storeId: String!, $id: String!) {\n  invoice(storeId: $storeId, id: $id, type: PRESCRIPTION) {\n    __typename\n    ... on InvoiceNode {\n      id\n      status\n      isCancellation\n      createdDatetime\n      backdatedDatetime\n      cancelledDatetime\n      patient {\n        id\n        name\n        code\n        isUnnamed\n      }\n      pricing {\n        totalAfterTax\n      }\n      lines {\n        nodes {\n          id\n          type\n          itemId\n          itemName\n          packSize\n          numberOfPacks\n          totalAfterTax\n          item {\n            id\n            unitName\n          }\n        }\n      }\n    }\n    ... on NodeError {\n      error {\n        __typename\n      }\n    }\n  }\n}",
+  query: "query simpleDispensedRecord($storeId: String!, $id: String!) {\n  invoice(storeId: $storeId, id: $id, type: PRESCRIPTION) {\n    __typename\n    ... on InvoiceNode {\n      id\n      status\n      isCancellation\n      createdDatetime\n      backdatedDatetime\n      cancelledDatetime\n      patient {\n        id\n        name\n        code\n        isUnnamed\n      }\n      pricing {\n        totalAfterTax\n      }\n      lines {\n        nodes {\n          id\n          type\n          itemId\n          itemName\n          packSize\n          numberOfPacks\n          totalAfterTax\n          sellPricePerPack\n          stockLine {\n            id\n            availableNumberOfPacks\n            packSize\n            sellPricePerPack\n            expiryDate\n            onHold\n            location {\n              onHold\n            }\n            vvmStatus {\n              unusable\n              priority\n            }\n          }\n          item {\n            id\n            unitName\n          }\n        }\n      }\n    }\n    ... on NodeError {\n      error {\n        __typename\n      }\n    }\n  }\n}",
 } as TypedDocument<SimpleDispensedRecordResult, SimpleDispensedRecordVariables>;
+
+export type SimpleSaveChangesVariables = {
+  storeId: string;
+  input: {
+    insertPrescriptions?: Array<{
+    id: string;
+    patientId: string;
+    diagnosisId?: string | null;
+    programId?: string | null;
+    theirReference?: string | null;
+    clinicianId?: string | null;
+    prescriptionDate?: string | null;
+  }> | null;
+    insertPrescriptionLines?: Array<{
+    id: string;
+    invoiceId: string;
+    stockLineId: string;
+    numberOfPacks: number;
+    note?: string | null;
+  }> | null;
+    updatePrescriptionLines?: Array<{
+    id: string;
+    stockLineId?: string | null;
+    numberOfPacks?: number | null;
+    note?: string | null;
+  }> | null;
+    deletePrescriptionLines?: Array<{
+    id: string;
+  }> | null;
+    setPrescribedQuantity?: Array<{
+    invoiceId: string;
+    itemId: string;
+    prescribedQuantity: number;
+  }> | null;
+    updatePrescriptions?: Array<{
+    id: string;
+    status?: "PICKED" | "VERIFIED" | "CANCELLED" | null;
+    patientId?: string | null;
+    clinicianId?: {
+    value?: string | null;
+  } | null;
+    prescriptionDate?: string | null;
+    comment?: string | null;
+    colour?: string | null;
+    diagnosisId?: {
+    value?: string | null;
+  } | null;
+    programId?: {
+    value?: string | null;
+  } | null;
+    theirReference?: {
+    value?: string | null;
+  } | null;
+    nameInsuranceJoinId?: {
+    value?: string | null;
+  } | null;
+    insuranceDiscountAmount?: number | null;
+    insuranceDiscountPercentage?: number | null;
+    customFields?: unknown | null;
+  }> | null;
+    deletePrescriptions?: Array<string> | null;
+    continueOnError?: boolean | null;
+  };
+};
+
+export type SimpleSaveChangesResult = {
+  batchPrescription: {
+  insertPrescriptionLines: Array<{
+  id: string;
+  response: ({
+  __typename: "InvoiceLineNode";
+} & {
+  id: string;
+}) | ({
+  __typename: "InsertPrescriptionLineError";
+} & {
+  error: {
+  __typename: "CannotEditInvoice" | "ForeignKeyError" | "LocationIsOnHold" | "LocationNotFound" | "NotEnoughStockForReduction" | "StockLineAlreadyExistsInInvoice" | "StockLineIsOnHold";
+};
+});
+}> | null;
+  updatePrescriptionLines: Array<{
+  id: string;
+  response: ({
+  __typename: "InvoiceLineNode";
+} & {
+  id: string;
+}) | ({
+  __typename: "UpdatePrescriptionLineError";
+} & {
+  error: {
+  __typename: "CannotEditInvoice" | "ForeignKeyError" | "LocationIsOnHold" | "LocationNotFound" | "NotEnoughStockForReduction" | "RecordNotFound" | "StockLineAlreadyExistsInInvoice" | "StockLineIsOnHold";
+};
+});
+}> | null;
+  deletePrescriptionLines: Array<{
+  id: string;
+  response: {
+  __typename: "DeletePrescriptionLineError" | "DeleteResponse";
+};
+}> | null;
+};
+};
+
+export const SimpleSaveChanges = {
+  query: "mutation simpleSaveChanges($storeId: String!, $input: BatchPrescriptionInput!) {\n  batchPrescription(storeId: $storeId, input: $input) {\n    insertPrescriptionLines {\n      id\n      response {\n        __typename\n        ... on InvoiceLineNode {\n          id\n        }\n        ... on InsertPrescriptionLineError {\n          error {\n            __typename\n          }\n        }\n      }\n    }\n    updatePrescriptionLines {\n      id\n      response {\n        __typename\n        ... on InvoiceLineNode {\n          id\n        }\n        ... on UpdatePrescriptionLineError {\n          error {\n            __typename\n          }\n        }\n      }\n    }\n    deletePrescriptionLines {\n      id\n      response {\n        __typename\n      }\n    }\n  }\n}",
+} as TypedDocument<SimpleSaveChangesResult, SimpleSaveChangesVariables>;
+
+export type SimpleDeleteDispenseVariables = {
+  storeId: string;
+  id: string;
+};
+
+export type SimpleDeleteDispenseResult = {
+  deletePrescription: ({
+  __typename: "DeletePrescriptionError";
+} & {
+  error: {
+  __typename: "CannotDeleteGeneratedDispensation" | "CannotDeleteInvoiceWithLines" | "CannotEditInvoice" | "RecordNotFound";
+};
+});
+};
+
+export const SimpleDeleteDispense = {
+  query: "mutation simpleDeleteDispense($storeId: String!, $id: String!) {\n  deletePrescription(storeId: $storeId, id: $id) {\n    __typename\n    ... on DeletePrescriptionError {\n      error {\n        __typename\n      }\n    }\n  }\n}",
+} as TypedDocument<SimpleDeleteDispenseResult, SimpleDeleteDispenseVariables>;
 
 export type SimpleCancelDispenseVariables = {
   storeId: string;

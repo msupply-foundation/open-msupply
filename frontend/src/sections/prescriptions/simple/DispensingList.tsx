@@ -18,7 +18,13 @@ import { Button } from '@/ui/elements/buttons/Button';
 import { LinkButton } from '@/ui/elements/buttons/LinkButton';
 import { IconButton } from '@/ui/elements/buttons/IconButton';
 import { Alert } from '@/ui/elements/feedback/Alert';
-import { CheckCircleIcon, ChevronDownIcon, TrashIcon } from '@/ui/icons';
+import { Popover } from '@/ui/elements/feedback/Popover';
+import {
+  CheckCircleIcon,
+  ChevronDownIcon,
+  MoreHorizontalIcon,
+  TrashIcon,
+} from '@/ui/icons';
 import { createMediaQuery } from '@/ui/utils/createMediaQuery';
 import {
   linePrice,
@@ -61,8 +67,22 @@ export interface OpenVisit {
   message?: JSX.Element;
   /** Why it can't be edited, where that is the whole answer. */
   reason?: string;
-  /** Its one action (Cancel), at the foot's inline end. */
+  /** Its one action (Cancel, or Edit), at the foot's inline end. */
   action?: JSX.Element;
+}
+
+/**
+ * A dispensed visit being edited (rules › editing a dispensed visit): the
+ * list is its medicines, Clear discards the changes, Dispense saves them, and
+ * the visit can be deleted.
+ */
+export interface EditingVisit {
+  /** Which visit is being edited, by when it was dispensed. */
+  heading: string;
+  /** Who it was for, and their code. */
+  forName: string | undefined;
+  /** Ask to delete it: from the menu, or Save with nothing on the list. */
+  onDelete: () => void;
 }
 
 export const DispensingList = (props: {
@@ -98,7 +118,7 @@ export const DispensingList = (props: {
    * never a toast (ui-standards › action feedback).
    */
   notice?: {
-    severity: 'success' | 'warning' | 'error';
+    severity: 'success' | 'info' | 'warning' | 'error';
     text: string;
     /** Where View goes: the visit the message says was dispensed. */
     viewHref?: string;
@@ -111,6 +131,8 @@ export const DispensingList = (props: {
    * Clear and Dispense. The list in progress waits, untouched, until it goes.
    */
   visit?: OpenVisit;
+  /** A dispensed visit being edited in the list. */
+  editing?: EditingVisit;
 }) => {
   const priceOfLine = (line: ListLine): number =>
     linePrice(props.cardOf(line.itemId), line.units);
@@ -143,16 +165,36 @@ export const DispensingList = (props: {
   // standard size, to match the keys on the cards (ui-surface S9 › touch).
   const isTouch = createMediaQuery('(pointer: coarse)');
 
-  const dispenseButton = (testId: string, cls?: string) => (
+  // While editing with nothing left on the list, saving means deleting the
+  // visit (rules › editing a dispensed visit).
+  const deletes = () => props.editing !== undefined && !hasLines();
+  // The foot's button names what it does while editing; the phone bar's
+  // keeps its one id.
+  const dispenseButton = (testId: string, cls?: string, foot = false) => (
     <Button
       class={cls}
-      icon={<CheckCircleIcon />}
-      disabled={!hasLines() || !props.canDispense || props.looking}
+      variant={deletes() ? 'danger' : undefined}
+      icon={deletes() ? <TrashIcon /> : <CheckCircleIcon />}
+      disabled={
+        (!hasLines() && !props.editing) || !props.canDispense || props.looking
+      }
       loading={props.dispensing}
-      data-testid={testId}
-      onClick={() => props.onDispense()}
+      data-testid={
+        foot && props.editing
+          ? deletes()
+            ? 'delete-dispense-button'
+            : 'save-changes-button'
+          : testId
+      }
+      onClick={() =>
+        deletes() ? props.editing?.onDelete() : props.onDispense()
+      }
     >
-      {t('button.dispense')}
+      {props.editing
+        ? deletes()
+          ? t('button.delete-dispensing-record')
+          : t('button.save-changes')
+        : t('button.dispense')}
     </Button>
   );
 
@@ -256,24 +298,75 @@ export const DispensingList = (props: {
               fallback={
                 <>
                   <div class={styles.titleRow}>
-                    <StepHeading
-                      n={3}
-                      label={t('heading.check-and-dispense')}
-                      heading
-                    />
-                    <Show when={hasLines()}>
-                      <span
-                        class={styles.count}
-                        data-testid="dispensing-list-count"
-                      >
-                        {tPlural('label.medicine-count', props.lines.length)}
-                      </span>
+                    {/* Editing, the visit being edited in the step's place,
+                        with no number: it is not a step of a new visit. */}
+                    <Show
+                      when={props.editing}
+                      fallback={
+                        <StepHeading
+                          n={3}
+                          label={t('heading.check-and-dispense')}
+                          heading
+                        />
+                      }
+                    >
+                      {editing => (
+                        <h2
+                          class={styles.visitHeading}
+                          data-testid="editing-dispense-heading"
+                        >
+                          {editing().heading}
+                        </h2>
+                      )}
                     </Show>
+                    <span class={styles.titleEnd}>
+                      <Show when={hasLines()}>
+                        <span
+                          class={styles.count}
+                          data-testid="dispensing-list-count"
+                        >
+                          {tPlural('label.medicine-count', props.lines.length)}
+                        </span>
+                      </Show>
+                      {/* Delete is rare and can't be undone: out of the foot,
+                          behind the menu, so Discard and Save stand alone. */}
+                      <Show when={props.editing}>
+                        {editing => (
+                          <Popover
+                            trigger={<MoreHorizontalIcon aria-hidden="true" />}
+                            triggerLabel={t('label.more-actions')}
+                            triggerClass={styles.moreActions}
+                            triggerTestId="edit-more-actions-button"
+                            placement="bottom-end"
+                          >
+                            {closeMenu => (
+                              <Button
+                                variant="ghost"
+                                icon={<TrashIcon />}
+                                class={styles.deleteAction}
+                                disabled={props.locked}
+                                data-testid="delete-dispense-menu-item"
+                                onClick={() => {
+                                  closeMenu();
+                                  editing().onDelete();
+                                }}
+                              >
+                                {t('button.delete-dispensing-record')}
+                              </Button>
+                            )}
+                          </Popover>
+                        )}
+                      </Show>
+                    </span>
                   </div>
                   <p class={styles.for} data-testid="dispensing-list-for">
-                    {props.forName === undefined
-                      ? t('label.for-not-chosen-yet')
-                      : t('label.for-patient', { name: props.forName })}
+                    {props.editing
+                      ? t('label.for-patient', {
+                          name: props.editing.forName ?? '',
+                        })
+                      : props.forName === undefined
+                        ? t('label.for-not-chosen-yet')
+                        : t('label.for-patient', { name: props.forName })}
                   </p>
                 </>
               }
@@ -575,19 +668,35 @@ export const DispensingList = (props: {
             </Show>
             <Show when={!props.visit}>
               <div class={styles.actions}>
-                {/* Hidden, not disabled, with nothing to clear (ui-surface S9). */}
-                <Show when={hasLines()}>
+                {/* Hidden, not disabled, with nothing to clear (ui-surface S9).
+                    While editing it discards the changes, so it is always
+                    there. */}
+                <Show
+                  when={props.editing}
+                  fallback={
+                    <Show when={hasLines()}>
+                      <Button
+                        variant="ghost"
+                        disabled={props.locked}
+                        loading={props.looking}
+                        data-testid="clear-list-button"
+                        onClick={() => props.onClear()}
+                      >
+                        {t('common.clear')}
+                      </Button>
+                    </Show>
+                  }
+                >
                   <Button
                     variant="ghost"
                     disabled={props.locked}
-                    loading={props.looking}
-                    data-testid="clear-list-button"
+                    data-testid="discard-changes-button"
                     onClick={() => props.onClear()}
                   >
-                    {t('common.clear')}
+                    {t('button.discard-changes')}
                   </Button>
                 </Show>
-                {dispenseButton('dispense-button')}
+                {dispenseButton('dispense-button', undefined, true)}
               </div>
             </Show>
           </footer>

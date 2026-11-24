@@ -9,6 +9,7 @@ import {
 import { createStore, type SetStoreFunction } from 'solid-js/store';
 import { authUser } from '../../../auth/authContext';
 import type { PatientOption } from '../../../domain/patient';
+import type { EditedVisit } from './editVisit';
 import type {
   CardItem,
   DispensedTo,
@@ -37,7 +38,7 @@ import type {
 // signing out drops them all.
 
 export type Notice = {
-  severity: 'success' | 'error';
+  severity: 'success' | 'info' | 'error';
   text: string;
   /** The visit the message is about, once dispensed: View opens it. */
   dispensedId?: string;
@@ -94,6 +95,12 @@ export interface KeptVisit {
   looking: Accessor<boolean>;
   setLooking: Setter<boolean>;
   /**
+   * A dispensed visit being edited in the list (rules › editing a dispensed
+   * visit): kept with the list, so a trip away keeps the edit too.
+   */
+  editing: Accessor<EditedVisit | undefined>;
+  setEditing: Setter<EditedVisit | undefined>;
+  /**
    * The visit's record: its id from its first save until it is finished or
    * cleared, so a save repeated after a lost reply can never make a second
    * record. Read only by Dispense and Clear, so not a signal.
@@ -116,6 +123,7 @@ const newVisit = (key: string, startsWithUnnamed: boolean): KeptVisit => {
   const [dispensing, setDispensing] = createSignal(false);
   const [unconfirmed, setUnconfirmed] = createSignal(false);
   const [looking, setLooking] = createSignal(false);
+  const [editing, setEditing] = createSignal<EditedVisit>();
   return {
     key,
     patient,
@@ -142,6 +150,8 @@ const newVisit = (key: string, startsWithUnnamed: boolean): KeptVisit => {
     setUnconfirmed,
     looking,
     setLooking,
+    editing,
+    setEditing,
     record: {},
   };
 };
@@ -191,6 +201,7 @@ export const worthKeeping = (visit: KeptVisit): boolean =>
   visit.dispensing() ||
   visit.unconfirmed() ||
   visit.looking() ||
+  visit.editing() !== undefined ||
   visit.record.current !== undefined;
 
 /**

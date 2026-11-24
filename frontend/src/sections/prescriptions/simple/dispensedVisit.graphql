@@ -30,6 +30,26 @@ query simpleDispensedRecord($storeId: String!, $id: String!) {
           packSize
           numberOfPacks
           totalAfterTax
+          # What editing needs (contract › editing a dispensed visit): the
+          # price the line was charged, which an update keeps, and its batch,
+          # with what the items read selects for one, so the visit's own
+          # stock counts as available.
+          sellPricePerPack
+          stockLine {
+            id
+            availableNumberOfPacks
+            packSize
+            sellPricePerPack
+            expiryDate
+            onHold
+            location {
+              onHold
+            }
+            vvmStatus {
+              unusable
+              priority
+            }
+          }
           item {
             id
             unitName
@@ -48,6 +68,60 @@ query simpleDispensedRecord($storeId: String!, $id: String!) {
 # Cancel a finished visit (contract › a dispensed visit): the record screen's
 # cancel, the move to CANCELLED. Only whether it worked is read: the screen
 # reads the visit again after.
+mutation simpleSaveChanges($storeId: String!, $input: BatchPrescriptionInput!) {
+  # Save changes to a Picked visit (contract › editing a dispensed visit):
+  # its line changes in one transaction, so a refusal anywhere saves nothing.
+  batchPrescription(storeId: $storeId, input: $input) {
+    insertPrescriptionLines {
+      id
+      response {
+        __typename
+        ... on InvoiceLineNode {
+          id
+        }
+        ... on InsertPrescriptionLineError {
+          error {
+            __typename
+          }
+        }
+      }
+    }
+    updatePrescriptionLines {
+      id
+      response {
+        __typename
+        ... on InvoiceLineNode {
+          id
+        }
+        ... on UpdatePrescriptionLineError {
+          error {
+            __typename
+          }
+        }
+      }
+    }
+    deletePrescriptionLines {
+      id
+      response {
+        __typename
+      }
+    }
+  }
+}
+
+# Delete a Picked visit (contract › editing a dispensed visit): a Picked
+# record can't be cancelled, only deleted.
+mutation simpleDeleteDispense($storeId: String!, $id: String!) {
+  deletePrescription(storeId: $storeId, id: $id) {
+    __typename
+    ... on DeletePrescriptionError {
+      error {
+        __typename
+      }
+    }
+  }
+}
+
 mutation simpleCancelDispense($storeId: String!, $id: String!) {
   updatePrescription(storeId: $storeId, input: { id: $id, status: CANCELLED }) {
     __typename
