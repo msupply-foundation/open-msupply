@@ -36,7 +36,15 @@ import type {
 // storage (contract › Dispensing records). One per signed-in user and store;
 // signing out drops them all.
 
-export type Notice = { severity: 'success' | 'error'; text: string };
+export type Notice = {
+  severity: 'success' | 'warning' | 'error';
+  text: string;
+  /**
+   * Says the stock was corrected (rules › correcting the stock): shown over
+   * the notice about short lines, which it answers, until the list changes.
+   */
+  corrected?: true;
+};
 
 export interface KeptVisit {
   /**

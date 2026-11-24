@@ -18,12 +18,14 @@ import { IconButton } from '@/ui/elements/buttons/IconButton';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { CheckCircleIcon, ChevronDownIcon, TrashIcon } from '@/ui/icons';
 import { createMediaQuery } from '@/ui/utils/createMediaQuery';
+import { createFocusTargets } from '@/ui/utils/createFocusTarget';
 import {
   linePrice,
   type ListLine,
   type MedicineCard,
 } from './simpleDispensingLogic';
 import { StepHeading } from './StepHeading';
+import { CorrectStockAction } from './CorrectStockDialog';
 import styles from './DispensingList.module.css';
 
 /*
@@ -53,6 +55,16 @@ export const DispensingList = (props: {
   cardOf: (itemId: string) => MedicineCard | undefined;
   onAmount: (itemId: string, units: number | undefined) => void;
   onRemove: (itemId: string) => void;
+  /**
+   * Correct the stock of a line's medicine, from a line that stopped at the
+   * stock or was left short (rules › correcting the stock). `allowed` false
+   * says who can instead. `open` gets where focus goes once it saves: the
+   * line's amount, the next thing to change or check.
+   */
+  correctStock: {
+    allowed: boolean;
+    open: (itemId: string, refocus: () => void) => void;
+  };
   /** Empty the list. Nothing was saved, so nothing else changes. */
   onClear: () => void;
   /** Save the visit (rules › dispensing the visit). */
@@ -107,6 +119,21 @@ export const DispensingList = (props: {
   // A touch screen: each line's amount field at the touch height of the
   // standard size, to match the keys on the cards (ui-surface S9 › touch).
   const isTouch = createMediaQuery('(pointer: coarse)');
+
+  // Each line's amount field, for focus to land on after correcting the stock.
+  const amountFields = createFocusTargets();
+
+  // Correct the stock beside a line's message (ui-surface S9).
+  const correctAction = (itemId: string, variant: 'secondary' | 'ghost') => (
+    <CorrectStockAction
+      allowed={props.correctStock.allowed}
+      disabled={props.locked}
+      variant={variant}
+      onCorrect={() =>
+        props.correctStock.open(itemId, () => amountFields.focus(itemId))
+      }
+    />
+  );
 
   const dispenseButton = (testId: string, cls?: string) => (
     <Button
@@ -280,6 +307,7 @@ export const DispensingList = (props: {
                               parentAnswersSynchronously
                               disabled={props.locked}
                               value={line.units}
+                              ref={amountFields.ref(line.itemId)}
                               data-testid="line-amount-input"
                               onChange={units =>
                                 props.onAmount(line.itemId, units)
@@ -306,15 +334,18 @@ export const DispensingList = (props: {
                         <Show when={line.capped && line.units <= stock()}>
                           <tr class={styles.note}>
                             <td colSpan={4}>
-                              <p
-                                class={styles.limit}
-                                data-testid="line-stock-limit"
-                              >
-                                {amountText(
-                                  'messages.only-units-in-stock',
-                                  stock()
-                                )}
-                              </p>
+                              <div class={styles.limitRow}>
+                                <p
+                                  class={styles.limit}
+                                  data-testid="line-stock-limit"
+                                >
+                                  {amountText(
+                                    'messages.only-units-in-stock',
+                                    stock()
+                                  )}
+                                </p>
+                                {correctAction(line.itemId, 'secondary')}
+                              </div>
                             </td>
                           </tr>
                         </Show>
@@ -338,36 +369,39 @@ export const DispensingList = (props: {
                                       )
                                     : t('messages.stock-now-shows-none')}
                                 </p>
-                                <Show
-                                  when={stock() > 0}
-                                  fallback={
+                                <div class={styles.lineActions}>
+                                  <Show
+                                    when={stock() > 0}
+                                    fallback={
+                                      <Button
+                                        variant="secondary"
+                                        size="small"
+                                        disabled={props.locked}
+                                        data-testid="line-warning-remove-button"
+                                        onClick={() =>
+                                          props.onRemove(line.itemId)
+                                        }
+                                      >
+                                        {t('label.remove')}
+                                      </Button>
+                                    }
+                                  >
                                     <Button
                                       variant="secondary"
                                       size="small"
                                       disabled={props.locked}
-                                      data-testid="line-warning-remove-button"
+                                      data-testid="give-instead-button"
                                       onClick={() =>
-                                        props.onRemove(line.itemId)
+                                        props.onAmount(line.itemId, stock())
                                       }
                                     >
-                                      {t('label.remove')}
+                                      {t('button.give-instead', {
+                                        quantity: roundedText(stock()),
+                                      })}
                                     </Button>
-                                  }
-                                >
-                                  <Button
-                                    variant="secondary"
-                                    size="small"
-                                    disabled={props.locked}
-                                    data-testid="give-instead-button"
-                                    onClick={() =>
-                                      props.onAmount(line.itemId, stock())
-                                    }
-                                  >
-                                    {t('button.give-instead', {
-                                      quantity: roundedText(stock()),
-                                    })}
-                                  </Button>
-                                </Show>
+                                  </Show>
+                                  {correctAction(line.itemId, 'ghost')}
+                                </div>
                               </div>
                             </td>
                           </tr>

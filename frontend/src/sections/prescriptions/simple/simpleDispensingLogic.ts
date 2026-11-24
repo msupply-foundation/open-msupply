@@ -62,6 +62,37 @@ export type StockState = 'plenty' | 'low' | 'out';
 export type StockLine = 'left' | 'low' | 'out' | undefined;
 
 /**
+ * The batch fields the Simple screen judges a batch by: the cards' batches and
+ * Correct the stock's both carry them.
+ */
+export interface StockBatch {
+  availableNumberOfPacks: number;
+  packSize: number;
+  expiryDate?: string | null;
+  onHold: boolean;
+  location?: { onHold: boolean } | null;
+  vvmStatus?: { unusable: boolean; priority: number } | null;
+}
+
+/**
+ * Whether dispensing may take a batch on its own, whatever it has left
+ * (spec/prescriptions rules › the Simple screen): not on hold, in a location
+ * not on hold, and not barred from issue or from automatic allocation.
+ */
+const dispensable = (
+  batch: StockBatch,
+  prefs: AllocationPreferences,
+  today: Date
+): boolean => {
+  if (batch.onHold || (batch.location?.onHold ?? false)) return false;
+  const barrable = { ...batch, stockLineOnHold: batch.onHold };
+  return (
+    barReasons(barrable, prefs, today).length === 0 &&
+    autoAllocateBarReasons(barrable, prefs, today).length === 0
+  );
+};
+
+/**
  * The item's batches that dispensing may take on its own, in fill order
  * (spec/prescriptions rules › the Simple screen): on-hold stock is hidden from
  * dispensing, and a batch barred from issue or from automatic allocation
@@ -75,14 +106,9 @@ export const fillableBatches = (
   today: Date = new Date()
 ): FillableBatch[] =>
   item.availableBatches.nodes
-    .map(batch => ({ ...batch, stockLineOnHold: batch.onHold }))
     .filter(
       batch =>
-        batch.availableNumberOfPacks > 0 &&
-        !batch.stockLineOnHold &&
-        !(batch.location?.onHold ?? false) &&
-        barReasons(batch, prefs, today).length === 0 &&
-        autoAllocateBarReasons(batch, prefs, today).length === 0
+        batch.availableNumberOfPacks > 0 && dispensable(batch, prefs, today)
     )
     .sort((a, b) => fillOrderCompare(a, b, prefs))
     .map(batch => ({
@@ -340,6 +366,116 @@ export const removeLine = (
   lines: readonly ListLine[],
   itemId: string
 ): ListLine[] => lines.filter(line => line.itemId !== itemId);
+
+/**
+ * What the system shows of a medicine (spec/prescriptions rules › correcting
+ * the stock): the units in the batches dispensing may take on its own, before
+ * the list — the figure a card starts from.
+ */
+export const systemFigure = (
+  batches: readonly StockBatch[],
+  prefs: AllocationPreferences,
+  today: Date = new Date()
+): number =>
+  round9(
+    batches
+      .filter(
+        batch =>
+          batch.availableNumberOfPacks > 0 && dispensable(batch, prefs, today)
+      )
+      .reduce(
+        (sum, batch) => sum + batch.availableNumberOfPacks * batch.packSize,
+        0
+      )
+  );
+
+/**
+ * The batch a count goes to (rules › correcting the stock): of the batches
+ * dispensing may take on its own, empty ones included, the one with the
+ * nearest expiry, a batch with no expiry last. Undefined when there is none,
+ * so there is nothing to add the count to.
+ */
+export const correctionBatch = <B extends StockBatch>(
+  batches: readonly B[],
+  prefs: AllocationPreferences,
+  today: Date = new Date()
+): B | undefined =>
+  batches
+    .filter(batch => dispensable(batch, prefs, today))
+    .sort((a, b) =>
+      fillOrderCompare(a, b, { sortByVvmStatusThenExpiry: false })
+    )[0];
+
+/**
+ * Whether a count can be saved (rules › correcting the stock): something
+ * counted, and more than the system shows. Correcting the stock here only adds
+ * to it, and the same figure changes nothing.
+ */
+export const canSaveCount = (
+  count: number | undefined,
+  figure: number
+): boolean => count !== undefined && round9(count) > round9(figure);
+
+/** A count below the system's figure, which the count field refuses. */
+export const countTooLow = (
+  count: number | undefined,
+  figure: number
+): boolean => count !== undefined && round9(count) < round9(figure);
+
+/**
+ * The packs a count adds to its batch: the difference in units, in that
+ * batch's packs, fractional where a pack splits.
+ */
+export const correctionPacks = (
+  count: number,
+  figure: number,
+  packSize: number
+): number => round9((count - figure) / packSize);
+
+/**
+ * The reason a correction carries (rules › correcting the stock): with
+ * several positive adjustment reasons staff choose (`ask`); with one, that
+ * one; with none, none.
+ */
+export const correctionReason = (
+  reasons: readonly { id: string }[]
+): { ask: true } | { ask: false; reasonId: string | null } =>
+  reasons.length > 1
+    ? { ask: true }
+    : { ask: false, reasonId: reasons[0]?.id ?? null };
+
+/**
+ * What the notice says to do once the stock is corrected (rules › correcting
+ * the stock): lower the amount while this patient's (what the list holds,
+ * plus an amount typed in the amount box) is still more than the count; with
+ * an amount waiting in the box, nothing more, since the box now takes it;
+ * raise the amount on a line that had stopped at the stock; press Dispense
+ * once the list holds the medicine; or nothing.
+ */
+export const correctedNext = (corrected: {
+  count: number;
+  listed: number;
+  typed: number;
+  stopped: boolean;
+}): 'lower' | 'raise' | 'dispense' | 'none' => {
+  if (round9(corrected.listed + corrected.typed) > round9(corrected.count))
+    return 'lower';
+  if (corrected.typed > 0) return 'none';
+  if (corrected.stopped) return 'raise';
+  return corrected.listed > 0 ? 'dispense' : 'none';
+};
+
+/**
+ * Items with one read again in place of its earlier copy, so the rest keep
+ * their objects. The same array when the item isn't among them.
+ */
+export const withItem = <T extends { id: string }>(
+  items: T[] | undefined,
+  fresh: T
+): T[] | undefined =>
+  items?.some(item => item.id === fresh.id)
+    ? items.map(item => (item.id === fresh.id ? fresh : item))
+    : items;
 
 /**
  * The list's medicines as Dispense's check found them (spec/prescriptions
