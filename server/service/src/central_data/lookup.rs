@@ -693,18 +693,7 @@ impl ReferenceError {
     }
 }
 
-/// As `find_reference`, given the cells, for a reference a later sheet may add.
-pub fn lookup_reference<T: KeyedTable>(
-    table: &T,
-    id: Option<&str>,
-    code: Option<&str>,
-    narrow: impl Fn(Vec<T::Record>) -> Vec<T::Record>,
-) -> Result<Result<Option<String>, ReferenceError>, RepositoryError> {
-    Ok(lookup_reference_record(table, id, code, narrow)?
-        .map(|record| record.map(|record| record.id().to_string())))
-}
-
-/// As `lookup_reference`, with the record it found.
+/// As `find_reference_record`, given the cells, for a reference a later sheet may add.
 pub fn lookup_reference_record<T: KeyedTable>(
     table: &T,
     id: Option<&str>,
@@ -830,7 +819,7 @@ mod tests {
         assert_eq!(found(Some("a"), None), Ok(Some("a".to_string())));
         assert_eq!(found(Some("b"), Some("Tab")), Ok(Some("b".to_string())));
         assert_eq!(found(None, None), Ok(None));
-        // Errors as `lookup_reference` gives them.
+        // Errors as `resolve` gives them.
         let error = |id: Option<&str>, name: Option<&str>| found(id, name).unwrap_err().error;
         assert_eq!(error(None, Some("Tab")), LookupError::Ambiguous);
         assert_eq!(error(Some("x"), None), LookupError::NotFound);

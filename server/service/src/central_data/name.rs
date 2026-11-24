@@ -6,7 +6,7 @@ use super::{
     field_changes,
     lookup::{
         InMemory, LookupError, NOT_FOUND, NamesOfType, active_first, find_record, find_reference,
-        lookup_reference, record_conflict,
+        lookup_reference_record, record_conflict,
     },
     name_with_code,
     sheet::Value,
@@ -586,12 +586,14 @@ fn find_supplying_store(
     id: Option<&str>,
 ) -> Result<Result<Option<String>, (bool, RowError)>, RepositoryError> {
     Ok(
-        lookup_reference(stores, id, code, std::convert::identity)?.map_err(|error| {
-            (
-                error.error == LookupError::NotFound,
-                error.to_row_error(sheet, row, SUPPLYING_STORE_CODE, SUPPLYING_STORE_ID, code),
-            )
-        }),
+        lookup_reference_record(stores, id, code, std::convert::identity)?
+            .map(|store| store.map(|store| store.id))
+            .map_err(|error| {
+                (
+                    error.error == LookupError::NotFound,
+                    error.to_row_error(sheet, row, SUPPLYING_STORE_CODE, SUPPLYING_STORE_ID, code),
+                )
+            }),
     )
 }
 
