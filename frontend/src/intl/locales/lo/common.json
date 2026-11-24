@@ -1770,6 +1770,8 @@
   "label.mark-as-status": "ໝາຍເປັນ {{status}}",
   "label.mark-as-visited": "ໝາຍວ່າມາຢ້ຽມຢາມແລ້ວ",
   "label.master-list": "ບັນຊີລາຍການຫຼັກ",
+  "label.master-list-lines": "ແຖວບັນຊີລາຍການຫຼັກ",
+  "label.master-list-name-or-item-code-contains": "ຊື່ບັນຊີລາຍການຫຼັກ ຫຼື ລະຫັດລາຍການ ມີຄຳວ່າ",
   "label.master-list-none": "ບໍ່ມີ – ໃບສັ່ງຊື້ຫວ່າງເປົ່າ",
   "label.master-lists": "ບັນຊີລາຍການຫຼັກ",
   "label.max": "ສູງສຸດ",

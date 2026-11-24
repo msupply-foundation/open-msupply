@@ -1167,6 +1167,8 @@
   "label.mark-as-status": "Отметить как {{status}}",
   "label.mark-as-visited": "Отметить как посещенное",
   "label.master-list": "Предзаданный Список",
+  "label.master-list-lines": "Строки главных списков",
+  "label.master-list-name-or-item-code-contains": "Название главного списка или код товара содержит",
   "label.master-lists": "Главные Списки",
   "label.max": "Максимум",
   "label.max-min-temperature": "Макс / Мин",

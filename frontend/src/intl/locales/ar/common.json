@@ -970,6 +970,8 @@
   "label.manufacturer": "المصنع",
   "label.margin": "الهامش",
   "label.master-list": "القائمة الرئيسية",
+  "label.master-list-lines": "سطور القوائم الرئيسية",
+  "label.master-list-name-or-item-code-contains": "اسم القائمة الرئيسية أو رمز العنصر يحتوي على",
   "label.master-lists": "القوائم الرئيسية",
   "label.max": "الحد الأقصى",
   "label.max-min-temperature": "الحد الأقصى / الحد الأدنى",

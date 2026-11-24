@@ -1868,6 +1868,8 @@
   "label.mark-as-status": "Marquer comme {{status}}",
   "label.mark-as-visited": "Marquer la consultation comme réalisée",
   "label.master-list": "Liste maîtresse",
+  "label.master-list-lines": "Lignes des listes maîtresses",
+  "label.master-list-name-or-item-code-contains": "Le nom de la liste maîtresse ou le code article contient",
   "label.master-lists": "Listes maîtresses",
   "label.max": "Maximum",
   "label.max-min-temperature": "Max / Min",

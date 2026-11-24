@@ -1821,6 +1821,8 @@
   "label.mark-as-status": "په نښه کړئ {{status}}",
   "label.mark-as-visited": "د لیدلو په توګه نښه کړئ",
   "label.master-list": "ماسټر لیست",
+  "label.master-list-lines": "د ماسټر لیستونو کرښې",
+  "label.master-list-name-or-item-code-contains": "د ماسټر لیست نوم یا د توکي کوډ لري",
   "label.master-lists": "ماسټر لیستونه",
   "label.max": "Max",
   "label.max-min-temperature": "Max / Min",

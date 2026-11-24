@@ -926,6 +926,8 @@
   "label.mark-as-status": "Marcar como {{status}}",
   "label.mark-as-visited": "Marcar como visitado",
   "label.master-list": "Lista Maestra",
+  "label.master-list-lines": "Líneas de listas maestras",
+  "label.master-list-name-or-item-code-contains": "Nombre de la lista maestra o código de artículo contiene",
   "label.master-lists": "Listas Maestras",
   "label.max": "Máximo",
   "label.max-min-temperature": "Máximo / Mínimo",

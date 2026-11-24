@@ -1821,6 +1821,8 @@
   "label.mark-as-status": "علامت به عنوان {{status}}",
   "label.mark-as-visited": "علامت به عنوان بازدید شده",
   "label.master-list": "فهرست اصلی",
+  "label.master-list-lines": "خطوط فهرست‌های اصلی",
+  "label.master-list-name-or-item-code-contains": "نام فهرست اصلی یا کد جنس شامل",
   "label.master-lists": "فهرست‌های اصلی",
   "label.max": "حداکثر",
   "label.max-min-temperature": "حداکثر / حداقل",
