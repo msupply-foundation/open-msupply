@@ -475,10 +475,9 @@ fn location(
     connection: &StorageConnection,
     id: Option<&str>,
 ) -> Result<Option<LocationRow>, RepositoryError> {
-    match id {
-        Some(id) => LocationRowRepository::new(connection).find_one_by_id(id),
-        None => Ok(None),
-    }
+    id.map(|id| LocationRowRepository::new(connection).find_one_by_id(id))
+        .transpose()
+        .map(Option::flatten)
 }
 
 /// Joins can be many, so they're filtered and counted in SQL.
