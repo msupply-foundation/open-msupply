@@ -81,6 +81,10 @@ impl<'a> ContextRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn all(&self) -> Result<Vec<ContextRow>, RepositoryError> {
+        Ok(context::dsl::context.load(self.connection.lock().connection())?)
+    }
+
     pub fn check_exists_by_id(&self, row_id: &str) -> Result<bool, RepositoryError> {
         let exists: bool = diesel::select(diesel::dsl::exists(
             context::dsl::context.filter(context::dsl::id.eq(row_id)),

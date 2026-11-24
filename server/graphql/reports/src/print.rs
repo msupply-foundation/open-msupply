@@ -8,6 +8,7 @@ use repository::{ReportQueryExecutor, ReportSqlQuery, StoreRowRepository};
 use service::auth::{Resource, ResourceAccessRequest};
 use service::report::definition::{GraphQlQuery, PrintReportSort, ReportDefinition};
 use service::report::report_service::{ReportError, ResolvedReportQuery};
+use service::report::timezone::with_report_timezone;
 use service::service_provider::ServiceProvider;
 
 use crate::PrintFormat;
@@ -75,6 +76,8 @@ pub async fn generate_report(
             require_central_standalone: false,
         },
     )?;
+    // Set once here, so the queries, `convert_data` and the templates all see the same timezone
+    let arguments = with_report_timezone(arguments);
 
     let sort = sort.map(|s| s.to_domain());
     let service_provider = ctx.service_provider();
@@ -178,6 +181,8 @@ pub async fn generate_report_definition(
             require_central_standalone: false,
         },
     )?;
+    // Set once here, so the queries, `convert_data` and the templates all see the same timezone
+    let arguments = with_report_timezone(arguments);
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.clone(), user.user_id)?;

@@ -17,6 +17,7 @@ use super::{
     InvoiceTransferProcessor, InvoiceTransferProcessorRecord, Operation,
     common::{convert_invoice_line_to_single_pack, generate_inbound_lines},
     create_inbound_invoice::InboundInvoiceType,
+    lock_invoice_row,
 };
 
 const DESCRIPTION: &str = "Update inbound invoice from outbound invoice";
@@ -63,10 +64,14 @@ impl InvoiceTransferProcessor for UpdateInboundInvoiceProcessor {
             Some(linked_invoice) => linked_invoice,
             None => return Ok(InvoiceTransferOutput::NoLinkedInvoice),
         };
+        // The record's copy of the inbound can be out of date, see `try_process_record`
+        let Some(inbound_invoice_row) = lock_invoice_row(&ctx.connection, inbound_invoice)? else {
+            return Ok(InvoiceTransferOutput::NoLinkedInvoice);
+        };
         // 4.
-        if inbound_invoice.invoice_row.status != InvoiceStatus::Picked {
+        if inbound_invoice_row.status != InvoiceStatus::Picked {
             return Ok(InvoiceTransferOutput::WrongInboundStatus(
-                inbound_invoice.invoice_row.status.to_owned(),
+                inbound_invoice_row.status,
             ));
         }
         // 5.
@@ -143,7 +148,7 @@ impl InvoiceTransferProcessor for UpdateInboundInvoiceProcessor {
             // it's Picked or Shipped, so there's no campaign of theirs to lose
             campaign_id: outbound_invoice_row.campaign_id.clone(),
 
-            ..inbound_invoice.invoice_row.clone()
+            ..inbound_invoice_row
         };
 
         InvoiceRowRepository::new(&ctx.connection).upsert_one(&updated_inbound_invoice)?;

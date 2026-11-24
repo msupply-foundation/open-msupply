@@ -1,7 +1,8 @@
 use super::{StorageConnection, unit_row::unit::dsl::*};
 use crate::{
     ChangelogSyncType, ChangelogTableName, Delete, RowActionType, SourceSiteId, Upsert,
-    db_diesel::changelog::ChangelogRepository, repository_error::RepositoryError,
+    db_diesel::changelog::ChangelogRepository, lower, repository_error::RepositoryError, trim,
+    trim_spaces,
 };
 use diesel::prelude::*;
 
@@ -28,6 +29,7 @@ table! {
     serde::Deserialize,
 )]
 #[diesel(table_name = unit)]
+#[diesel(treat_none_as_null = true)]
 pub struct UnitRow {
     pub id: String,
     pub name: String,
@@ -98,9 +100,29 @@ impl<'a> UnitRowRepository<'a> {
         Ok(exists)
     }
 
+    /// Active and inactive, in any letter case. Spaces around either name, which legacy sync can
+    /// save, don't count.
+    pub fn find_by_trimmed_name_any_case(
+        &self,
+        unit_name: &str,
+    ) -> Result<Vec<UnitRow>, RepositoryError> {
+        let result = unit
+            .filter(lower(trim(name)).eq(lower(trim_spaces(unit_name))))
+            .order(id.asc())
+            .load(self.connection.lock().connection())?;
+        Ok(result)
+    }
+
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<UnitRow>, RepositoryError> {
         let result = unit
             .filter(id.eq_any(ids))
+            .load(self.connection.lock().connection())?;
+        Ok(result)
+    }
+
+    pub fn find_all(&self) -> Result<Vec<UnitRow>, RepositoryError> {
+        let result = unit
+            .order((index.asc(), name.asc()))
             .load(self.connection.lock().connection())?;
         Ok(result)
     }

@@ -17,7 +17,7 @@ use service::invoice_line::stock_in_line::{
     StockInType, UpdateStockInLine as ServiceInput, UpdateStockInLineError as ServiceError,
 };
 
-use super::{BatchIsReserved, validate_line_edit_authorisation};
+use super::{BatchIsReserved, LineAuthorisation, validate_line_edit_authorisation};
 
 #[derive(InputObject)]
 #[graphql(name = "UpdateInboundShipmentLineInput")]
@@ -88,7 +88,10 @@ pub fn update(
         store_id,
         &r#type,
         &service_context.connection,
-        &[(input.id.clone(), input.status.clone())],
+        &[LineAuthorisation::Update {
+            id: input.id.clone(),
+            status: input.status,
+        }],
     )?;
 
     let response = match service_provider.invoice_line_service.update_stock_in_line(

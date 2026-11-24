@@ -1,4 +1,10 @@
 import type { DebouncedEdit } from '@/domain/debouncedEdit';
+import {
+  calendarDateToInstant,
+  instantToCalendarDate,
+  type CalendarDate,
+  type Instant,
+} from '@/intl/calendarDate';
 import type { UpdatePurchaseOrderVariables } from './purchaseOrderDetail.generated';
 
 // Every as-you-type field on an order's own screen, in ONE debounced buffer
@@ -43,11 +49,18 @@ export type SaveFieldResult = { ok: boolean; message?: string };
  * panel shows it date-only, and takes it by hand until the order is Sent). Its
  * `NullableDatetimeUpdate` parses a NAIVE `YYYY-MM-DDTHH:MM:SS`, read as UTC,
  * and rejects any zone suffix — yet the node hands the field back WITH
- * `+00:00` (contract ⚠️ the sent moment is written naive and read zoned). So a
- * picked day is written as UTC midnight, and the stored value is read back as
- * its UTC day: the two are symmetric, and the time component is never surfaced.
+ * `+00:00` (contract ⚠️ the sent moment is written naive and read zoned).
+ *
+ * It is an instant like every other moment, because on entry to Sent the
+ * service stamps the real moment over whatever was typed. So it is read as
+ * the LOCAL day it falls on — the day the list's Sent column shows — and a
+ * picked day is written as its local midnight in UTC (the zone suffix dropped
+ * for the naive parse), which reads back as the same day. Reading the UTC day
+ * instead showed the day before for a store ahead of UTC that sent in its
+ * morning (#2614).
  */
-export const sentDayToWire = (day: string): string => `${day}T00:00:00`;
+export const sentDayToWire = (day: CalendarDate): string =>
+  calendarDateToInstant(day).slice(0, 19);
 export const sentWireToDay = (
-  wire: string | null | undefined
-): string | undefined => (wire ? wire.slice(0, 10) : undefined);
+  wire: Instant | null | undefined
+): CalendarDate | undefined => instantToCalendarDate(wire) ?? undefined;

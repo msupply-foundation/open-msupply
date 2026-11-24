@@ -10,6 +10,7 @@ use repository::{
 
 pub mod query;
 pub mod query_lines;
+pub mod upsert;
 pub mod validate;
 
 pub trait MasterListServiceTrait: Sync + Send {

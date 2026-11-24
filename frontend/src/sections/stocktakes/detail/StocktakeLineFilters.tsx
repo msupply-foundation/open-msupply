@@ -9,9 +9,9 @@ import { campaignsResource } from '@/domain/campaign';
 
 // The detail line table's filters, rendered in the DataTable's own toolbar
 // (ui-standards → tables › filtering): the item code/name search as the
-// screen's default filter, plus addable Location and Activity chips. Which is
-// which lives in the definitions (stocktakeDetailFilters). Activity is offered
-// only while the campaign register has entries.
+// screen's default filter, plus addable Location, Expiry date and Activity
+// chips. Which is which lives in the definitions (stocktakeDetailFilters).
+// Activity is offered only while the campaign register has entries.
 //
 // Plus one SPECIAL chip, the "errors" filter (issue #791 follow-up): it doesn't
 // map to a wire filter key the user types into — it's a boolean toggle whose

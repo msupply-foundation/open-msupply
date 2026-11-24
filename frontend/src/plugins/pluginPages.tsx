@@ -1,5 +1,5 @@
 import { ErrorBoundary, lazy, Show, Suspense } from 'solid-js';
-import { pageActions, pageFooter, pageTrail } from './pageSlots';
+import { pageActions, pageFooter, pageToolbar, pageTrail } from './pageSlots';
 import { currentStoreId } from '../store/storeContext';
 import { storePath } from '../nav/storeRelativePath';
 import type { Component } from 'solid-js';
@@ -9,6 +9,7 @@ import { Page } from '../ui/layout/Page/Page';
 import { Header } from '../ui/layout/Header/Header';
 import { Breadcrumb } from '../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../ui/layout/Header/HeaderButtons';
+import { HeaderToolbar } from '../ui/layout/Header/HeaderToolbar';
 import {
   upperNav,
   type NavItem,
@@ -609,6 +610,19 @@ const pageComponent = (registered: RegisteredPage): Component => {
                   {actions()()}
                 </ErrorBoundary>
               </HeaderButtons>
+            )}
+          </Show>
+          {/* The page's field row (pageSlots.ts), below the breadcrumb and
+              actions like a host detail screen's. */}
+          <Show when={pageToolbar.value()}>
+            {toolbar => (
+              <HeaderToolbar>
+                <ErrorBoundary
+                  fallback={<p>{t('error.plugin-unavailable')}</p>}
+                >
+                  {toolbar()()}
+                </ErrorBoundary>
+              </HeaderToolbar>
             )}
           </Show>
         </Header>

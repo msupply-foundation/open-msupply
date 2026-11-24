@@ -26,7 +26,8 @@
       "options": {
         "dateOnly": true,
         "disableFuture": true,
-        "min": "#/properties/adjustmentDateFrom"
+        "min": "#/properties/adjustmentDateFrom",
+        "dateAsEndOfDay": true
       }
     },
     {

@@ -1,4 +1,4 @@
-import { FILES_URL } from '../../config';
+import { fileUrl } from '../../config';
 
 // Client-side file plumbing for generated reports (spec/reports "The generated
 // file" / "Printing and exporting"). Dependency-free and never-throwing, in the
@@ -41,10 +41,9 @@ export const fetchReportFile = async (
   | { kind: 'error'; message: string }
 > => {
   try {
-    const response = await fetch(
-      `${FILES_URL}?id=${encodeURIComponent(fileId)}`,
-      { credentials: 'same-origin' }
-    );
+    const response = await fetch(fileUrl(fileId), {
+      credentials: 'same-origin',
+    });
     if (!response.ok) {
       return { kind: 'error', message: `HTTP ${response.status}` };
     }

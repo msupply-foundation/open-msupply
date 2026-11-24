@@ -9,6 +9,7 @@ const state = {
   programModule: false,
   vaccineModule: false,
   central: false,
+  standalone: false,
   // Most tests exercise the capability gates on destinations that also carry
   // a query permission, so permissions default to all-granted; tests about the
   // permission gates themselves opt out.
@@ -25,6 +26,7 @@ vi.mock('../store/storeContext', () => ({
 }));
 vi.mock('../api/serverInfo', () => ({
   isCentralServer: () => state.central,
+  isCentralStandalone: () => state.standalone,
 }));
 
 // The plugin half of the registry (spec/navigation § plugin destinations) is
@@ -51,6 +53,7 @@ beforeEach(() => {
   state.programModule = false;
   state.vaccineModule = false;
   state.central = false;
+  state.standalone = false;
   state.grantAll = true;
   state.permissions = new Set();
 });
@@ -121,6 +124,16 @@ describe('capability gates (OMS-REG-NAV-01.1–.14)', () => {
     state.permissions = new Set(['SERVER_ADMIN']);
     expect(gatedPaths()).toContain('manage/help-documents');
     expect(gatedPaths()).toContain('manage/sites');
+  });
+
+  it('offers Import and export only to a server admin on a standalone central server', () => {
+    state.central = true;
+    expect(gatedPaths()).not.toContain('manage/central-data');
+    expect(routeAccess('manage/central-data')).toEqual({ kind: 'blocked' });
+    state.standalone = true;
+    expect(gatedPaths()).toContain('manage/central-data');
+    state.grantAll = false;
+    expect(gatedPaths()).not.toContain('manage/central-data');
   });
 
   it('gates Demographics and Manage › Equipment on the vaccine module (.12)', () => {

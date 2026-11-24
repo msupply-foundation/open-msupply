@@ -390,6 +390,21 @@ const StocktakeDetailView: Component = () => {
       );
   };
 
+  // Whether every selected line is a vaccine — Reduce to 0 then offers vial-
+  // wastage reasons, as the React front end's allSelectedItemsAreVaccines did
+  // (issue #456). Read off the loaded page like selectedVolume: a selected id
+  // not on it counts as not-a-vaccine, which leaves the plain negative
+  // reasons — valid for any reduction, so never a reason the server rejects.
+  const selectedAllVaccines = (): boolean => {
+    const ids = new Set(selectedIds());
+    const selected = rows().filter(r => ids.has(r.id));
+    return (
+      selected.length > 0 &&
+      selected.length === ids.size &&
+      selected.every(r => r.item.isVaccine)
+    );
+  };
+
   // Locations WITH capacity for this store, fetched ONCE HERE (not from a
   // global cache) and passed down to the line editor + change-location picker,
   // so their % used / fullness filter reflect current stock. `volumeUsed` is
@@ -706,12 +721,11 @@ const StocktakeDetailView: Component = () => {
       header: () => t('label.code'),
       cardGroup: 'more',
       // Sized as the shared `itemCode` column (the `code` cell kind: 5rem off a
-      // ~9-char measure, capped at 7, monospace so digits align down the
-      // column). It was carrying no definition at all, so it auto-sized to
-      // whatever the widest code on the page happened to be and moved as the
-      // user paged. Any change to what a code column is worth belongs in
-      // _globalColumnConfig.ts, which is the one place those widths are tuned —
-      // not here.
+      // ~9-char measure, monospace so digits align down the column). It was
+      // carrying no definition at all, so it auto-sized to whatever the widest
+      // code on the page happened to be and moved as the user paged. Any change
+      // to what a code column is worth belongs in _globalColumnConfig.ts, which
+      // is the one place those widths are tuned — not here.
       ...getCellDefinition('itemCode'),
     },
     {
@@ -1177,6 +1191,7 @@ const StocktakeDetailView: Component = () => {
                       selectedIds={selectedIds}
                       disabled={isDisabled(node())}
                       hideReason={hideReason()}
+                      allVaccines={selectedAllVaccines()}
                       onCommit={onLinesChanged}
                       onError={stampErrors}
                       onShowErrors={showErrors}

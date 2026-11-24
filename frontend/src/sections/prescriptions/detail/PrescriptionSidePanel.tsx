@@ -1,6 +1,7 @@
 import { createSignal, Show, type Component } from 'solid-js';
 import { t } from '../../../intl';
 import { genderLabel } from '@/domain/patient';
+import { shownPatientName } from '../patientName';
 import { localisedDate } from '../../../intl/formatDateTime';
 import { formatNumber } from '../../../intl';
 import {
@@ -296,7 +297,14 @@ export const PrescriptionSidePanel: Component<
         collapsible
       >
         <FieldRow label={t('label.patient-name')}>
-          <Text variant="body">{props.node.patient?.name ?? '—'}</Text>
+          <Text variant="body">
+            {props.node.patient
+              ? shownPatientName(
+                  props.node.patient.name,
+                  props.node.patient.isUnnamed
+                )
+              : '—'}
+          </Text>
         </FieldRow>
         <FieldRow label={t('label.code')}>
           <Text variant="body">{props.node.patient?.code ?? '—'}</Text>

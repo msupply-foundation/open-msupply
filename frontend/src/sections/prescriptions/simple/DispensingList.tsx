@@ -59,8 +59,14 @@ export const DispensingList = (props: {
   onDispense: () => void;
   /** Someone is chosen, so there is someone to dispense to. */
   canDispense: boolean;
-  /** A save is in flight. */
+  /** A save is in flight: Dispense shows busy. */
   dispensing: boolean;
+  /**
+   * Clear is looking for a save whose reply was lost: Clear shows busy, and
+   * Dispense can't be pressed, so it never saves a list Clear is about to
+   * empty (rules › dispensing the visit).
+   */
+  looking: boolean;
   /**
    * A save is in flight or its reply was lost: the lines can't change, and
    * only Dispense is offered (rules › dispensing the visit).
@@ -106,7 +112,7 @@ export const DispensingList = (props: {
     <Button
       class={cls}
       icon={<CheckCircleIcon />}
-      disabled={!hasLines() || !props.canDispense}
+      disabled={!hasLines() || !props.canDispense || props.looking}
       loading={props.dispensing}
       data-testid={testId}
       onClick={() => props.onDispense()}
@@ -408,14 +414,18 @@ export const DispensingList = (props: {
             </Show>
             {/* The panel's actions, at its inline end, Dispense last. */}
             <div class={styles.actions}>
-              <Button
-                variant="ghost"
-                disabled={!hasLines() || props.locked}
-                data-testid="clear-list-button"
-                onClick={() => props.onClear()}
-              >
-                {t('common.clear')}
-              </Button>
+              {/* Hidden, not disabled, with nothing to clear (ui-surface S9). */}
+              <Show when={hasLines()}>
+                <Button
+                  variant="ghost"
+                  disabled={props.locked}
+                  loading={props.looking}
+                  data-testid="clear-list-button"
+                  onClick={() => props.onClear()}
+                >
+                  {t('common.clear')}
+                </Button>
+              </Show>
               {dispenseButton('dispense-button')}
             </div>
           </footer>

@@ -9,6 +9,8 @@ pub struct StringFilterInput {
     equal_to: Option<String>,
     /// Search term must be included in search candidate (case insensitive)
     like: Option<String>,
+    /// Search candidate must start with the search term (case insensitive)
+    starts_with: Option<String>,
 }
 
 impl From<StringFilterInput> for StringFilter {
@@ -19,7 +21,7 @@ impl From<StringFilterInput> for StringFilter {
             not_equal_to: None,
             equal_any: None,
             not_equal_all: None,
-            starts_with: None,
+            starts_with: f.starts_with,
             ends_with: None,
         }
     }

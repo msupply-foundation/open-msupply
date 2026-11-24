@@ -18,12 +18,12 @@ import { Toolbar } from '@/ui/layout/Header/Toolbar';
 import { Tabs, TabList, TabPanel } from '@/ui/elements/tabs/Tabs';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { useUrlQueryState } from '@/list/urlQueryState';
+import { useUrlTab } from '@/list/urlTab';
 import { initialPageSize } from '@/list/pageSize';
 import {
   DEFAULT_STATE,
-  DEFAULT_TAB,
   needsArrivalWindow,
-  tabFromParam,
+  TABS,
   widenToInclude,
   withDefaultWindow,
   type ListedBreach,
@@ -60,19 +60,13 @@ const MonitoringScreen: Component = () => {
   // destination's gates — the vaccine module, then SENSOR_QUERY — are applied
   // before this screen by the router (spec/navigation).
   const params = useParams<{ storeId: string }>();
-  const [searchParams, setSearchParams] = useSearchParams<{
-    tab?: string;
-    query?: string;
-  }>();
+  const [searchParams] = useSearchParams<{ query?: string }>();
   const { query, setQuery } = useUrlQueryState<MonitoringState>({
     ...DEFAULT_STATE,
     first: initialPageSize(),
   });
 
-  const tab = () => tabFromParam(searchParams.tab);
-  // The first tab carries no param, keeping the base URL clean.
-  const setTab = (value: string) =>
-    setSearchParams({ tab: value === DEFAULT_TAB ? undefined : value });
+  const { tab, setTab } = useUrlTab(TABS);
 
   // A pristine address adopts the default 24-hour window and records it in
   // the address, so every tab then shares it (rules › the chart). That is

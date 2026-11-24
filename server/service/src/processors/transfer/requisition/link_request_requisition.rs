@@ -1,6 +1,8 @@
 use crate::processors::transfer::requisition::RequisitionTransferOutput;
 
-use super::{RequisitionTransferProcessor, RequisitionTransferProcessorRecord};
+use super::{
+    RequisitionTransferProcessor, RequisitionTransferProcessorRecord, lock_requisition_row,
+};
 use repository::{
     RepositoryError, RequisitionRow, RequisitionRowRepository, RequisitionType, StorageConnection,
 };
@@ -43,12 +45,13 @@ impl RequisitionTransferProcessor for LinkRequestRequisitionProcessor {
             Some(linked_requisition) => linked_requisition,
             None => return Ok(RequisitionTransferOutput::NoLinkedRequisition),
         };
+        // The record's copy of the request can be out of date, see `try_process_record`
+        let Some(request_requisition_row) = lock_requisition_row(connection, request_requisition)?
+        else {
+            return Ok(RequisitionTransferOutput::NoLinkedRequisition);
+        };
         // 4.
-        if request_requisition
-            .requisition_row
-            .linked_requisition_id
-            .is_some()
-        {
+        if request_requisition_row.linked_requisition_id.is_some() {
             return Ok(RequisitionTransferOutput::LinkedRequisitionNotLinked);
         }
 
@@ -56,7 +59,7 @@ impl RequisitionTransferProcessor for LinkRequestRequisitionProcessor {
         let linked_request_requisition = RequisitionRow {
             // 5.
             linked_requisition_id: Some(response_requisition.requisition_row.id.clone()),
-            ..request_requisition.requisition_row.clone()
+            ..request_requisition_row
         };
 
         RequisitionRowRepository::new(connection).upsert_one(&linked_request_requisition)?;

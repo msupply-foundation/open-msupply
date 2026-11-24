@@ -7,8 +7,7 @@ import {
   type GraphqlErrorItem,
 } from '@/api/graphql';
 import { rejectionFrom, type Rejection } from '@/api/rejection';
-import { reportUnauthenticated } from '@/auth/authContext';
-import { formatFileSize, t } from '@/intl';
+import { t } from '@/intl';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { ErrorDetails } from '@/ui/elements/feedback/ErrorDetails';
@@ -19,17 +18,17 @@ import { Checkbox } from '@/ui/elements/inputs/Checkbox';
 import { UploadZone } from '@/ui/elements/inputs/UploadZone';
 import { Select } from '@/ui/elements/selectors/Select';
 import { Text } from '@/ui/elements/typography/Text';
-import type { FileRejection } from '@/ui/elements/inputs/uploadFiles';
+import {
+  chooseOne,
+  tooLargeMessage,
+  type FileRejection,
+} from '@/ui/elements/inputs/uploadFiles';
 import { HStack } from '@/ui/layout/Stack/HStack';
 import { Stack } from '@/ui/layout/Stack/Stack';
 import { CloseIcon, FileIcon } from '@/ui/icons';
 import { InstallUploadedPlugin, UploadedPluginInfo } from './plugins.generated';
-import {
-  BUNDLE_ACCEPT,
-  chooseBundle,
-  MAX_BUNDLE_BYTES,
-  uploadBundle,
-} from './bundleFile';
+import { BUNDLE_ACCEPT } from './bundleFile';
+import { MAX_UPLOAD_BYTES, uploadFile } from '@/api/postFiles';
 import {
   blankOldUiCandidates,
   canInstall,
@@ -164,7 +163,7 @@ export const UploadPluginDialog = (props: {
   // none whatever they are (rules › installing a bundle), which is why the
   // zone's combined `onPick` is used rather than its per-half callbacks.
   const pick = (accepted: File[], rejected: FileRejection<File>[]): void => {
-    const choice = chooseBundle(accepted, rejected);
+    const choice = chooseOne(accepted, rejected);
     if (choice.kind === 'chosen') {
       choose(choice.file);
     } else if (choice.kind === 'refused') {
@@ -191,13 +190,12 @@ export const UploadPluginDialog = (props: {
   // an ended session, an abort — stops here, as it does for every call: the
   // install is not sent to fail the same way again.
   const uploadAndRead = async (chosen: File): Promise<Uploaded | undefined> => {
-    const uploaded = await uploadBundle(chosen);
-    if (!uploaded.ok) {
-      setNotice({ kind: 'upload', status: uploaded.status });
-      // The upload is not a GraphQL call, so graphqlFetch never sees its
-      // session end: report it here, and the app's re-login modal opens over
-      // this dialog. The file stays chosen for the retry (OMS-REG-MNG-07.64).
-      if (uploaded.signedOut) reportUnauthenticated();
+    const uploaded = await uploadFile(chosen);
+    if (uploaded.kind === 'failed') {
+      setNotice({ kind: 'upload', status: uploaded.message });
+      // A signed-out upload has already opened the re-login modal over this
+      // dialog (uploadFile). The file stays chosen for the retry
+      // (OMS-REG-MNG-07.64).
       return undefined;
     }
     const info = await graphqlFetch(
@@ -293,10 +291,7 @@ export const UploadPluginDialog = (props: {
 
   const refusalText = (rejection: FileRejection<File>): string =>
     rejection.reason === 'size'
-      ? t('error.file-exceeds-size-limit', {
-          filename: rejection.file.name,
-          maxSize: formatFileSize(MAX_BUNDLE_BYTES),
-        })
+      ? tooLargeMessage(rejection.file.name, MAX_UPLOAD_BYTES)
       : t('error.plugin-invalid-file');
 
   // Install plugin waits for every choice the preview asks (rules › a bundle
@@ -437,7 +432,7 @@ export const UploadPluginDialog = (props: {
           <Text>{t('messages.plugin-upload-helper')}</Text>
           <UploadZone
             accept={BUNDLE_ACCEPT}
-            maxSize={MAX_BUNDLE_BYTES}
+            maxSize={MAX_UPLOAD_BYTES}
             multiple={false}
             disabled={running()}
             inputTestId="upload-plugin-file-input"

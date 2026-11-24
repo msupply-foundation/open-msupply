@@ -26,6 +26,7 @@ export const PREFERENCE_GROUPS = {
   },
   expiredStock: { id: 'expired-stock', labelKey: 'label.expired-stock' },
   backdating: { id: 'backdating', labelKey: 'label.backdating' },
+  dispensing: { id: 'dispensing', labelKey: 'dispensing' },
 } as const satisfies Record<string, PreferenceGroupDef>;
 
 export type PreferenceGroupLabelKey =

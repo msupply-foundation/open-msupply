@@ -27,3 +27,26 @@ export const saveFile = async (
   const { saveBlob } = await import('../platform/openDocument');
   return saveBlob(blob, fileName);
 };
+
+export type PrintResult = { ok: true } | { ok: false; message: string };
+
+/**
+ * Print an HTML document the plugin builds itself (a standalone page with its
+ * own `<style>`, `@media print` rules included): the system print dialog on the
+ * web, through a hidden frame so the app around the plugin isn't printed, and
+ * the OS print service on Android, whose WebView has no `window.print`. The
+ * same path the host's report Print takes. Never throws.
+ */
+export const printHtml = async (
+  html: string,
+  title: string
+): Promise<PrintResult> => {
+  const { printBlob } = await import('../platform/openDocument');
+  const result = await printBlob(
+    new Blob([html], { type: 'text/html' }),
+    title
+  );
+  return result.ok
+    ? { ok: true }
+    : { ok: false, message: result.message ?? 'Printing failed' };
+};

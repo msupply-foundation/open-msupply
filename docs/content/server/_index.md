@@ -165,7 +165,7 @@ See [Config section](#configs) for more info on yaml configurations.
 
 ## Dependencies
 
-When using Postgres, Postgres 12 or higher is required.
+When using Postgres, Postgres 13 or higher is required.
 
 ### Windows
 
@@ -316,6 +316,8 @@ See [Sync Integration Tests](service/src/sync/test/integration/README.md)
 Note, to speed-up tests database templates are used (Sqlite + Postrgres), e.g. to reuse fully migrated databases from previous tests.
 To disable this you can set the environment variable `MSUPPLY_NO_TEST_DB_TEMPLATE=true`.
 However, in general this should not be needed but might be useful if you suspect a bug in the test template code.
+
+Postgres test databases are kept after a run, so you can look at one after a failure. A full run leaves many GB of them; set `MSUPPLY_DROP_TEST_DBS=true` to drop each test's database when it finishes (CI does this).
 
 ## Building docs
 

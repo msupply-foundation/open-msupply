@@ -23,6 +23,7 @@ pub struct StocktakeLineFilterInput {
     pub donor_id: Option<EqualFilterStringInput>,
     pub campaign_id: Option<EqualFilterStringInput>,
     pub batch: Option<StringFilterInput>,
+    pub expiry_date: Option<DateFilterInput>,
     pub manufacture_date: Option<DateFilterInput>,
     pub campaign_name: Option<StringFilterInput>,
 }
@@ -39,6 +40,7 @@ impl From<StocktakeLineFilterInput> for StocktakeLineFilter {
             donor_id: f.donor_id.map(EqualFilter::from),
             campaign_id: f.campaign_id.map(EqualFilter::from),
             batch: f.batch.map(StringFilterInput::into),
+            expiry_date: f.expiry_date.map(DateFilter::from),
             manufacture_date: f.manufacture_date.map(DateFilter::from),
             campaign_name: f.campaign_name.map(StringFilterInput::into),
         }
