@@ -433,8 +433,11 @@ export const countTooLow = (
  * The packs a count adds to its batch: the difference in units, in that
  * batch's packs, fractional where a pack splits. The stock afterwards must be
  * the count exactly, or the counted amount still can't be given. So the packs
- * are rounded only where the rounded packs still make the difference: 10 units
- * on packs of 30 is 1/3 of a pack, and 0.333333333 packs would make 9.99999999.
+ * are rounded only where the rounded packs make the difference to within float
+ * error: 10 units on packs of 30 is 1/3 of a pack, and 0.333333333 packs would
+ * make 9.99999999. The check is tighter than 9 decimals because the batch
+ * already holds packs of its own, fractional where its pack size is (1.5, 2.5),
+ * and an error just under the 9th decimal can carry once they are added.
  */
 export const correctionPacks = (
   count: number,
@@ -444,7 +447,7 @@ export const correctionPacks = (
   const difference = count - figure;
   const packs = difference / packSize;
   const rounded = round9(packs);
-  return round9(rounded * packSize) === round9(difference) ? rounded : packs;
+  return Math.abs(rounded * packSize - difference) < 1e-11 ? rounded : packs;
 };
 
 /**

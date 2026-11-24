@@ -1519,7 +1519,8 @@ describe('correcting the stock', () => {
   });
 
   it('OMS-REG-DIS-12.252: the stock afterwards is the count exactly, even where the pack size does not divide the difference', () => {
-    // [count, figure, pack size]: packs of 30 or 28 tablets are common.
+    // [count, figure, pack size]: packs of 30 or 28 tablets are common, and
+    // a fractional pack size leaves the batch holding fractional packs.
     const cases: [number, number, number][] = [
       [10, 0, 30],
       [50, 40, 30],
@@ -1528,11 +1529,17 @@ describe('correcting the stock', () => {
       [7, 2.5, 28],
       [13, 0, 7],
       [100, 0, 0.5],
+      [1.05, 1, 1.5],
+      [316.52, 145, 1.5],
+      [12.3, 4.1, 2.5],
+      [9.9, 2.2, 1.1],
     ];
     for (const [count, figure, packSize] of cases) {
       const packs = correctionPacks(count, figure, packSize);
-      // What the screen then has: the batch's packs back in units.
-      expect(round9(figure + packs * packSize)).toBe(count);
+      // What the screen then works out: the batch's packs (what it held, plus
+      // what was added) back in units, as the server stores them.
+      const held = figure / packSize;
+      expect(round9((held + packs) * packSize)).toBe(count);
     }
   });
 

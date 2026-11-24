@@ -6,6 +6,7 @@ import {
   reportPermissionDenied,
 } from '@/api/graphql';
 import { gated } from '@/api/gated';
+import { round9 } from '@/domain/allocation';
 import { rejectionFrom } from '@/api/rejection';
 import { roundedText, t, type LocaleKey } from '@/intl';
 import { translateServerError } from '@/intl/intlUtils';
@@ -91,6 +92,9 @@ export const CorrectStockDialog = (props: {
   // A save lost its reply and the stock couldn't be read after it, so it may
   // have landed: saving again could add the stock twice.
   const [unsure, setUnsure] = createSignal(false);
+  // The stock changed between showing its figure and Save, so nothing was
+  // saved: staff check the count against the new figure and save again.
+  const [changed, setChanged] = createSignal<string | undefined>();
   const countField = createFocusTarget();
 
   // The medicine's batches, or null when they couldn't be read. Background:
@@ -143,6 +147,7 @@ export const CorrectStockDialog = (props: {
     if (!canSave() || counted === undefined) return;
     setSaving(true);
     setError(undefined);
+    setChanged(undefined);
     try {
       await saveCount(counted);
     } finally {
@@ -151,15 +156,23 @@ export const CorrectStockDialog = (props: {
   };
 
   const saveCount = async (counted: number) => {
-    // The stock again, as it is now: the counter may have given some out, or
-    // stock come in, since the dialog opened. The dialog then shows this
-    // figure, and if the count is no longer above it, the count field says
-    // why, and nothing is saved.
+    // The stock again, as it is now: another counter may have given some out,
+    // or stock come in, since the figure was shown. If it changed, nothing is
+    // saved: whether the count was made before or after that change, only
+    // staff know, so they check it against the new figure and save again
+    // (rules › correcting the stock).
+    const prefs = prescriptionPreferences();
+    const before = figure();
     const now = await readBatches();
     if (now === null) return setError(t('error.correct-stock-not-read'));
     setBatches(now);
-    const prefs = prescriptionPreferences();
     const shown = systemFigure(now, prefs);
+    if (round9(shown) !== round9(before))
+      return setChanged(
+        unitText('messages.correct-stock-changed', {
+          quantity: roundedText(shown),
+        })
+      );
     const target = correctionBatch(now, prefs);
     if (!target || !canSaveCount(counted, shown)) return;
     const result = await graphqlFetch(
@@ -218,7 +231,22 @@ export const CorrectStockDialog = (props: {
       testId="correct-stock-modal"
       initialFocus={countField}
       actionsLead={
-        <Show when={error()}>
+        <Show
+          when={error()}
+          fallback={
+            <Show when={changed()}>
+              {message => (
+                <Alert
+                  severity="warning"
+                  compact
+                  testId="correct-stock-changed"
+                >
+                  {message()}
+                </Alert>
+              )}
+            </Show>
+          }
+        >
           {message => (
             <Alert severity="error" compact testId="correct-stock-error">
               {message()}

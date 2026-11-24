@@ -901,7 +901,13 @@ const SimpleDispensingPage: Component = () => {
             itemId={opened.itemId}
             name={cardOf(opened.itemId)?.item.name ?? ''}
             unit={cardOf(opened.itemId)?.item.unitName ?? ''}
-            onClose={() => setCorrecting(undefined)}
+            // Closed without saving: the medicine is read again anyway, since
+            // the dialog may have found the stock changed, or a save whose
+            // reply was lost may have landed, and the screen should show it.
+            onClose={() => {
+              setCorrecting(undefined);
+              void readAgain(opened.itemId);
+            }}
             onSaved={count => corrected(opened, count)}
           />
         )}

@@ -2975,6 +2975,7 @@
   "messages.correct-stock-lower": "That is less than the system shows. Correcting the stock here can only add to it.",
   "messages.correct-stock-what-to-count": "Don't count stock that is on hold, expired or set aside for another patient.",
   "messages.correct-stock-same": "That is what the system already shows, so there is nothing to correct.",
+  "messages.correct-stock-changed": "The stock changed while this was open: the system now shows {{quantity}} {{unit}}. Check your count, then save again.",
   "messages.correct-stock-no-batch": "There is no batch of {{item}} to add the count to. Receive the stock, or add it from Stock, first.",
   "messages.correct-stock-shows": "The system shows {{quantity}} {{unit}}.",
   "messages.correct-stock-shows-none": "The system shows none in stock.",
