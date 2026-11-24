@@ -50,6 +50,10 @@ export interface PickedDateFieldProps {
    * keeps showing the chosen day until then, so the confirmed pick never
    * flickers back to the old day for the save round-trip. */
   onBackdate: (backdatedDatetime: string) => Promise<void>;
+  /** The line delete before a backdate failed or its outcome is unknown
+   * (a lost reply may still have committed) — the parent refetches the lines
+   * and totals so the page shows what the server holds. */
+  onLinesChanged: () => Promise<void>;
 }
 
 export const PickedDateField: Component<PickedDateFieldProps> = props => {
@@ -114,7 +118,10 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
   };
 
   // Confirmed: lines first (when there were any), then the backdate. The
-  // draft holds the chosen day until the node reflects the save.
+  // draft holds the chosen day until the node reflects the save. A failed
+  // delete stops before the backdate but still refreshes the page: a lost
+  // reply may have committed, and the table must not keep showing deleted
+  // lines (onBackdate refreshes on the success path).
   const applyConfirmed = async (info: {
     backdatedDatetime: string;
     warningKeys: BackdateWarningKey[];
@@ -122,7 +129,10 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
     const hasLines = info.warningKeys.includes(
       'messages.confirm-backdate-picked-date'
     );
-    if (hasLines && !(await deleteAllLines())) return;
+    if (hasLines && !(await deleteAllLines())) {
+      await props.onLinesChanged();
+      return;
+    }
     await props.onBackdate(info.backdatedDatetime);
   };
 

@@ -1115,6 +1115,7 @@ const OutboundDetailView: Component = () => {
                     // page must follow, like any other line-level change.
                     if ('backdatedDatetime' in patch) await refetchAfterSave();
                   }}
+                  onLinesChanged={refetchAfterSave}
                 />
               }
               header={
