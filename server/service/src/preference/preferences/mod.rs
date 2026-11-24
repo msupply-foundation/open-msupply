@@ -98,6 +98,8 @@ pub mod global_logo;
 pub use global_logo::*;
 pub mod decimal_places_for_numbers;
 pub use decimal_places_for_numbers::*;
+pub mod report_store_tags;
+pub use report_store_tags::*;
 
 pub struct PreferenceProvider {
     // Global preferences

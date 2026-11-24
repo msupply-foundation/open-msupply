@@ -42,6 +42,7 @@ query allReportVersions(
         version
         isActive
         isCustom
+        storeTagIds
       }
     }
     ... on QueryReportsError {
@@ -79,21 +80,37 @@ mutation installUploadedReports($fileId: String!) {
   }
 }
 
-# Change one version's active state — the ENTIRE mutable surface of an
-# installed report (contract.md § activation). `UpdateReportInput` is
-# `{ id, isActive }`: no other field of a report is writable anywhere in the
-# schema, which is why the editor shows everything else read-only.
+# Change one version's active state and its report's store tags — the ENTIRE
+# mutable surface of an installed report (contract.md § activation, § store
+# tags). `UpdateReportInput` is `{ id, isActive, storeTagIds }`: no other field
+# of a report is writable anywhere in the schema, which is why the editor shows
+# everything else read-only. Store tags apply to the report's code, so to every
+# version.
 #
-# Its one domain rejection — an id that is not an installed version — arrives
-# as an untyped top-level `Bad user input` with extensions.details "Report not
-# found", so the caller opts into returnGraphqlErrors.
+# Its domain rejections — an id that is not an installed version, a store tag
+# that doesn't exist — arrive as untyped top-level `Bad user input` errors
+# with extensions.details "Report not found" / "Store tag not found: <id>", so
+# the caller opts into returnGraphqlErrors.
 mutation updateReport($input: UpdateReportInput!) {
   centralServer {
     reports {
       updateReport(input: $input) {
         id
         isActive
+        storeTagIds
       }
+    }
+  }
+}
+
+# The store tag picker's options: every name tag (maintained in legacy
+# mSupply), sorted by name. A report's store tags decide which stores see it on
+# the Reports page before Show more (rules.md § store tags).
+query nameTags($storeId: String!) {
+  nameTags(storeId: $storeId) {
+    nodes {
+      id
+      name
     }
   }
 }

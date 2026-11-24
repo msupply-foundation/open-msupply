@@ -1,8 +1,8 @@
-import { createMemo, createResource, For, Show } from 'solid-js';
+import { createMemo, createResource, createSignal, For, Show } from 'solid-js';
 import type { Component, JSX } from 'solid-js';
 import { useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
-import { locale, t } from '../../../intl';
+import { formatNumber, locale, t, tPlural } from '../../../intl';
 import type { LocaleKey } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
@@ -35,6 +35,7 @@ import type {
   ReportsVariables,
 } from '../../../domain/reports/reports.generated';
 import { reportLabel } from '../../../domain/reports';
+import { hiddenReportCount, shownReports } from './shownFirst';
 
 // S1 — the Reports dashboard (spec/reports S1, OMS-REG-RPT-07.9/.10). NOT a
 // list screen: a widget dashboard of clickable report cards grouped into
@@ -163,6 +164,18 @@ const ReportsPage: Component = () => {
   );
 
   const reports = (): ReportNode[] => reportsRes.latest ?? [];
+  // The categories whose Show more is pressed: each lists the reports the
+  // store isn't given first, until pressed again or the page is left (spec
+  // S1, OMS-REG-RPT-07.20). Keyed by the category's title key.
+  const [expanded, setExpanded] = createSignal<ReadonlySet<LocaleKey>>(
+    new Set()
+  );
+  const toggleExpanded = (key: LocaleKey) => {
+    const next = new Set(expanded());
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    setExpanded(next);
+  };
   const programModule = (): boolean =>
     !!storeContext()?.storePreferences.omProgramModule;
 
@@ -172,24 +185,36 @@ const ReportsPage: Component = () => {
     const module = programModule();
     return CATEGORIES.map(def => {
       const gatedOff = def.gate === 'programs' && !module;
-      const nodes = gatedOff
+      const eligible = gatedOff
         ? []
         : reports().filter(
             r => r.subContext != null && def.subContexts.includes(r.subContext)
           );
-      return { def, nodes };
+      const isExpanded = expanded().has(def.titleKey);
+      return {
+        def,
+        isExpanded,
+        // The category's held-back reports: the N in its Show N more
+        // (OMS-REG-RPT-07.16, .20).
+        hidden: hiddenReportCount(eligible),
+        nodes: shownReports(eligible, isExpanded),
+        eligible,
+      };
     });
   });
 
-  // Total cards across every eligible category — 0 means "no reports available"
-  // (the whole-page empty state, spec S1).
+  // Total reports across every eligible category, hidden ones included — 0
+  // means "no reports available" (the whole-page empty state, spec S1). A
+  // store whose every report is hidden still gets the page and the categories'
+  // Show more, not the empty state.
   const totalShown = (): number =>
-    grouped().reduce((n, g) => n + g.nodes.length, 0);
+    grouped().reduce((n, g) => n + g.eligible.length, 0);
 
   // Panels that render: primary categories always (even empty), Other/Programs
-  // only when they hold cards (spec S1 gating table).
+  // only when they hold reports (spec S1 gating table) — hidden ones count, so
+  // a category whose every report is held back still offers its Show more.
   const visible = () =>
-    grouped().filter(g => g.def.gate === 'primary' || g.nodes.length > 0);
+    grouped().filter(g => g.def.gate === 'primary' || g.eligible.length > 0);
 
   const prefs = () => storeContext()?.storePreferences;
 
@@ -280,24 +305,50 @@ const ReportsPage: Component = () => {
         {/* One DashboardCard per category in the generic Card grid, mirroring
             the landing dashboard (spec S1 layout): the category's captured
             icon chip on the card title, its iconless report cards stacked as
-            full-width rows inside. */}
+            full-width rows inside. Keyed by the category's fixed definition,
+            not the group object rebuilt on every toggle, so pressing Show more
+            doesn't remount the tiles and lose the button's focus
+            (kdd/solid-reactivity-pitfalls). */}
         <CardGrid>
-          <For each={visible()}>
-            {group => (
-              <DashboardCard
-                title={t(group.def.titleKey)}
-                icon={group.def.icon()}
-              >
-                <For each={group.nodes}>
-                  {report => (
-                    <WidgetCard
-                      title={reportLabel(report)}
-                      href={`/${params.storeId}/reports/${report.id}`}
-                    />
-                  )}
-                </For>
-              </DashboardCard>
-            )}
+          <For each={visible().map(g => g.def)}>
+            {def => {
+              const group = () => grouped().find(g => g.def === def)!;
+              return (
+                <DashboardCard
+                  title={t(def.titleKey)}
+                  icon={def.icon()}
+                  footer={
+                    // Only in a category holding reports back; it toggles
+                    // that category alone (OMS-REG-RPT-07.20).
+                    <Show when={group().hidden > 0}>
+                      <Button
+                        variant="ghost"
+                        data-testid="reports-show-more-toggle"
+                        aria-expanded={group().isExpanded}
+                        onClick={() => toggleExpanded(def.titleKey)}
+                      >
+                        {group().isExpanded
+                          ? t('button.show-fewer-reports')
+                          : tPlural(
+                              'button.show-more-reports',
+                              group().hidden,
+                              { count: formatNumber(group().hidden) }
+                            )}
+                      </Button>
+                    </Show>
+                  }
+                >
+                  <For each={group().nodes}>
+                    {report => (
+                      <WidgetCard
+                        title={reportLabel(report)}
+                        href={`/${params.storeId}/reports/${report.id}`}
+                      />
+                    )}
+                  </For>
+                </DashboardCard>
+              );
+            }}
           </For>
         </CardGrid>
       </Show>
