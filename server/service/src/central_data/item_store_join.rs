@@ -14,10 +14,7 @@ use super::{
 };
 use crate::{
     i64_to_u32,
-    item_store_join::{
-        UpsertItemStoreJoinError, delete_item_store_join, find_item_store_joins,
-        upsert_item_store_join,
-    },
+    item_store_join::{UpsertItemStoreJoinError, delete_item_store_join, upsert_item_store_join},
 };
 use repository::{
     ItemRow, ItemRowRepository, ItemStoreJoinFilter, ItemStoreJoinRow, ItemStoreJoinRowRepository,
@@ -329,7 +326,8 @@ impl ItemStoreJoinSheet {
         store_id: Option<&str>,
     ) -> Result<Result<Option<ItemStoreJoinRow>, RowError>, RepositoryError> {
         let by_key = || match (item_id, store_id) {
-            (Some(item_id), Some(store_id)) => find_item_store_joins(connection, item_id, store_id),
+            (Some(item_id), Some(store_id)) => ItemStoreJoinRowRepository::new(connection)
+                .find_by_item_and_store(item_id, store_id),
             _ => Ok(Vec::new()),
         };
         find_by_id_or_composite_key(

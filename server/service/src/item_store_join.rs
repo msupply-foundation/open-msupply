@@ -52,16 +52,6 @@ pub fn delete_item_store_join(
     ItemStoreJoinRowRepository::new(connection).delete(id)
 }
 
-/// The joins between the item and the store, in id order: one, unless legacy mSupply sent more or
-/// merging two items left both.
-pub fn find_item_store_joins(
-    connection: &StorageConnection,
-    item_id: &str,
-    store_id: &str,
-) -> Result<Vec<ItemStoreJoinRow>, RepositoryError> {
-    ItemStoreJoinRowRepository::new(connection).find_by_item_and_store(item_id, store_id)
-}
-
 /// Only what the save changes is checked, so a saved join that no longer passes, such as one with
 /// a negative price, stays editable.
 fn validate(
@@ -103,7 +93,8 @@ fn validate(
         return Err(UpsertItemStoreJoinError::NegativePrice);
     }
     if (item_changes || store_changes)
-        && let Some(other) = find_item_store_joins(connection, &row.item_id, &row.store_id)?
+        && let Some(other) = ItemStoreJoinRowRepository::new(connection)
+            .find_by_item_and_store(&row.item_id, &row.store_id)?
             .into_iter()
             .find(|other| other.id != row.id)
     {
@@ -248,14 +239,10 @@ mod tests {
         .unwrap();
 
         delete_item_store_join(&connection, "a").unwrap();
+        let repo = ItemStoreJoinRowRepository::new(&connection);
+        assert_eq!(repo.find_by_item_and_store("para", "store").unwrap(), []);
         assert_eq!(
-            find_item_store_joins(&connection, "para", "store").unwrap(),
-            []
-        );
-        assert_eq!(
-            find_item_store_joins(&connection, "ibu", "store")
-                .unwrap()
-                .len(),
+            repo.find_by_item_and_store("ibu", "store").unwrap().len(),
             1
         );
         // Deleting a join that isn't there does nothing.
