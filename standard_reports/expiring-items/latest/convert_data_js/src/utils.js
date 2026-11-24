@@ -6,19 +6,16 @@ const processStockLines = (nodes, sort, dir) => {
 
   filteredNodes.forEach(line => {
     const daysUntilExpiredFloat = calculateDaysUntilExpired(line?.expiryDate);
-    const expectedUsage = calculateExpectedUsage(daysUntilExpiredFloat, line);
-    if (!!expectedUsage) {
-      line.expectedUsage = expectedUsage;
-    }
-    const stockAtRisk = calculateStockAtRisk(
-      line?.packSize,
-      line?.totalNumberOfPacks,
-      line?.item?.stats?.averageMonthlyConsumption,
-      daysUntilExpiredFloat
-    );
-    if (!!stockAtRisk) {
-      line.stockAtRisk = stockAtRisk;
-    }
+    // null rather than undefined when there's no figure, so the template can tell it from 0
+    line.expectedUsage =
+      calculateExpectedUsage(daysUntilExpiredFloat, line) ?? null;
+    line.stockAtRisk =
+      calculateStockAtRisk(
+        line?.packSize,
+        line?.totalNumberOfPacks,
+        line?.item?.stats?.averageMonthlyConsumption,
+        daysUntilExpiredFloat
+      ) ?? null;
     // null rather than undefined when there's no expiry date, so the template can tell it from 0
     line.daysUntilExpired = roundDaysToInteger(daysUntilExpiredFloat) ?? null;
     line.averageMonthlyConsumption =
