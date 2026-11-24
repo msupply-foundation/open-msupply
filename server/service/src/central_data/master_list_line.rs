@@ -5,7 +5,7 @@ use super::{
     delete::{DELETE_COLUMN, already_deleted_as, check_delete, is_delete},
     field_changes,
     lookup::{
-        InMemory, KeyPart, KeyedTable, NOT_FOUND, SavedCode, find_by_id_or_composite_key,
+        InMemory, KeyPart, KeyedTable, NOT_FOUND, SavedCode, differs, find_by_id_or_composite_key,
         find_reference, key_conflict, key_or,
     },
     master_list_refs::{
@@ -280,12 +280,12 @@ impl MasterListLineSheet {
                 let parts = [
                     master_list_part(&self.master_lists, master_list_id, &saved.master_list_id),
                     KeyPart {
-                        changed: item_id.is_some_and(|item_id| item_id != saved.item_id),
+                        changed: differs(item_id, &saved.item_id),
                         code_column: ITEM_CODE,
                         id_column: ITEM_ID,
                         saved_id: &saved.item_id,
-                        saved_code: SavedCode::Read(&|item: &Option<ItemRow>| {
-                            key_or(item.as_ref(), &saved.item_id).to_string()
+                        saved_code: SavedCode::Read(|item: &Option<ItemRow>| {
+                            item.as_ref().map(|item| item.code.as_str())
                         }),
                     },
                 ];

@@ -404,8 +404,33 @@ pub struct KeyPart<'a, D> {
 pub enum SavedCode<'a, D> {
     /// Already known, such as from a table read once.
     Known(&'a str),
-    /// From what `key_conflict`'s `describe` read, such as an item's code.
-    Read(&'a dyn Fn(&D) -> String),
+    /// From what `key_conflict`'s `describe` read, such as an item's code; `saved_id` when that
+    /// found no record, as `key_or` does.
+    Read(fn(&D) -> Option<&str>),
+}
+
+impl<'a, D> KeyPart<'a, D> {
+    /// A reference to a table read once, so its saved code is known.
+    pub fn in_memory<R: Keyed + Clone>(
+        records: &'a InMemory<R>,
+        changed: bool,
+        code_column: &'a str,
+        id_column: &'a str,
+        saved_id: &'a str,
+    ) -> Self {
+        KeyPart {
+            changed,
+            code_column,
+            id_column,
+            saved_id,
+            saved_code: SavedCode::Known(records.key_or_id(saved_id)),
+        }
+    }
+}
+
+/// Whether a row's reference, `None` when it gives none, is another than the saved record's.
+pub fn differs(given: Option<&str>, saved: &str) -> bool {
+    given.is_some_and(|given| given != saved)
 }
 
 /// `check` for `find_by_id_or_composite_key`, for a table keyed by references: the conflict on the
@@ -430,9 +455,9 @@ pub fn key_conflict<D>(
             row,
             (
                 part.code_column,
-                &match part.saved_code {
-                    SavedCode::Known(code) => code.to_string(),
-                    SavedCode::Read(code) => code(&described),
+                match part.saved_code {
+                    SavedCode::Known(code) => code,
+                    SavedCode::Read(code) => code(&described).unwrap_or(part.saved_id),
                 },
             ),
             (part.id_column, part.saved_id),

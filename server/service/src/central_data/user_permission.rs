@@ -4,8 +4,8 @@ use super::{
     cells::{Row, RowError, collect},
     delete::{DELETE_COLUMN, already_deleted_as, check_delete, is_delete},
     lookup::{
-        InMemory, KeyPart, NOT_FOUND, SavedCode, active_first, find_by_id_or_composite_key,
-        find_reference, key_conflict, key_or, read_contexts,
+        InMemory, KeyPart, NOT_FOUND, SavedCode, active_first, differs,
+        find_by_id_or_composite_key, find_reference, key_conflict, key_or, read_contexts,
     },
     sheet::Value,
     sorted_by, stores_with_names,
@@ -288,11 +288,12 @@ impl UserPermissionSheet {
             None => Ok(Vec::new()),
         };
         // Blank context is none, except on a `DELETE` row. Blank store keeps the saved one.
-        let differs = |given: &Reference, saved: &Option<String>, blank_keeps: bool| match given {
-            None => false,
-            Some(None) if blank_keeps => false,
-            Some(given) => given != saved,
-        };
+        let reference_differs =
+            |given: &Reference, saved: &Option<String>, blank_keeps: bool| match given {
+                None => false,
+                Some(None) if blank_keeps => false,
+                Some(given) => given != saved,
+            };
         find_by_id_or_composite_key(
             row,
             id,
@@ -303,23 +304,20 @@ impl UserPermissionSheet {
                 let saved_store = saved.store_id.as_deref().unwrap_or_default();
                 let saved_context = saved.context_id.as_deref().unwrap_or_default();
                 let parts = [
-                    KeyPart {
-                        changed: key
-                            .user_id
-                            .as_ref()
-                            .is_some_and(|user| *user != saved.user_id),
-                        code_column: USERNAME,
-                        id_column: USER_ID,
-                        saved_id: &saved.user_id,
-                        saved_code: SavedCode::Known(self.users.key_or_id(&saved.user_id)),
-                    },
-                    KeyPart {
-                        changed: differs(&key.store_id, &saved.store_id, true),
-                        code_column: STORE_CODE,
-                        id_column: STORE_ID,
-                        saved_id: saved_store,
-                        saved_code: SavedCode::Known(self.stores.key_or_id(saved_store)),
-                    },
+                    KeyPart::in_memory(
+                        &self.users,
+                        differs(key.user_id.as_deref(), &saved.user_id),
+                        USERNAME,
+                        USER_ID,
+                        &saved.user_id,
+                    ),
+                    KeyPart::in_memory(
+                        &self.stores,
+                        reference_differs(&key.store_id, &saved.store_id, true),
+                        STORE_CODE,
+                        STORE_ID,
+                        saved_store,
+                    ),
                     // No id column: a permission is its own code.
                     KeyPart {
                         changed: key
@@ -331,17 +329,13 @@ impl UserPermissionSheet {
                         saved_id: saved.permission.as_ref(),
                         saved_code: SavedCode::Known(saved.permission.as_ref()),
                     },
-                    KeyPart {
-                        changed: differs(&key.context_id, &saved.context_id, delete),
-                        code_column: CONTEXT_NAME,
-                        id_column: CONTEXT_ID,
-                        saved_id: saved_context,
-                        saved_code: SavedCode::Known(
-                            self.contexts
-                                .get(saved_context)
-                                .map_or("", |context| context.name.as_str()),
-                        ),
-                    },
+                    KeyPart::in_memory(
+                        &self.contexts,
+                        reference_differs(&key.context_id, &saved.context_id, delete),
+                        CONTEXT_NAME,
+                        CONTEXT_ID,
+                        saved_context,
+                    ),
                 ];
                 key_conflict(row, found, &saved.id, id, &parts, || {
                     Ok((self.record(saved), ()))

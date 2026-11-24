@@ -3,7 +3,7 @@
 //! the server needs it as it is.
 use super::{
     cells::{Row, RowError},
-    lookup::{InMemory, KeyPart, NOT_FOUND, SavedCode, active_first, find_reference},
+    lookup::{InMemory, KeyPart, NOT_FOUND, active_first, differs, find_reference},
 };
 use repository::{
     EqualFilter, MasterListRow, MasterListRowRepository, RepositoryError, StorageConnection,
@@ -83,11 +83,11 @@ pub(super) fn master_list_part<'a, D>(
     given: Option<&str>,
     saved_id: &'a str,
 ) -> KeyPart<'a, D> {
-    KeyPart {
-        changed: given.is_some_and(|given| given != saved_id),
-        code_column: MASTER_LIST_NAME,
-        id_column: MASTER_LIST_ID,
+    KeyPart::in_memory(
+        master_lists,
+        differs(given, saved_id),
+        MASTER_LIST_NAME,
+        MASTER_LIST_ID,
         saved_id,
-        saved_code: SavedCode::Known(master_lists.key_or_id(saved_id)),
-    }
+    )
 }

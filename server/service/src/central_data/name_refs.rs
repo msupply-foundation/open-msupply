@@ -4,7 +4,7 @@
 //! finds its name its own way, as its type defaults to STORE.
 use super::{
     cells::{Row, RowError},
-    lookup::{NamesOfType, active_first, find_reference},
+    lookup::{KeyPart, NamesOfType, SavedCode, active_first, differs, find_reference},
     name::type_label,
     name_with_code,
 };
@@ -70,5 +70,20 @@ pub(super) fn name_error(
             ),
         )),
         _ => None,
+    }
+}
+
+/// The name in a join's lookup key, for `key_conflict`, whose `describe` reads the saved join's
+/// name. `given` is the row's.
+pub(super) fn name_part<'a>(
+    given: Option<&str>,
+    saved_id: &'a str,
+) -> KeyPart<'a, Option<NameRow>> {
+    KeyPart {
+        changed: differs(given, saved_id),
+        code_column: NAME_CODE,
+        id_column: NAME_ID,
+        saved_id,
+        saved_code: SavedCode::Read(|name| name.as_ref().map(|name| name.code.as_str())),
     }
 }

@@ -3,15 +3,13 @@ use super::{
     SheetImport, SheetStart,
     cells::{Row, RowError, choice_cell, collect},
     delete::{DELETE_COLUMN, already_deleted_as, check_delete, is_delete},
-    lookup::{
-        InMemory, KeyPart, NOT_FOUND, SavedCode, find_by_id_or_composite_key, key_conflict, key_or,
-    },
+    lookup::{InMemory, NOT_FOUND, find_by_id_or_composite_key, key_conflict},
     master_list_refs::{
         MASTER_LIST_ID, MASTER_LIST_NAME, check_not_placeholder, find_master_list,
         master_list_part, not_found_error, not_placeholder, protected_error, read_master_lists,
     },
     name::{TYPES as NAME_TYPES, type_label},
-    name_refs::{NAME_CODE, NAME_ID, NAME_NAME, NAME_TYPE, find_name, name_error},
+    name_refs::{NAME_CODE, NAME_ID, NAME_NAME, NAME_TYPE, find_name, name_error, name_part},
     name_with_code,
     sheet::Value,
     sorted_by,
@@ -273,15 +271,7 @@ impl MasterListNameJoinSheet {
             |saved, found, id| {
                 let parts = [
                     master_list_part(&self.master_lists, master_list_id, &saved.master_list_id),
-                    KeyPart {
-                        changed: name_id.is_some_and(|name_id| name_id != saved.name_id),
-                        code_column: NAME_CODE,
-                        id_column: NAME_ID,
-                        saved_id: &saved.name_id,
-                        saved_code: SavedCode::Read(&|name: &Option<NameRow>| {
-                            key_or(name.as_ref(), &saved.name_id).to_string()
-                        }),
-                    },
+                    name_part(name_id, &saved.name_id),
                 ];
                 // The saved join's name, read only to describe a conflict.
                 key_conflict(row, found, &saved.id, id, &parts, || {

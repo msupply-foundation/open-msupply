@@ -5,11 +5,11 @@ use super::{
     delete::{DELETE_COLUMN, already_deleted, check_delete, is_delete},
     field_changes,
     lookup::{
-        Found, InMemory, KeyPart, NOT_FOUND, SavedCode, find_by_id_or_composite_key,
-        find_reference, key_conflict, key_or,
+        Found, InMemory, KeyPart, NOT_FOUND, differs, find_by_id_or_composite_key, find_reference,
+        key_conflict, key_or,
     },
     name::{TYPES as NAME_TYPES, type_label},
-    name_refs::{NAME_CODE, NAME_ID, NAME_NAME, NAME_TYPE, find_name, name_error},
+    name_refs::{NAME_CODE, NAME_ID, NAME_NAME, NAME_TYPE, find_name, name_error, name_part},
     name_with_code,
     sheet::Value,
     stores_with_names,
@@ -304,22 +304,14 @@ impl NameStoreJoinSheet {
                 }
                 let store = self.stores.get(&saved.store_id);
                 let parts = [
-                    KeyPart {
-                        changed: store_id.is_some_and(|store_id| store_id != saved.store_id),
-                        code_column: STORE_CODE,
-                        id_column: STORE_ID,
-                        saved_id: &saved.store_id,
-                        saved_code: SavedCode::Known(key_or(store, &saved.store_id)),
-                    },
-                    KeyPart {
-                        changed: name_id.is_some_and(|name_id| name_id != saved.name_id),
-                        code_column: NAME_CODE,
-                        id_column: NAME_ID,
-                        saved_id: &saved.name_id,
-                        saved_code: SavedCode::Read(&|name: &Option<NameRow>| {
-                            key_or(name.as_ref(), &saved.name_id).to_string()
-                        }),
-                    },
+                    KeyPart::in_memory(
+                        &self.stores,
+                        differs(store_id, &saved.store_id),
+                        STORE_CODE,
+                        STORE_ID,
+                        &saved.store_id,
+                    ),
+                    name_part(name_id, &saved.name_id),
                 ];
                 // The saved join's name, read only to describe a conflict.
                 key_conflict(row, found, &saved.id, id, &parts, || {
