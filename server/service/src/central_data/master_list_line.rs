@@ -186,7 +186,7 @@ impl SheetImport for MasterListLineSheet {
         if delete {
             // Named by the row's master list and item, as found.
             let missing = match (&master_list_id, &item_id) {
-                (Some(master_list_id), Some(item_id)) if saved.is_none() => {
+                (Some(master_list_id), Some(item_id)) => {
                     self.record(master_list_id, item_id, item.as_ref())
                 }
                 _ => id.clone().unwrap_or_default(),

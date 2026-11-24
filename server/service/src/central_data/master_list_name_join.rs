@@ -190,7 +190,7 @@ impl SheetImport for MasterListNameJoinSheet {
         if delete {
             // Named by the row's master list and name, as found.
             let missing = match (&master_list_id, &name_id) {
-                (Some(master_list_id), Some(name_id)) if existing.is_none() => {
+                (Some(master_list_id), Some(name_id)) => {
                     self.record(master_list_id, name.as_ref(), name_id)
                 }
                 _ => id.clone().unwrap_or_default(),
