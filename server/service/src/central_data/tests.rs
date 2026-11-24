@@ -6869,6 +6869,14 @@ async fn a_name_store_join_row_cannot_change_its_store_or_name() {
     let ctx = service_provider.basic_context().unwrap();
     // Two joins for one store and name, as legacy data can have.
     add_join(&connection, "join_clinic_2", "store_main", "clinic");
+    StoreRowRepository::new(&connection)
+        .upsert_one(&StoreRow {
+            id: "store_ward".to_string(),
+            code: "WD".to_string(),
+            name_id: "clinic".to_string(),
+            ..Default::default()
+        })
+        .unwrap();
 
     let path = write_file(
         dir.path(),
@@ -6892,6 +6900,7 @@ async fn a_name_store_join_row_cannot_change_its_store_or_name() {
                 ("name_code", "CL1"),
                 ("name_is_supplier", "TRUE"),
             ]),
+            join_row(&[("id", "join_own"), ("store_code", "WD")]),
         ]),
     );
     let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
@@ -6912,6 +6921,11 @@ async fn a_name_store_join_row_cannot_change_its_store_or_name() {
                 4,
                 Some("id"),
                 "ambiguous reference, please provide id instead"
+            ),
+            (
+                6,
+                Some("store_code"),
+                "store_code and id conflict: Main store (MAIN) in store MS has store_code MS and id join_own, but this row has store_code WD and id join_own"
             ),
         ]
     );
@@ -7574,6 +7588,14 @@ async fn a_user_permission_finds_its_references_and_cannot_change_them() {
         permission_setup("central_data_permission_references").await;
     let ctx = as_user(&service_provider, IMPORTER);
     let before = permissions_of(&connection, "anna");
+    StoreRowRepository::new(&connection)
+        .upsert_one(&StoreRow {
+            id: "store_wd".to_string(),
+            code: "WD".to_string(),
+            name_id: "ms_name".to_string(),
+            ..Default::default()
+        })
+        .unwrap();
 
     let path = write_file(
         dir.path(),
@@ -7651,6 +7673,18 @@ async fn a_user_permission_finds_its_references_and_cannot_change_them() {
                 ("store_code", "XX"),
                 ("permission", "REPORT"),
             ]),
+            permission_row(&[
+                ("id", "anna_stocktake"),
+                ("username", "anna"),
+                ("store_code", "WD"),
+                ("permission", "STOCKTAKE_QUERY"),
+            ]),
+            permission_row(&[
+                ("id", "anna_stocktake"),
+                ("username", "anna"),
+                ("store_code", "MS"),
+                ("permission", "REPORT"),
+            ]),
         ]),
     );
     let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
@@ -7678,6 +7712,16 @@ async fn a_user_permission_finds_its_references_and_cannot_change_them() {
                 "context_id and id conflict: anna: DOCUMENT_QUERY for Immunisation in store MS has context_id immunisation and id anna_documents, but this row has a blank context_id and id anna_documents"
             ),
             (6, Some("store_code"), "referenced record not found"),
+            (
+                7,
+                Some("store_code"),
+                "store_code and id conflict: anna: STOCKTAKE_QUERY in store MS has store_code MS and id anna_stocktake, but this row has store_code WD and id anna_stocktake"
+            ),
+            (
+                8,
+                Some("permission"),
+                "permission and id conflict: anna: STOCKTAKE_QUERY in store MS has permission STOCKTAKE_QUERY and id anna_stocktake, but this row has permission REPORT and id anna_stocktake"
+            ),
         ]
     );
     assert_eq!(permissions_of(&connection, "anna"), before);
