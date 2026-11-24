@@ -29,6 +29,7 @@ import {
   correctionBatch,
   correctionPacks,
   correctionReason,
+  countSame,
   countTooLow,
   systemFigure,
 } from './simpleDispensingLogic';
@@ -253,6 +254,12 @@ export const CorrectStockDialog = (props: {
                   : undefined
               }
               errorTestId="correct-stock-count-error"
+              warning={
+                countSame(count(), figure())
+                  ? t('messages.correct-stock-same')
+                  : undefined
+              }
+              warningTestId="correct-stock-count-same"
               data-testid="correct-stock-count-input"
             />
             <Show when={reason().ask}>

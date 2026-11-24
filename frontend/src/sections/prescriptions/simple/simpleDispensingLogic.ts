@@ -416,6 +416,13 @@ export const canSaveCount = (
   figure: number
 ): boolean => count !== undefined && round9(count) > round9(figure);
 
+/**
+ * A count the same as the system's figure: nothing to correct. The count field
+ * says so, since Save stays disabled for it.
+ */
+export const countSame = (count: number | undefined, figure: number): boolean =>
+  count !== undefined && round9(count) === round9(figure);
+
 /** A count below the system's figure, which the count field refuses. */
 export const countTooLow = (
   count: number | undefined,

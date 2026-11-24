@@ -10,6 +10,7 @@ import {
   correctionBatch,
   correctionPacks,
   correctionReason,
+  countSame,
   countTooLow,
   dispenseInput,
   dispenseOutcome,
@@ -1500,6 +1501,15 @@ describe('correcting the stock', () => {
     expect(countTooLow(19, 20)).toBe(true);
     expect(countTooLow(20, 20)).toBe(false);
     expect(countTooLow(25, 20)).toBe(false);
+  });
+
+  it('OMS-REG-DIS-12.255: a count the same as the figure says there is nothing to correct', () => {
+    expect(countSame(undefined, 20)).toBe(false);
+    expect(countSame(20, 20)).toBe(true);
+    expect(countSame(19, 20)).toBe(false);
+    expect(countSame(21, 20)).toBe(false);
+    expect(countSame(0, 0)).toBe(true);
+    expect(countSame(0.1 + 0.2, 0.3)).toBe(true);
   });
 
   it("OMS-REG-DIS-12.252: the difference is added in the batch's packs, splitting a pack where it must", () => {
