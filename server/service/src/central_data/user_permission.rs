@@ -5,13 +5,13 @@ use super::{
     delete::{DELETE_COLUMN, already_deleted_as, check_delete, is_delete},
     lookup::{
         Found, InMemory, NOT_FOUND, active_first, find_by_id_or_composite_key, find_reference,
-        new_id_conflict, read_contexts, record_conflict, reference_conflict,
+        key_or, new_id_conflict, read_contexts, record_conflict, reference_conflict,
     },
     sheet::Value,
     stores_with_names,
     user_refs::{
         ID, STORE_CODE, STORE_ID, USER_ID, USERNAME, check_not_protected, exportable_users,
-        protected_error, store_code, username, users_by_id,
+        protected_error, users_by_id,
     },
 };
 use crate::{
@@ -89,7 +89,7 @@ impl ImportTable for UserPermissionTable {
         connection: &StorageConnection,
         filter: &ExportFilter,
     ) -> Result<Vec<Vec<Value>>, RepositoryError> {
-        // One query: the export has already checked the row cap.
+        // Read whole, not paged: the export has already checked the row cap.
         let permissions = UserPermissionRepository::new(connection)
             .query_by_filter(exportable(connection, filter)?)?;
         let records = References::read(connection)?;
@@ -275,10 +275,6 @@ impl Key {
 }
 
 impl UserPermissionSheet {
-    fn username<'a>(&'a self, user_id: &'a str) -> &'a str {
-        username(&self.users, user_id)
-    }
-
     /// With an id the row's key MUST match, but a `DELETE` row's blank cells aren't compared.
     fn find_permission(
         &self,
@@ -359,11 +355,11 @@ impl UserPermissionSheet {
         let saved_context = saved.context_id.as_deref().unwrap_or_default();
         match key_column {
             USERNAME => conflict(
-                (USERNAME, self.username(&saved.user_id)),
+                (USERNAME, self.users.key_or_id(&saved.user_id)),
                 (USER_ID, &saved.user_id),
             ),
             STORE_CODE => conflict(
-                (STORE_CODE, store_code(&self.stores, saved_store)),
+                (STORE_CODE, self.stores.key_or_id(saved_store)),
                 (STORE_ID, saved_store),
             ),
             CONTEXT_NAME => conflict(
@@ -421,7 +417,7 @@ impl UserPermissionSheet {
                     .error(DELETE_COLUMN, locks_out_message(&saved.permission))
                     .into(),
                 DeleteUserPermissionError::Protected => {
-                    protected_error(row, self.username(&saved.user_id), "permissions").into()
+                    protected_error(row, self.users.key_or_id(&saved.user_id), "permissions").into()
                 }
                 DeleteUserPermissionError::DatabaseError(error) => RowFailure::Database(error),
             },
@@ -459,7 +455,7 @@ fn record(
 ) -> String {
     let mut record = format!(
         "{}: {}",
-        user.map_or(permission.user_id.as_str(), |user| &user.username),
+        key_or(user, &permission.user_id),
         permission.permission.as_ref()
     );
     if let Some(context_id) = &permission.context_id {
@@ -470,7 +466,7 @@ fn record(
         record.push_str(&format!(" for {name}"));
     }
     if let Some(store_id) = &permission.store_id {
-        let code = store.map_or(store_id.as_str(), |store| &store.code);
+        let code = key_or(store, store_id);
         record.push_str(&format!(" in store {code}"));
     }
     record
@@ -500,7 +496,7 @@ fn upsert_failure(
     error: UpsertUserPermissionError,
 ) -> RowFailure {
     let user_column = row.reference_column(USERNAME, USER_ID);
-    let username = user.map_or(permission.user_id.as_str(), |user| &user.username);
+    let username = key_or(user, &permission.user_id);
     match error {
         UpsertUserPermissionError::UserDeleted => row
             .error(

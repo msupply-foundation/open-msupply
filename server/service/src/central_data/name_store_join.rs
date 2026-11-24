@@ -6,7 +6,7 @@ use super::{
     field_changes,
     lookup::{
         Found, InMemory, NOT_FOUND, NamesOfType, active_first, find_by_id_or_composite_key,
-        find_reference, new_id_conflict, reference_conflict,
+        find_reference, key_or, new_id_conflict, reference_conflict,
     },
     name::{TYPES as NAME_TYPES, type_label},
     name_with_code,
@@ -86,7 +86,7 @@ impl ImportTable for NameStoreJoinTable {
         filter: &ExportFilter,
     ) -> Result<Vec<Vec<Value>>, RepositoryError> {
         let stores = stores_with_names(connection)?;
-        // One query: the export has already checked the row count against the import cap.
+        // Read whole, not paged: the export has already checked the row cap.
         let mut joins =
             NameStoreJoinRepository::new(connection).query_by_filter(join_filter(filter))?;
         let store_code = |join: &NameStoreJoin| {
@@ -492,7 +492,7 @@ fn upsert_failure(
                 name_column,
                 format!(
                     "Store {} already sees {name_label}, through {other_id}",
-                    store.map_or(join.store_id.as_str(), |store| store.code.as_str())
+                    key_or(store, &join.store_id)
                 ),
             )
             .into(),
