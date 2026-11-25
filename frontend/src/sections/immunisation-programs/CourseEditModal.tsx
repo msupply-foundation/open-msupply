@@ -557,270 +557,285 @@ export const CourseEditModal: Component<CourseEditModalProps> = props => {
           .join(', ')}`;
 
   return (
-    <Dialog
-      open
-      testId="vaccine-course-edit-modal"
-      title={
-        isEdit
-          ? t('heading.edit-vaccine-course')
-          : t('heading.create-vaccine-course')
-      }
-      // Blocking while the save is in flight: no Escape exit until it resolves.
-      dismissable={!saving()}
-      onClose={props.onClose}
-      // One steady box across the tabs (components › modal dialog): the
-      // width stays put, and the store rates hold the height Course details
-      // had — their table scrolls inside it rather than stretching the
-      // dialog to the screen, so the title, tabs and footer never move.
-      width="wide"
-      holdHeight={tab() === 'store-rates'}
-      // The server's refusal sits above the actions, with the draft kept for
-      // correction and retry (S3 § states).
-      footer={
-        <Show when={serverError()}>
-          {error => (
-            <Alert severity="error" testId="vaccine-course-save-error">
-              {error().message}
-              <Show when={error().detail}>
-                {detail => <ErrorDetails detail={detail()} />}
-              </Show>
-            </Alert>
-          )}
-        </Show>
-      }
-      actions={
-        <>
-          <Show when={!saving()}>
-            <CancelButton
-              data-testid="dialog-button-cancel"
-              onClick={props.onClose}
-            />
-          </Show>
-          {/* Save, not OK (controls › footer button identity) — always offered
-              on create, only once dirty on edit; busy while saving. */}
-          <DialogSaveButton
-            data-testid="dialog-button-save"
-            disabled={!canSave() || loading() || notFound()}
-            loading={saving()}
-            onClick={() => void save()}
-          />
-        </>
-      }
-    >
-      <Show when={!loading()} fallback={<Spinner />}>
-        <Show
-          when={!notFound()}
-          fallback={
-            <Alert severity="error">{t('error.immunisations-not-found')}</Alert>
-          }
-        >
-          <Tabs
-            value={tab()}
-            onValueChange={value => setTab(value as EditorTab)}
-          >
+    // Tabs wraps the Dialog so the strip rides its `tabs` slot, pinned under
+    // the title rather than scrolled away with the form when an on-screen
+    // keyboard shortens the dialog (#2592).
+    <Tabs value={tab()} onValueChange={value => setTab(value as EditorTab)}>
+      <Dialog
+        open
+        testId="vaccine-course-edit-modal"
+        title={
+          isEdit
+            ? t('heading.edit-vaccine-course')
+            : t('heading.create-vaccine-course')
+        }
+        // Blocking while the save is in flight: no Escape exit until it resolves.
+        dismissable={!saving()}
+        onClose={props.onClose}
+        // One steady box across the tabs (components › modal dialog): the
+        // width stays put, and the store rates hold the height Course details
+        // had — their table scrolls inside it rather than stretching the
+        // dialog to the screen, so the title, tabs and footer never move.
+        width="wide"
+        holdHeight={tab() === 'store-rates'}
+        tabs={
+          <Show when={!loading() && !notFound()}>
             <TabList
               tabs={[
                 { value: 'details', label: t('label.course-details') },
                 { value: 'store-rates', label: t('label.rates-per-store') },
               ]}
             />
-            <TabPanel value="details">
-              <Stack>
-                {/* Two groups side by side, so no field runs the dialog's
+          </Show>
+        }
+        // The server's refusal sits above the actions, with the draft kept for
+        // correction and retry (S3 § states).
+        footer={
+          <Show when={serverError()}>
+            {error => (
+              <Alert severity="error" testId="vaccine-course-save-error">
+                {error().message}
+                <Show when={error().detail}>
+                  {detail => <ErrorDetails detail={detail()} />}
+                </Show>
+              </Alert>
+            )}
+          </Show>
+        }
+        actions={
+          <>
+            <Show when={!saving()}>
+              <CancelButton
+                data-testid="dialog-button-cancel"
+                onClick={props.onClose}
+              />
+            </Show>
+            {/* Save, not OK (controls › footer button identity) — always offered
+              on create, only once dirty on edit; busy while saving. */}
+            <DialogSaveButton
+              data-testid="dialog-button-save"
+              disabled={!canSave() || loading() || notFound()}
+              loading={saving()}
+              onClick={() => void save()}
+            />
+          </>
+        }
+      >
+        <Show when={!loading()} fallback={<Spinner />}>
+          <Show
+            when={!notFound()}
+            fallback={
+              <Alert severity="error">
+                {t('error.immunisations-not-found')}
+              </Alert>
+            }
+          >
+            <>
+              <TabPanel value="details">
+                <Stack>
+                  {/* Two groups side by side, so no field runs the dialog's
                     full width (#984); they stack once the dialog is too
                     narrow for both. Each sits in a grey inset panel, the
                     two ending level (`stretch`). Top-level groups of a
                     dialog whose title holds the h2: rank h3, treatment
                     `group`. */}
-                <FormColumns stretch>
-                  <FormColumn>
-                    <InsetPanel>
-                      <FormSection
-                        title={t('heading.course')}
-                        headingLevel="h3"
-                        heading="group"
-                      >
-                        <TextField
-                          label={t('label.immunisation-name')}
-                          required
-                          data-testid="vaccine-course-name-input"
-                          disabled={saving()}
-                          error={fieldError('name')}
-                          value={draft.name}
-                          onInput={event =>
-                            setDraft('name', event.currentTarget.value)
-                          }
-                        />
-                        <MultiSelect<VaccineItem>
-                          label={t('label.vaccine-items')}
-                          required
-                          items={itemOptions()}
-                          itemToString={item => item.name}
-                          itemToValue={item => item.id}
-                          selectedItems={selectedItems()}
-                          onChange={setItems}
-                          inputTestId="vaccine-course-items-input"
-                          disabled={saving()}
-                          error={fieldError('vaccineItems')}
-                        />
-                      </FormSection>
-                    </InsetPanel>
-                  </FormColumn>
-                  <FormColumn>
-                    <InsetPanel>
-                      <FormSection
-                        title={t('heading.forecasting')}
-                        headingLevel="h3"
-                        heading="group"
-                      >
-                        <Combobox<Group>
-                          label={t('label.target-demographic')}
-                          items={groupOptions()}
-                          itemToString={group => group.name}
-                          itemToValue={group => group.id}
-                          value={draft.demographicId ?? undefined}
-                          selectedItem={draft.demographic ?? undefined}
-                          onChange={setGroup}
-                          inputTestId="vaccine-course-demographic-input"
-                          disabled={saving()}
-                        />
-                        <FormRow>
-                          <NumberField
-                            label={t('label.coverage-rate')}
+                  <FormColumns stretch>
+                    <FormColumn>
+                      <InsetPanel>
+                        <FormSection
+                          title={t('heading.course')}
+                          headingLevel="h3"
+                          heading="group"
+                        >
+                          <TextField
+                            label={t('label.immunisation-name')}
                             required
-                            endAdornment="%"
-                            min={0}
-                            decimalLimit={1}
-                            data-testid="vaccine-course-coverage-input"
+                            data-testid="vaccine-course-name-input"
                             disabled={saving()}
-                            error={fieldError('coverageRate')}
-                            value={draft.coverageRate}
-                            onChange={value => setDraft('coverageRate', value)}
+                            error={fieldError('name')}
+                            value={draft.name}
+                            onInput={event =>
+                              setDraft('name', event.currentTarget.value)
+                            }
                           />
-                          <NumberField
-                            label={t('label.wastage-rate')}
+                          <MultiSelect<VaccineItem>
+                            label={t('label.vaccine-items')}
                             required
-                            endAdornment="%"
-                            min={0}
-                            // No `max`: the cap is a SAVE-time check (rules §
-                            // input bounds — "above 100 the save is refused as
-                            // too large"), reported by the validation summary;
-                            // a `max` here would clamp the entry silently on
-                            // blur instead.
-                            decimalLimit={1}
-                            data-testid="vaccine-course-wastage-input"
+                            items={itemOptions()}
+                            itemToString={item => item.name}
+                            itemToValue={item => item.id}
+                            selectedItems={selectedItems()}
+                            onChange={setItems}
+                            inputTestId="vaccine-course-items-input"
                             disabled={saving()}
-                            error={fieldError('wastageRate')}
-                            value={draft.wastageRate}
-                            onChange={value => setDraft('wastageRate', value)}
+                            error={fieldError('vaccineItems')}
                           />
-                        </FormRow>
-                        {/* One slot of a two-up row, so the field lines up
+                        </FormSection>
+                      </InsetPanel>
+                    </FormColumn>
+                    <FormColumn>
+                      <InsetPanel>
+                        <FormSection
+                          title={t('heading.forecasting')}
+                          headingLevel="h3"
+                          heading="group"
+                        >
+                          <Combobox<Group>
+                            label={t('label.target-demographic')}
+                            items={groupOptions()}
+                            itemToString={group => group.name}
+                            itemToValue={group => group.id}
+                            value={draft.demographicId ?? undefined}
+                            selectedItem={draft.demographic ?? undefined}
+                            onChange={setGroup}
+                            inputTestId="vaccine-course-demographic-input"
+                            disabled={saving()}
+                          />
+                          <FormRow>
+                            <NumberField
+                              label={t('label.coverage-rate')}
+                              required
+                              endAdornment="%"
+                              min={0}
+                              decimalLimit={1}
+                              data-testid="vaccine-course-coverage-input"
+                              disabled={saving()}
+                              error={fieldError('coverageRate')}
+                              value={draft.coverageRate}
+                              onChange={value =>
+                                setDraft('coverageRate', value)
+                              }
+                            />
+                            <NumberField
+                              label={t('label.wastage-rate')}
+                              required
+                              endAdornment="%"
+                              min={0}
+                              // No `max`: the cap is a SAVE-time check (rules §
+                              // input bounds — "above 100 the save is refused as
+                              // too large"), reported by the validation summary;
+                              // a `max` here would clamp the entry silently on
+                              // blur instead.
+                              decimalLimit={1}
+                              data-testid="vaccine-course-wastage-input"
+                              disabled={saving()}
+                              error={fieldError('wastageRate')}
+                              value={draft.wastageRate}
+                              onChange={value => setDraft('wastageRate', value)}
+                            />
+                          </FormRow>
+                          {/* One slot of a two-up row, so the field lines up
                             under the coverage rate rather than running the
                             group's full width. */}
-                        <FormRow>
-                          <NumberField
-                            label={t('label.annual-doses-per-person')}
-                            labelInfo={
-                              <InfoTooltip
-                                text={t('description.annual-doses-per-person')}
-                                label={t('label.annual-doses-per-person')}
-                                triggerTestId="vaccine-course-annual-doses-per-person-info"
-                              />
-                            }
-                            min={0}
-                            decimalLimit={2}
-                            data-testid="vaccine-course-annual-doses-per-person-input"
+                          <FormRow>
+                            <NumberField
+                              label={t('label.annual-doses-per-person')}
+                              labelInfo={
+                                <InfoTooltip
+                                  text={t(
+                                    'description.annual-doses-per-person'
+                                  )}
+                                  label={t('label.annual-doses-per-person')}
+                                  triggerTestId="vaccine-course-annual-doses-per-person-info"
+                                />
+                              }
+                              min={0}
+                              decimalLimit={2}
+                              data-testid="vaccine-course-annual-doses-per-person-input"
+                              disabled={saving()}
+                              error={fieldError('annualDosesPerPerson')}
+                              // What a blank counts, so a programme can see what
+                              // it overrides: the doses for full protection, below.
+                              helperText={
+                                draft.annualDosesPerPerson == null
+                                  ? t(
+                                      'messages.annual-doses-per-person-blank',
+                                      {
+                                        doses: draft.vaccineCourseDoses.length,
+                                      }
+                                    )
+                                  : undefined
+                              }
+                              value={draft.annualDosesPerPerson ?? undefined}
+                              onChange={value =>
+                                setDraft('annualDosesPerPerson', value ?? null)
+                              }
+                            />
+                            <div />
+                          </FormRow>
+                          <Checkbox
+                            label={t('label.calculate-demand')}
+                            testId="vaccine-course-gaps-checkbox"
                             disabled={saving()}
-                            error={fieldError('annualDosesPerPerson')}
-                            // What a blank counts, so a programme can see what
-                            // it overrides: the doses for full protection, below.
-                            helperText={
-                              draft.annualDosesPerPerson == null
-                                ? t('messages.annual-doses-per-person-blank', {
-                                    doses: draft.vaccineCourseDoses.length,
-                                  })
-                                : undefined
-                            }
-                            value={draft.annualDosesPerPerson ?? undefined}
-                            onChange={value =>
-                              setDraft('annualDosesPerPerson', value ?? null)
+                            checked={draft.useInGapsCalculations}
+                            onChange={checked =>
+                              setDraft('useInGapsCalculations', checked)
                             }
                           />
-                          <div />
-                        </FormRow>
-                        <Checkbox
-                          label={t('label.calculate-demand')}
-                          testId="vaccine-course-gaps-checkbox"
-                          disabled={saving()}
-                          checked={draft.useInGapsCalculations}
-                          onChange={checked =>
-                            setDraft('useInGapsCalculations', checked)
-                          }
-                        />
-                      </FormSection>
-                    </InsetPanel>
-                  </FormColumn>
-                </FormColumns>
-                {/* The validation summary — the typed-value rules as they
+                        </FormSection>
+                      </InsetPanel>
+                    </FormColumn>
+                  </FormColumns>
+                  {/* The validation summary — the typed-value rules as they
                     trip, the required checks once a Save press found them,
                     live after that (S3 § validation summary). */}
-                <Show when={problems().length > 0}>
-                  <Alert severity="error" testId="vaccine-course-validation">
-                    <div>{t('messages.alert-problem-with-form-input')}</div>
-                    <For each={problems()}>
-                      {item => <div>{problemLine(item)}</div>}
-                    </For>
-                  </Alert>
-                </Show>
-                <FormSection
-                  title={t('heading.dose-schedule')}
-                  headingLevel="h3"
-                  heading="group"
-                >
-                  <HStack justify="between" wrap>
-                    <Checkbox
-                      label={t('label.can-skip-dose')}
-                      testId="vaccine-course-skip-dose-checkbox"
-                      disabled={saving()}
-                      checked={draft.canSkipDose}
-                      onChange={checked => setDraft('canSkipDose', checked)}
+                  <Show when={problems().length > 0}>
+                    <Alert severity="error" testId="vaccine-course-validation">
+                      <div>{t('messages.alert-problem-with-form-input')}</div>
+                      <For each={problems()}>
+                        {item => <div>{problemLine(item)}</div>}
+                      </For>
+                    </Alert>
+                  </Show>
+                  <FormSection
+                    title={t('heading.dose-schedule')}
+                    headingLevel="h3"
+                    heading="group"
+                  >
+                    <HStack justify="between" wrap>
+                      <Checkbox
+                        label={t('label.can-skip-dose')}
+                        testId="vaccine-course-skip-dose-checkbox"
+                        disabled={saving()}
+                        checked={draft.canSkipDose}
+                        onChange={checked => setDraft('canSkipDose', checked)}
+                      />
+                      <Button
+                        icon={<PlusCircleIcon />}
+                        data-testid="add-dose-button"
+                        disabled={saving()}
+                        onClick={addDose}
+                      >
+                        {t('label.dose')}
+                      </Button>
+                    </HStack>
+                    <DataTable
+                      columns={doseColumns()}
+                      rows={draft.vaccineCourseDoses}
+                      rowKey={dose => dose.id}
+                      showFullScreen={false}
+                      // Every cell is an in-place editor, and the age cells
+                      // grow a validation message beneath their inputs.
+                      // Centred, that growth would lift the offending cell's
+                      // inputs above the rest of the row — the inputs stop
+                      // lining up exactly when one is wrong.
+                      cellAlign="start"
+                      emptyMessage={t('message.add-a-dose')}
                     />
-                    <Button
-                      icon={<PlusCircleIcon />}
-                      data-testid="add-dose-button"
-                      disabled={saving()}
-                      onClick={addDose}
-                    >
-                      {t('label.dose')}
-                    </Button>
-                  </HStack>
-                  <DataTable
-                    columns={doseColumns()}
-                    rows={draft.vaccineCourseDoses}
-                    rowKey={dose => dose.id}
-                    showFullScreen={false}
-                    // Every cell is an in-place editor, and the age cells
-                    // grow a validation message beneath their inputs.
-                    // Centred, that growth would lift the offending cell's
-                    // inputs above the rest of the row — the inputs stop
-                    // lining up exactly when one is wrong.
-                    cellAlign="start"
-                    emptyMessage={t('message.add-a-dose')}
-                  />
-                </FormSection>
-              </Stack>
-            </TabPanel>
-            <TabPanel value="store-rates">
-              <StoreRatesPanel
-                configs={draft.storeConfigs}
-                onChange={configs => setDraft('storeConfigs', configs)}
-                disabled={saving()}
-              />
-            </TabPanel>
-          </Tabs>
+                  </FormSection>
+                </Stack>
+              </TabPanel>
+              <TabPanel value="store-rates">
+                <StoreRatesPanel
+                  configs={draft.storeConfigs}
+                  onChange={configs => setDraft('storeConfigs', configs)}
+                  disabled={saving()}
+                />
+              </TabPanel>
+            </>
+          </Show>
         </Show>
-      </Show>
-    </Dialog>
+      </Dialog>
+    </Tabs>
   );
 };

@@ -34,3 +34,32 @@ describe('crumbHref (OMS-REG-NAV-02.5)', () => {
     expect(crumbHref('#/header')).toBe('#/header');
   });
 });
+
+describe('parentOf — where Escape goes (spec/keyboard KB-X5)', () => {
+  it('is the crumb before the current page (OMS-REG-KBD-02.6, .43)', async () => {
+    const { parentOf } = await at('/');
+    expect(
+      parentOf([
+        { label: 'Patients', to: '/S/dispensary/patients' },
+        { label: 'Jo', to: '/S/dispensary/patients/p1' },
+        {
+          label: 'Vaccinations',
+          to: '/S/dispensary/patients/p1?tab=vaccinations',
+        },
+        { label: 'Card' },
+      ])
+    ).toBe('/S/dispensary/patients/p1?tab=vaccinations');
+  });
+
+  it('is nothing for a single-crumb trail — a list (OMS-REG-KBD-02.42)', async () => {
+    const { parentOf } = await at('/');
+    expect(parentOf([{ label: 'Stocktakes' }])).toBeUndefined();
+  });
+
+  it('is nothing when the crumb before the page has nowhere to go', async () => {
+    const { parentOf } = await at('/');
+    expect(
+      parentOf([{ label: 'Loading' }, { label: 'Record' }])
+    ).toBeUndefined();
+  });
+});

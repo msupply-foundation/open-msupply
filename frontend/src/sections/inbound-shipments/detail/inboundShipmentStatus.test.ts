@@ -10,6 +10,7 @@ import {
   isDeletable,
   isEditable,
   actionsLocked,
+  kindBannerKeys,
   reachableStatuses,
   sourceLinkOf,
   statusDatetime,
@@ -85,6 +86,57 @@ describe('sourceLinkOf (REPL-03.10 / .11 / .12 — which shipments reach Picked 
           linkedShipment: { id: 'outbound-1' },
         })
       ).toBe(expected.linked);
+    });
+  }
+});
+
+// The kind banner picks its copy by source link (issue #1588: a PO-linked
+// shipment was told another store created it and that it could not be edited).
+describe('kindBannerKeys', () => {
+  it('tells a shipment with no source link its status will not update automatically', () => {
+    for (const inboundType of [
+      'MANUAL_EXTERNAL',
+      'FROM_REQUISITION',
+    ] as const) {
+      for (const status of ['NEW', 'DELIVERED', 'RECEIVED', 'VERIFIED']) {
+        expect(kindBannerKeys({ inboundType, status })).toEqual([
+          'info.manual-shipment',
+        ]);
+      }
+    }
+  });
+
+  it('shows a PO-linked shipment only the no-edit sentence, and only at Shipped', () => {
+    const po = (status: string) =>
+      kindBannerKeys({ inboundType: 'FROM_PURCHASE_ORDER', status });
+    // Shipped is read-only for every shipment, so the lock still needs a reason.
+    expect(po('SHIPPED')).toEqual(['info.automatic-shipment-no-edit']);
+    for (const status of ['NEW', 'DELIVERED', 'RECEIVED', 'VERIFIED']) {
+      expect(po(status)).toEqual([]);
+    }
+  });
+
+  // FROM_REQUISITION is how the usual transfer (internal order → requisition →
+  // outbound shipment) arrives: the server reads requisition_id first when it
+  // sets inboundType.
+  for (const inboundType of ['MANUAL_INTERNAL', 'FROM_REQUISITION'] as const) {
+    it(`adds the no-edit sentence to a ${inboundType} transfer only at Picked and Shipped`, () => {
+      const transfer = (status: string) =>
+        kindBannerKeys({
+          inboundType,
+          linkedShipment: { id: 'outbound-1' },
+          status,
+        });
+      for (const status of ['PICKED', 'SHIPPED']) {
+        expect(transfer(status)).toEqual([
+          'info.automatic-shipment',
+          'info.automatic-shipment-no-edit',
+        ]);
+      }
+      // New is editable, so it doesn't claim a lock.
+      for (const status of ['NEW', 'DELIVERED', 'RECEIVED', 'VERIFIED']) {
+        expect(transfer(status)).toEqual(['info.automatic-shipment']);
+      }
     });
   }
 });
@@ -350,7 +402,11 @@ describe('the track keeps the current stage (OMS-REG-REPL-03.28)', () => {
   });
 
   it('excludes a stage the shipment is not resting on', () => {
-    expect(stages('RECEIVED', allowed)).toEqual(['NEW', 'RECEIVED', 'VERIFIED']);
+    expect(stages('RECEIVED', allowed)).toEqual([
+      'NEW',
+      'RECEIVED',
+      'VERIFIED',
+    ]);
   });
 
   it('tracks the plain flow index while the preference is unrestrictive', () => {

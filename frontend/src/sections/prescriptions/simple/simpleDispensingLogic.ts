@@ -47,7 +47,31 @@ export interface MedicineCard {
   batches: FillableBatch[];
   /** Units in those batches: what the card offers before the list. */
   stock: number;
+  /**
+   * While a dispensed visit is edited, what it gave of this medicine and
+   * what it was charged for it. A line still holding that amount is the
+   * visit's as saved (rules › editing a dispensed visit): priced at that
+   * charge, never short, and left as it is by Save changes.
+   */
+  kept?: { units: number; price: number };
 }
+
+/** Whether a line holds what the edited visit gave of its medicine. */
+const keepsAmount = (card: MedicineCard, units: number): boolean =>
+  card.kept !== undefined && round9(units) === round9(card.kept.units);
+
+/**
+ * The stock a line of this many units is checked against: the card's, or,
+ * for a line still holding what an edited visit gave, at least that much,
+ * since saving leaves it on the batches it was taken from. Zero with no card.
+ */
+export const stockFor = (
+  card: MedicineCard | undefined,
+  units: number
+): number => {
+  if (!card) return 0;
+  return keepsAmount(card, units) ? Math.max(card.stock, units) : card.stock;
+};
 
 /**
  * Whether a card's stock is worth stopping for (spec/prescriptions › the
@@ -257,12 +281,18 @@ export const priceOf = (
     : price;
 };
 
-/** A line's price on a card: zero with no card to price it from. */
+/**
+ * A line's price on a card: zero with no card to price it from, and what the
+ * visit was charged for a line still holding what an edited visit gave.
+ */
 export const linePrice = (
   card: MedicineCard | undefined,
   units: number
-): number =>
-  card ? priceOf(card.batches, units, card.defaultPricePerUnit) : 0;
+): number => {
+  if (!card) return 0;
+  if (card.kept && keepsAmount(card, units)) return card.kept.price;
+  return priceOf(card.batches, units, card.defaultPricePerUnit);
+};
 
 /**
  * Whether two prices read differently to the currency's smallest unit
@@ -522,8 +552,9 @@ export const stockAtCheck = (
  */
 export const shortLines = (
   lines: readonly ListLine[],
-  stockOf: (itemId: string) => number
-): ListLine[] => lines.filter(line => line.units > stockOf(line.itemId));
+  stockOf: (itemId: string, units: number) => number
+): ListLine[] =>
+  lines.filter(line => line.units > stockOf(line.itemId, line.units));
 
 /**
  * The lines whose price at Dispense's check differs from the price the screen
@@ -541,7 +572,8 @@ export const repricedLines = (
   lines.filter(line => {
     const was = shown.get(line.itemId);
     const now = checked.find(card => card.item.id === line.itemId);
-    if (was === undefined || !now || line.units > now.stock) return false;
+    if (was === undefined || !now || line.units > stockFor(now, line.units))
+      return false;
     return priceDiffers(was, linePrice(now, line.units), decimals);
   });
 

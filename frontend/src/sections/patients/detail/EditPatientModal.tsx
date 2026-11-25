@@ -156,55 +156,64 @@ export const EditPatientModal: Component<EditPatientModalProps> = props => {
 
   return (
     <>
-      <Dialog
-        open
-        title={patientName()}
-        icon={<EditIcon />}
-        width="form"
-        minBodyHeightRem={34}
-        testId="edit-patient-modal"
-        dismissable={!details().saving()}
-        onClose={props.onClose}
-        actions={
-          <>
-            <CancelButton
-              data-testid="dialog-button-cancel"
-              disabled={details().saving()}
-              onClick={props.onClose}
-            />
-            <Button
-              variant="secondary"
-              data-testid="view-patient-button"
-              disabled={details().saving()}
-              onClick={viewPatient}
-            >
-              {t('button.view-patient')}
-            </Button>
-            <Show when={details().canMutate()}>
-              <DialogSaveButton
-                data-testid="dialog-button-save"
-                loading={details().saving()}
-                disabled={!patientDetails.canSave()}
-                onClick={() => void details().attemptSave()}
+      {/* Tabs wraps the Dialog so the strip can ride its `tabs` slot — pinned
+          under the header, outside the scroll region — while the panels stay
+          its children. In the scroll region, an on-screen keyboard shortening
+          the dialog scrolled the strip away the moment a lower field took
+          focus (#2592). */}
+      <Tabs
+        value={activeTab()}
+        onValueChange={value => setActiveTab(value as ModalTab)}
+      >
+        <Dialog
+          open
+          title={patientName()}
+          icon={<EditIcon />}
+          width="form"
+          minBodyHeightRem={34}
+          testId="edit-patient-modal"
+          dismissable={!details().saving()}
+          onClose={props.onClose}
+          tabs={
+            <Show when={node()}>
+              <TabList
+                tabs={[
+                  { value: 'details', label: t('label.patient-details') },
+                  ...(hasInsurance()
+                    ? [{ value: 'insurance', label: t('label.insurance') }]
+                    : []),
+                  { value: 'custom-fields', label: t('label.custom-fields') },
+                ]}
               />
             </Show>
-          </>
-        }
-      >
-        <Show when={node()} fallback={<Spinner center />}>
-          <Tabs
-            value={activeTab()}
-            onValueChange={value => setActiveTab(value as ModalTab)}
-          >
-            <TabList
-              tabs={[
-                { value: 'details', label: t('label.patient-details') },
-                ...(hasInsurance()
-                  ? [{ value: 'insurance', label: t('label.insurance') }]
-                  : []),
-                { value: 'custom-fields', label: t('label.custom-fields') },
-              ]}
-            />
+          }
+          actions={
+            <>
+              <CancelButton
+                data-testid="dialog-button-cancel"
+                disabled={details().saving()}
+                onClick={props.onClose}
+              />
+              <Button
+                variant="secondary"
+                data-testid="view-patient-button"
+                disabled={details().saving()}
+                onClick={viewPatient}
+              >
+                {t('button.view-patient')}
+              </Button>
+              <Show when={details().canMutate()}>
+                <DialogSaveButton
+                  data-testid="dialog-button-save"
+                  loading={details().saving()}
+                  disabled={!patientDetails.canSave()}
+                  onClick={() => void details().attemptSave()}
+                />
+              </Show>
+            </>
+          }
+        >
+          <Show when={node()} fallback={<Spinner center />}>
             <TabPanel value="details">
               <ContentContainer size="form" padded>
                 <PatientDetailsBody
@@ -238,9 +247,9 @@ export const EditPatientModal: Component<EditPatientModalProps> = props => {
                 />
               </ContentContainer>
             </TabPanel>
-          </Tabs>
-        </Show>
-      </Dialog>
+          </Show>
+        </Dialog>
+      </Tabs>
 
       <InsuranceModal
         open={insuranceState() !== undefined}

@@ -96,6 +96,28 @@ export interface DialogProps {
    */
   headerAlign?: 'center' | 'start';
   description?: JSX.Element;
+  /**
+   * A tab strip (`<TabList>`) rendered as the header's last row: its own
+   * bottom line replaces the heading rule, so the strip IS the header's bottom
+   * edge (as a TabList is in a page `Header`). Being outside the scroll
+   * region, it stays on screen however far the panels scroll. Not for a
+   * `titleHidden` dialog, whose header paints nothing. Put in
+   * `children` instead, the strip is the scroll region's first row: once the
+   * body is short (an on-screen keyboard up on a tablet) focusing a field
+   * lower down scrolls it off, and the user has to scroll back up to switch
+   * tab (#2592).
+   *
+   * TabList reads the tabs context, so wrap the whole `<Dialog>` in
+   * `<Tabs>` — its root is `display: contents`, so it adds no box around the
+   * dialog — and pass the `<TabPanel>`s as children:
+   *
+   *     <Tabs value={tab()} onValueChange={setTab}>
+   *       <Dialog tabs={<TabList tabs={…} />} …>
+   *         <TabPanel value="a">…</TabPanel>
+   *       </Dialog>
+   *     </Tabs>
+   */
+  tabs?: JSX.Element;
   children?: JSX.Element;
   /**
    * Bottom-pinned content sitting just above the actions (e.g. a
@@ -314,6 +336,7 @@ const DialogContent = (local: DialogContentProps): JSX.Element => {
   const title = children(() => c.title);
   const icon = children(() => c.icon);
   const headerActions = children(() => c.headerActions);
+  const tabs = children(() => c.tabs);
   const description = children(() => c.description);
   const footer = children(() => c.footer);
   const actions = children(() => c.actions);
@@ -370,6 +393,11 @@ const DialogContent = (local: DialogContentProps): JSX.Element => {
         <Show when={headerActions()}>
           <div class={styles.headerActions}>{headerActions()}</div>
         </Show>
+        {/* The tab strip is the header's last row and its bottom edge — one
+            rule, not the heading's and the strip's — and, being outside the
+            scroll region, it never scrolls away from the panels it switches
+            (#2592). */}
+        {tabs()}
       </header>
       {/* Only THIS region scrolls (see .scroll in the CSS). The header above
           and the bottom region below sit outside the scroll container, so the

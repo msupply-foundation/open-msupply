@@ -1,4 +1,4 @@
-import { children, For, Show, type JSX } from 'solid-js';
+import { children, For, onCleanup, Show, type JSX } from 'solid-js';
 import { t } from '../../../intl';
 import { documentHref } from '../../../nav/storeRelativePath';
 import { useShellSection } from '../AppShell/shellContext';
@@ -53,6 +53,10 @@ export type Crumb = LinkCrumb | ActionCrumb;
 export const crumbHref = (to: string): string =>
   to.startsWith('#') ? to : documentHref(to);
 
+/** Where the trail's parent crumb links — Escape's target (KB-X5). */
+export const parentOf = (crumbs: readonly Crumb[]): string | undefined =>
+  crumbs[crumbs.length - 2]?.to;
+
 export interface BreadcrumbProps {
   /**
    * Leading icon, painted brand orange. Optional because inside the app shell
@@ -95,6 +99,12 @@ export const Breadcrumb = (props: BreadcrumbProps) => {
   // Resolved once — a JSX prop read twice builds two element trees
   // (kdd/solid-reactivity-pitfalls §3).
   const icon = children(() => props.icon ?? sectionIcon());
+
+  const withdraw = section?.registerParent?.(
+    // eslint-disable-next-line solid/reactivity -- an accessor, read live by the shell when Escape is pressed
+    () => parentOf(props.crumbs)
+  );
+  if (withdraw) onCleanup(withdraw);
   const status = children(() => props.status);
 
   return (
