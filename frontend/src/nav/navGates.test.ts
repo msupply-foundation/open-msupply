@@ -273,6 +273,10 @@ describe('routeAccess (OMS-REG-NAV-01.16, .19)', () => {
     });
   });
 
+  it('leaves an unknown path under an ungated section to the not-found page', () => {
+    expect(routeAccess('inventory/no-such-screen')).toEqual({ kind: 'ok' });
+  });
+
   it("sends a section's own URL Home (OMS-REG-NAV-01.27)", () => {
     expect(routeAccess('inventory')).toEqual({ kind: 'blocked' });
     expect(routeAccess('replenishment')).toEqual({ kind: 'blocked' });
