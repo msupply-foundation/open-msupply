@@ -1,4 +1,11 @@
-import { createSignal, Show, splitProps, type Component } from 'solid-js';
+import {
+  createEffect,
+  createSignal,
+  on,
+  Show,
+  splitProps,
+  type Component,
+} from 'solid-js';
 import { t } from '@/intl';
 import { Button } from '@/ui/elements/buttons/Button';
 import { PrinterIcon } from '@/ui/icons';
@@ -23,6 +30,17 @@ export type ExportPrintButtonProps = Omit<SelectReportModalProps, 'onClose'> & {
 export const ExportPrintButton: Component<ExportPrintButtonProps> = props => {
   const [open, setOpen] = createSignal(false);
   const [local, modalProps] = splitProps(props, ['disabled', 'disabledReason']);
+  // Closed, not just hidden, when the screen loses its record or moves to
+  // another while the dialog is open (browser Back or Forward on the Simple
+  // dispensing screen): it never comes back by itself, and never prints a
+  // record it wasn't opened for.
+  createEffect(
+    on(
+      () => [local.disabled, props.dataId],
+      () => setOpen(false),
+      { defer: true }
+    )
+  );
   return (
     <>
       <Button
@@ -40,8 +58,7 @@ export const ExportPrintButton: Component<ExportPrintButtonProps> = props => {
       >
         {t('button.export-or-print')}
       </Button>
-      {/* Closed if the screen loses its record while the dialog is open. */}
-      <Show when={open() && !local.disabled}>
+      <Show when={open()}>
         <SelectReportModal {...modalProps} onClose={() => setOpen(false)} />
       </Show>
     </>
