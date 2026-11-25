@@ -2,7 +2,7 @@ use chrono::NaiveDate;
 use log::{error, info};
 use repository::{
     DateFilter, KeyType, KeyValueStoreRepository, PatientFilter, RepositoryError, StringFilter,
-    is_unnamed_patient_id,
+    has_search_words, is_unnamed_patient_id,
 };
 use thiserror::Error;
 use url::Url;
@@ -83,8 +83,24 @@ fn central_search_filter(params: &CentralPatientSearch) -> PatientFilter {
 }
 
 /// Whether legacy mSupply has anything to filter on: it ignores a date of
-/// birth range.
+/// birth range. `@` is legacy mSupply's wildcard, so a name of only symbols
+/// (which finds no one locally) or a patient ID holding `@` (which matches
+/// itself locally) isn't sent: "@" alone would return every patient
+/// (OMS-REG-DIS-01.88).
 fn legacy_can_filter(params: &CentralPatientSearch) -> bool {
+    let finds_no_one = |name: &Option<String>| {
+        name.as_deref()
+            .is_some_and(|name| !name.trim().is_empty() && !has_search_words(name))
+    };
+    if finds_no_one(&params.first_name)
+        || finds_no_one(&params.last_name)
+        || params
+            .code
+            .as_deref()
+            .is_some_and(|code| code.contains('@'))
+    {
+        return false;
+    }
     params.code.is_some()
         || params.first_name.is_some()
         || params.last_name.is_some()
@@ -590,6 +606,38 @@ mod test {
         }));
         assert!(legacy_can_filter(&CentralPatientSearch {
             date_of_birth: Some(date(1984, 3, 14)),
+            ..Default::default()
+        }));
+    }
+
+    // OMS-REG-DIS-01.88: a name of only symbols, or a patient ID holding `@`,
+    // isn't sent to legacy mSupply, where `@` alone would match every patient
+    #[test]
+    fn legacy_is_not_asked_with_its_wildcard() {
+        for name in ["@", "%", " - ", "_"] {
+            assert!(!legacy_can_filter(&CentralPatientSearch {
+                last_name: Some(name.to_string()),
+                ..Default::default()
+            }));
+            assert!(!legacy_can_filter(&CentralPatientSearch {
+                first_name: Some(name.to_string()),
+                code: Some("ABC".to_string()),
+                ..Default::default()
+            }));
+        }
+        for code in ["@", "AB@"] {
+            assert!(!legacy_can_filter(&CentralPatientSearch {
+                code: Some(code.to_string()),
+                last_name: Some("Diallo".to_string()),
+                ..Default::default()
+            }));
+        }
+        assert!(legacy_can_filter(&CentralPatientSearch {
+            last_name: Some("N'Guessan".to_string()),
+            ..Default::default()
+        }));
+        assert!(legacy_can_filter(&CentralPatientSearch {
+            code: Some("AB-1".to_string()),
             ..Default::default()
         }));
     }

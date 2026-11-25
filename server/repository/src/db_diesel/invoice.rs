@@ -20,7 +20,7 @@ use strum::IntoEnumIterator;
 
 use crate::{
     DatetimeFilter, EqualFilter, Pagination, Sort, StringFilter,
-    db_diesel::patient::{UNNAMED_PATIENT_LIKE_ESCAPE, unnamed_patient_id_like},
+    db_diesel::patient::{LIKE_ESCAPE, unnamed_patient_id_like},
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};
@@ -398,13 +398,9 @@ fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
         if let Some(value) = is_for_unnamed_patient {
             let pattern = unnamed_patient_id_like();
             query = if value {
-                query.filter(name::id.like(pattern).escape(UNNAMED_PATIENT_LIKE_ESCAPE))
+                query.filter(name::id.like(pattern).escape(LIKE_ESCAPE))
             } else {
-                query.filter(
-                    name::id
-                        .not_like(pattern)
-                        .escape(UNNAMED_PATIENT_LIKE_ESCAPE),
-                )
+                query.filter(name::id.not_like(pattern).escape(LIKE_ESCAPE))
             };
         }
 
