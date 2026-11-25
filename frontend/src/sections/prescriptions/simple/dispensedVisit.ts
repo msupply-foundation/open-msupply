@@ -98,6 +98,26 @@ export const cannotEditReason = (
 export const canEditVisit = (record: DispensedRecord): boolean =>
   record.status === 'PICKED' && !record.isCancellation;
 
+/** The record as read again after a change to it. */
+export type RecordRead =
+  | { kind: 'read'; record: DispensedRecord }
+  /** No dispensing record with the id: deleted. */
+  | { kind: 'gone' };
+
+/**
+ * What a cancel that was refused, or whose reply was lost, did, by the record
+ * read after it (rules › a dispensed visit): it may have gone through, now or
+ * by an earlier press, since a second cancel is refused. Cancelled is
+ * cancelled; any other status is not; a read that failed (undefined) can't
+ * tell.
+ */
+export const afterCancelRead = (
+  read: RecordRead | undefined
+): 'cancelled' | 'not-cancelled' | 'unknown' => {
+  if (read?.kind !== 'read') return 'unknown';
+  return read.record.status === 'CANCELLED' ? 'cancelled' : 'not-cancelled';
+};
+
 /** Only a finished visit can be cancelled, never a cancellation's mirror. */
 export const canCancelVisit = (record: DispensedRecord): boolean =>
   canCancelPrescription(

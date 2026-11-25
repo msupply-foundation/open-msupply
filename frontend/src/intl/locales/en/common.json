@@ -507,6 +507,8 @@
   "error.details-request": "Request",
   "error.details-store": "Store",
   "error.discount-exceeds-maximum": "Discount percentage exceeds maximum (100) allowed",
+  "error.dispense-cancel-unconfirmed": "The dispensing record may not have been cancelled. Open it again to check.",
+  "error.dispense-delete-unconfirmed": "The dispensing record may have been deleted. Press Delete dispensing record again to check: nothing will go back in stock twice.",
   "error.dispense-failed": "The visit couldn't be dispensed. Nothing was saved.",
   "error.dispense-not-cancelled": "The dispensing record couldn't be cancelled. Nothing changed.",
   "error.dispense-not-deleted": "The dispensing record couldn't be deleted. Nothing changed.",

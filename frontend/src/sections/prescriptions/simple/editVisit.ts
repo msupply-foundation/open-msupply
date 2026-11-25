@@ -1,6 +1,6 @@
 import { round9 } from '@/domain/allocation';
 import { itemsGiven } from '../list/medicinesGiven';
-import type { DispensedRecord } from './dispensedVisit';
+import type { DispensedRecord, RecordRead } from './dispensedVisit';
 import type { SimpleSaveChangesResult } from './dispensedVisit.generated';
 import {
   allocate,
@@ -75,6 +75,12 @@ const ownByBatch = (
  * for it (an updated line keeps its price). A batch the visit emptied, which
  * the items read no longer returns, comes from the visit's own line. Items
  * the visit took nothing of are returned as they are.
+ *
+ * An item on the default price list is then priced batch by batch, as the
+ * server prices the save: the visit's own batches at what they were charged,
+ * any other batch at today's default price (a new line's price). Priced at
+ * today's default throughout, an edit after the price list changed would
+ * show one total and save another.
  */
 export const withOwnStock = (
   items: readonly CardItem[],
@@ -88,6 +94,13 @@ export const withOwnStock = (
     );
     if (mine.length === 0) return item;
     const shown = new Set(item.availableBatches.nodes.map(batch => batch.id));
+    const defaultPrice = item.defaultPricePerUnit ?? null;
+    // A batch the visit didn't take: a new line, at today's default price
+    // where the item has one.
+    const other = (batch: ItemBatch): ItemBatch =>
+      defaultPrice === null
+        ? batch
+        : { ...batch, sellPricePerPack: defaultPrice * batch.packSize };
     const add = (batch: ItemBatch, batchLines: RecordLine[]): ItemBatch => ({
       ...batch,
       availableNumberOfPacks: round9(
@@ -100,7 +113,7 @@ export const withOwnStock = (
     const nodes = [
       ...item.availableBatches.nodes.map(batch => {
         const batchLines = own.get(batch.id);
-        return batchLines ? add(batch, batchLines) : batch;
+        return batchLines ? add(batch, batchLines) : other(batch);
       }),
       ...mine.flatMap(batchLines => {
         const batch = batchLines[0]?.stockLine;
@@ -109,6 +122,8 @@ export const withOwnStock = (
     ];
     return {
       ...item,
+      // Priced from the batches, which now carry the prices the save will.
+      defaultPricePerUnit: null,
       availableBatches: { ...item.availableBatches, nodes },
     };
   });
@@ -233,11 +248,21 @@ export const givesListed = (
   );
 };
 
-/** The record as Save changes reads it. */
-export type RecordRead =
-  | { kind: 'read'; record: DispensedRecord }
-  /** No dispensing record with the id: deleted. */
-  | { kind: 'gone' };
+export type { RecordRead };
+
+/**
+ * What a Delete whose reply was lost did, by the record read after it
+ * (rules › editing a dispensed visit): gone is deleted; past Picked, it can't
+ * be edited any more; still Picked, it wasn't deleted. A read that failed
+ * (undefined) can't tell.
+ */
+export const afterDeleteRead = (
+  read: RecordRead | undefined
+): 'deleted' | 'not-editable' | 'not-deleted' | 'unknown' => {
+  if (read === undefined) return 'unknown';
+  if (read.kind === 'gone') return 'deleted';
+  return read.record.status === 'PICKED' ? 'not-deleted' : 'not-editable';
+};
 
 /**
  * The calls Save changes makes, so its steps can be followed without a server.

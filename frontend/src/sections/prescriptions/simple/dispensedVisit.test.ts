@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { medicinesGiven } from '../list/medicinesGiven';
 import {
+  afterCancelRead,
   canCancelVisit,
   cannotEditReason,
   visitHeading,
@@ -218,5 +219,27 @@ describe('canCancelVisit (spec/prescriptions rules › a dispensed visit)', () =
     expect(
       canCancelVisit(record({ status: 'VERIFIED', isCancellation: true }))
     ).toBe(false);
+  });
+});
+
+describe('afterCancelRead (spec/prescriptions rules › a dispensed visit)', () => {
+  // OMS-REG-DIS-12.273: the reply was lost, but the cancel went through.
+  it('says a record that now reads cancelled was cancelled', () => {
+    expect(
+      afterCancelRead({ kind: 'read', record: record({ status: 'CANCELLED' }) })
+    ).toBe('cancelled');
+  });
+
+  // OMS-REG-DIS-12.259
+  it('says nothing changed only when the record still reads finished', () => {
+    expect(
+      afterCancelRead({ kind: 'read', record: record({ status: 'VERIFIED' }) })
+    ).toBe('not-cancelled');
+  });
+
+  // OMS-REG-DIS-12.273
+  it('can’t tell when the record can’t be read', () => {
+    expect(afterCancelRead(undefined)).toBe('unknown');
+    expect(afterCancelRead({ kind: 'gone' })).toBe('unknown');
   });
 });

@@ -87,6 +87,7 @@ import {
   SimpleSaveChanges,
 } from './dispensedVisit.generated';
 import {
+  afterCancelRead,
   canCancelVisit,
   canEditVisit,
   cannotEditReason,
@@ -96,6 +97,7 @@ import {
   type DispensedRecord,
 } from './dispensedVisit';
 import {
+  afterDeleteRead,
   editOutcome,
   saveChanges,
   visitListLines,
@@ -818,7 +820,8 @@ const SimpleDispensingPage: Component = () => {
         { storeId: storeOpened, id },
         { returnGraphqlErrors: true, background: true }
       );
-      let outcome: 'deleted' | 'generated' | 'not-editable' | 'failed' =
+      let outcome:
+        'deleted' | 'generated' | 'not-editable' | 'failed' | 'unconfirmed' =
         'failed';
       if (result.kind === 'success') {
         const reply = result.data.deletePrescription;
@@ -835,11 +838,16 @@ const SimpleDispensingPage: Component = () => {
                 ? 'not-editable'
                 : 'failed';
       } else if (result.kind === 'unexpectedError') {
-        // The reply was lost: the record says whether it went.
-        const now = await readRecord(id);
-        if (now?.kind === 'gone') outcome = 'deleted';
-        else if (now?.kind === 'read' && now.record.status !== 'PICKED')
-          outcome = 'not-editable';
+        // The reply was lost: the record says whether it went. If it can't
+        // be read either, the screen can't tell, and says so: pressing
+        // Delete again finds out (a record already gone counts as deleted).
+        const check = afterDeleteRead(await readRecord(id));
+        outcome =
+          check === 'unknown'
+            ? 'unconfirmed'
+            : check === 'not-deleted'
+              ? 'failed'
+              : check;
       } else if (result.kind === 'graphqlError' && isForbidden(result.errors))
         reportPermissionDenied(missingPermissions(result.errors));
       if (outcome === 'deleted') {
@@ -857,7 +865,9 @@ const SimpleDispensingPage: Component = () => {
           text: t(
             outcome === 'generated'
               ? 'messages.cant-delete-generated-dispensation'
-              : 'error.dispense-not-deleted'
+              : outcome === 'unconfirmed'
+                ? 'error.dispense-delete-unconfirmed'
+                : 'error.dispense-not-deleted'
           ),
         });
     } finally {
@@ -960,6 +970,19 @@ const SimpleDispensingPage: Component = () => {
   const cancelOpened = async (id: string): Promise<void> => {
     setVisitNotice(undefined);
     setCancelling(id);
+    const cancelled = async (): Promise<void> => {
+      setVisitNotice({
+        id,
+        notice: {
+          severity: 'success',
+          text: t('messages.dispense-cancelled'),
+        },
+      });
+      // Its stock is back on the cards, and the visit now reads cancelled:
+      // read again only while it is still the one open.
+      void refetchItems();
+      if (viewingId() === id) await readOpenedAgain();
+    };
     try {
       const result = await graphqlFetch(
         SimpleCancelDispense,
@@ -969,27 +992,24 @@ const SimpleDispensingPage: Component = () => {
       if (
         result.kind === 'success' &&
         result.data.updatePrescription.__typename === 'InvoiceNode'
-      ) {
-        setVisitNotice({
-          id,
-          notice: {
-            severity: 'success',
-            text: t('messages.dispense-cancelled'),
-          },
-        });
-        // Its stock is back on the cards, and the visit now reads
-        // cancelled: read again only while it is still the one open.
-        void refetchItems();
-        if (viewingId() === id) await readOpenedAgain();
-        return;
-      }
+      )
+        return await cancelled();
       if (result.kind === 'graphqlError' && isForbidden(result.errors))
         reportPermissionDenied(missingPermissions(result.errors));
+      // A lost reply, or a refusal: the cancel may have gone through, now or
+      // by an earlier press whose reply was lost (a second cancel is refused).
+      // The record says which; "nothing changed" only when it still isn't
+      // cancelled.
+      const check = afterCancelRead(await readRecord(id));
+      if (check === 'cancelled') return await cancelled();
       setVisitNotice({
         id,
         notice: {
           severity: 'error',
-          text: t('error.dispense-not-cancelled'),
+          text:
+            check === 'not-cancelled'
+              ? t('error.dispense-not-cancelled')
+              : t('error.dispense-cancel-unconfirmed'),
         },
       });
     } finally {

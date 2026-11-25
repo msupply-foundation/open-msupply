@@ -3,6 +3,7 @@ import type { AllocationPreferences } from '@/domain/allocation';
 import type { DispensedRecord } from './dispensedVisit';
 import type { SimpleSaveChangesResult } from './dispensedVisit.generated';
 import {
+  afterDeleteRead,
   changesNothing,
   editInput,
   editOutcome,
@@ -17,6 +18,7 @@ import {
 } from './editVisit';
 import {
   buildCards,
+  linePrice,
   type CardItem,
   type ListLine,
   type MedicineCard,
@@ -154,6 +156,33 @@ describe('withOwnStock (rules › editing a dispensed visit)', () => {
       [recordLine('l1', 'para', batch('b'), 1)]
     );
     expect(same).toBe(amox);
+  });
+
+  // OMS-REG-DIS-12.262, rules › editing a dispensed visit: a medicine on the
+  // default price list whose price went up after the visit. The server keeps
+  // an updated line's price and charges a new line today's default, so the
+  // list must price the same way.
+  it('prices the visit’s own units at what they were charged, and more units at today’s default price', () => {
+    // Dispensed 10 at the old default of 1.00; the default is now 1.20.
+    const own = batch('own', {
+      availableNumberOfPacks: 0,
+      sellPricePerPack: 1,
+    });
+    const next = batch('next', {
+      expiryDate: '2031-01-01',
+      sellPricePerPack: 0.5,
+    });
+    const para: CardItem = {
+      ...item('para', [next]),
+      defaultPricePerUnit: 1.2,
+    };
+    const [card] = cardsOf(
+      withOwnStock([para], [recordLine('l1', 'para', own, 10, 1)])
+    );
+    // Kept at 10: what the visit was charged.
+    expect(linePrice(card, 10)).toBeCloseTo(10, 9);
+    // Raised to 12: the visit's 10 at 1.00, the 2 more at today's 1.20.
+    expect(linePrice(card, 12)).toBeCloseTo(12.4, 9);
   });
 });
 
@@ -421,5 +450,25 @@ describe('saveChanges (rules › editing a dispensed visit)', () => {
     });
     expect(await saveChanges('rx', listed, c)).toEqual({ kind: 'saved' });
     expect(tries).toBe(2);
+  });
+});
+
+describe('afterDeleteRead (rules › editing a dispensed visit)', () => {
+  it('says a record that is gone was deleted', () => {
+    expect(afterDeleteRead({ kind: 'gone' })).toBe('deleted');
+  });
+
+  it('says a record still Picked wasn’t deleted, and one past Picked can’t be edited', () => {
+    expect(afterDeleteRead({ kind: 'read', record: record([]) })).toBe(
+      'not-deleted'
+    );
+    expect(
+      afterDeleteRead({ kind: 'read', record: record([], 'VERIFIED') })
+    ).toBe('not-editable');
+  });
+
+  // OMS-REG-DIS-12.274
+  it('can’t tell when the record can’t be read', () => {
+    expect(afterDeleteRead(undefined)).toBe('unknown');
   });
 });
