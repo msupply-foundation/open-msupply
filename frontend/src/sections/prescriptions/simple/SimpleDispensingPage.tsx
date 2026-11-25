@@ -32,6 +32,7 @@ import {
   t,
 } from '@/intl';
 import { hasPermission, prescriptionPreferences } from '@/store/storeContext';
+import { ExportPrintButton } from '@/domain/reports';
 import { fetchPatientOptionById, minimalPatientOption } from '@/domain/patient';
 import { ItemSearch } from '@/domain/item';
 import { round9 } from '@/domain/allocation';
@@ -96,6 +97,7 @@ import {
   canCancelVisit,
   canEditVisit,
   cannotEditReason,
+  printableVisit,
   dispensedAt,
   visitHeading,
   visitLines,
@@ -1208,6 +1210,20 @@ const SimpleDispensingPage: Component = () => {
     return { ...notice, viewHref: `${simpleHref}/${notice.dispensedId}` };
   };
 
+  // The one dispensed visit Export/Print is for (rules › printing a dispensed
+  // visit): the visit open on the screen, once read; else, with nothing on
+  // the list and no edit under way, the visit the message names.
+  const printableId = (): string | undefined => {
+    const said = shownNotice();
+    return printableVisit({
+      viewing: viewingId() !== undefined,
+      openedId: openedRecord()?.id,
+      editing: editing() !== undefined,
+      listed: lines.length,
+      namedId: said && 'dispensedId' in said ? said.dispensedId : undefined,
+    });
+  };
+
   /** The breadcrumb's last crumb: who the open visit was for, and when. */
   const crumbOf = (record: DispensedRecord | undefined): string => {
     if (!record) return t('heading.dispensing-record');
@@ -1357,6 +1373,14 @@ const SimpleDispensingPage: Component = () => {
                   : t('button.new-dispense')}
               </LinkButton>
             </Show>
+            {/* The store's forms for one dispensed visit, never a list in
+                progress (rules › printing a dispensed visit). */}
+            <ExportPrintButton
+              context="PRESCRIPTION"
+              dataId={printableId() ?? ''}
+              disabled={printableId() === undefined}
+              disabledReason={t('messages.print-dispensed-visit-only')}
+            />
             <LinkButton
               href={recordsHref}
               variant="secondary"
