@@ -58,42 +58,34 @@ export const monthLabel = (month: MonthKey): string => {
 
 export type VerifyOutcome =
   | { kind: 'verified'; count: number }
-  /** The server answered, and verified nothing (OMS-REG-DIS-12.317). */
+  /**
+   * The server refused a record, so it verified none (OMS-REG-DIS-12.317).
+   */
   | { kind: 'refused' }
   /**
-   * The app's own error dialog has already told the user (a lost
-   * connection, a refused permission, an expired session); the dialog adds
-   * nothing of its own and reads the number again, which shows what happened.
+   * The app's own dialogs have already told the user (a refused permission,
+   * a server fault, a lost connection, an expired session). The Verify may
+   * or may not have landed, so the dialog adds nothing of its own and reads
+   * the number again, which shows what happened.
    */
   | { kind: 'reported' };
 
 /**
- * What a Verify reply means, for a request sent with `returnGraphqlErrors`.
- * The batch is one transaction, and a failed one still reports success for
- * the rows it rolled back (contract wire trap), so a single row that isn't
- * the record means none was verified.
+ * What a Verify reply means, for a request sent WITHOUT `returnGraphqlErrors`.
+ * A record the server won't verify comes back as an error row in a success
+ * reply. The batch is one transaction, and a failed one still reports success
+ * for the rows it rolled back (contract wire trap), so a single row that isn't
+ * the record means none was verified. Anything but a success is a failure the
+ * app has already reported.
  */
 export const verifyOutcome = (
   result: GraphqlResult<VerifyPrescriptionsResult>,
   sent: number
 ): VerifyOutcome => {
-  switch (result.kind) {
-    case 'success': {
-      const rows = result.data.batchPrescription.updatePrescriptions ?? [];
-      const allVerified =
-        rows.length === sent &&
-        rows.every(row => row.response.__typename === 'InvoiceNode');
-      return allVerified
-        ? { kind: 'verified', count: sent }
-        : { kind: 'refused' };
-    }
-    // The server answered with an error, so its transaction didn't commit.
-    case 'graphqlError':
-      return { kind: 'refused' };
-    case 'forbidden':
-    case 'unauthenticated':
-    case 'unexpectedError':
-    case 'aborted':
-      return { kind: 'reported' };
-  }
+  if (result.kind !== 'success') return { kind: 'reported' };
+  const rows = result.data.batchPrescription.updatePrescriptions ?? [];
+  const allVerified =
+    rows.length === sent &&
+    rows.every(row => row.response.__typename === 'InvoiceNode');
+  return allVerified ? { kind: 'verified', count: sent } : { kind: 'refused' };
 };

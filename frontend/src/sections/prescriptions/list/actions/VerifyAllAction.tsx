@@ -109,14 +109,13 @@ const Body = (props: VerifyAllActionProps & { onClose: () => void }) => {
       void refetch();
       return;
     }
-    const result = await graphqlFetch(
-      VerifyPrescriptions,
-      {
-        storeId: props.storeId,
-        updates: ids.map(id => ({ id, status: 'VERIFIED' as const })),
-      },
-      { returnGraphqlErrors: true }
-    );
+    // No returnGraphqlErrors: a record the server won't verify comes back as a
+    // row in a success reply, so a GraphQL error here is a refused permission
+    // or a server fault, the app's own dialogs' to report.
+    const result = await graphqlFetch(VerifyPrescriptions, {
+      storeId: props.storeId,
+      updates: ids.map(id => ({ id, status: 'VERIFIED' as const })),
+    });
     const outcome = verifyOutcome(result, ids.length);
     if (outcome.kind === 'verified') {
       setVerifiedCount(outcome.count);

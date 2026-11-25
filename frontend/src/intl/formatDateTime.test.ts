@@ -90,6 +90,29 @@ describe('calendar dates show the day they name (#1500)', () => {
     expect(localisedMonthYear('2026-01-01')).toBe('January 2026');
   });
 
+  it('localisedMonthYear names the month in Lao, which date-fns has no locale for', () => {
+    setLocale('lo');
+    try {
+      expect(localisedMonthYear('2026-10-01')).toBe('ຕຸລາ 2026');
+    } finally {
+      setLocale('en');
+    }
+  });
+
+  it('localisedMonthYear names the Gregorian month in Dari, not the Solar Hijri one', () => {
+    setLocale('prs');
+    try {
+      // October, in Afghan Persian's own digits; left to the browser's
+      // default calendar it would be Mizan (میزان) 1405.
+      const label = localisedMonthYear('2026-10-01');
+      expect(label).toContain('اکتوبر');
+      expect(label).toContain('۲۰۲۶');
+      expect(label).not.toMatch(/[0-9]/);
+    } finally {
+      setLocale('en');
+    }
+  });
+
   it('customDate', () => {
     expect(customDate('2025-10-01', 'yyyy-MM-dd')).toBe('2025-10-01');
     expect(customDate('2025-10-01', 'd MMM yyyy')).toBe('1 Oct 2025');

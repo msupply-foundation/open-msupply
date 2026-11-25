@@ -110,21 +110,30 @@ describe('verifyOutcome', () => {
     });
   });
 
-  it('reads a GraphQL error from the server as none verified — .317', () => {
-    expect(
-      verifyOutcome(
-        { kind: 'graphqlError', message: 'Record not found', errors: [] },
-        1
-      )
-    ).toEqual({ kind: 'refused' });
-  });
-
-  it("leaves the app's own error dialog to report a lost connection", () => {
-    expect(verifyOutcome({ kind: 'unexpectedError' }, 1)).toEqual({
-      kind: 'reported',
-    });
+  // A refused permission, a store not active on this site or a database
+  // fault comes back as a GraphQL error, never as "a record changed": that
+  // is only ever a row in a success reply.
+  it("leaves a refused permission to the app's permission dialog", () => {
     expect(verifyOutcome({ kind: 'forbidden' }, 1)).toEqual({
       kind: 'reported',
     });
+  });
+
+  it("leaves a server fault or a lost connection to the app's error dialog", () => {
+    expect(verifyOutcome({ kind: 'unexpectedError' }, 1)).toEqual({
+      kind: 'reported',
+    });
+    expect(verifyOutcome({ kind: 'unauthenticated' }, 1)).toEqual({
+      kind: 'reported',
+    });
+  });
+
+  it('never reads a GraphQL error as a refused record', () => {
+    expect(
+      verifyOutcome(
+        { kind: 'graphqlError', message: 'Database error', errors: [] },
+        1
+      )
+    ).toEqual({ kind: 'reported' });
   });
 });
