@@ -158,7 +158,7 @@ impl From<RepositoryError> for UpdateStockOutLineError {
 #[cfg(test)]
 mod test {
     use repository::{
-        InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow,
+        EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow,
         InvoiceRowRepository, InvoiceStatus, InvoiceType, StockLineRow, StockLineRowRepository,
         mock::{
             MockDataInserts, mock_item_a, mock_item_b_lines, mock_name_store_a,
@@ -167,9 +167,11 @@ mod test {
             mock_outbound_shipment_c_invoice_lines, mock_outbound_shipment_no_stock_line,
             mock_patient, mock_prescription_a_invoice_lines, mock_stock_line_b,
             mock_stock_line_location_is_on_hold, mock_stock_line_on_hold, mock_store_a,
-            mock_store_b, mock_store_c, stock_line_with_volume,
+            mock_store_b, mock_store_c, mock_vvm_status_a, mock_vvm_status_b,
+            stock_line_with_volume,
         },
         test_db::setup_all,
+        vvm_status::vvm_status_log::{VVMStatusLogFilter, VVMStatusLogRepository},
     };
 
     use crate::{
@@ -1040,5 +1042,214 @@ mod test {
             updated_invoice_line.prescribed_quantity,
             updated_prescribed_quantity
         );
+    }
+
+    // spec/prescriptions contract › editing a dispensed visit: changing a
+    // prescription line's amount (which takes no VVM status) keeps its
+    // batch's VVM status.
+    #[actix_rt::test]
+    async fn update_stock_out_line_keeps_batch_vvm_status() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "update_stock_out_line_keeps_batch_vvm_status",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_b().id, "".to_string())
+            .unwrap();
+        let invoice_line_service = service_provider.invoice_line_service;
+        let stock_line_repo = StockLineRowRepository::new(&connection);
+
+        let batch = StockLineRow {
+            vvm_status_id: Some(mock_vvm_status_a().id),
+            ..mock_stock_line_b()
+        };
+        stock_line_repo.upsert_one(&batch).unwrap();
+
+        let prescription = InvoiceRow {
+            id: "prescription_vvm".to_string(),
+            name_id: mock_name_store_a().id,
+            r#type: InvoiceType::Prescription,
+            store_id: context.store_id.clone(),
+            status: InvoiceStatus::Picked,
+            ..Default::default()
+        };
+        InvoiceRowRepository::new(&context.connection)
+            .upsert_one(&prescription)
+            .unwrap();
+        invoice_line_service
+            .insert_stock_out_line(
+                &context,
+                InsertStockOutLine {
+                    id: "prescription_vvm-1".to_string(),
+                    r#type: StockOutType::Prescription,
+                    invoice_id: prescription.id.clone(),
+                    stock_line_id: batch.id.clone(),
+                    number_of_packs: 1.0,
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        invoice_line_service
+            .update_stock_out_line(
+                &context,
+                UpdateStockOutLine {
+                    id: "prescription_vvm-1".to_string(),
+                    r#type: Some(StockOutType::Prescription),
+                    number_of_packs: Some(2.0),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let after = stock_line_repo.find_one_by_id(&batch.id).unwrap().unwrap();
+        assert_eq!(after.vvm_status_id, Some(mock_vvm_status_a().id));
+        assert_eq!(
+            after.available_number_of_packs,
+            batch.available_number_of_packs - 2.0
+        );
+    }
+
+    // Outbound lines send the VVM status they show on every save, so a line
+    // update with none clears the batch's: that is how staff clear it in the
+    // outbound line editor. Only prescription lines keep it.
+    #[actix_rt::test]
+    async fn update_stock_out_line_outbound_clears_vvm_status() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "update_stock_out_line_outbound_clears_vvm_status",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_b().id, "".to_string())
+            .unwrap();
+        let invoice_line_service = service_provider.invoice_line_service;
+        let stock_line_repo = StockLineRowRepository::new(&connection);
+
+        let batch = StockLineRow {
+            vvm_status_id: Some(mock_vvm_status_a().id),
+            ..mock_stock_line_b()
+        };
+        stock_line_repo.upsert_one(&batch).unwrap();
+
+        let shipment = InvoiceRow {
+            id: "outbound_vvm_clear".to_string(),
+            name_id: mock_name_store_a().id,
+            r#type: InvoiceType::OutboundShipment,
+            store_id: context.store_id.clone(),
+            status: InvoiceStatus::New,
+            ..Default::default()
+        };
+        InvoiceRowRepository::new(&context.connection)
+            .upsert_one(&shipment)
+            .unwrap();
+        invoice_line_service
+            .insert_stock_out_line(
+                &context,
+                InsertStockOutLine {
+                    id: "outbound_vvm_clear-1".to_string(),
+                    r#type: StockOutType::OutboundShipment,
+                    invoice_id: shipment.id.clone(),
+                    stock_line_id: batch.id.clone(),
+                    number_of_packs: 1.0,
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        invoice_line_service
+            .update_stock_out_line(
+                &context,
+                UpdateStockOutLine {
+                    id: "outbound_vvm_clear-1".to_string(),
+                    r#type: Some(StockOutType::OutboundShipment),
+                    number_of_packs: Some(1.0),
+                    vvm_status_id: None,
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let after = stock_line_repo.find_one_by_id(&batch.id).unwrap().unwrap();
+        assert_eq!(after.vvm_status_id, None);
+    }
+
+    // The other half of the fix above: a line update that does give a VVM
+    // status still sets the batch's, and logs the change against the line.
+    #[actix_rt::test]
+    async fn update_stock_out_line_sets_given_vvm_status() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "update_stock_out_line_sets_given_vvm_status",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_b().id, "".to_string())
+            .unwrap();
+        let invoice_line_service = service_provider.invoice_line_service;
+        let stock_line_repo = StockLineRowRepository::new(&connection);
+
+        let batch = StockLineRow {
+            vvm_status_id: Some(mock_vvm_status_a().id),
+            ..mock_stock_line_b()
+        };
+        stock_line_repo.upsert_one(&batch).unwrap();
+
+        let prescription = InvoiceRow {
+            id: "prescription_vvm_given".to_string(),
+            name_id: mock_name_store_a().id,
+            r#type: InvoiceType::Prescription,
+            store_id: context.store_id.clone(),
+            status: InvoiceStatus::Picked,
+            ..Default::default()
+        };
+        InvoiceRowRepository::new(&context.connection)
+            .upsert_one(&prescription)
+            .unwrap();
+        invoice_line_service
+            .insert_stock_out_line(
+                &context,
+                InsertStockOutLine {
+                    id: "prescription_vvm_given-1".to_string(),
+                    r#type: StockOutType::Prescription,
+                    invoice_id: prescription.id.clone(),
+                    stock_line_id: batch.id.clone(),
+                    number_of_packs: 1.0,
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        invoice_line_service
+            .update_stock_out_line(
+                &context,
+                UpdateStockOutLine {
+                    id: "prescription_vvm_given-1".to_string(),
+                    r#type: Some(StockOutType::Prescription),
+                    vvm_status_id: Some(mock_vvm_status_b().id),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let after = stock_line_repo.find_one_by_id(&batch.id).unwrap().unwrap();
+        assert_eq!(after.vvm_status_id, Some(mock_vvm_status_b().id));
+
+        let logs = VVMStatusLogRepository::new(&connection)
+            .query_by_filter(
+                VVMStatusLogFilter::new().invoice_line_id(EqualFilter::equal_to(
+                    "prescription_vvm_given-1".to_string(),
+                )),
+            )
+            .unwrap();
+        assert_eq!(logs.len(), 1);
+        assert_eq!(logs[0].status_id, mock_vvm_status_b().id);
     }
 }
