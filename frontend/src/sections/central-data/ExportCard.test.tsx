@@ -361,6 +361,43 @@ describe('ExportCard', () => {
     });
   });
 
+  it('gives master list lines a master list name or item code search and no Status filter (OMS-REG-CDIO-01.46, .176)', async () => {
+    open();
+    expect(
+      shown.fields['central-data-export-master_list_line-search']!.placeholder
+    ).toBe('label.master-list-name-or-item-code-contains');
+    expect(
+      shown.selects['central-data-export-master_list_line-status']
+    ).toBeUndefined();
+
+    shown.checkboxes['central-data-export-master_list_line']!.onChange(true);
+    await settle();
+    expect(countRequests().at(-1)).toEqual({
+      tables: [{ table: 'MASTER_LIST_LINE', contains: null, isActive: null }],
+    });
+  });
+
+  it('gives names on master lists a master list name or name code search and no Status filter (OMS-REG-CDIO-01.46, .186)', async () => {
+    open();
+    expect(
+      shown.fields['central-data-export-master_list_name_join-search']!
+        .placeholder
+    ).toBe('label.master-list-name-or-name-code-contains');
+    expect(
+      shown.selects['central-data-export-master_list_name_join-status']
+    ).toBeUndefined();
+
+    shown.checkboxes['central-data-export-master_list_name_join']!.onChange(
+      true
+    );
+    await settle();
+    expect(countRequests().at(-1)).toEqual({
+      tables: [
+        { table: 'MASTER_LIST_NAME_JOIN', contains: null, isActive: null },
+      ],
+    });
+  });
+
   it('gives users in stores a username or store code search and no Status filter (OMS-REG-CDIO-01.46, .162)', async () => {
     open();
     expect(

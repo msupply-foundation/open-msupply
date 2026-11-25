@@ -5,14 +5,14 @@ use super::{
     delete::{DELETE_COLUMN, already_deleted_as, check_delete, is_delete},
     field_changes,
     lookup::{
-        Found, InMemory, NOT_FOUND, active_first, find_by_id_or_composite_key, find_reference,
-        new_id_conflict, reference_conflict,
+        InMemory, KeyPart, NOT_FOUND, active_first, differs, find_by_id_or_composite_key,
+        find_reference, key_conflict,
     },
     sheet::Value,
-    stores_with_names,
+    sorted_by, stores_with_names,
     user_refs::{
         ID, STORE_CODE, STORE_ID, USER_ID, USERNAME, check_not_protected, exportable_users,
-        protected_error, store_code, user_column, username, users_by_id,
+        protected_error, user_column, users_by_id,
     },
 };
 use crate::{
@@ -79,12 +79,12 @@ impl ImportTable for UserStoreJoinTable {
         connection: &StorageConnection,
         filter: &ExportFilter,
     ) -> Result<Vec<Vec<Value>>, RepositoryError> {
-        // One query: the export has already checked the row cap.
+        // Read whole, not paged: the export has already checked the row cap.
         let joins = UserStoreJoinRepository::new(connection)
             .query_by_filter(exportable(connection, filter)?)?;
         let users = users_by_id(connection)?;
         let stores = stores_with_names(connection)?;
-        let mut rows: Vec<_> = joins
+        let rows = joins
             .into_iter()
             .map(|join| {
                 let user = users.get(&join.user_id);
@@ -103,8 +103,7 @@ impl ImportTable for UserStoreJoinTable {
                 (order, cells)
             })
             .collect();
-        rows.sort_by(|(a, _), (b, _)| a.cmp(b));
-        Ok(rows.into_iter().map(|(_, cells)| cells).collect())
+        Ok(sorted_by(rows))
     }
 
     fn count(
@@ -306,17 +305,17 @@ impl SheetImport for UserStoreJoinSheet {
             }
             let codes = |joins: &mut dyn Iterator<Item = &UserStoreJoinRow>| {
                 let mut codes: Vec<String> = joins
-                    .map(|other| self.store_code(&other.store_id).to_string())
+                    .map(|other| self.stores.key_or_id(&other.store_id).to_string())
                     .collect();
                 codes.sort();
                 codes
             };
-            let username = self.username(&join.user_id);
+            let username = self.users.key_or_id(&join.user_id);
             error.message = if gives {
                 format!(
                     "{} would be {username}'s default store, and so would {}, but a user has \
                      only one. Set is_default to FALSE for all but one",
-                    self.store_code(&join.store_id),
+                    self.stores.key_or_id(&join.store_id),
                     and_list(&codes(
                         &mut user_defaults.iter().filter(|other| other.id != join.id)
                     ))
@@ -351,8 +350,8 @@ impl SheetImport for UserStoreJoinSheet {
                 "This row takes {} away from {}, but the user_permission sheet gives them \
                  STORE_ACCESS there, which gives it back. Mark that row DELETE too, or remove \
                  it from the file",
-                self.store_code(&join.store_id),
-                self.username(&join.user_id)
+                self.stores.key_or_id(&join.store_id),
+                self.users.key_or_id(&join.user_id)
             );
             errors.push(error);
         }
@@ -366,8 +365,8 @@ impl SheetImport for UserStoreJoinSheet {
                     "This row gives {} store {}, but the user_permission sheet takes their \
                      STORE_ACCESS there away, which takes the store away too. Clear that row's \
                      DELETE, or mark this row DELETE",
-                    self.username(&join.user_id),
-                    self.store_code(&join.store_id)
+                    self.users.key_or_id(&join.user_id),
+                    self.stores.key_or_id(&join.store_id)
                 );
                 errors.push(error);
                 continue;
@@ -378,8 +377,8 @@ impl SheetImport for UserStoreJoinSheet {
             error.message = format!(
                 "{} has no store access on {}, so they couldn't log in to it. Add a \
                  STORE_ACCESS row for it on the user_permission sheet",
-                self.username(&join.user_id),
-                self.store_code(&join.store_id)
+                self.users.key_or_id(&join.user_id),
+                self.stores.key_or_id(&join.store_id)
             );
             errors.push(error);
         }
@@ -388,20 +387,12 @@ impl SheetImport for UserStoreJoinSheet {
 }
 
 impl UserStoreJoinSheet {
-    fn username<'a>(&'a self, user_id: &'a str) -> &'a str {
-        username(&self.users, user_id)
-    }
-
-    fn store_code<'a>(&'a self, store_id: &'a str) -> &'a str {
-        store_code(&self.stores, store_id)
-    }
-
     /// `anna in store MS`.
     fn record(&self, user_id: &str, store_id: &str) -> String {
         format!(
             "{} in store {}",
-            self.username(user_id),
-            self.store_code(store_id)
+            self.users.key_or_id(user_id),
+            self.stores.key_or_id(store_id)
         )
     }
 
@@ -426,30 +417,24 @@ impl UserStoreJoinSheet {
             |join| &join.id,
             |id| UserStoreJoinRowRepository::new(connection).find_one_by_id(id),
             |saved, found, id| {
-                let record = self.record(&saved.user_id, &saved.store_id);
-                Ok(match found {
-                    Found::NewIdBesideKey => Some(new_id_conflict(row, &record, &saved.id, id)),
-                    Found::ById if user_id.is_some_and(|user_id| user_id != saved.user_id) => {
-                        Some(reference_conflict(
-                            row,
-                            (USERNAME, self.username(&saved.user_id)),
-                            (USER_ID, &saved.user_id),
-                            &record,
-                            &saved.id,
-                            id,
-                        ))
-                    }
-                    Found::ById if store_id.is_some_and(|store_id| store_id != saved.store_id) => {
-                        Some(reference_conflict(
-                            row,
-                            (STORE_CODE, self.store_code(&saved.store_id)),
-                            (STORE_ID, &saved.store_id),
-                            &record,
-                            &saved.id,
-                            id,
-                        ))
-                    }
-                    Found::ById => None,
+                let parts = [
+                    KeyPart::in_memory(
+                        &self.users,
+                        differs(user_id, &saved.user_id),
+                        USERNAME,
+                        USER_ID,
+                        &saved.user_id,
+                    ),
+                    KeyPart::in_memory(
+                        &self.stores,
+                        differs(store_id, &saved.store_id),
+                        STORE_CODE,
+                        STORE_ID,
+                        &saved.store_id,
+                    ),
+                ];
+                key_conflict(row, found, &saved.id, id, &parts, || {
+                    Ok((self.record(&saved.user_id, &saved.store_id), ()))
                 })
             },
         )
@@ -488,7 +473,7 @@ impl UserStoreJoinSheet {
                         )
                         .into(),
                     DeleteUserStoreJoinError::Protected => {
-                        protected_error(row, self.username(&saved.user_id), "stores").into()
+                        protected_error(row, self.users.key_or_id(&saved.user_id), "stores").into()
                     }
                     DeleteUserStoreJoinError::DatabaseError(error) => RowFailure::Database(error),
                 })?;
@@ -512,7 +497,7 @@ impl UserStoreJoinSheet {
         join: &UserStoreJoinRow,
         error: UpsertUserStoreJoinError,
     ) -> RowFailure {
-        let username = self.username(&join.user_id);
+        let username = self.users.key_or_id(&join.user_id);
         match error {
             UpsertUserStoreJoinError::UserNotFound => row
                 .error(row.reference_column(USERNAME, USER_ID), NOT_FOUND)
@@ -534,7 +519,7 @@ impl UserStoreJoinSheet {
                     STORE_CODE,
                     format!(
                         "{username} already has store {}, through {other_id}",
-                        self.store_code(&join.store_id)
+                        self.stores.key_or_id(&join.store_id)
                     ),
                 )
                 .into(),

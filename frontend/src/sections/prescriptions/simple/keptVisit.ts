@@ -38,10 +38,15 @@ import type {
 // signing out drops them all.
 
 export type Notice = {
-  severity: 'success' | 'info' | 'error';
+  severity: 'success' | 'info' | 'warning' | 'error';
   text: string;
   /** The visit the message is about, once dispensed: View opens it. */
   dispensedId?: string;
+  /**
+   * Says the stock was corrected (rules › correcting the stock): shown over
+   * the notice about short lines, which it answers, until the list changes.
+   */
+  corrected?: true;
 };
 
 export interface KeptVisit {

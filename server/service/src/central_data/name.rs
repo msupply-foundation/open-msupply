@@ -143,7 +143,7 @@ impl ImportTable for NameTable {
         filter: &ExportFilter,
     ) -> Result<Vec<Vec<Value>>, RepositoryError> {
         let references = References::load(connection)?;
-        // One query: the export has already checked the row count against the import cap.
+        // Read whole, not paged: the export has already checked the row cap.
         Ok(NameRowRepository::new(connection)
             .query_by_filter(name_filter(filter))?
             .into_iter()

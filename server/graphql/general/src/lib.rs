@@ -160,6 +160,11 @@ impl GeneralQueries {
         get_names(ctx, store_id, page, filter, sort)
     }
 
+    /// Every name tag (maintained in legacy mSupply), sorted by name
+    pub async fn name_tags(&self, ctx: &Context<'_>, store_id: String) -> Result<NameTagConnector> {
+        name_tags(ctx, store_id)
+    }
+
     pub async fn store(&self, ctx: &Context<'_>, id: String) -> Result<StoreResponse> {
         get_store(ctx, &id)
     }

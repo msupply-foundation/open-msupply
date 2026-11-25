@@ -466,3 +466,13 @@ button.deleteAction[data-variant] {
     block-size: var(--input-height-touch);
   }
 }
+
+/* A line's message with Correct the stock beside it, wrapping under it where
+   the panel is narrow. */
+.limitRow,
+.lineActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}

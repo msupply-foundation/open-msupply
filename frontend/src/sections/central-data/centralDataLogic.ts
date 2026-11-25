@@ -89,6 +89,20 @@ export const TABLES: {
     hasStatus: true,
   },
   {
+    value: 'MASTER_LIST_LINE',
+    labelKey: 'label.master-list-lines',
+    sheet: 'master_list_line',
+    searchKey: 'label.master-list-name-or-item-code-contains',
+    hasStatus: false,
+  },
+  {
+    value: 'MASTER_LIST_NAME_JOIN',
+    labelKey: 'label.names-on-master-lists',
+    sheet: 'master_list_name_join',
+    searchKey: 'label.master-list-name-or-name-code-contains',
+    hasStatus: false,
+  },
+  {
     value: 'NAME_STORE_JOIN',
     labelKey: 'label.names-in-stores',
     sheet: 'name_store_join',

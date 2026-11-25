@@ -4,14 +4,14 @@ use super::{
     cells::{Row, RowError, collect},
     delete::{DELETE_COLUMN, already_deleted_as, check_delete, is_delete},
     lookup::{
-        Found, InMemory, NOT_FOUND, active_first, find_by_id_or_composite_key, find_reference,
-        new_id_conflict, read_contexts, record_conflict, reference_conflict,
+        InMemory, KeyPart, NOT_FOUND, SavedCode, active_first, differs,
+        find_by_id_or_composite_key, find_reference, key_conflict, key_or, read_contexts,
     },
     sheet::Value,
-    stores_with_names,
+    sorted_by, stores_with_names,
     user_refs::{
         ID, STORE_CODE, STORE_ID, USER_ID, USERNAME, check_not_protected, exportable_users,
-        protected_error, store_code, username, users_by_id,
+        protected_error, users_by_id,
     },
 };
 use crate::{
@@ -89,11 +89,11 @@ impl ImportTable for UserPermissionTable {
         connection: &StorageConnection,
         filter: &ExportFilter,
     ) -> Result<Vec<Vec<Value>>, RepositoryError> {
-        // One query: the export has already checked the row cap.
+        // Read whole, not paged: the export has already checked the row cap.
         let permissions = UserPermissionRepository::new(connection)
             .query_by_filter(exportable(connection, filter)?)?;
         let records = References::read(connection)?;
-        let mut rows: Vec<_> = permissions
+        let rows = permissions
             .iter()
             .map(|permission| {
                 let user = records.users.get(&permission.user_id);
@@ -117,8 +117,7 @@ impl ImportTable for UserPermissionTable {
                 (order, cells)
             })
             .collect();
-        rows.sort_by(|(a, _), (b, _)| a.cmp(b));
-        Ok(rows.into_iter().map(|(_, cells)| cells).collect())
+        Ok(sorted_by(rows))
     }
 
     fn count(
@@ -275,10 +274,6 @@ impl Key {
 }
 
 impl UserPermissionSheet {
-    fn username<'a>(&'a self, user_id: &'a str) -> &'a str {
-        username(&self.users, user_id)
-    }
-
     /// With an id the row's key MUST match, but a `DELETE` row's blank cells aren't compared.
     fn find_permission(
         &self,
@@ -293,11 +288,12 @@ impl UserPermissionSheet {
             None => Ok(Vec::new()),
         };
         // Blank context is none, except on a `DELETE` row. Blank store keeps the saved one.
-        let differs = |given: &Reference, saved: &Option<String>, blank_keeps: bool| match given {
-            None => false,
-            Some(None) if blank_keeps => false,
-            Some(given) => given != saved,
-        };
+        let reference_differs =
+            |given: &Reference, saved: &Option<String>, blank_keeps: bool| match given {
+                None => false,
+                Some(None) if blank_keeps => false,
+                Some(given) => given != saved,
+            };
         find_by_id_or_composite_key(
             row,
             id,
@@ -305,88 +301,47 @@ impl UserPermissionSheet {
             |permission| &permission.id,
             |id| UserPermissionRowRepository::new(connection).find_one_by_id(id),
             |saved, found, id| {
-                let column = match found {
-                    Found::NewIdBesideKey => {
-                        return Ok(Some(new_id_conflict(
-                            row,
-                            &self.record(saved),
-                            &saved.id,
-                            id,
-                        )));
-                    }
-                    Found::ById
-                        if key
-                            .user_id
-                            .as_ref()
-                            .is_some_and(|user| *user != saved.user_id) =>
-                    {
-                        Some(USERNAME)
-                    }
-                    Found::ById if differs(&key.store_id, &saved.store_id, true) => {
-                        Some(STORE_CODE)
-                    }
-                    Found::ById
-                        if key
+                let saved_store = saved.store_id.as_deref().unwrap_or_default();
+                let saved_context = saved.context_id.as_deref().unwrap_or_default();
+                let parts = [
+                    KeyPart::in_memory(
+                        &self.users,
+                        differs(key.user_id.as_deref(), &saved.user_id),
+                        USERNAME,
+                        USER_ID,
+                        &saved.user_id,
+                    ),
+                    KeyPart::in_memory(
+                        &self.stores,
+                        reference_differs(&key.store_id, &saved.store_id, true),
+                        STORE_CODE,
+                        STORE_ID,
+                        saved_store,
+                    ),
+                    // No id column: a permission is its own code.
+                    KeyPart {
+                        changed: key
                             .permission
                             .as_ref()
-                            .is_some_and(|permission| *permission != saved.permission) =>
-                    {
-                        Some(PERMISSION)
-                    }
-                    Found::ById if differs(&key.context_id, &saved.context_id, delete) => {
-                        Some(CONTEXT_NAME)
-                    }
-                    Found::ById => None,
-                };
-                Ok(column.map(|column| self.conflict(row, saved, id, column)))
+                            .is_some_and(|permission| *permission != saved.permission),
+                        code_column: PERMISSION,
+                        id_column: PERMISSION,
+                        saved_id: saved.permission.as_ref(),
+                        saved_code: SavedCode::Known(saved.permission.as_ref()),
+                    },
+                    KeyPart::in_memory(
+                        &self.contexts,
+                        reference_differs(&key.context_id, &saved.context_id, delete),
+                        CONTEXT_NAME,
+                        CONTEXT_ID,
+                        saved_context,
+                    ),
+                ];
+                key_conflict(row, found, &saved.id, id, &parts, || {
+                    Ok((self.record(saved), ()))
+                })
             },
         )
-    }
-
-    /// On `key_column`, or its id column when the row fills only that.
-    fn conflict(
-        &self,
-        row: &Row,
-        saved: &UserPermissionRow,
-        id: &str,
-        key_column: &str,
-    ) -> RowError {
-        let record = self.record(saved);
-        let conflict = |code, reference_id| {
-            reference_conflict(row, code, reference_id, &record, &saved.id, id)
-        };
-        let saved_store = saved.store_id.as_deref().unwrap_or_default();
-        let saved_context = saved.context_id.as_deref().unwrap_or_default();
-        match key_column {
-            USERNAME => conflict(
-                (USERNAME, self.username(&saved.user_id)),
-                (USER_ID, &saved.user_id),
-            ),
-            STORE_CODE => conflict(
-                (STORE_CODE, store_code(&self.stores, saved_store)),
-                (STORE_ID, saved_store),
-            ),
-            CONTEXT_NAME => conflict(
-                (
-                    CONTEXT_NAME,
-                    self.contexts
-                        .get(saved_context)
-                        .map_or("", |context| context.name.as_str()),
-                ),
-                (CONTEXT_ID, saved_context),
-            ),
-            _ => row.error(
-                PERMISSION,
-                record_conflict(
-                    PERMISSION,
-                    &record,
-                    saved.permission.as_ref(),
-                    &saved.id,
-                    &row.text(PERMISSION).unwrap_or_default(),
-                    id,
-                ),
-            ),
-        }
     }
 
     fn delete(
@@ -421,7 +376,7 @@ impl UserPermissionSheet {
                     .error(DELETE_COLUMN, locks_out_message(&saved.permission))
                     .into(),
                 DeleteUserPermissionError::Protected => {
-                    protected_error(row, self.username(&saved.user_id), "permissions").into()
+                    protected_error(row, self.users.key_or_id(&saved.user_id), "permissions").into()
                 }
                 DeleteUserPermissionError::DatabaseError(error) => RowFailure::Database(error),
             },
@@ -459,7 +414,7 @@ fn record(
 ) -> String {
     let mut record = format!(
         "{}: {}",
-        user.map_or(permission.user_id.as_str(), |user| &user.username),
+        key_or(user, &permission.user_id),
         permission.permission.as_ref()
     );
     if let Some(context_id) = &permission.context_id {
@@ -470,7 +425,7 @@ fn record(
         record.push_str(&format!(" for {name}"));
     }
     if let Some(store_id) = &permission.store_id {
-        let code = store.map_or(store_id.as_str(), |store| &store.code);
+        let code = key_or(store, store_id);
         record.push_str(&format!(" in store {code}"));
     }
     record
@@ -500,7 +455,7 @@ fn upsert_failure(
     error: UpsertUserPermissionError,
 ) -> RowFailure {
     let user_column = row.reference_column(USERNAME, USER_ID);
-    let username = user.map_or(permission.user_id.as_str(), |user| &user.username);
+    let username = key_or(user, &permission.user_id);
     match error {
         UpsertUserPermissionError::UserDeleted => row
             .error(

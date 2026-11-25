@@ -1,9 +1,9 @@
-//! What the two user sheets, `user_store_join` and `user_permission`, share: naming the users and
-//! stores their rows refer to, refusing a protected user, and which records they export.
+//! What the two user sheets, `user_store_join` and `user_permission`, share: their columns, refusing
+//! a protected user, and which records they export.
 use super::{ExportFilter, cells::Row, cells::RowError, lookup::InMemory};
 use crate::user_account::upsert::protected_user_ids;
 use repository::{
-    EqualFilter, RepositoryError, StorageConnection, StoreRow, StringFilter, UserAccountRow,
+    EqualFilter, RepositoryError, StorageConnection, StringFilter, UserAccountRow,
     UserAccountRowRepository, UserOnStoreFilter,
 };
 use std::collections::HashMap;
@@ -13,20 +13,6 @@ pub(super) const USERNAME: &str = "username";
 pub(super) const USER_ID: &str = "user_id";
 pub(super) const STORE_CODE: &str = "store_code";
 pub(super) const STORE_ID: &str = "store_id";
-
-/// Else the id.
-pub(super) fn username<'a>(users: &'a InMemory<UserAccountRow>, user_id: &'a str) -> &'a str {
-    users
-        .get(user_id)
-        .map_or(user_id, |user| user.username.as_str())
-}
-
-/// Else the id.
-pub(super) fn store_code<'a>(stores: &'a InMemory<StoreRow>, store_id: &'a str) -> &'a str {
-    stores
-        .get(store_id)
-        .map_or(store_id, |store| store.code.as_str())
-}
 
 /// The column the row found its user by, else `id`, for a row that finds its record by id alone.
 pub(super) fn user_column(row: &Row) -> &'static str {
@@ -56,7 +42,7 @@ pub(super) fn check_not_protected(
     what: &str,
 ) -> Result<(), RowError> {
     if protected.iter().any(|protected| protected == user_id) {
-        return Err(protected_error(row, username(users, user_id), what));
+        return Err(protected_error(row, users.key_or_id(user_id), what));
     }
     Ok(())
 }

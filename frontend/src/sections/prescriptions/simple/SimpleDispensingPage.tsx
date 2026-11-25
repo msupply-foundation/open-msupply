@@ -28,6 +28,7 @@ import {
   locale,
   localisedDateTime,
   localisedTime,
+  roundedText,
   t,
 } from '@/intl';
 import { hasPermission, prescriptionPreferences } from '@/store/storeContext';
@@ -58,9 +59,11 @@ import {
   SimpleUnnamedPatient,
 } from './simpleDispense.generated';
 import { AmountDialog } from './AmountDialog';
+import { CorrectStockDialog } from './CorrectStockDialog';
 import {
   addAmount,
   buildCards,
+  correctedNext,
   dispenseOutcome,
   dispenseVisit,
   medicinesFor,
@@ -73,6 +76,7 @@ import {
   unnamedStillChosen,
   unreadIds,
   visitWasSaved,
+  withItem,
   type CardItem,
   type ListLine,
   type MedicineCard,
@@ -217,28 +221,29 @@ const SimpleDispensingPage: Component = () => {
   // that loses it. A read that fails keeps the cards as they were, the kept
   // visit's last read when the screen has none of its own; with none at all,
   // the card area says so and offers to read them again.
-  const [items, { refetch: refetchItems }] = createResource<
-    CardItem[] | undefined,
-    { storeId: string; ids: string[]; dispensed: number }
-  >(
-    () => {
-      const list = medicines();
-      if (!list || list.length === 0) return false;
-      return {
-        storeId: storeOpened,
-        ids: list.map(m => m.itemId),
-        dispensed: dispensedCount(),
-      };
-    },
-    async ({ storeId, ids }, { value }) => {
-      const fetched = await fetchItems(storeId, ids, true);
-      if (fetched) {
-        setCardsRead(fetched);
-        dropCheckFromBefore();
+  const [items, { refetch: refetchItems, mutate: mutateItems }] =
+    createResource<
+      CardItem[] | undefined,
+      { storeId: string; ids: string[]; dispensed: number }
+    >(
+      () => {
+        const list = medicines();
+        if (!list || list.length === 0) return false;
+        return {
+          storeId: storeOpened,
+          ids: list.map(m => m.itemId),
+          dispensed: dispensedCount(),
+        };
+      },
+      async ({ storeId, ids }, { value }) => {
+        const fetched = await fetchItems(storeId, ids, true);
+        if (fetched) {
+          setCardsRead(fetched);
+          dropCheckFromBefore();
+        }
+        return fetched ?? value ?? cardsRead();
       }
-      return fetched ?? value ?? cardsRead();
-    }
-  );
+    );
 
   // Read, and none came back: the first read failed (a later one keeps the
   // cards it had). Not while it reads again, which shows as loading.
@@ -1147,6 +1152,8 @@ const SimpleDispensingPage: Component = () => {
     );
   const shownNotice = () => {
     if (dispensing()) return notice();
+    // A correction answers a short line, so it says what to do next instead.
+    if (notice()?.corrected) return notice();
     const shortNow = short();
     const repricedNow = repriced();
     if (shortNow.length === 0 && repricedNow.length === 0) return notice();
@@ -1187,6 +1194,77 @@ const SimpleDispensingPage: Component = () => {
       : undefined;
     const when = localisedDateTime(dispensedAt(record));
     return who ? `${who} · ${when}` : when;
+  };
+
+  // Correct the stock (rules › correcting the stock): offered to staff who
+  // may adjust stock, for the medicine it was opened for, with the amount
+  // typed in the amount box when it was opened from there. `refocus` puts
+  // focus back where it was opened from once it saves: the button that
+  // opened it is gone by then, so the dialog can't return focus to it.
+  const canCorrect = () => hasPermission('INVENTORY_ADJUSTMENT_MUTATE');
+  type Correcting = { itemId: string; typed: number; refocus: () => void };
+  const [correcting, setCorrecting] = createSignal<Correcting | undefined>();
+
+  // The medicine read again after a correction, in place of its earlier copy
+  // wherever the screen holds it: the cards, the medicines from the search
+  // and Dispense's last check, so every figure on the screen follows. In the
+  // background: if it fails, the screen keeps what it showed, and the next
+  // Dispense checks the stock again anyway.
+  const readAgain = async (itemId: string): Promise<void> => {
+    const fetched = await fetchItems(storeOpened, [itemId], true);
+    const fresh = fetched?.find(item => item.id === itemId);
+    if (!fresh) return;
+    mutateItems(now => withItem(now, fresh));
+    setCardsRead(now => withItem(now, fresh));
+    setSearchedRead(now => withItem(now, fresh));
+    if (checked().some(card => card.item.id === itemId)) {
+      const [card] = buildCards(
+        medicinesFor([itemId], medicines() ?? []),
+        [fresh],
+        prescriptionPreferences()
+      );
+      if (card)
+        setChecked(checked().map(now => (now.item.id === itemId ? card : now)));
+    }
+  };
+
+  // Saved: the count is the system's figure now. A line that stopped at the
+  // old figure no longer says so, and the notice says what to do next.
+  const corrected = (opened: Correcting, count: number): void => {
+    setCorrecting(undefined);
+    opened.refocus();
+    const { itemId, typed } = opened;
+    const card = cardOf(itemId);
+    const listed = unitsListed(lines, itemId);
+    const stopped = lines.some(line => line.itemId === itemId && line.capped);
+    if (stopped)
+      setLines(
+        produce(draft => {
+          const line = draft.find(l => l.itemId === itemId);
+          if (line) delete line.capped;
+        })
+      );
+    const next = correctedNext({ count, listed, typed, stopped });
+    const key =
+      next === 'lower'
+        ? 'messages.stock-corrected-lower'
+        : next === 'raise'
+          ? 'messages.stock-corrected-raise'
+          : next === 'dispense'
+            ? 'messages.stock-corrected-dispense'
+            : 'messages.stock-corrected';
+    setNotice({
+      severity: next === 'lower' ? 'warning' : 'success',
+      // The unit as set up, never pluralised (#666); none leaves no gap.
+      text: t(key, {
+        quantity: roundedText(count),
+        unit: card?.item.unitName ?? '',
+        item: card?.item.name ?? '',
+        amount: roundedText(listed + typed),
+      }).replace(/\s+/g, ' '),
+      corrected: true,
+    });
+    void readAgain(itemId);
   };
 
   return (
@@ -1397,6 +1475,11 @@ const SimpleDispensingPage: Component = () => {
             setNotice(undefined);
             update(removeLine(lines, itemId));
           }}
+          correctStock={{
+            allowed: canCorrect(),
+            open: (itemId, refocus) =>
+              setCorrecting({ itemId, typed: 0, refocus }),
+          }}
           onClear={() => (editing() ? discard() : void clear())}
           onDispense={() => void (editing() ? saveEdit() : dispense())}
           canDispense={canPress()}
@@ -1440,11 +1523,35 @@ const SimpleDispensingPage: Component = () => {
             card={card()}
             available={available(card())}
             locked={locked()}
+            correctStock={{
+              allowed: canCorrect(),
+              open: (typed, refocus) =>
+                setCorrecting({ itemId: card().item.id, typed, refocus }),
+            }}
             onAdd={units => {
               addToList(card(), units);
               closeAmount();
             }}
             onClose={closeAmount}
+          />
+        )}
+      </Show>
+      {/* Over the amount box when opened from it, so it is rendered after. */}
+      <Show when={correcting()} keyed>
+        {opened => (
+          <CorrectStockDialog
+            storeId={storeOpened}
+            itemId={opened.itemId}
+            name={cardOf(opened.itemId)?.item.name ?? ''}
+            unit={cardOf(opened.itemId)?.item.unitName ?? ''}
+            // Closed without saving: the medicine is read again anyway, since
+            // the dialog may have found the stock changed, or a save whose
+            // reply was lost may have landed, and the screen should show it.
+            onClose={() => {
+              setCorrecting(undefined);
+              void readAgain(opened.itemId);
+            }}
+            onSaved={count => corrected(opened, count)}
           />
         )}
       </Show>

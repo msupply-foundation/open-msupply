@@ -23,7 +23,11 @@ mod item;
 mod location_type;
 pub mod lookup;
 mod master_list;
+mod master_list_line;
+mod master_list_name_join;
+mod master_list_refs;
 mod name;
+mod name_refs;
 mod name_store_join;
 pub mod sheet;
 mod store;
@@ -56,6 +60,8 @@ pub enum CentralDataTable {
     User,
     Item,
     MasterList,
+    MasterListLine,
+    MasterListNameJoin,
     NameStoreJoin,
     UserStoreJoin,
     UserPermission,
@@ -139,6 +145,8 @@ impl CentralDataTable {
             CentralDataTable::User => "user",
             CentralDataTable::Item => "item",
             CentralDataTable::MasterList => "master_list",
+            CentralDataTable::MasterListLine => "master_list_line",
+            CentralDataTable::MasterListNameJoin => "master_list_name_join",
             CentralDataTable::NameStoreJoin => "name_store_join",
             CentralDataTable::UserStoreJoin => "user_store_join",
             CentralDataTable::UserPermission => "user_permission",
@@ -156,6 +164,8 @@ static TABLES: &[&(dyn ImportTable + Sync)] = &[
     &user::UserTable,
     &item::ItemTable,
     &master_list::MasterListTable,
+    &master_list_line::MasterListLineTable,
+    &master_list_name_join::MasterListNameJoinTable,
     &name_store_join::NameStoreJoinTable,
     &user_store_join::UserStoreJoinTable,
     &user_permission::UserPermissionTable,
@@ -371,6 +381,12 @@ pub fn field_changes(
         .filter(|(_, from, to)| from != to)
         .map(|(column, from, to)| FieldChange { column, from, to })
         .collect()
+}
+
+/// An export's rows in key order, each built with its sort key beside it.
+pub(crate) fn sorted_by<K: Ord>(mut rows: Vec<(K, Vec<sheet::Value>)>) -> Vec<Vec<sheet::Value>> {
+    rows.sort_by(|(a, _), (b, _)| a.cmp(b));
+    rows.into_iter().map(|(_, cells)| cells).collect()
 }
 
 #[derive(Debug, PartialEq)]
