@@ -98,6 +98,26 @@ Counts are English strings containing the term, split by the Lao used.
 | sync                    | ຊິງຄ໌        | 65/66         |                                                                                                                                                                  |
 | server                  | ເຊີບເວີ      | 87/87         |                                                                                                                                                                  |
 
+### Terms settled in the 2026-11-26 backlog drafts
+
+Settled by the drafts, not yet by a Lao reviewer. Change them here when one does.
+
+| English                          | Lao               | Notes                                                                                          |
+| -------------------------------- | ----------------- | ---------------------------------------------------------------------------------------------- |
+| dispense (verb, button)          | ຈ່າຍຢາ            | not Google's _ແຈກຢາຍ_ ("distribute")                                                           |
+| dispensing record                | ການຈ່າຍຢາ         | keeps _ໃບສັ່ງຢາ_ for a prescriber's prescription; see open questions                           |
+| Dispensing records (list/button) | ປະຫວັດການຈ່າຍຢາ   | "dispensing history"                                                                           |
+| unnamed patient                  | ຄົນເຈັບບໍ່ລະບຸຊື່ | "no name given", not "has no name"                                                             |
+| common medicines                 | ຢາທີ່ໃຊ້ເລື້ອຍ    | coined; _ຢາທົ່ວໄປ_ would read as "generic medicines"                                           |
+| stock                            | ສະຕ໋ອກ            | never Google's _ຫຼັກຊັບ_ (financial securities)                                                |
+| amount (of a medicine)           | ຈຳນວນ             | `label.amount` = _ຈຳນວນເງິນ_ is money; don't reuse it for quantities                           |
+| tag                              | ປ້າຍກຳກັບ         | from `label.tag-colour`                                                                        |
+| template                         | ແບບຟອມ            | catalog majority; not _ແມ່ແບບ_                                                                 |
+| consumption                      | ການໃຊ້ຈ່າຍ        | not _ການບໍລິໂພກ_; consumption estimate = _ການປະມານການໃຊ້ຈ່າຍ_ (_ຄາດຄະເນ_ is forecast/expected) |
+| short (units short)              | ຂາດ               | not _ສັ້ນ_ (short in length)                                                                   |
+| left (quantity left)             | ເຫຼືອ             | not _ຊ້າຍ_ (left-hand side)                                                                    |
+| screen                           | ໜ້າຈໍ             |                                                                                                |
+
 ## Open questions
 
 - **column: _ຄໍລຳ_ (10) vs _ຖັນ_ (3).** `table.column-visible`, `table.columns` and
@@ -114,4 +134,12 @@ Counts are English strings containing the term, split by the Lao used.
   confirm.
 - **more: _ເພິ່ມ_ (misspelt, 22 strings) vs _ເພີ່ມ_ (116).** `button.more`, `common.more`,
   `button.order-more` and others use _ເພິ່ມ_; it's a typo for _ເພີ່ມ_.
+- **dispensing record: _ໃບສັ່ງຢາ_ (15) vs _ການຈ່າຍຢາ_ (11).** _ໃບສັ່ງຢາ_ is the older majority,
+  but it is also the word for a prescriber's prescription (`label.prescription-request`), so
+  strings that name both (`messages.cant-delete-generated-dispensation`,
+  `messages.confirm-ready-to-dispense`) already use _ການຈ່າຍຢາ_ for the dispensing record. New
+  drafts use _ການຈ່າຍຢາ_. Still on _ໃບສັ່ງຢາ_: `button.view-prescription`,
+  `error.failed-to-create-prescription`, `error.prescription-not-found`,
+  `label.cancel-prescription`, `label.create-prescription`, `messages.deleted-prescriptions_other`,
+  `messages.prescription-will-be-created` and others. A Lao reviewer should pick one.
 - **status labels without _ແລ້ວ_**: 18 of 52 single-word "-ed" `label.` values leave it off.
