@@ -7749,6 +7749,10 @@ async fn a_user_permission_finds_its_references_and_cannot_change_them() {
 async fn a_user_permission_row_can_give_the_setup_admin_a_permission_but_not_take_one_away() {
     let (connection, service_provider, dir) =
         permission_setup("central_data_permission_setup_admin").await;
+    // MS is on this server's site, store_a on another.
+    KeyValueStoreRepository::new(&connection)
+        .set_i32(KeyType::SettingsSyncSiteId, Some(0))
+        .unwrap();
     let ctx = as_user(&service_provider, IMPORTER);
 
     let path = write_file(
@@ -7786,6 +7790,28 @@ async fn a_user_permission_row_can_give_the_setup_admin_a_permission_but_not_tak
     assert_eq!(
         row_errors(&summary),
         vec![(2, Some("id"), message), (3, Some("username"), message)]
+    );
+    assert_eq!(permissions_of(&connection, "admin").len(), 2);
+
+    // Their account isn't on store_a's site, so that site couldn't apply the record.
+    let path = write_file(
+        dir.path(),
+        permission_sheet(vec![permission_row(&[
+            ("username", "admin"),
+            ("store_id", "store_a"),
+            ("permission", "STOCKTAKE_QUERY"),
+        ])]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(
+            2,
+            Some("store_id"),
+            "admin is only on this server, so import can't give them permissions in another site's store: code is on site 100"
+        )]
     );
     assert_eq!(permissions_of(&connection, "admin").len(), 2);
 }
@@ -8571,6 +8597,10 @@ async fn a_user_store_finds_its_references_and_cannot_change_them() {
 async fn a_user_store_row_can_give_the_setup_admin_a_store_but_not_take_one_away() {
     let (connection, service_provider, dir) =
         user_store_setup("central_data_user_store_setup_admin").await;
+    // store_a is on this server's site, store_b on another.
+    KeyValueStoreRepository::new(&connection)
+        .set_i32(KeyType::SettingsSyncSiteId, Some(mock_store_a().site_id))
+        .unwrap();
     let ctx = as_user(&service_provider, IMPORTER);
 
     let path = write_file(
@@ -8611,6 +8641,28 @@ async fn a_user_store_row_can_give_the_setup_admin_a_store_but_not_take_one_away
     assert_eq!(
         row_errors(&summary),
         vec![(2, Some("id"), message), (3, Some("username"), message)]
+    );
+    assert_eq!(store_joins_of(&connection, "admin").len(), 2);
+
+    // Their account isn't on store_b's site, so that site couldn't apply the record.
+    let path = write_file(
+        dir.path(),
+        user_store_sheet(vec![user_store_row(&[
+            ("username", "admin"),
+            ("store_id", "store_b"),
+            ("is_default", "FALSE"),
+        ])]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(
+            2,
+            Some("store_id"),
+            "admin is only on this server, so import can't give them stores in another site's store: code is on site 2"
+        )]
     );
     assert_eq!(store_joins_of(&connection, "admin").len(), 2);
 }

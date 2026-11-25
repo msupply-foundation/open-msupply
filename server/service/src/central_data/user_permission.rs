@@ -10,8 +10,8 @@ use super::{
     sheet::Value,
     sorted_by, stores_with_names,
     user_refs::{
-        ID, STORE_CODE, STORE_ID, USER_ID, USERNAME, check_not_protected, exportable_users,
-        locked_users, protected_error, users_by_id,
+        ID, STORE_CODE, STORE_ID, SetupAdmin, USER_ID, USERNAME, check_not_protected,
+        exportable_users, locked_users, protected_error, users_by_id,
     },
 };
 use crate::{
@@ -144,6 +144,7 @@ impl ImportTable for UserPermissionTable {
             contexts: read_contexts(connection)?,
             protected: protected_user_ids(connection)?,
             server_users: server_user_ids(),
+            setup_admin: SetupAdmin::read(connection)?,
             importer: start.user_id.to_string(),
         }))
     }
@@ -158,6 +159,7 @@ struct UserPermissionSheet {
     protected: Vec<String>,
     /// No row gives them permissions: the users the server records its own work as.
     server_users: Vec<String>,
+    setup_admin: Option<SetupAdmin>,
     importer: String,
 }
 
@@ -247,6 +249,12 @@ impl SheetImport for UserPermissionSheet {
             context_id: key.context_id.flatten(),
         };
         new.id = id.unwrap_or_else(|| new_user_permission_id(&new));
+        if let (Some(admin), Some(store)) = (
+            &self.setup_admin,
+            new.store_id.as_deref().and_then(|id| self.stores.get(id)),
+        ) {
+            admin.check_store(row, &self.users, &new.user_id, store, "permissions")?;
+        }
         upsert_user_permission(connection, &self.server_users, &new)
             .map_err(|error| upsert_failure(row, &new, self.users.get(&new.user_id), error))?;
         Ok(RowOutcome {

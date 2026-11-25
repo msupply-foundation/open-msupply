@@ -3,8 +3,8 @@
 use super::{ExportFilter, cells::Row, cells::RowError, lookup::InMemory};
 use crate::user_account::upsert::server_user_ids;
 use repository::{
-    EqualFilter, RepositoryError, StorageConnection, StringFilter, UserAccountRow,
-    UserAccountRowRepository, UserOnStoreFilter,
+    EqualFilter, KeyType, KeyValueStoreRepository, RepositoryError, StorageConnection, StoreRow,
+    StringFilter, UserAccountRow, UserAccountRowRepository, UserOnStoreFilter,
 };
 use std::collections::HashMap;
 
@@ -59,6 +59,51 @@ pub(super) fn locked_users<'a>(
         (protected, format!("take away their {what}"))
     } else {
         (server_users, format!("change their {what}"))
+    }
+}
+
+/// The admin a standalone central server made at setup. Setup writes no changelog row for their
+/// account, so it never syncs to another site.
+pub(super) struct SetupAdmin {
+    id: String,
+    site_id: Option<i32>,
+}
+
+impl SetupAdmin {
+    /// `None` on a server that wasn't set up as a standalone central server.
+    pub(super) fn read(connection: &StorageConnection) -> Result<Option<Self>, RepositoryError> {
+        let repo = KeyValueStoreRepository::new(connection);
+        let Some(id) = repo.get_string(KeyType::StandaloneCentralAdminUserId)? else {
+            return Ok(None);
+        };
+        Ok(Some(SetupAdmin {
+            id,
+            site_id: repo.get_i32(KeyType::SettingsSyncSiteId)?,
+        }))
+    }
+
+    /// Refuses giving them `what`, `stores` or `permissions`, in a store of another site: that
+    /// site would get the record but not the user, so could never apply it.
+    pub(super) fn check_store(
+        &self,
+        row: &Row,
+        users: &InMemory<UserAccountRow>,
+        user_id: &str,
+        store: &StoreRow,
+        what: &str,
+    ) -> Result<(), RowError> {
+        if user_id != self.id || Some(store.site_id) == self.site_id {
+            return Ok(());
+        }
+        Err(row.error(
+            row.reference_column(STORE_CODE, STORE_ID),
+            format!(
+                "{} is only on this server, so import can't give them {what} in another site's store: {} is on site {}",
+                users.key_or_id(user_id),
+                store.code,
+                store.site_id
+            ),
+        ))
     }
 }
 

@@ -11,8 +11,8 @@ use super::{
     sheet::Value,
     sorted_by, stores_with_names,
     user_refs::{
-        ID, STORE_CODE, STORE_ID, USER_ID, USERNAME, check_not_protected, exportable_users,
-        locked_users, protected_error, user_column, users_by_id,
+        ID, STORE_CODE, STORE_ID, SetupAdmin, USER_ID, USERNAME, check_not_protected,
+        exportable_users, locked_users, protected_error, user_column, users_by_id,
     },
 };
 use crate::{
@@ -128,6 +128,7 @@ impl ImportTable for UserStoreJoinTable {
             stores: InMemory::new(StoreRowRepository::new(connection).all()?),
             protected: protected_user_ids(connection)?,
             server_users: server_user_ids(),
+            setup_admin: SetupAdmin::read(connection)?,
             importer: start.user_id.to_string(),
             default_checks: Vec::new(),
             written: Vec::new(),
@@ -148,6 +149,7 @@ struct UserStoreJoinSheet {
     protected: Vec<String>,
     /// No row gives them stores: the users the server records its own work as.
     server_users: Vec<String>,
+    setup_admin: Option<SetupAdmin>,
     importer: String,
     /// Each row that adds or changes a join, with the join and whether the row makes it the user's
     /// default, should the sheet leave the user more than one. Its message is set then.
@@ -242,6 +244,10 @@ impl SheetImport for UserStoreJoinSheet {
         };
         let change = Change::between_upserts(saved, &new);
         if change != Change::Unchanged {
+            if let (Some(admin), Some(store)) = (&self.setup_admin, self.stores.get(&new.store_id))
+            {
+                admin.check_store(row, &self.users, &new.user_id, store, "stores")?;
+            }
             upsert_user_store_join_unchecked_default(connection, &self.server_users, &new)
                 .map_err(|error| self.upsert_failure(row, &new, error))?;
             let gives_default = new.is_default && !saved.is_some_and(|saved| saved.is_default);
