@@ -120,6 +120,18 @@ export const localisedTime = (value: Date | string | number): string =>
     format(calendarDateOrInstantToDate(value), 'p', { locale: dateFnsLocale() })
   );
 
+/**
+ * A month and its year in the app's language, e.g. "October 2026": the
+ * standalone month name (`LLLL`), which some languages decline differently
+ * from the month inside a date.
+ */
+export const localisedMonthYear = (value: Date | string | number): string =>
+  localiseDigits(
+    format(calendarDateOrInstantToDate(value), 'LLLL yyyy', {
+      locale: dateFnsLocale(),
+    })
+  );
+
 export const localisedDateTime = (value: Date | string | number): string =>
   localiseDigits(
     format(calendarDateOrInstantToDate(value), 'Pp', {

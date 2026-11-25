@@ -8,6 +8,7 @@ import {
   localeDateFormat,
   localisedDate,
   localisedDateTime,
+  localisedMonthYear,
   localisedTime,
   localisedTimeAgo,
 } from './formatDateTime';
@@ -80,6 +81,13 @@ describe('calendar dates show the day they name (#1500)', () => {
 
   it('exportDate', () => {
     expect(exportDate('2025-10-01')).toBe('01/10/2025');
+  });
+
+  it('localisedMonthYear', () => {
+    expect(localisedMonthYear('2025-10-01')).toBe('October 2025');
+    // The 1st, the day a month starts on, is the day most west-of-UTC
+    // readings slip back from.
+    expect(localisedMonthYear('2026-01-01')).toBe('January 2026');
   });
 
   it('customDate', () => {
@@ -173,6 +181,7 @@ describe('digit systems match the numbers beside them', () => {
     expect(localisedDate(AT)).not.toMatch(/[0-9]/);
     expect(localisedTime(AT)).not.toMatch(/[0-9]/);
     expect(localisedDateTime(AT)).not.toMatch(/[0-9]/);
+    expect(localisedMonthYear(AT)).not.toMatch(/[0-9]/);
   });
 
   it('leaves a Latin-digit locale exactly as date-fns wrote it', async () => {

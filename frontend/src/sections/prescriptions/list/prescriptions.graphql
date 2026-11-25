@@ -80,3 +80,52 @@ mutation deletePrescriptions($storeId: String!, $ids: [String!]!) {
     }
   }
 }
+
+# Verify all (spec/prescriptions contract › verifying the month's records): the
+# store's PICKED dispensing records picked up to the chosen month's last
+# instant. The dialog reads the number with `page: { first: 1 }`, and the ids
+# with no page when staff confirm (the server sets no maximum page size). The
+# top-level `type` pins the type and the permission, as for the list above.
+query prescriptionsToVerify(
+  $storeId: String!
+  $pickedUpTo: DateTime!
+  $page: PaginationInput
+) {
+  invoices(
+    storeId: $storeId
+    filter: {
+      status: { equalTo: PICKED }
+      pickedDatetime: { beforeOrEqualTo: $pickedUpTo }
+    }
+    page: $page
+    type: [PRESCRIPTION]
+  ) {
+    ... on InvoiceConnector {
+      totalCount
+      nodes {
+        id
+      }
+    }
+  }
+}
+
+# Verifies every record in one transaction: `continueOnError` is left unset
+# (false), so one refusal verifies none. As for the bulk delete, the response
+# then still reports success for the rows it rolled back (contract wire trap),
+# so any error in it means nothing was verified.
+mutation verifyPrescriptions(
+  $storeId: String!
+  $updates: [UpdatePrescriptionInput!]!
+) {
+  batchPrescription(
+    storeId: $storeId
+    input: { updatePrescriptions: $updates }
+  ) {
+    updatePrescriptions {
+      id
+      response {
+        __typename
+      }
+    }
+  }
+}
