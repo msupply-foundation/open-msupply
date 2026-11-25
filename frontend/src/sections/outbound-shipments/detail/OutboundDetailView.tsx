@@ -9,7 +9,7 @@ import {
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
-import { gated } from '../../../api/gated';
+import { gated, notFound } from '../../../api/gated';
 import { t, tPlural } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
@@ -45,7 +45,8 @@ import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePane
 import { createAddAction } from '../../../ui/utils/keyActions';
 import { ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
-import { RowStatusBadges, uncapped } from './RowStatusBadges';
+import { NotFoundNotice } from '../../../ui/elements/feedback/NotFoundNotice';
+import { RowStatusBadges } from './RowStatusBadges';
 import {
   AlertCircleIcon,
   AlertTriangleIcon,
@@ -320,13 +321,15 @@ const OutboundDetailView: Component = () => {
     async variables => {
       // A not-found NodeError is NOT routed to the global error modal (which
       // would offer a useless reload of the same bad id, and shadow the local
-      // notice); it falls through to `undefined` here and the view shows the
-      // OMS-REG-DIST-01.20 "not found" blocking notice → back to list.
+      // notice); it resolves `null` here and the view shows the
+      // OMS-REG-DIST-01.20 "not found" blocking notice → back to list. A failed
+      // read resolves `undefined` and keeps the spinner, under the global error
+      // modal.
       const result = await graphqlFetch(OutboundDetail, variables);
       if (result.kind !== 'success') return undefined;
       return result.data.invoice.__typename === 'InvoiceNode'
         ? result.data.invoice
-        : undefined;
+        : null;
     }
   );
 
@@ -336,7 +339,7 @@ const OutboundDetailView: Component = () => {
   // allocate report) mid-interaction. `.latest` suspends only until the FIRST
   // load resolves, so the initial spinner is unchanged
   // (kdd/solid-reactivity-pitfalls § no remounts, rule 1).
-  const node = (): OutboundNode | undefined => data.latest;
+  const node = (): OutboundNode | undefined => data.latest ?? undefined;
 
   // The lines PAGE — a separate, server-filtered/sorted/paged query
   // (OMS-REG-DIST-03.28). Keyed on the SERIALISED variables (a stable string)
@@ -764,8 +767,7 @@ const OutboundDetailView: Component = () => {
   const crumbs = (current: OutboundNode) => [
     {
       label: t('outbound-shipments'),
-      onClick: () =>
-        navigate(`/${params.storeId}/distribution/outbound-shipment`),
+      to: `/${params.storeId}/distribution/outbound-shipment`,
     },
     { label: String(current.invoiceNumber) },
   ];
@@ -815,12 +817,7 @@ const OutboundDetailView: Component = () => {
         },
         sortKey: 'batch',
         header: () => t('label.batch'),
-        // Mono, per the spec's line-table column 3 — but WITHOUT the `code`
-        // kind's 7rem growth cap: this column doesn't only hold a code, it
-        // renders the word "Unallocated" for a placeholder line, which fills
-        // the cap exactly and pins the column there so it can't be dragged
-        // wider at all. Same reasoning (and fix) as the `locationCode` key's
-        // "own size, NO cap" note in _globalColumnConfig (#601).
+        // Mono, per the spec's line-table column 3.
         //
         // NOT user-hideable (hideFromColumnSettings), unlike every other data
         // column here: this cell carries the WORD behind the placeholder
@@ -829,9 +826,7 @@ const OutboundDetailView: Component = () => {
         // colour alone — the one thing the marking is never allowed to be
         // (styling principle 9 / WCAG 1.4.1). The column stays draggable and
         // sortable; it just can't be switched off.
-        ...uncapped(
-          getCellDefinition<Line>('batch', { hideFromColumnSettings: true })
-        ),
+        ...getCellDefinition<Line>('batch', { hideFromColumnSettings: true }),
         // A placeholder has no batch, and the word standing in for one must
         // not be readable AS one: in this mono column "Unallocated" set in
         // Monaco alongside e2e-030062-a is just another code at a glance. The
@@ -1077,25 +1072,13 @@ const OutboundDetailView: Component = () => {
       <Show
         when={node()}
         fallback={
-          <Show when={!data.loading}>
-            <Dialog
-              open
-              dismissable={false}
+          <Show when={notFound(data)} fallback={<Spinner center />}>
+            <NotFoundNotice
+              testId="shipment-not-found-notice"
+              title={t('error.shipment-not-found')}
+              description={t('messages.click-to-return-to-shipments')}
               onClose={() =>
                 navigate(`/${params.storeId}/distribution/outbound-shipment`)
-              }
-              icon={<InfoIcon />}
-              title={t('heading.not-found')}
-              description={t('error.shipment-not-found')}
-              actions={
-                <OkButton
-                  data-testid="dialog-button-ok"
-                  onClick={() =>
-                    navigate(
-                      `/${params.storeId}/distribution/outbound-shipment`
-                    )
-                  }
-                />
               }
             />
           </Show>
@@ -1120,11 +1103,12 @@ const OutboundDetailView: Component = () => {
                   edit={edit}
                   onSaveField={async patch => {
                     await saveField(patch);
-                    // A backdate DELETES the shipment's lines server-side
-                    // (OMS-REG-DIST-04.24) — the visible page must follow,
-                    // like any other line-level change.
+                    // A backdate follows deleting all the shipment's lines
+                    // (OMS-REG-DIST-04.24, PickedDateField) — the visible
+                    // page must follow, like any other line-level change.
                     if ('backdatedDatetime' in patch) await refetchAfterSave();
                   }}
+                  onLinesChanged={refetchAfterSave}
                 />
               }
               header={
@@ -1350,6 +1334,9 @@ const OutboundDetailView: Component = () => {
                   columns={columns()}
                   rows={rows()}
                   rowKey={line => line.id}
+                  // The pager is in the status footer: `page` lets the
+                  // table go back to its first row when the page changes.
+                  page={linePagination()}
                   // Filters live WITH the table, in its own toolbar — never the
                   // page header (ui-standards § tables › toolbar, binding). The
                   // item search is the permanent default chip; Location is

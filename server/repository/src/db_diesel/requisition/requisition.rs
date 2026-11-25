@@ -17,7 +17,10 @@ use crate::{
 };
 
 use crate::Pagination;
-use diesel::{dsl::IntoBoxed, prelude::*};
+use diesel::{
+    dsl::{IntoBoxed, not},
+    prelude::*,
+};
 
 pub type RequisitionJoin = (
     RequisitionRow,
@@ -230,12 +233,18 @@ fn create_filtered_query(
         }
 
         if let Some(a_shipment_has_been_created) = a_shipment_has_been_created {
-            let requisition_ids = invoice::table.select(invoice::requisition_id).into_boxed();
+            // Invoices raised without a requisition carry a NULL here. A NULL in
+            // the set makes `NOT IN` unknown for every row, so the "no shipment"
+            // branch would match no rows.
+            let requisition_ids = invoice::table
+                .select(invoice::requisition_id)
+                .filter(invoice::requisition_id.is_not_null())
+                .into_boxed();
 
             if a_shipment_has_been_created {
                 query = query.filter(requisition::id.nullable().eq_any(requisition_ids))
             } else {
-                query = query.filter(requisition::id.nullable().ne_all(requisition_ids))
+                query = query.filter(not(requisition::id.nullable().eq_any(requisition_ids)))
             }
         }
 
@@ -254,7 +263,7 @@ fn create_filtered_query(
             if has_outstanding_lines {
                 query = query.filter(requisition::id.eq_any(requisition_ids))
             } else {
-                query = query.filter(requisition::id.ne_all(requisition_ids))
+                query = query.filter(not(requisition::id.eq_any(requisition_ids)))
             }
         }
     }

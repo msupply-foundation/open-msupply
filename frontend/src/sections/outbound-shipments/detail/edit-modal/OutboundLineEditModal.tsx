@@ -13,7 +13,7 @@ import {
 import { createStore, reconcile } from 'solid-js/store';
 import { graphqlFetch } from '../../../../api/graphql';
 import { t, tPlural } from '../../../../intl';
-import { roundedText } from '../../../../intl/numberDisplay';
+import { displayNumber, roundedText } from '../../../../intl/numberDisplay';
 import { formatCurrency } from '../../../../intl/currency';
 import { Dialog, DIALOG_SCROLL } from '../../../../ui/elements/feedback/Dialog';
 import {
@@ -57,7 +57,7 @@ import {
   InfoIcon,
   PauseIcon,
 } from '../../../../ui/icons';
-import { RowStatusBadges, uncapped } from '../RowStatusBadges';
+import { RowStatusBadges } from '../RowStatusBadges';
 import { StatusBadge } from '@/ui/elements/feedback/StatusBadge';
 import {
   DraftStockOutLines,
@@ -77,6 +77,8 @@ import { mirroredIssueValue, roundedLensValue } from './issueMirror';
 import {
   availableUnits as sumAvailableUnits,
   issuedUnits as sumIssuedUnits,
+  availableDoses as sumAvailableDoses,
+  issuedDoses as sumIssuedDoses,
   distinctPackSizes as packSizesIn,
   autoAllocateBarReasons,
   barReasons,
@@ -440,6 +442,44 @@ const warningMessages = (
     }
   });
 
+// A distribution's warnings, held unresolved: the over-allocation and
+// shortfall figures read in the CURRENT lens, so a lens switch re-expresses
+// them in place (OMS-REG-SMV-11.45) — `switchLensTo` changes no allocation and
+// raises nothing new. A manual entry's adjustment (below) is held the same
+// way; any other banner is already a resolved IssueBanner.
+type DistributionReport = {
+  derived: readonly IssueWarning[];
+  requestedUnits: number;
+  outcome: DistributionOutcome;
+};
+// A manual per-batch entry the whole-pack clamp changed (OMS-REG-SMV-11.33),
+// held as packs with the line's own rates so it too reads in the current lens:
+// doses under the doses lens, otherwise packs (what the cell takes there).
+type AdjustedEntry = {
+  appliedPacks: number;
+  requestedPacks: number;
+  packSize: number;
+  dosesPerUnit: number;
+};
+type WarningEntry = IssueBanner | DistributionReport | AdjustedEntry;
+const adjustedEntryBanner = (
+  entry: AdjustedEntry,
+  lens: AllocateUnit
+): IssueBanner => {
+  const inLens = (packs: number) =>
+    lens.kind === 'doses'
+      ? packsToDoses(packs, entry.packSize, entry.dosesPerUnit)
+      : packs;
+  return {
+    testId: 'outbound-adjusted-entry-warning',
+    message: t('messages.over-allocated-line', {
+      quantity: roundedText(inLens(entry.appliedPacks)),
+      issueQuantity: roundedText(inLens(entry.requestedPacks)),
+    }),
+    severity: 'warning',
+  };
+};
+
 const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   const [item, setItem] = createSignal<LineEditItem | undefined>(
     props.initialItem
@@ -500,7 +540,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // zero-pack lines, silently dropping that status change (spec S4 § save).
   const [vvmConfirm, setVvmConfirm] = createSignal(false);
   // Warnings raised by the last distribution (spec S4 § warnings).
-  const [warnings, setWarnings] = createSignal<IssueBanner[]>([]);
+  const [warnings, setWarnings] = createSignal<WarningEntry[]>([]);
   // Dirty gate: OK is disabled until something changed (matches the e2e
   // expectation that OK saves a real change).
   const [dirty, setDirty] = createSignal(false);
@@ -683,20 +723,19 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         ]);
     }
 
-    // Old-app lens-default parity (its OutboundLineEdit Allocation.tsx): an
-    // item with exactly ONE distinct pack size opens in packs-of-that-size —
+    // Old-app lens-default parity (its OutboundLineEdit Allocation.tsx): a
+    // vaccine under manage-vaccines-in-doses opens in doses, so a number typed
+    // as doses isn't issued as that many units (OMS-REG-DIST-03.47). Otherwise
+    // an item with exactly ONE distinct pack size opens in packs-of-that-size —
     // with the store's pack-to-one preference every batch is pack size 1, so
     // this reads "packs of 1" rather than the item's unit. Applied AFTER
     // auto-allocation so the distribution ran in units; the switch only
-    // re-expresses the seeded quantity (a single-pack-size item's packs lens
-    // fills the very same batches, so nothing moves). A vaccine on the doses
-    // lens is left in units as before — the doses default is a separate parity
-    // gap, not touched here.
+    // re-expresses the seeded quantity, so nothing moves.
     const sizes = distinctPackSizes();
     const onlySize = sizes.length === 1 ? sizes[0] : undefined;
-    const vaccineInDoses = prefs().manageVaccinesInDoses && !!item()?.isVaccine;
-    if (!vaccineInDoses && onlySize)
-      switchLensTo({ kind: 'packs', size: onlySize });
+    if (prefs().manageVaccinesInDoses && picked.isVaccine)
+      switchLensTo({ kind: 'doses', dosesPerUnit: picked.doses ?? 1 });
+    else if (onlySize) switchLensTo({ kind: 'packs', size: onlySize });
   };
 
   // Back to the item-search state — add mode with no item picked. Reached by
@@ -922,6 +961,60 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // Per-batch doses ⇔ packs uses the LINE's own pack size / doses-per-unit (a
   // variant may override the item's), so the grid converts row by row via the
   // shared domain helpers (packsToDoses / dosesToPacks).
+  const packsInLens = (line: DraftLine, packs: number) =>
+    dosesView() ? packsToDoses(packs, line.packSize, line.dosesPerUnit) : packs;
+  const inStoreFigure = (line: DraftLine) =>
+    packsInLens(line, line.inStorePacks);
+  const availableFigure = (line: DraftLine) =>
+    line.stockLineOnHold || line.location?.onHold
+      ? 0
+      : packsInLens(line, line.availablePacks);
+
+  // The placeholder and the requested total it falls short of, as the footer
+  // and the placeholder notice both read them: doses under the doses lens
+  // (old-app parity — "Total doses"; #2067), units under the units and packs
+  // lenses. One memo, so the two can't drift apart. The doses placeholder
+  // rounds as the Issue field does: 301 doses leaves 20.333333333 units,
+  // which would read back as 60.999999999 doses.
+  const placeholderFigures = createMemo(() => {
+    const placeholder = placeholderUnits();
+    if (!dosesView())
+      return { placeholder, total: issuedUnits() + placeholder };
+    const placeholderDoses = roundedLensValue(placeholder, allocateIn());
+    return {
+      placeholder: placeholderDoses,
+      total: sumIssuedDoses(draft) + placeholderDoses,
+    };
+  });
+
+  // The banners as shown: a distribution's report resolved in the current lens.
+  const banners = createMemo(() =>
+    warnings().flatMap(entry =>
+      'derived' in entry
+        ? warningMessages(
+            entry.derived,
+            entry.requestedUnits,
+            allocateIn(),
+            entry.outcome
+          )
+        : 'appliedPacks' in entry
+          ? [adjustedEntryBanner(entry, allocateIn())]
+          : [entry]
+    )
+  );
+
+  // Whether the advisory stack above the grid has anything to show — one
+  // place for the stack's members, so an advisory added to the stack can't be
+  // left out of the gate that renders it. It reads banners(), not warnings():
+  // a distribution with nothing to report still leaves its entry in
+  // warnings(), and resolves to no banner.
+  const hasAdvisories = createMemo(
+    () =>
+      !!scanNarrowing() ||
+      placeholderUnits() > 0 ||
+      !!activityMismatchBanner() ||
+      banners().length > 0
+  );
 
   // The <Select> value string for the current allocate-in lens. Capture the
   // lens in a local so TS narrows the discriminated union without a cast (a
@@ -978,14 +1071,13 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     // (OMS-REG-SMV-11.7/.11). While NEW the shortfall is surfaced separately as
     // the placeholder notice; past NEW it has no placeholder to land in, so it
     // is reported here instead (OMS-REG-SMV-11.13).
-    setWarnings(
-      warningMessages(
-        deriveIssueWarnings(result, { reportShortfall: !props.isNew }),
-        units,
-        lens,
-        distributionOutcome(result, allocationPrefs())
-      )
-    );
+    setWarnings([
+      {
+        derived: deriveIssueWarnings(result, { reportShortfall: !props.isNew }),
+        requestedUnits: units,
+        outcome: distributionOutcome(result, allocationPrefs()),
+      },
+    ]);
     setDirty(true);
     // The allocation just changed — any earlier zero-allocation / unsaved-VVM
     // confirmation no longer applies (spec S4 § save; it must be re-earned
@@ -1051,15 +1143,13 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       ? packsToDoses(applied, line.packSize, line.dosesPerUnit)
       : applied;
     setWarnings(
-      value != null && appliedQuantity !== value
+      requestedPacks != null && appliedQuantity !== value
         ? [
             {
-              testId: 'outbound-adjusted-entry-warning',
-              message: t('messages.over-allocated-line', {
-                quantity: roundedText(appliedQuantity),
-                issueQuantity: roundedText(value),
-              }),
-              severity: 'warning',
+              appliedPacks: applied,
+              requestedPacks,
+              packSize: line.packSize,
+              dosesPerUnit: line.dosesPerUnit,
             },
           ]
         : []
@@ -1313,15 +1403,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       // The meta rides as getCellDefinition's second argument, NOT a sibling
       // `meta:` key — the spread returns its own `meta` and would overwrite one
       // declared beside it (which is exactly how this card lost its header).
-      // Cap-less (the shared `uncapped` — the chips fill the code preset's
-      // 7rem cap and pin the column, the #601 trap the detail table hit too).
-      ...uncapped(
-        getCellDefinition('batch', {
-          headerPosition: 'primary',
-          showLabel: true,
-          hideFromColumnSettings: true,
-        })
-      ),
+      ...getCellDefinition('batch', {
+        headerPosition: 'primary',
+        showLabel: true,
+        hideFromColumnSettings: true,
+      }),
       // Room for the batch value AND its status chips by default; still
       // user-resizable in both directions (no cap).
       size: remToPx(13),
@@ -1517,46 +1603,36 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       : []),
     {
       // In-store stock — re-expressed in doses under the doses lens (old-app
-      // parity). Static per row, so an accessor is safe: a lens flip rebuilds
-      // the whole column set (columns() reads the lens), unlike the in-place
-      // per-batch edits the canAllocate note covers.
-      c: {
-        accessor: line =>
-          dosesView()
-            ? packsToDoses(line.inStorePacks, line.packSize, line.dosesPerUnit)
-            : line.inStorePacks,
-        id: 'inStorePacks',
-      },
+      // parity). The cell reads the row, not info.getValue(): TanStack caches
+      // each row's accessor value by column id for as long as the row model
+      // lives, and a lens flip rebuilds the columns but not the rows — so a
+      // cached value would keep the previous lens's figure under the new
+      // header (#2067).
+      c: { accessor: inStoreFigure, id: 'inStorePacks' },
       header: () =>
         dosesView() ? t('label.in-store-doses') : t('label.in-store'),
       cardGroup: 'batch',
       ...getNumberCell(),
+      cell: info => (
+        <Num value={displayNumber(inStoreFigure(info.row.original))} />
+      ),
       // No CELL_DEF key — "In store (doses)" is the binding constraint.
       size: remToPx(7),
     },
     {
       // Allocatable stock — an ON-HOLD batch (stock line or location) shows 0
       // (old-app parity: nothing here may be issued); doses under the doses
-      // lens.
-      c: {
-        accessor: line => {
-          if (line.stockLineOnHold || line.location?.onHold) return 0;
-          return dosesView()
-            ? packsToDoses(
-                line.availablePacks,
-                line.packSize,
-                line.dosesPerUnit
-              )
-            : line.availablePacks;
-        },
-        id: 'availablePacks',
-      },
+      // lens. Read from the row for the reason In store is.
+      c: { accessor: availableFigure, id: 'availablePacks' },
       header: () =>
         dosesView()
           ? t('label.available-doses')
           : t('label.available-in-packs'),
       cardGroup: 'batch',
       ...getCellDefinition('availablePacks'),
+      cell: info => (
+        <Num value={displayNumber(availableFigure(info.row.original))} />
+      ),
     },
     {
       // Packs issued from this batch (OMS-REG-DIST-03.19), bounded 0…available —
@@ -1778,11 +1854,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     },
     {
       // Other-campaign flag, CARD-ONLY — the companion to the table's "Not for
-      // this campaign" badge beside the batch code, which cards hide.
+      // this activity" badge beside the batch code, which cards hide.
       c: { accessor: lineOtherCampaign, id: 'otherCampaign' },
-      header: () => t('label.not-for-this-campaign'),
+      header: () => t('label.not-for-this-activity'),
       ...getFlagCell(
-        t('label.not-for-this-campaign'),
+        t('label.not-for-this-activity'),
         {
           headerPosition: 'badge',
           hideOnTable: true,
@@ -1846,12 +1922,17 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           fallback={
             <Show when={item()}>
               <HStack gap="md">
+                {/* In doses under the doses lens, units otherwise — see
+                  placeholderFigures. */}
                 <span data-testid="outbound-unallocated-units">
-                  {t('label.unallocated')}: <Num value={placeholderUnits()} />
+                  {t('label.unallocated')}:{' '}
+                  <Num value={placeholderFigures().placeholder} />
                 </span>
                 <span data-testid="outbound-total-units">
-                  {t('label.total-units')}:{' '}
-                  <Num value={issuedUnits() + placeholderUnits()} />
+                  {dosesView()
+                    ? t('label.total-doses')
+                    : t('label.total-units')}
+                  : <Num value={placeholderFigures().total} />
                 </span>
               </HStack>
             </Show>
@@ -2028,7 +2109,23 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                     than a labelled input, and the row's end-alignment would
                     otherwise drop its label below theirs. */}
                   <span class={styles.availableValue}>
-                    <Num value={availableUnits()} /> {unitName()}
+                    {/* Under the doses lens: doses, with the units behind them
+                      (old-app parity — "Available: 99,968 doses (9,997
+                      vials)", whole numbers both; #2067). */}
+                    <Show
+                      when={dosesView()}
+                      fallback={
+                        <>
+                          <Num value={availableUnits()} /> {unitName()}
+                        </>
+                      }
+                    >
+                      {t('label.available-doses-with-units', {
+                        doseCount: roundedText(sumAvailableDoses(draft), 0),
+                        unitCount: roundedText(Math.round(availableUnits()), 0),
+                        unitName: unitName(),
+                      })}
+                    </Show>
                   </span>
                 </LabelledValue>
               </div>
@@ -2064,7 +2161,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               toolbar of their own a few pixels above the cards, spending a
               whole row of a modal whose scarce axis is vertical. Docked at the
               row's inline end by its own auto margin, so it holds that edge
-              whether or not the placeholder notice is beside it, and empty
+              however the pieces before it wrap, and empty
               (invisible) until an item is picked, since the table only exists
               then. */}
           <div ref={setTableControls} class={styles.headerTableControls} />
@@ -2099,87 +2196,48 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           </Stack>
         }
       >
-        {/* The working area: the batch grid and the advisories under it scroll
-            TOGETHER, so a message costs nothing until you reach the end of the
-            cards (the table lays out at content height here — DataTable's
-            `fitContent` — instead of owning a scroll box of its own). */}
-        {/* DIALOG_SCROLL: this is the editor's OWN scroll box between the
-            dialog body and its main table, so in the full-screen sheet the
-            Dialog widens it to the sheet edges the way it widens its own
-            scroll region — otherwise the grid's edge-to-edge bleed would be
-            clipped here, hiding the first and last columns (the chain rule on
-            DialogProps.size, #246). */}
-        <div class={styles.workArea} {...DIALOG_SCROLL}>
-          {/* A scan narrowed the batches: say so, and let the user clear it
-              (.211) — the rows it ruled out sink and disable. */}
-          <Show when={scanNarrowing()}>
-            {narrowing => (
-              <ScanNarrowedNotice
-                batch={narrowing().batch}
-                nothingLeft={narrowing().nothingLeft}
-                onShowAll={() => setScanExcludedIds(new Set<string>())}
-              />
-            )}
-          </Show>
-          {/* Batch grid: one row per available batch, FEFO-ordered; barred rows
-              disabled (OMS-REG-SMV-11.26/.31). */}
-          <div class={styles.batchGrid}>
-            <DataTable
-              dialogTable
-              columns={columns()}
-              rows={draftRows()}
-              rowKey={line => line.id}
-              loading={loadingLines()}
-              cardGroups={CARD_GROUPS}
-              showCardToggle
-              showFullScreen={false}
-              // The controls ride the header row instead of a toolbar of their
-              // own a few pixels above the cards — a whole row of a modal whose
-              // scarce axis is vertical. With nothing else to put in it, the
-              // table's toolbar row then doesn't render at all.
-              controlsMount={tableControls()}
-              // Lay out at content height so THIS modal's scroll area (the work
-              // area around us) scrolls the cards and the advisories under them
-              // as one. Card view only — see the prop.
-              fitContent
-              // The ONE row colour this grid spends: the disabled grey on a
-              // barred or non-allocatable batch (OMS-REG-SMV-11.26/.31/.37). Its former
-              // status tints — expired red, held amber, allocated green — are
-              // gone (2026-08-21, D111 revised); the badges beside each batch
-              // code, the On-hold column, the reddened Expiry-date cell and
-              // the issued figures carry every one of those facts in words.
-              rowState={line => (rowDisabled(line) ? 'disabled' : undefined)}
-              emptyMessage={t('messages.no-stock-available')}
-              config={tableConfig.config()}
-              setConfig={tableConfig.setConfig}
-              configIsDefault={tableConfig.isConfigDefault()}
-              onSaveGlobalDefault={
-                tableConfig.canSaveGlobalDefault()
-                  ? tableConfig.saveGlobalTableConfig
-                  : undefined
-              }
-            />
-          </div>
-
-          {/* ADVISORY messages — they inform, they don't gate the save, so they
-              live in the flow after the last card and scroll away with it
-              rather than holding pinned height over the grid. Anything that
-              gates Save (a rejection, the zero-allocation and VVM
-              confirmations) is in the footer's message slot instead, pinned
-              beside the button it blocks. */}
+        {/* ADVISORY messages — they inform, they don't gate the save. Pinned
+            above the batch grid, so they stay in view however many batches
+            the item has (issue #885); on a screen too short to pin them they
+            scroll away with the body instead (.workArea). Anything that gates
+            Save (a rejection, the zero-allocation and VVM confirmations) is in
+            the footer's message slot instead, pinned beside the button it
+            blocks. Gated as a whole so an empty stack spends no gap over the
+            grid. */}
+        <Show when={hasAdvisories()}>
           <Stack gap="sm">
+            {/* A scan narrowed the batches: say so, and let the user clear it
+                (.211) — the rows it ruled out sink and disable. It explains
+                what the grid no longer offers, so it stays with the other
+                advisories rather than scrolling away with the cards. */}
+            <Show when={scanNarrowing()}>
+              {narrowing => (
+                <ScanNarrowedNotice
+                  batch={narrowing().batch}
+                  nothingLeft={narrowing().nothingLeft}
+                  onShowAll={() => setScanExcludedIds(new Set<string>())}
+                />
+              )}
+            </Show>
+
             {/* The shortfall that became a placeholder — a consequence of the
                 Issue entry, so it reads with the batches it failed to fill,
                 not up in the header row where it reflowed the inputs as the
-                user typed. */}
+                user typed. In the footer's figures, doses under the doses
+                lens (old-app parity). */}
             <Show when={placeholderUnits() > 0}>
               <Alert severity="info" testId="outbound-placeholder-notice">
-                {t('messages.placeholder-allocated-units', {
-                  requestedQuantity: roundedText(
-                    issuedUnits() + placeholderUnits()
-                  ),
-                  placeholderQuantity: roundedText(placeholderUnits()),
-                })}
+                {t(
+                  dosesView()
+                    ? 'messages.placeholder-allocated-doses'
+                    : 'messages.placeholder-allocated-units',
+                  {
+                    requestedQuantity: roundedText(placeholderFigures().total),
+                    placeholderQuantity: roundedText(
+                      placeholderFigures().placeholder
+                    ),
+                  }
+                )}
               </Alert>
             </Show>
 
@@ -2204,7 +2262,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             </Show>
 
             {/* Stacked warning banners (spec S4 § warnings). */}
-            <For each={warnings()}>
+            <For each={banners()}>
               {banner => (
                 <Alert severity={banner.severity} testId={banner.testId}>
                   {banner.message}
@@ -2212,6 +2270,57 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               )}
             </For>
           </Stack>
+        </Show>
+
+        {/* The working area: the batch grid scrolls here, under the pinned
+            advisories (the table lays out at content height — DataTable's
+            `fitContent` — instead of owning a scroll box of its own). */}
+        {/* DIALOG_SCROLL: this is the editor's OWN scroll box between the
+            dialog body and its main table, so in the full-screen sheet the
+            Dialog widens it to the sheet edges the way it widens its own
+            scroll region — otherwise the grid's edge-to-edge bleed would be
+            clipped here, hiding the first and last columns (the chain rule on
+            DialogProps.size, #246). */}
+        <div class={styles.workArea} {...DIALOG_SCROLL}>
+          {/* Batch grid: one row per available batch, FEFO-ordered; barred rows
+              disabled (OMS-REG-SMV-11.26/.31). */}
+          <div class={styles.batchGrid}>
+            <DataTable
+              dialogTable
+              columns={columns()}
+              rows={draftRows()}
+              rowKey={line => line.id}
+              loading={loadingLines()}
+              cardGroups={CARD_GROUPS}
+              showCardToggle
+              showFullScreen={false}
+              // The controls ride the header row instead of a toolbar of their
+              // own a few pixels above the cards — a whole row of a modal whose
+              // scarce axis is vertical. With nothing else to put in it, the
+              // table's toolbar row then doesn't render at all.
+              controlsMount={tableControls()}
+              // Lay out at content height so THIS modal's scroll area (the work
+              // area around us) scrolls the cards, under the pinned advisories.
+              // Card view only — see the prop.
+              fitContent
+              // The ONE row colour this grid spends: the disabled grey on a
+              // barred or non-allocatable batch (OMS-REG-SMV-11.26/.31/.37). Its former
+              // status tints — expired red, held amber, allocated green — are
+              // gone (2026-08-21, D111 revised); the badges beside each batch
+              // code, the On-hold column, the reddened Expiry-date cell and
+              // the issued figures carry every one of those facts in words.
+              rowState={line => (rowDisabled(line) ? 'disabled' : undefined)}
+              emptyMessage={t('messages.no-stock-available')}
+              config={tableConfig.config()}
+              setConfig={tableConfig.setConfig}
+              configIsDefault={tableConfig.isConfigDefault()}
+              onSaveGlobalDefault={
+                tableConfig.canSaveGlobalDefault()
+                  ? tableConfig.saveGlobalTableConfig
+                  : undefined
+              }
+            />
+          </div>
         </div>
       </Show>
     </Dialog>

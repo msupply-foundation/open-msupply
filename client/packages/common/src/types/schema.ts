@@ -235,6 +235,17 @@ export type ActivityLogSortInput = {
   key: ActivityLogSortFieldInput;
 };
 
+/**
+ * A line whose month already has real consumption for its item: the estimate is
+ * added on top of it
+ */
+export type ActualConsumptionOverlapNode = {
+  __typename: 'ActualConsumptionOverlapNode';
+  actualQuantity: Scalars['Float']['output'];
+  /** Index into the input lines */
+  line: Scalars['Int']['output'];
+};
+
 export type AddFromMasterListError = {
   __typename: 'AddFromMasterListError';
   error: AddFromMasterListErrorInterface;
@@ -692,7 +703,7 @@ export type AssetLogNode = {
   __typename: 'AssetLogNode';
   assetId: Scalars['String']['output'];
   comment?: Maybe<Scalars['String']['output']>;
-  createdDatetime: Scalars['NaiveDateTime']['output'];
+  createdDatetime: Scalars['DateTime']['output'];
   documents: SyncFileReferenceConnector;
   id: Scalars['String']['output'];
   logDatetime: Scalars['DateTime']['output'];
@@ -1625,6 +1636,201 @@ export type CannotReverseInvoiceStatus = UpdateErrorInterface &
     description: Scalars['String']['output'];
   };
 
+export type CentralDataCannotReadFile = CentralDataImportErrorInterface & {
+  __typename: 'CentralDataCannotReadFile';
+  description: Scalars['String']['output'];
+};
+
+export enum CentralDataChangeNode {
+  Deleted = 'DELETED',
+  Inserted = 'INSERTED',
+  /** Counted as updated. */
+  Restored = 'RESTORED',
+  Unchanged = 'UNCHANGED',
+  Updated = 'UPDATED',
+}
+
+export type CentralDataErrorsFileResponse =
+  | CentralDataExportNode
+  | CentralDataImportError;
+
+export type CentralDataExportCountNode = {
+  __typename: 'CentralDataExportCountNode';
+  matching: Scalars['Int']['output'];
+  table: CentralDataTableNode;
+  total: Scalars['Int']['output'];
+};
+
+export type CentralDataExportCountsNode = {
+  __typename: 'CentralDataExportCountsNode';
+  /** Across all tables, as for an import. */
+  maxRows: Scalars['Int']['output'];
+  tables: Array<CentralDataExportCountNode>;
+};
+
+export type CentralDataExportError = {
+  __typename: 'CentralDataExportError';
+  error: CentralDataExportErrorInterface;
+};
+
+export type CentralDataExportErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type CentralDataExportNode = {
+  __typename: 'CentralDataExportNode';
+  fileId: Scalars['String']['output'];
+};
+
+export type CentralDataExportResponse =
+  | CentralDataExportError
+  | CentralDataExportNode;
+
+export type CentralDataExportTableInput = {
+  /** Any letter case. */
+  contains?: InputMaybe<Scalars['String']['input']>;
+  /** Ignored by a table with no active flag. */
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
+  table: CentralDataTableNode;
+};
+
+export type CentralDataFieldChangeNode = {
+  __typename: 'CentralDataFieldChangeNode';
+  column: Scalars['String']['output'];
+  from: Scalars['String']['output'];
+  to: Scalars['String']['output'];
+};
+
+export type CentralDataImportError = {
+  __typename: 'CentralDataImportError';
+  error: CentralDataImportErrorInterface;
+};
+
+export type CentralDataImportErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type CentralDataImportNode = {
+  __typename: 'CentralDataImportNode';
+  /** The first 100; `tables` counts them all. */
+  changes: Array<CentralDataRowChangeNode>;
+  /** With any, nothing was applied. */
+  errorCount: Scalars['Int']['output'];
+  /** The first 100. */
+  errors: Array<CentralDataRowErrorNode>;
+  tables: Array<CentralDataTableChangesNode>;
+};
+
+export type CentralDataImportResponse =
+  | CentralDataImportError
+  | CentralDataImportNode;
+
+export type CentralDataMutations = {
+  __typename: 'CentralDataMutations';
+  /** The upload with each row's errors in an `error` column, as a file id for /files. */
+  errorsFile: CentralDataErrorsFileResponse;
+  /** Returns a file id for /files. Refused over the import cap. */
+  export: CentralDataExportResponse;
+  /** Applies nothing if any row has an error. */
+  import: CentralDataImportResponse;
+};
+
+export type CentralDataMutationsErrorsFileArgs = {
+  fileId: Scalars['String']['input'];
+};
+
+export type CentralDataMutationsExportArgs = {
+  tables: Array<CentralDataExportTableInput>;
+};
+
+export type CentralDataMutationsImportArgs = {
+  fileId: Scalars['String']['input'];
+  today?: InputMaybe<Scalars['NaiveDate']['input']>;
+};
+
+export type CentralDataQueries = {
+  __typename: 'CentralDataQueries';
+  exportCounts: CentralDataExportCountsNode;
+  /** Writes nothing. */
+  importPreview: CentralDataImportResponse;
+};
+
+export type CentralDataQueriesExportCountsArgs = {
+  tables: Array<CentralDataExportTableInput>;
+};
+
+export type CentralDataQueriesImportPreviewArgs = {
+  fileId: Scalars['String']['input'];
+};
+
+export type CentralDataRowChangeNode = {
+  __typename: 'CentralDataRowChangeNode';
+  change: CentralDataChangeNode;
+  /** For an update, the columns that change. */
+  fields: Array<CentralDataFieldChangeNode>;
+  /** E.g. the unit's name. */
+  record: Scalars['String']['output'];
+  /** As Excel shows it. */
+  row: Scalars['Int']['output'];
+  sheet: Scalars['String']['output'];
+};
+
+export type CentralDataRowErrorNode = {
+  __typename: 'CentralDataRowErrorNode';
+  column?: Maybe<Scalars['String']['output']>;
+  message: Scalars['String']['output'];
+  /** As Excel shows it. Null on a sheet name, which has no row. */
+  row?: Maybe<Scalars['Int']['output']>;
+  sheet: Scalars['String']['output'];
+};
+
+export type CentralDataTableChangesNode = {
+  __typename: 'CentralDataTableChangesNode';
+  deleted: Scalars['Int']['output'];
+  /** Heading errors included. */
+  errorCount: Scalars['Int']['output'];
+  inserted: Scalars['Int']['output'];
+  table: CentralDataTableNode;
+  unchanged: Scalars['Int']['output'];
+  updated: Scalars['Int']['output'];
+};
+
+export enum CentralDataTableNode {
+  Currency = 'CURRENCY',
+  Item = 'ITEM',
+  LocationType = 'LOCATION_TYPE',
+  MasterList = 'MASTER_LIST',
+  MasterListLine = 'MASTER_LIST_LINE',
+  MasterListNameJoin = 'MASTER_LIST_NAME_JOIN',
+  Name = 'NAME',
+  NameStoreJoin = 'NAME_STORE_JOIN',
+  Store = 'STORE',
+  Unit = 'UNIT',
+  User = 'USER',
+  UserPermission = 'USER_PERMISSION',
+  UserStoreJoin = 'USER_STORE_JOIN',
+}
+
+export type CentralDataTooManyCells = CentralDataImportErrorInterface & {
+  __typename: 'CentralDataTooManyCells';
+  cellCount: Scalars['Int']['output'];
+  description: Scalars['String']['output'];
+  maxCells: Scalars['Int']['output'];
+};
+
+export type CentralDataTooManyRows = CentralDataExportErrorInterface &
+  CentralDataImportErrorInterface & {
+    __typename: 'CentralDataTooManyRows';
+    description: Scalars['String']['output'];
+    maxRows: Scalars['Int']['output'];
+    rowCount: Scalars['Int']['output'];
+  };
+
+export type CentralDataUploadExpired = CentralDataImportErrorInterface & {
+  __typename: 'CentralDataUploadExpired';
+  description: Scalars['String']['output'];
+};
+
 export type CentralGeneralMutations = {
   __typename: 'CentralGeneralMutations';
   configureNameProperties: ConfigureNamePropertiesResponse;
@@ -1664,6 +1870,8 @@ export type CentralGeneralMutationsSetSyncApiPausedArgs = {
 
 export type CentralPatientNode = {
   __typename: 'CentralPatientNode';
+  /** Not filled by legacy mSupply or an older central */
+  address1?: Maybe<Scalars['String']['output']>;
   code: Scalars['String']['output'];
   code2?: Maybe<Scalars['String']['output']>;
   dateOfBirth?: Maybe<Scalars['NaiveDate']['output']>;
@@ -1672,6 +1880,9 @@ export type CentralPatientNode = {
   id: Scalars['String']['output'];
   isDeceased: Scalars['Boolean']['output'];
   lastName: Scalars['String']['output'];
+  /** Not filled by legacy mSupply or an older central */
+  nextOfKinName?: Maybe<Scalars['String']['output']>;
+  phone?: Maybe<Scalars['String']['output']>;
 };
 
 export type CentralPatientSearchConnector = {
@@ -1690,11 +1901,27 @@ export type CentralPatientSearchErrorInterface = {
 };
 
 export type CentralPatientSearchInput = {
-  /** Patient code */
+  /**
+   * Patient code: the start of the code or code 2, ignoring case. Exactly
+   * the code on legacy mSupply.
+   */
   code?: InputMaybe<Scalars['String']['input']>;
+  /** An exact date of birth */
   dateOfBirth?: InputMaybe<Scalars['NaiveDate']['input']>;
+  /** The earliest date of birth, for a year or a month (not on legacy mSupply) */
+  dateOfBirthFrom?: InputMaybe<Scalars['NaiveDate']['input']>;
+  /** The latest date of birth, for a year or a month (not on legacy mSupply) */
+  dateOfBirthTo?: InputMaybe<Scalars['NaiveDate']['input']>;
+  /**
+   * Max number of returned patients, in name order. There's no total: ask
+   * for one more than you show to know whether there are more. Not on
+   * legacy mSupply, which returns every match.
+   */
+  first?: InputMaybe<Scalars['Int']['input']>;
   firstName?: InputMaybe<Scalars['String']['input']>;
   lastName?: InputMaybe<Scalars['String']['input']>;
+  /** First returned patient is at this position in the name order */
+  offset?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type CentralPatientSearchResponse =
@@ -1757,6 +1984,7 @@ export type CentralServerMutationNode = {
   barcode: BarcodeMutations;
   bundledItem: BundledItemMutations;
   campaign: CampaignMutations;
+  centralData: CentralDataMutations;
   customField: CustomFieldMutations;
   demographic: DemographicMutations;
   general: CentralGeneralMutations;
@@ -1770,8 +1998,14 @@ export type CentralServerMutationNode = {
   vaccineCourse: VaccineCourseMutations;
 };
 
+export type CentralServerNoAnswer = CentralPatientSearchErrorInterface & {
+  __typename: 'CentralServerNoAnswer';
+  description: Scalars['String']['output'];
+};
+
 export type CentralServerQueryNode = {
   __typename: 'CentralServerQueryNode';
+  centralData: CentralDataQueries;
   customField: CustomFieldConfigQueries;
   plugin: CentralPluginQueries;
   site: CentralSiteQueries;
@@ -1903,6 +2137,26 @@ export type CodeRequired = UpsertSiteErrorInterface & {
   description: Scalars['String']['output'];
 };
 
+export type CommonMedicineInput = {
+  amounts: Array<Scalars['Float']['input']>;
+  itemId: Scalars['String']['input'];
+};
+
+export type CommonMedicineNode = {
+  __typename: 'CommonMedicineNode';
+  /**
+   * The one-press amounts, in the item's own unit. Empty when the card asks
+   * for the amount instead.
+   */
+  amounts: Array<Scalars['Float']['output']>;
+  itemId: Scalars['String']['output'];
+};
+
+export type CommonMedicinesInput = {
+  storeId: Scalars['String']['input'];
+  value: Array<CommonMedicineInput>;
+};
+
 export type ConfigureNamePropertiesResponse = Success;
 
 export type ConfigureNamePropertyInput = {
@@ -1920,6 +2174,76 @@ export type ConnectionError = CentralPatientSearchErrorInterface &
     __typename: 'ConnectionError';
     description: Scalars['String']['output'];
   };
+
+export type ConsumptionEstimateLineErrorNode = {
+  __typename: 'ConsumptionEstimateLineErrorNode';
+  /** Index into the input lines */
+  line: Scalars['Int']['output'];
+  /** For `REPEATED_MONTH`: the earlier line with the same item and month */
+  otherLine?: Maybe<Scalars['Int']['output']>;
+  problem: ConsumptionEstimateLineProblem;
+};
+
+export type ConsumptionEstimateLineInput = {
+  itemIdOrCode: Scalars['String']['input'];
+  /** Any day in the month: the estimate is for the whole calendar month */
+  month: Scalars['NaiveDate']['input'];
+  /** In units */
+  quantity: Scalars['Float']['input'];
+};
+
+export enum ConsumptionEstimateLineProblem {
+  InvalidQuantity = 'INVALID_QUANTITY',
+  ItemNotFound = 'ITEM_NOT_FOUND',
+  /** This month or later: only finished months can have an estimate */
+  MonthNotFinished = 'MONTH_NOT_FINISHED',
+  /** The same item and month as an earlier line */
+  RepeatedMonth = 'REPEATED_MONTH',
+}
+
+/** Nothing is saved when any line has a problem */
+export type ConsumptionEstimateLinesError = {
+  __typename: 'ConsumptionEstimateLinesError';
+  errors: Array<ConsumptionEstimateLineErrorNode>;
+  /**
+   * As on a successful response: the cleared items whose estimates would be
+   * removed once the lines are fixed
+   */
+  removedItems: Array<Scalars['Int']['output']>;
+};
+
+export type ConsumptionEstimateNode = {
+  __typename: 'ConsumptionEstimateNode';
+  item: ItemNode;
+  itemId: Scalars['String']['output'];
+  /** The first day of the month the estimate is for */
+  month: Scalars['NaiveDate']['output'];
+  /** In units */
+  quantity: Scalars['Float']['output'];
+};
+
+export type ConsumptionEstimateTemplateItemNode = {
+  __typename: 'ConsumptionEstimateTemplateItemNode';
+  code: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+};
+
+export type ConsumptionEstimatesNode = {
+  __typename: 'ConsumptionEstimatesNode';
+  /** The store's AMC look-back period: how many months of estimates count */
+  amcLookBackMonths: Scalars['Float']['output'];
+  estimates: Array<ConsumptionEstimateNode>;
+  /**
+   * The store is on another site that has been set up and syncs over v5/v6,
+   * which estimates (synced over v7 only) don't reach
+   */
+  siteSyncsOverV5V6: Scalars['Boolean']['output'];
+  /**
+   * The active stock items visible in the store, by name: the rows of a blank
+   * upload template. Only resolved when asked for, as there can be thousands.
+   */
+  templateItems: Array<ConsumptionEstimateTemplateItemNode>;
+};
 
 export type ConsumptionHistoryConnector = {
   __typename: 'ConsumptionHistoryConnector';
@@ -2241,7 +2565,7 @@ export type CustomFieldOptionNode = {
    * this field when building a picker, so a deleted option can be read but
    * not newly selected.
    */
-  deletedDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  deletedDatetime?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];
   key: Scalars['String']['output'];
   name: Scalars['String']['output'];
@@ -3097,6 +3421,23 @@ export type DiagnosisNode = {
   id: Scalars['String']['output'];
 };
 
+/** Which screen dispensing opens on (the `dispensingScreen` preference). */
+export enum DispensingScreenNode {
+  /** The Simple dispensing screen */
+  Simple = 'SIMPLE',
+  /** The dispensing list */
+  Standard = 'STANDARD',
+}
+
+/**
+ * One store's edit of the dispensing screen. A null `value` CLEARS the
+ * store's own value, returning the store to the global value.
+ */
+export type DispensingScreenStoreOverrideInput = {
+  storeId: Scalars['String']['input'];
+  value?: InputMaybe<DispensingScreenNode>;
+};
+
 export type DisplaySettingNode = {
   __typename: 'DisplaySettingNode';
   hash: Scalars['String']['output'];
@@ -3715,6 +4056,16 @@ export type FinaliseRnRFormResponse = RnRFormNode;
 export type FinalisedRequisition = DeleteResponseRequisitionErrorInterface & {
   __typename: 'FinalisedRequisition';
   description: Scalars['String']['output'];
+};
+
+export type FloatFilterInput = {
+  aboveOrEqualTo?: InputMaybe<Scalars['Float']['input']>;
+  belowOrEqualTo?: InputMaybe<Scalars['Float']['input']>;
+  equalTo?: InputMaybe<Scalars['Float']['input']>;
+  /** Strict greater-than (exclusive) */
+  greaterThan?: InputMaybe<Scalars['Float']['input']>;
+  /** Strict less-than (exclusive) */
+  lessThan?: InputMaybe<Scalars['Float']['input']>;
 };
 
 export type FloatStorePrefInput = {
@@ -4551,6 +4902,13 @@ export type InsertInboundShipmentLineInput = {
   sellPricePerPack: Scalars['Float']['input'];
   shippedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   shippedPackSize?: InputMaybe<Scalars['Float']['input']>;
+  /**
+   * The new line's authorisation state, on a purchase-order-linked shipment
+   * whose store requires line authorisation (omitted: Pending); ignored on
+   * any other line. Passed or Rejected needs the authorise permission on any
+   * external line, including one that ignores it.
+   */
+  status?: InputMaybe<InvoiceLineStatusType>;
   taxPercentage?: InputMaybe<Scalars['Float']['input']>;
   totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
   volumePerPack?: InputMaybe<Scalars['Float']['input']>;
@@ -4988,6 +5346,11 @@ export type InsertRequestRequisitionInput = {
   /** Defaults to 2 weeks from now */
   expectedDeliveryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
+  /**
+   * Starts the order with a line for every item on this master list, each requesting its
+   * suggested quantity. Created in one step: if the lines can't be added, no order is created
+   */
+  masterListId?: InputMaybe<Scalars['String']['input']>;
   /**
    * Defaults to the store's supply interval + safety buffer, or 1 month on a store whose
    * facility record carries no supply interval. Ignored, the store's supply interval +
@@ -5532,6 +5895,11 @@ export type InvoiceFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   invoiceNumber?: InputMaybe<EqualFilterBigNumberInput>;
   invoiceNumberOrStatus?: InputMaybe<StringFilterInput>;
+  /**
+   * Whether the other party is a store's unnamed patient: false leaves
+   * its dispensing records out, as the patient search's recent patients do
+   */
+  isForUnnamedPatient?: InputMaybe<Scalars['Boolean']['input']>;
   isProgramInvoice?: InputMaybe<Scalars['Boolean']['input']>;
   linkedInvoiceId?: InputMaybe<EqualFilterStringInput>;
   linkedOrderNumber?: InputMaybe<EqualFilterBigNumberInput>;
@@ -5571,6 +5939,8 @@ export type InvoiceLineConnector = {
 };
 
 export type InvoiceLineFilterInput = {
+  batch?: InputMaybe<StringFilterInput>;
+  expiryDate?: InputMaybe<DateFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   /** @deprecated Since 2.8.0. Use reason_option */
   inventoryAdjustmentReason?: InputMaybe<EqualFilterStringInput>;
@@ -5581,7 +5951,9 @@ export type InvoiceLineFilterInput = {
   /** Matches on item code OR item name */
   itemCodeOrName?: InputMaybe<StringFilterInput>;
   itemId?: InputMaybe<EqualFilterStringInput>;
+  locationCode?: InputMaybe<StringFilterInput>;
   locationId?: InputMaybe<EqualFilterStringInput>;
+  manufactureDate?: InputMaybe<DateFilterInput>;
   numberOfPacks?: InputMaybe<EqualFilterBigFloatingNumberInput>;
   programId?: InputMaybe<EqualFilterStringInput>;
   reasonOption?: InputMaybe<EqualFilterStringInput>;
@@ -5691,6 +6063,8 @@ export enum InvoiceLineSortFieldInput {
   ItemName = 'itemName',
   /** Invoice line item stock location name */
   LocationName = 'locationName',
+  /** Invoice line manufacture date */
+  ManufactureDate = 'manufactureDate',
   /** Invoice line pack size */
   PackSize = 'packSize',
   /** Units requested for the line's item on the invoice's linked requisition */
@@ -5757,6 +6131,12 @@ export type InvoiceNode = {
   insurancePolicy?: Maybe<InsurancePolicyNode>;
   invoiceNumber: Scalars['Int']['output'];
   isCancellation: Scalars['Boolean']['output'];
+  /**
+   * Whether the invoice is for a store's unnamed patient, so a list can show
+   * its translated label without loading each row's patient
+   * (spec/prescriptions rules › the unnamed patient)
+   */
+  isForUnnamedPatient: Scalars['Boolean']['output'];
   lines: InvoiceLineConnector;
   /** Inbound Shipment <-> Outbound Shipment, where Inbound Shipment originated from Outbound Shipment */
   linkedShipment?: Maybe<InvoiceNode>;
@@ -5998,6 +6378,13 @@ export type ItemFilterInput = {
   maxMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
   minMonthsOfStock?: InputMaybe<Scalars['Float']['input']>;
   name?: InputMaybe<StringFilterInput>;
+  /**
+   * Items with no counted line in a finalised stocktake of this store since the given
+   * datetime, including items never counted in this store
+   */
+  notCountedSince?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Excludes items already present as a line on the given record */
+  notInRecord?: InputMaybe<ItemNotInRecordFilterInput>;
   productsAtRiskOfBeingOutOfStock?: InputMaybe<Scalars['Boolean']['input']>;
   type?: InputMaybe<EqualFilterItemTypeInput>;
   universalCode?: InputMaybe<StringFilterInput>;
@@ -6077,6 +6464,13 @@ export type ItemNode = {
   customFields?: Maybe<Scalars['JSON']['output']>;
   ddd: Scalars['String']['output'];
   defaultPackSize: Scalars['Float']['output'];
+  /**
+   * The item's price per unit on the default price list, null when it is on none.
+   * The same price `itemPrice` gives as `defaultPricePerUnit`, and what the server
+   * charges a patient for each unit of a stock-out line. Not store-specific: the
+   * default price list is the same in every store.
+   */
+  defaultPricePerUnit?: Maybe<Scalars['Float']['output']>;
   doses: Scalars['Int']['output'];
   id: Scalars['String']['output'];
   isVaccine: Scalars['Boolean']['output'];
@@ -6161,6 +6555,17 @@ export enum ItemNodeType {
   NonStock = 'NON_STOCK',
   Service = 'SERVICE',
   Stock = 'STOCK',
+}
+
+export type ItemNotInRecordFilterInput = {
+  id: Scalars['String']['input'];
+  record: ItemNotInRecordTypeInput;
+};
+
+export enum ItemNotInRecordTypeInput {
+  Invoice = 'invoice',
+  Requisition = 'requisition',
+  Stocktake = 'stocktake',
 }
 
 export type ItemPriceInput = {
@@ -6754,6 +7159,12 @@ export type Mutations = {
   duplicateInboundShipment: DuplicateInboundShipmentResponse;
   duplicateOutboundShipment: DuplicateOutboundShipmentResponse;
   finaliseRnrForm: FinaliseRnRFormResponse;
+  /**
+   * The store's unnamed patient, the one record its walk-in visits are
+   * dispensed to: created on the first call, the same record after.
+   * Refused where the store's "Use the unnamed patient" is off.
+   */
+  getOrCreateUnnamedPatient: PatientNode;
   initialiseAsCentralServer: InitialiseAsCentralServerResponse;
   initialiseSite: InitialiseSiteResponse;
   insertAsset: InsertAssetResponse;
@@ -7157,6 +7568,10 @@ export type MutationsDuplicateOutboundShipmentArgs = {
 
 export type MutationsFinaliseRnrFormArgs = {
   input: FinaliseRnRFormInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsGetOrCreateUnnamedPatientArgs = {
   storeId: Scalars['String']['input'];
 };
 
@@ -7866,6 +8281,18 @@ export type NameStoreJoinNode = {
   storeId: Scalars['String']['output'];
 };
 
+export type NameTagConnector = {
+  __typename: 'NameTagConnector';
+  nodes: Array<NameTagNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type NameTagNode = {
+  __typename: 'NameTagNode';
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+};
+
 export type NamesResponse = NameConnector;
 
 export type NoPermissionForThisStore = InsertAssetErrorInterface &
@@ -8148,6 +8575,8 @@ export type PatientFilterInput = {
   address2?: InputMaybe<StringFilterInput>;
   code?: InputMaybe<StringFilterInput>;
   code2?: InputMaybe<StringFilterInput>;
+  /** Matches the code or the secondary code (code 2) */
+  codeOrCode2?: InputMaybe<StringFilterInput>;
   country?: InputMaybe<StringFilterInput>;
   dateOfBirth?: InputMaybe<DateFilterInput>;
   dateOfDeath?: InputMaybe<DateFilterInput>;
@@ -8162,6 +8591,13 @@ export type PatientFilterInput = {
   gender?: InputMaybe<EqualFilterGenderType>;
   id?: InputMaybe<EqualFilterStringInput>;
   identifier?: InputMaybe<StringFilterInput>;
+  /**
+   * Only patients visible in the queried store (it has a visible
+   * name_store_join for them), or with false only those that aren't.
+   * Unset, patients are returned whichever store they belong to. Read by
+   * the `patients` query only.
+   */
+  isVisible?: InputMaybe<Scalars['Boolean']['input']>;
   lastName?: InputMaybe<StringFilterInput>;
   name?: InputMaybe<StringFilterInput>;
   nextOfKinName?: InputMaybe<StringFilterInput>;
@@ -8205,6 +8641,11 @@ export type PatientNode = {
   gender?: Maybe<GenderTypeNode>;
   id: Scalars['String']['output'];
   isDeceased: Scalars['Boolean']['output'];
+  /**
+   * Whether this is a store's unnamed patient, the one record its walk-in
+   * visits are dispensed to. Search never returns it.
+   */
+  isUnnamed: Scalars['Boolean']['output'];
   lastName?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
   nextOfKin?: Maybe<PatientNode>;
@@ -8471,16 +8912,19 @@ export type PreferenceDescriptionNode = {
 export enum PreferenceKey {
   AdjustForNumberOfDaysOutOfStock = 'adjustForNumberOfDaysOutOfStock',
   AllowTrackingOfStockByDonor = 'allowTrackingOfStockByDonor',
+  AskForPatientType = 'askForPatientType',
   AuthorisePurchaseOrder = 'authorisePurchaseOrder',
   Backdating = 'backdating',
   BlindStocktake = 'blindStocktake',
   CanChangeTargetMonthsOfStock = 'canChangeTargetMonthsOfStock',
   CanCreateInternalOrderFromARequisition = 'canCreateInternalOrderFromARequisition',
+  CommonMedicines = 'commonMedicines',
   CustomTranslations = 'customTranslations',
   CustomTranslationsV2 = 'customTranslationsV2',
   DaysInMonth = 'daysInMonth',
   DecimalPlacesForNumbers = 'decimalPlacesForNumbers',
   DisableManualReturns = 'disableManualReturns',
+  DispensingScreen = 'dispensingScreen',
   DisplayPopulationBasedForecasting = 'displayPopulationBasedForecasting',
   DoNotPrintPlaceholderLineLabels = 'doNotPrintPlaceholderLineLabels',
   ExpiredStockIssueThreshold = 'expiredStockIssueThreshold',
@@ -8503,6 +8947,7 @@ export enum PreferenceKey {
   PreventTransfersMonthsBeforeInitialisation = 'preventTransfersMonthsBeforeInitialisation',
   PromptForBatchAndExpiryOnInboundShipments = 'promptForBatchAndExpiryOnInboundShipments',
   ReceivePaymentsFromPrescriptions = 'receivePaymentsFromPrescriptions',
+  ReportStoreTags = 'reportStoreTags',
   RequisitionAutoFinalise = 'requisitionAutoFinalise',
   SecondThresholdForExpiringItems = 'secondThresholdForExpiringItems',
   SelectDestinationStoreForAnInternalOrder = 'selectDestinationStoreForAnInternalOrder',
@@ -8510,17 +8955,38 @@ export enum PreferenceKey {
   ShowIndicativePriceInRequisitions = 'showIndicativePriceInRequisitions',
   SkipIntermediateStatusesInOutbound = 'skipIntermediateStatusesInOutbound',
   SortByVvmStatusThenExpiry = 'sortByVvmStatusThenExpiry',
+  StartWithUnnamedPatient = 'startWithUnnamedPatient',
   StoreCustomColour = 'storeCustomColour',
   SyncRecordsDisplayThreshold = 'syncRecordsDisplayThreshold',
   TransferStockToInternalCustomersAtCostPrice = 'transferStockToInternalCustomersAtCostPrice',
   UseSimplifiedMobileUi = 'useSimplifiedMobileUi',
+  UseUnnamedPatient = 'useUnnamedPatient',
   WarnWhenMissingRecentStocktake = 'warnWhenMissingRecentStocktake',
   WarningForExcessRequest = 'warningForExcessRequest',
 }
 
 export type PreferenceMutations = {
   __typename: 'PreferenceMutations';
+  /** Removes all of a store's estimated consumption */
+  clearConsumptionEstimates: OkResponse;
+  /**
+   * Replaces the estimated consumption of the items named: each ends up with
+   * exactly the months given, and unchanged months aren't rewritten. Items not
+   * named are left alone. Nothing is saved if any line has a problem; `dryRun`
+   * checks the lines without saving.
+   */
+  replaceConsumptionEstimates: ReplaceConsumptionEstimatesResponse;
   upsertPreferences: OkResponse;
+};
+
+export type PreferenceMutationsClearConsumptionEstimatesArgs = {
+  forStoreId: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type PreferenceMutationsReplaceConsumptionEstimatesArgs = {
+  input: ReplaceConsumptionEstimatesInput;
+  storeId: Scalars['String']['input'];
 };
 
 export type PreferenceMutationsUpsertPreferencesArgs = {
@@ -8537,8 +9003,10 @@ export enum PreferenceValueNodeType {
   BackdatingData = 'BACKDATING_DATA',
   Boolean = 'BOOLEAN',
   Colour = 'COLOUR',
+  CommonMedicines = 'COMMON_MEDICINES',
   CustomTranslations = 'CUSTOM_TRANSLATIONS',
   CustomTranslationsV2 = 'CUSTOM_TRANSLATIONS_V2',
+  DispensingScreen = 'DISPENSING_SCREEN',
   Float = 'FLOAT',
   Image = 'IMAGE',
   Integer = 'INTEGER',
@@ -8551,16 +9019,28 @@ export type PreferencesNode = {
   __typename: 'PreferencesNode';
   adjustForNumberOfDaysOutOfStock: Scalars['Boolean']['output'];
   allowTrackingOfStockByDonor: Scalars['Boolean']['output'];
+  /**
+   * Whether the Simple screen asks if the patient is an outpatient or an
+   * inpatient.
+   */
+  askForPatientType: Scalars['Boolean']['output'];
   authorisePurchaseOrder: Scalars['Boolean']['output'];
   backdating: BackdatingNode;
   blindStocktake: Scalars['Boolean']['output'];
   canChangeTargetMonthsOfStock: Scalars['Boolean']['output'];
   canCreateInternalOrderFromARequisition: Scalars['Boolean']['output'];
+  /** The medicines shown as cards on the Simple dispensing screen, in order. */
+  commonMedicines: Array<CommonMedicineNode>;
   customTranslations: Scalars['JSONObject']['output'];
   customTranslationsV2: Scalars['JSON']['output'];
   daysInMonth: Scalars['Float']['output'];
   decimalPlacesForNumbers: Scalars['Int']['output'];
   disableManualReturns: Scalars['Boolean']['output'];
+  /**
+   * Which screen dispensing opens on: the store's own value where it has
+   * one, else the global value.
+   */
+  dispensingScreen: DispensingScreenNode;
   displayPopulationBasedForecasting: Scalars['Boolean']['output'];
   doNotPrintPlaceholderLineLabels: Scalars['Boolean']['output'];
   expiredStockIssueThreshold: Scalars['Int']['output'];
@@ -8593,10 +9073,17 @@ export type PreferencesNode = {
   showContactTracing: Scalars['Boolean']['output'];
   showIndicativePriceInRequisitions: Scalars['Boolean']['output'];
   sortByVvmStatusThenExpiry: Scalars['Boolean']['output'];
+  /**
+   * Whether each new visit on the Simple screen starts with the unnamed
+   * patient chosen.
+   */
+  startWithUnnamedPatient: Scalars['Boolean']['output'];
   storeCustomColour: Scalars['String']['output'];
   syncRecordsDisplayThreshold: Scalars['Int']['output'];
   transferStockToInternalCustomersAtCostPrice: Scalars['Boolean']['output'];
   useSimplifiedMobileUi: Scalars['Boolean']['output'];
+  /** Whether the store can dispense to its unnamed patient. */
+  useUnnamedPatient: Scalars['Boolean']['output'];
   warnWhenMissingRecentStocktake: WarnWhenMissingRecentStocktakeDataNode;
   warningForExcessRequest: Scalars['Boolean']['output'];
 };
@@ -9333,6 +9820,11 @@ export type Queries = {
   centralPatientSearch: CentralPatientSearchResponse;
   centralServer: CentralServerQueryNode;
   clinicians: CliniciansResponse;
+  /**
+   * The store's estimated consumption, entered for a store without consumption
+   * history of its own and added on top of real consumption when calculating AMC
+   */
+  consumptionEstimates: ConsumptionEstimatesNode;
   contactTraces: ContactTraceResponse;
   contacts: ContactsResponse;
   csvToExcel: PrintReportResponse;
@@ -9465,6 +9957,8 @@ export type Queries = {
   /** Available without authorisation in all states (Operational, Initialisation and MigratingDatabase) */
   migrationStatus: MigrationStatusNode;
   nameProperties: NamePropertyResponse;
+  /** Every name tag (maintained in legacy mSupply), sorted by name */
+  nameTags: NameTagConnector;
   /** Query omSupply "name" entries */
   names: NamesResponse;
   numberOfRecordsInPushQueue: Scalars['Int']['output'];
@@ -9509,6 +10003,10 @@ export type Queries = {
   requisition: RequisitionResponse;
   requisitionByNumber: RequisitionResponse;
   requisitionCounts: RequisitionCounts;
+  /**
+   * A request requisition line's consumption history and stock evolution. Only the series
+   * the query selects are read; the others are null
+   */
   requisitionLineChart: RequisitionLineChartResponse;
   /**
    * An item's request line as the line editor's draft would save it, under a chosen
@@ -9516,6 +10014,7 @@ export type Queries = {
    * adding the item would create
    */
   requisitionLineForecastPreview: RequisitionLineForecastPreviewResponse;
+  requisitionLines: RequisitionLinesResponse;
   requisitions: RequisitionsResponse;
   responseRequisitionStats: RequisitionLineStatsResponse;
   /** @deprecated Since 2.8.0. Use reason_options instead */
@@ -9687,6 +10186,11 @@ export type QueriesCliniciansArgs = {
   filter?: InputMaybe<ClinicianFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<ClinicianSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesConsumptionEstimatesArgs = {
+  forStoreId: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
@@ -9959,6 +10463,7 @@ export type QueriesItemsByStockLineFilterArgs = {
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<ItemSortInput>>;
   storeId: Scalars['String']['input'];
+  timezoneOffset?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type QueriesLedgerArgs = {
@@ -10000,6 +10505,10 @@ export type QueriesMasterListsArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type QueriesNameTagsArgs = {
+  storeId: Scalars['String']['input'];
+};
+
 export type QueriesNamesArgs = {
   filter?: InputMaybe<NameFilterInput>;
   page?: InputMaybe<PaginationInput>;
@@ -10023,6 +10532,7 @@ export type QueriesPatientSearchArgs = {
 };
 
 export type QueriesPatientsArgs = {
+  countLimit?: InputMaybe<Scalars['Int']['input']>;
   filter?: InputMaybe<PatientFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<PatientSortInput>>;
@@ -10180,6 +10690,7 @@ export type QueriesReportsArgs = {
 export type QueriesRequisitionArgs = {
   id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
+  type?: InputMaybe<RequisitionNodeType>;
 };
 
 export type QueriesRequisitionByNumberArgs = {
@@ -10201,6 +10712,13 @@ export type QueriesRequisitionLineChartArgs = {
 
 export type QueriesRequisitionLineForecastPreviewArgs = {
   input: RequisitionLineForecastPreviewInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesRequisitionLinesArgs = {
+  filter?: InputMaybe<RequisitionLineFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<RequisitionLineSortInput>>;
   storeId: Scalars['String']['input'];
 };
 
@@ -10250,6 +10768,7 @@ export type QueriesStockLinesArgs = {
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<StockLineSortInput>>;
   storeId: Scalars['String']['input'];
+  timezoneOffset?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type QueriesStockRelocationArgs = {
@@ -10482,6 +11001,7 @@ export type RecordNotFound = AddFromMasterListErrorInterface &
   DeleteResponseRequisitionLineErrorInterface &
   DeleteSupplierReturnErrorInterface &
   NodeErrorInterface &
+  QueryReportErrorInterface &
   RequisitionLineChartErrorInterface &
   RequisitionLineForecastPreviewErrorInterface &
   RequisitionLineStatsErrorInterface &
@@ -10614,6 +11134,36 @@ export type RepackStockLineNode = {
   stockLine?: Maybe<StockLineNode>;
 };
 
+export type ReplaceConsumptionEstimatesInput = {
+  /**
+   * Items (by id or code) named with no months, e.g. a blank row in the
+   * file: their estimates are removed. One with no estimates, or that matches
+   * no item, is ignored.
+   */
+  clearedItems?: InputMaybe<Array<Scalars['String']['input']>>;
+  /** Check the lines and report what would be saved, without saving */
+  dryRun?: InputMaybe<Scalars['Boolean']['input']>;
+  /** The store whose estimates these are */
+  forStoreId: Scalars['String']['input'];
+  /**
+   * Each item named ends up with exactly these months; items not named are
+   * left alone
+   */
+  lines: Array<ConsumptionEstimateLineInput>;
+};
+
+export type ReplaceConsumptionEstimatesNode = {
+  __typename: 'ReplaceConsumptionEstimatesNode';
+  estimates: Array<ConsumptionEstimateNode>;
+  overlaps: Array<ActualConsumptionOverlapNode>;
+  /** Indexes into `clearedItems` of the items whose estimates are removed */
+  removedItems: Array<Scalars['Int']['output']>;
+};
+
+export type ReplaceConsumptionEstimatesResponse =
+  | ConsumptionEstimateLinesError
+  | ReplaceConsumptionEstimatesNode;
+
 export type ReportConnector = {
   __typename: 'ReportConnector';
   nodes: Array<ReportNode>;
@@ -10659,8 +11209,20 @@ export type ReportNode = {
   id: Scalars['String']['output'];
   isActive: Scalars['Boolean']['output'];
   isCustom: Scalars['Boolean']['output'];
+  /**
+   * Whether the queried store sees this report on the Reports page without
+   * pressing its category's "Show more": it has no store tags, or the store has one
+   * of them. A report that isn't displayed can still be run.
+   */
+  isDisplayed: Scalars['Boolean']['output'];
   /** Human readable name of the report */
   name: Scalars['String']['output'];
+  /**
+   * The store tags this report is displayed for on the Reports page. Set
+   * per report code, so every version of a report has the same tags. Empty
+   * means every store.
+   */
+  storeTagIds: Array<Scalars['String']['output']>;
   subContext?: Maybe<Scalars['String']['output']>;
   version: Scalars['String']['output'];
 };
@@ -10763,6 +11325,21 @@ export type RequisitionLineConnector = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type RequisitionLineFilterInput = {
+  comment?: InputMaybe<StringFilterInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  itemCodeOrName?: InputMaybe<StringFilterInput>;
+  itemId?: InputMaybe<EqualFilterStringInput>;
+  /**
+   * Filter by months of stock (available_stock_on_hand / average_monthly_consumption).
+   * No stock and no consumption is 0; stock but no consumption has no value and
+   * never matches.
+   */
+  monthsOfStock?: InputMaybe<FloatFilterInput>;
+  requestedQuantity?: InputMaybe<EqualFilterBigFloatingNumberInput>;
+  requisitionId?: InputMaybe<EqualFilterStringInput>;
+};
+
 export type RequisitionLineForecastPreviewError = {
   __typename: 'RequisitionLineForecastPreviewError';
   error: RequisitionLineForecastPreviewErrorInterface;
@@ -10792,6 +11369,15 @@ export type RequisitionLineForecastPreviewNode = {
   __typename: 'RequisitionLineForecastPreviewNode';
   availableStockOnHand: Scalars['Float']['output'];
   averageMonthlyConsumption: Scalars['Float']['output'];
+  /**
+   * The consumption history and stock evolution for the previewed line, as
+   * `requisitionLineChart` gives them for a saved one — so an item being added charts
+   * before its line exists. The draft's requested quantity isn't part of the preview, so
+   * the stock projection adds nothing at delivery. Only the series the query selects are
+   * read; the others are null. Null if the chart can't be read: the chart is context, so
+   * failing to read it doesn't fail the preview
+   */
+  chart?: Maybe<ItemChartNode>;
   forecastBreakdown: ForecastBreakdownNode;
   forecastMethod: ForecastMethodNode;
   forecastMethodOptions: Array<ForecastMethodOptionNode>;
@@ -10799,6 +11385,11 @@ export type RequisitionLineForecastPreviewNode = {
   suggestedQuantity: Scalars['Float']['output'];
   /** The requisition's target months × the monthly demand */
   targetStock: Scalars['Float']['output'];
+};
+
+export type RequisitionLineForecastPreviewNodeChartArgs = {
+  consumptionOptionsInput?: InputMaybe<ConsumptionOptionsInput>;
+  stockEvolutionOptionsInput?: InputMaybe<StockEvolutionOptionsInput>;
 };
 
 export type RequisitionLineForecastPreviewResponse =
@@ -10888,6 +11479,28 @@ export type RequisitionLineNodeItemStatsArgs = {
   periodEnd?: InputMaybe<Scalars['NaiveDate']['input']>;
 };
 
+export enum RequisitionLineSortFieldInput {
+  ApprovedQuantity = 'approvedQuantity',
+  Comment = 'comment',
+  DefaultPackSize = 'defaultPackSize',
+  ItemCode = 'itemCode',
+  ItemName = 'itemName',
+  MonthsOfStock = 'monthsOfStock',
+  RequestedQuantity = 'requestedQuantity',
+  SuggestedQuantity = 'suggestedQuantity',
+  SupplyQuantity = 'supplyQuantity',
+}
+
+export type RequisitionLineSortInput = {
+  /**
+   * Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: RequisitionLineSortFieldInput;
+};
+
 export type RequisitionLineStatsError = {
   __typename: 'RequisitionLineStatsError';
   error: RequisitionLineStatsErrorInterface;
@@ -10907,6 +11520,8 @@ export type RequisitionLineWithItemIdExists =
       __typename: 'RequisitionLineWithItemIdExists';
       description: Scalars['String']['output'];
     };
+
+export type RequisitionLinesResponse = RequisitionLineConnector;
 
 export type RequisitionNode = {
   __typename: 'RequisitionNode';
@@ -10963,9 +11578,10 @@ export type RequisitionNode = {
   shipments: InvoiceConnector;
   status: RequisitionNodeStatus;
   /**
-   * The ordering store's supply interval and safety buffer (from its facility record) as
-   * they stand now, null when it carries no supply interval. A general
-   * order's default target months of stock.
+   * The ordering store's supply interval and safety buffer (from its facility record) and
+   * delivery lead time (from its store preferences) as they stand now, null when its
+   * facility record carries no supply interval. Their sum is a general order's default
+   * target months of stock.
    */
   supplyIntervalAndBuffer?: Maybe<SupplyIntervalAndBufferNode>;
   theirReference?: Maybe<Scalars['String']['output']>;
@@ -11445,14 +12061,14 @@ export type SiteNode = {
   appVersion?: Maybe<Scalars['String']['output']>;
   code: Scalars['String']['output'];
   /** First time the remote completed an initialising pull. */
-  firstSyncDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  firstSyncDatetime?: Maybe<Scalars['DateTime']['output']>;
   hardwareId?: Maybe<Scalars['String']['output']>;
   id: Scalars['Int']['output'];
   isMultiDevice: Scalars['Boolean']['output'];
   /** Last time the remote made any authenticated v7 request. */
-  lastConnectionDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  lastConnectionDatetime?: Maybe<Scalars['DateTime']['output']>;
   /** Last time the remote fully pulled from this central server. */
-  lastSyncDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
+  lastSyncDatetime?: Maybe<Scalars['DateTime']['output']>;
   name: Scalars['String']['output'];
   /**
    * Which sync flow the site runs. Hardware-id / token clearing is only
@@ -11548,6 +12164,11 @@ export type StockLineFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
   isAvailable?: InputMaybe<Scalars['Boolean']['input']>;
+  /**
+   * true: expiry date before today. false: expiry date today or later, or no expiry date.
+   * Today is in the query's `timezoneOffset`, or the server's timezone without one
+   */
+  isExpired?: InputMaybe<Scalars['Boolean']['input']>;
   isProgramStockLine?: InputMaybe<Scalars['Boolean']['input']>;
   itemCodeOrName?: InputMaybe<StringFilterInput>;
   itemId?: InputMaybe<EqualFilterStringInput>;
@@ -11779,11 +12400,16 @@ export type StocktakeLineConnector = {
 };
 
 export type StocktakeLineFilterInput = {
+  batch?: InputMaybe<StringFilterInput>;
   campaignId?: InputMaybe<EqualFilterStringInput>;
+  campaignName?: InputMaybe<StringFilterInput>;
+  donorId?: InputMaybe<EqualFilterStringInput>;
+  expiryDate?: InputMaybe<DateFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   itemCodeOrName?: InputMaybe<StringFilterInput>;
   itemId?: InputMaybe<EqualFilterStringInput>;
   locationId?: InputMaybe<EqualFilterStringInput>;
+  manufactureDate?: InputMaybe<DateFilterInput>;
   stockLineId?: InputMaybe<EqualFilterStringInput>;
   stocktakeId?: InputMaybe<EqualFilterStringInput>;
 };
@@ -11829,11 +12455,14 @@ export type StocktakeLineNodeManufacturerArgs = {
 
 export enum StocktakeLineSortFieldInput {
   Batch = 'batch',
+  Campaign = 'campaign',
   CountedNumberOfPacks = 'countedNumberOfPacks',
+  Donor = 'donor',
   ExpiryDate = 'expiryDate',
   ItemCode = 'itemCode',
   ItemName = 'itemName',
   LocationCode = 'locationCode',
+  ManufactureDate = 'manufactureDate',
   PackSize = 'packSize',
   ReasonOption = 'reasonOption',
   SnapshotNumberOfPacks = 'snapshotNumberOfPacks',
@@ -12014,6 +12643,8 @@ export type StringFilterInput = {
   equalTo?: InputMaybe<Scalars['String']['input']>;
   /** Search term must be included in search candidate (case insensitive) */
   like?: InputMaybe<Scalars['String']['input']>;
+  /** Search candidate must start with the search term (case insensitive) */
+  startsWith?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type StringStorePrefInput = {
@@ -12111,6 +12742,8 @@ export type SupplierReturnLineNode = {
 
 export type SupplyIntervalAndBufferNode = {
   __typename: 'SupplyIntervalAndBufferNode';
+  /** How long an order takes to arrive: the store preference `monthsLeadTime`, zero when unset */
+  deliveryLeadTimeMonths: Scalars['Float']['output'];
   /** Zero when the facility record carries none */
   safetyBufferMonths: Scalars['Float']['output'];
   supplyIntervalMonths: Scalars['Float']['output'];
@@ -13403,12 +14036,19 @@ export type UpdatePurchaseOrderResponse = IdResponse | UpdatePurchaseOrderError;
 export type UpdateReportInput = {
   id: Scalars['String']['input'];
   isActive: Scalars['Boolean']['input'];
+  /**
+   * The store tags the report is displayed for on the Reports page. Applies
+   * to the report's code, so to every version of it. An empty list displays
+   * it for every store. Leave out to keep the current tags.
+   */
+  storeTagIds?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 export type UpdateReportNode = {
   __typename: 'UpdateReportNode';
   id: Scalars['String']['output'];
   isActive: Scalars['Boolean']['output'];
+  storeTagIds: Array<Scalars['String']['output']>;
 };
 
 export type UpdateRequestRequisitionError = {
@@ -13958,6 +14598,8 @@ export type UpsertPackVariantResponse =
 export type UpsertPreferencesInput = {
   adjustForNumberOfDaysOutOfStock?: InputMaybe<Scalars['Boolean']['input']>;
   allowTrackingOfStockByDonor?: InputMaybe<Scalars['Boolean']['input']>;
+  askForPatientType?: InputMaybe<Scalars['Boolean']['input']>;
+  askForPatientTypeStoreOverride?: InputMaybe<Array<BoolStoreOverrideInput>>;
   authorisePurchaseOrder?: InputMaybe<Scalars['Boolean']['input']>;
   authorisePurchaseOrderStoreOverride?: InputMaybe<
     Array<BoolStoreOverrideInput>
@@ -13968,6 +14610,7 @@ export type UpsertPreferencesInput = {
   canCreateInternalOrderFromARequisition?: InputMaybe<
     Array<BoolStorePrefInput>
   >;
+  commonMedicines?: InputMaybe<Array<CommonMedicinesInput>>;
   customTranslations?: InputMaybe<Scalars['JSONObject']['input']>;
   /**
    * v2 custom translations, shape: `language -> namespace -> key -> value`.
@@ -13977,6 +14620,10 @@ export type UpsertPreferencesInput = {
   daysInMonth?: InputMaybe<Scalars['Float']['input']>;
   decimalPlacesForNumbers?: InputMaybe<Scalars['Int']['input']>;
   disableManualReturns?: InputMaybe<Array<BoolStorePrefInput>>;
+  dispensingScreen?: InputMaybe<DispensingScreenNode>;
+  dispensingScreenStoreOverride?: InputMaybe<
+    Array<DispensingScreenStoreOverrideInput>
+  >;
   displayPopulationBasedForecasting?: InputMaybe<Scalars['Boolean']['input']>;
   doNotPrintPlaceholderLineLabels?: InputMaybe<Array<BoolStorePrefInput>>;
   expiredStockIssueThreshold?: InputMaybe<Scalars['Int']['input']>;
@@ -14019,12 +14666,18 @@ export type UpsertPreferencesInput = {
   showContactTracing?: InputMaybe<Scalars['Boolean']['input']>;
   showIndicativePriceInRequisitions?: InputMaybe<Array<BoolStorePrefInput>>;
   sortByVvmStatusThenExpiry?: InputMaybe<Array<BoolStorePrefInput>>;
+  startWithUnnamedPatient?: InputMaybe<Scalars['Boolean']['input']>;
+  startWithUnnamedPatientStoreOverride?: InputMaybe<
+    Array<BoolStoreOverrideInput>
+  >;
   storeCustomColour?: InputMaybe<Array<StringStorePrefInput>>;
   syncRecordsDisplayThreshold?: InputMaybe<Scalars['Int']['input']>;
   transferStockToInternalCustomersAtCostPrice?: InputMaybe<
     Scalars['Boolean']['input']
   >;
   useSimplifiedMobileUi?: InputMaybe<Array<BoolStorePrefInput>>;
+  useUnnamedPatient?: InputMaybe<Scalars['Boolean']['input']>;
+  useUnnamedPatientStoreOverride?: InputMaybe<Array<BoolStoreOverrideInput>>;
   warnWhenMissingRecentStocktake?: InputMaybe<
     Array<WarnWhenMissingRecentStocktakeInput>
   >;

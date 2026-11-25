@@ -32,9 +32,9 @@
 // Labels arrive pre-translated (OMS-REG-RPT-10.3) and are used verbatim.
 
 import {
-  localDayToUtc,
-  utcToLocalDay,
-} from '../../ui/elements/inputs/dateTimeConvert';
+  calendarDateToInstant,
+  instantToCalendarDate,
+} from '../../intl/calendarDate';
 
 /** One option for an enum select: raw schema value + its display label. */
 export interface EnumOption {
@@ -111,6 +111,12 @@ export type ParsedField =
        */
       dateOnly: boolean;
       /**
+       * uiSchema `options.monthOnly` — edited as a month (the month picker);
+       * the value is the month's 1st, submitted as that day's start instant
+       * on a date-time field, as the React UI sends it.
+       */
+      monthOnly: boolean;
+      /**
        * uiSchema `options.dateAsEndOfDay` — widen to the day's inclusive end.
        */
       dateAsEndOfDay: boolean;
@@ -133,9 +139,28 @@ export type ParsedField =
       nullable: boolean;
       default?: unknown;
     }
-  | { kind: 'dateRange'; key: string; label: string; nullable: boolean }
-  | { kind: 'masterList'; key: string; label: string; nullable: boolean }
-  | { kind: 'location'; key: string; label: string; nullable: boolean }
+  | {
+      kind: 'dateRange';
+      key: string;
+      label: string;
+      nullable: boolean;
+      required: boolean;
+      /** uiSchema `options.requiredBothDates` — one end alone blocks OK. */
+      requiredBothDates: boolean;
+      /** uiSchema `options.disableFuture` — no days after today. */
+      disableFuture: boolean;
+    }
+  /**
+   * The master-list and location pickers. `default` is the schema's, so a
+   * `default: null` picker left empty is sent as null (OMS-REG-RPT-10.16).
+   */
+  | {
+      kind: 'masterList' | 'location';
+      key: string;
+      label: string;
+      nullable: boolean;
+      default?: unknown;
+    }
   /**
    * The patient-program picker: options are the store's program-enrolment
    * registries; the submitted value is the program's CONTEXT id
@@ -454,6 +479,7 @@ export const parseArgumentSchema = (raw: {
             default: prop.default,
             dateTime: prop.format === 'date-time',
             dateOnly: options?.dateOnly === true,
+            monthOnly: options?.monthOnly === true,
             dateAsEndOfDay: options?.dateAsEndOfDay === true,
             disableFuture: options?.disableFuture === true,
             minKey: scopeKey(options?.min),
@@ -484,13 +510,33 @@ export const parseArgumentSchema = (raw: {
         });
         break;
       case 'DateRange':
-        fields.push({ kind: 'dateRange', key, label, nullable });
+        fields.push({
+          kind: 'dateRange',
+          key,
+          label,
+          nullable,
+          required: isRequired,
+          requiredBothDates: options?.requiredBothDates === true,
+          disableFuture: options?.disableFuture === true,
+        });
         break;
       case 'MasterListSearch':
-        fields.push({ kind: 'masterList', key, label, nullable });
+        fields.push({
+          kind: 'masterList',
+          key,
+          label,
+          nullable,
+          default: prop?.default,
+        });
         break;
       case 'LocationSearch':
-        fields.push({ kind: 'location', key, label, nullable });
+        fields.push({
+          kind: 'location',
+          key,
+          label,
+          nullable,
+          default: prop?.default,
+        });
         break;
       case 'PatientProgramSearch':
         fields.push({
@@ -655,7 +701,8 @@ const toDatetimeFilter = (value: unknown): ReportArgs | undefined => {
  * (OMS-REG-RPT-10.17/.31/.35; the captured client parsed bare dates at UTC
  * midnight — normalized here, see the contract).
  */
-export const dayStartInstant = (date: string): string => localDayToUtc(date);
+export const dayStartInstant = (date: string): string =>
+  calendarDateToInstant(date);
 
 /**
  * A calendar date's last instant (23:59:59.999 local) as an RFC3339 UTC
@@ -663,7 +710,7 @@ export const dayStartInstant = (date: string): string => localDayToUtc(date);
  * captured client's hour-24 overflow normalized away, see the contract).
  */
 export const dayEndInstant = (date: string): string =>
-  localDayToUtc(date, { endOfDay: true });
+  calendarDateToInstant(date, { endOfDay: true });
 
 /**
  * An RFC3339 instant → the viewer's local calendar date (`yyyy-mm-dd`), for
@@ -671,7 +718,7 @@ export const dayEndInstant = (date: string): string =>
  * from/to bounds). '' for absent or garbled values.
  */
 export const instantToLocalDate = (value: unknown): string =>
-  typeof value === 'string' ? (utcToLocalDay(value) ?? '') : '';
+  typeof value === 'string' ? (instantToCalendarDate(value) ?? '') : '';
 
 /** The date-kind slice of ParsedField the date-entry helpers below read. */
 type DateField = Extract<ParsedField, { kind: 'date' }>;
@@ -693,7 +740,7 @@ export const dateArgumentValue = (field: DateField, isoDay: string): string =>
 /**
  * A date field's stored value → the local calendar day it edits: plain
  * 'YYYY-MM-DD' values pass through, instant values read back as the local day
- * (never sliced — see `utcToLocalDay`). '' for absent/garbled values.
+ * (never sliced — see `instantToCalendarDate`). '' for absent/garbled values.
  */
 export const dateArgumentDay = (value: unknown): string => {
   if (typeof value !== 'string' || value === '') return '';
@@ -704,7 +751,7 @@ export const dateArgumentDay = (value: unknown): string => {
  * A date field's selectable day bounds (OMS-REG-RPT-10.40): the sibling values
  * its `min`/`max` scope refs point at — read live from the form's current
  * values — with the ceiling tightened to today when the element disallows
- * future days. ISO days compare lexicographically, so the tighter ceiling is a
+ * future days. Calendar dates compare lexicographically, so the tighter ceiling is a
  * string compare. `today` is passed in (this module stays clock-free / pure).
  */
 export const dateFieldBounds = (
@@ -719,11 +766,23 @@ export const dateFieldBounds = (
 };
 
 /**
+ * The comparable unit for a value/bound pair: a month-only field
+ * (OMS-REG-RPT-10.44) compares by `YYYY-MM` — a month holding any in-range
+ * day is in range, so a `min` falling mid-month doesn't reject the month's
+ * 1st — while a day field compares days untouched. Slicing BOTH sides keeps a
+ * stored instant's day component out of a month comparison.
+ */
+const comparableDay = (field: DateField, day: string): string =>
+  field.monthOnly ? day.slice(0, 7) : day;
+
+/**
  * Which bound (if any) the field's current value violates — 'future' when the
  * element disallows future days and the day is past today, else 'min'/'max'
  * against the live sibling bounds. The picker can't produce a violation
  * (out-of-range days are unselectable) but typed entry can; a violation shows
- * at the field and blocks OK (OMS-REG-RPT-10.40).
+ * at the field and blocks OK (OMS-REG-RPT-10.40). Month-only fields compare
+ * by month (see `comparableDay`) — the same rule the picker grid and the
+ * typed path apply, so the three agree.
  */
 export const dateFieldViolation = (
   field: DateField,
@@ -732,11 +791,33 @@ export const dateFieldViolation = (
 ): 'future' | 'min' | 'max' | undefined => {
   const day = dateArgumentDay(values[field.key]);
   if (!day) return undefined;
-  if (field.disableFuture && day > today) return 'future';
+  if (
+    field.disableFuture &&
+    comparableDay(field, day) > comparableDay(field, today)
+  )
+    return 'future';
   const min = field.minKey ? dateArgumentDay(values[field.minKey]) : '';
-  if (min && day < min) return 'min';
+  if (min && comparableDay(field, day) < comparableDay(field, min))
+    return 'min';
   const max = field.maxKey ? dateArgumentDay(values[field.maxKey]) : '';
-  if (max && day > max) return 'max';
+  if (max && comparableDay(field, day) > comparableDay(field, max))
+    return 'max';
+  return undefined;
+};
+
+/** Why a date range blocks OK; `value` is `{ start, end }` or undefined. */
+export const dateRangeViolation = (
+  field: Extract<ParsedField, { kind: 'dateRange' }>,
+  value: unknown
+): 'required' | 'bothDates' | undefined => {
+  const range =
+    value && typeof value === 'object'
+      ? (value as { start?: unknown; end?: unknown })
+      : {};
+  const hasStart = typeof range.start === 'string' && range.start !== '';
+  const hasEnd = typeof range.end === 'string' && range.end !== '';
+  if (!hasStart && !hasEnd) return field.required ? 'required' : undefined;
+  if (field.requiredBothDates && !(hasStart && hasEnd)) return 'bothDates';
   return undefined;
 };
 

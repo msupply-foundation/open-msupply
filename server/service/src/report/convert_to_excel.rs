@@ -46,7 +46,7 @@ pub fn csv_to_excel(
     // Write headers
     for (col_idx, header) in headers.iter().enumerate() {
         let cell = sheet.get_cell_mut((col_idx as u32 + 1, 1));
-        cell.set_value(header.to_string());
+        set_cell_text(cell, header);
         cell.get_style_mut().get_font_mut().set_bold(true);
     }
 
@@ -55,7 +55,7 @@ pub fn csv_to_excel(
         let row = row_idx as u32 + 2;
         for (col_idx, field) in record.iter().enumerate() {
             let cell = sheet.get_cell_mut((col_idx as u32 + 1, row));
-            cell.set_value(field);
+            set_cell_text(cell, field);
         }
     }
 
@@ -213,7 +213,7 @@ fn apply_header(sheet: &mut Worksheet, header_html: &str) -> u32 /* rows used */
     for (coordinate, el) in header_cells.into_iter() {
         let sheet_cell = sheet.get_cell_mut(coordinate);
 
-        sheet_cell.set_value(inner_text(el));
+        set_cell_text(sheet_cell, inner_text(el));
 
         apply_known_styles(sheet_cell, el);
 
@@ -257,7 +257,7 @@ fn apply_data_table_headers(
 
         if !body.ignore_table_header() {
             let cell = sheet.get_cell_mut((column_index, row_idx));
-            cell.set_value(header);
+            set_cell_text(cell, header);
             cell.get_style_mut().get_font_mut().set_bold(true);
         }
     }
@@ -318,9 +318,8 @@ fn apply_data_rows(
             // If no custom columns, every column will be mapped, otherwise only custom columns
             if let Some(column_index) = index_to_column_index_map.get(&(cell_index as u32)).cloned()
             {
-                let sheet_cell = sheet
-                    .get_cell_mut((column_index, row_idx))
-                    .set_value(inner_text(cell));
+                let sheet_cell = sheet.get_cell_mut((column_index, row_idx));
+                set_cell_text(sheet_cell, inner_text(cell));
                 apply_known_styles(sheet_cell, cell);
             }
         }
@@ -335,7 +334,7 @@ fn apply_data_rows(
             if let Some(column_index) = index_to_column_index_map.get(&(cell_index as u32)).cloned()
             {
                 let sheet_cell = sheet.get_cell_mut((column_index, row_idx));
-                sheet_cell.set_value(cell);
+                set_cell_text(sheet_cell, cell);
                 sheet_cell.get_style_mut().get_font_mut().set_bold(true);
             }
         }
@@ -424,7 +423,12 @@ impl Selectors {
     }
 
     fn rows_and_cells<'a>(&'a self) -> Vec<Vec<ElementRef<'a>>> {
-        let rows_selector = Selector::parse("tbody tr:not([excel-type=\"total-row\"])").unwrap();
+        // `total-row` is laid out separately (see `total_rows`); `ignore` is a row that exists
+        // only in the printed form (e.g. a line's comment row) and has no place in the sheet.
+        let rows_selector = Selector::parse(
+            "tbody tr:not([excel-type=\"total-row\"]):not([excel-type=\"ignore\"])",
+        )
+        .unwrap();
         let cells_selector = Selector::parse("td").unwrap();
         self.html
             .select(&rows_selector)
@@ -510,6 +514,19 @@ fn inner_text<'a>(element_ref: ElementRef<'a>) -> &'a str {
         .find(|t| !t.trim().is_empty())
         .map(|t| t.trim())
         .unwrap_or_default()
+}
+
+/// Puts text in a cell, which the sheet stores as a number when it reads as one. Text with a
+/// leading zero, such as the item code `030063`, is a code rather than a number, so it stays
+/// text: as a number Excel would show it as `30063`.
+fn set_cell_text(cell: &mut Cell, text: &str) {
+    let digits = text.strip_prefix('-').unwrap_or(text).as_bytes();
+    let has_leading_zero = digits.len() > 1 && digits[0] == b'0' && digits[1].is_ascii_digit();
+    if has_leading_zero {
+        cell.set_value_string(text);
+    } else {
+        cell.set_value(text);
+    }
 }
 
 fn apply_known_styles(cell: &mut Cell, el: ElementRef) {
@@ -635,6 +652,125 @@ mod report_to_excel_test {
         // Blank row before the total row
         assert_eq!(get_value("B4"), "");
         assert_eq!(get_value("B5"), "Total:");
+    }
+
+    /// A row marked `excel-type="ignore"` exists only in the printed form (e.g. a purchase
+    /// order line's comment, which spans the row under its line) and must not appear in the
+    /// sheet at all — neither as a data row nor a total row — leaving the real rows and their
+    /// columns untouched.
+    #[test]
+    fn test_generate_excel_skips_ignored_rows() {
+        let report: GeneratedReport = GeneratedReport {
+            document: r#"
+          <table>
+            <thead>
+              <tr><th>Item</th><th>Unit</th><th>Price</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Acetylsalicylic Acid 100mg tabs</td>
+                <td>Tablets</td>
+                <td>10.00</td>
+              </tr>
+              <tr class="comment" excel-type="ignore">
+                <td></td>
+                <td colspan="2"><span>Note:</span> handle with care</td>
+              </tr>
+              <tr>
+                <td>Ibuprofen 200mg tabs</td>
+                <td>Tablets</td>
+                <td>15.00</td>
+              </tr>
+            </tbody>
+          </table>
+        "#
+            .to_string(),
+            header: None,
+            footer: None,
+        };
+
+        let mut book = umya_spreadsheet::new_file();
+        book.set_sheet_name(0, "test").unwrap();
+        let sheet = book.get_sheet_by_name_mut("test").unwrap();
+
+        apply_report(sheet, report, "test");
+
+        let get_value = |coord: &str| get_value(sheet, coord);
+
+        // The two real lines sit in consecutive rows, right after the header — the ignored
+        // comment row neither takes a row of its own nor spills "Note:" into a data column.
+        assert_eq!(get_value("A1"), "Item");
+        assert_eq!(get_value("A2"), "Acetylsalicylic Acid 100mg tabs");
+        assert_eq!(get_value("A3"), "Ibuprofen 200mg tabs");
+        assert_eq!(get_value("B3"), "Tablets");
+        // `15.00` reads as a number, so the sheet stores it as `15` (see leading-zeros test).
+        assert_eq!(get_value("C3"), "15");
+        // Nothing was written below the last real line.
+        assert_eq!(get_value("A4"), "");
+        assert_eq!(get_value("B4"), "");
+    }
+
+    /// An item code like `030063` is text that happens to be digits: as a number Excel would
+    /// show `30063`. That holds for headings (a customer coded `007` in a crosstab) and total
+    /// rows too. Numbers, zero and decimals below one still go in as numbers.
+    #[test]
+    fn test_generate_excel_keeps_leading_zeros() {
+        let report: GeneratedReport = GeneratedReport {
+            document: r#"
+          <table>
+            <thead>
+              <tr><th>Code</th><th>Quantity</th><th>Zero</th><th>Price</th><th>007</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>030063</td><td>100</td><td>0</td><td>0.50</td><td>-012</td></tr>
+              <tr excel-type="total-row"><td>0099</td><td>100</td><td></td><td></td><td></td></tr>
+            </tbody>
+          </table>
+        "#
+            .to_string(),
+            header: None,
+            footer: None,
+        };
+
+        let mut book = umya_spreadsheet::new_file();
+        book.set_sheet_name(0, "test").unwrap();
+        let sheet = book.get_sheet_by_name_mut("test").unwrap();
+
+        apply_report(sheet, report, "test");
+
+        let data_type = |coord: &str| sheet.get_cell(coord).unwrap().get_data_type().to_string();
+        assert_eq!(get_value(sheet, "A2"), "030063");
+        assert_eq!(data_type("A2"), "s");
+        assert_eq!(data_type("E2"), "s");
+        assert_eq!(data_type("B2"), "n");
+        assert_eq!(data_type("C2"), "n");
+        assert_eq!(data_type("D2"), "n");
+        // Heading
+        assert_eq!(get_value(sheet, "E1"), "007");
+        assert_eq!(data_type("E1"), "s");
+        // Total row, after a blank row
+        assert_eq!(get_value(sheet, "A4"), "0099");
+        assert_eq!(data_type("A4"), "s");
+        assert_eq!(data_type("B4"), "n");
+    }
+
+    /// A list exported as CSV keeps its codes too
+    #[test]
+    fn test_csv_to_excel_keeps_leading_zeros() {
+        let base_dir = test_base_dir("csv_leading_zeros");
+        let file_id =
+            csv_to_excel(&base_dir, "Code,Quantity\n030063,100\n", "codes", None).unwrap();
+        let generated_file = StaticFileService::new(&base_dir)
+            .unwrap()
+            .find_file(&file_id, StaticFileCategory::Temporary)
+            .unwrap()
+            .unwrap();
+        let book = umya_spreadsheet::reader::xlsx::read(&generated_file.path).unwrap();
+        let sheet = book.get_sheet(&0).unwrap();
+
+        assert_eq!(get_value(sheet, "A2"), "030063");
+        assert_eq!(sheet.get_cell("A2").unwrap().get_data_type(), "s");
+        assert_eq!(sheet.get_cell("B2").unwrap().get_data_type(), "n");
     }
 
     #[test]

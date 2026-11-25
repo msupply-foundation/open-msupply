@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   customDate,
   exportDate,
+  exportTime,
   getDisplayAge,
   loadDateFnsLocale,
   localeDateFormat,
@@ -62,6 +63,34 @@ describe('getDisplayAge (spec/patients — age display)', () => {
     expect(getDisplayAge('2025-09-21')).toBe('10 days');
     expect(getDisplayAge('2025-04-01')).toBe('6 months, 0 days');
     expect(getDisplayAge('1994-06-30')).toBe('31 years');
+  });
+});
+
+/*
+ * A calendar date (`YYYY-MM-DD`, a GraphQL NaiveDate) shows the day it names,
+ * in every zone (#1500). Read as a UTC instant, a date of birth of 1 October
+ * shows as 30/09 anywhere west of Greenwich — so these fail on any machine,
+ * because the suite runs west of UTC by default (vitest.config.ts).
+ */
+describe('calendar dates show the day they name (#1500)', () => {
+  it('localisedDate', () => {
+    expect(localisedDate('2025-10-01')).toBe('01/10/2025');
+    expect(localisedDate('2026-01-01')).toBe('01/01/2026');
+  });
+
+  it('exportDate', () => {
+    expect(exportDate('2025-10-01')).toBe('01/10/2025');
+  });
+
+  it('customDate', () => {
+    expect(customDate('2025-10-01', 'yyyy-MM-dd')).toBe('2025-10-01');
+    expect(customDate('2025-10-01', 'd MMM yyyy')).toBe('1 Oct 2025');
+  });
+
+  it('a timestamp still shows the user’s own day and time', () => {
+    const instant = new Date(2025, 9, 1, 23, 30);
+    expect(localisedDate(instant.toISOString())).toBe('01/10/2025');
+    expect(localisedTime(instant.toISOString())).toBe('23:30');
   });
 });
 
@@ -206,6 +235,16 @@ describe('digit systems match the numbers beside them', () => {
     setLocale('ar');
     expect(localisedDate(AT)).not.toMatch(/[0-9]/);
     expect(exportDate(AT)).toBe('06/09/2026');
+  });
+
+  it('keeps a time bound for a FILE in Latin digits, as its date is', async () => {
+    // A dispensing record's Dispensed column joins the two: one cell must not
+    // read in two digit systems.
+    await loadDateFnsLocale('ar');
+    setLocale('ar');
+    expect(localisedTime(AT)).not.toMatch(/[0-9]/);
+    expect(exportTime(AT)).toMatch(/[0-9]/);
+    expect(exportTime(AT)).not.toMatch(/[\u0660-\u0669\u06F0-\u06F9]/);
   });
 
   it('reads one digit system across every rung of “how long ago”', async () => {

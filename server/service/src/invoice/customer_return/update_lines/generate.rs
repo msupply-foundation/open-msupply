@@ -55,6 +55,7 @@ pub fn generate(
                  vvm_status_id,
                  volume_per_pack,
              }| InsertStockInLine {
+                status: None,
                 id,
                 invoice_id: customer_return_id.clone(),
                 item_id,

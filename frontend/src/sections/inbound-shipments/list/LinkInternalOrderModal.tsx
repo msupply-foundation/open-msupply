@@ -1,4 +1,4 @@
-import { createSignal, Show, type Component } from 'solid-js';
+import { Show, type Component } from 'solid-js';
 import { t } from '../../../intl';
 import { initialPageSize, rememberPageSize } from '../../../list/pageSize';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
@@ -7,6 +7,7 @@ import { Button } from '../../../ui/elements/buttons/Button';
 import { CancelButton } from '../../../ui/elements/buttons/StandardButtons';
 import { Text } from '../../../ui/elements/typography/Text';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
+import { createLocalPagination } from '../../../ui/elements/table/createLocalPagination';
 import {
   CommentHeader,
   getCellDefinition,
@@ -47,9 +48,10 @@ export const LinkInternalOrderModal: Component<
 > = props => {
   // Client-side pagination over the fetched orders (the parent hands in the
   // full set; a supplier normally has few, but a busy one can have many).
-  const [offset, setOffset] = createSignal(0);
-  const [pageSize, setPageSize] = createSignal(initialPageSize());
-  const page = () => props.orders.slice(offset(), offset() + pageSize());
+  const page = createLocalPagination(() => props.orders, {
+    pageSize: initialPageSize(),
+    onPageSizeChange: rememberPageSize,
+  });
 
   const columns = (): Column<LinkInternalOrderRowFragment, never>[] => [
     {
@@ -131,24 +133,14 @@ export const LinkInternalOrderModal: Component<
       <DataTable
         dialogTable
         columns={columns()}
-        rows={page()}
+        rows={page.rows()}
         rowKey={r => r.id}
         loading={props.loading}
         // Clicking a row links THAT order and creates the shipment.
         onRowClick={row => !props.busy && props.onLink(row.id)}
         showFullScreen={false}
         emptyMessage={t('error.no-internal-orders')}
-        pagination={{
-          offset: offset(),
-          pageSize: pageSize(),
-          total: props.orders.length,
-          onOffsetChange: setOffset,
-          onPageSizeChange: size => {
-            rememberPageSize(size);
-            setPageSize(size);
-            setOffset(0);
-          },
-        }}
+        pagination={page.pagination()}
       />
     </Dialog>
   );

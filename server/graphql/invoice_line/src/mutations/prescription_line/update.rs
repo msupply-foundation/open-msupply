@@ -528,7 +528,7 @@ mod test {
         let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             InvoiceLineMutations,
-            "test_graphql_update_prescription_success",
+            "test_graphql_update_prescription_line_success",
             MockDataInserts::all(),
         )
         .await;

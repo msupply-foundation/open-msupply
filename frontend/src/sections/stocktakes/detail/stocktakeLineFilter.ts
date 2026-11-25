@@ -9,9 +9,8 @@ import type { StocktakeLinesVariables } from './lines/stocktakeDetail.generated'
 // connection in memory): the detail table is now server sorted / filtered /
 // paged (kdd/stocktake-line-editing), so the only filters we can offer are the
 // ones the backend's StocktakeLineFilterInput supports. See
-// stocktakeDetailFilters.tsx for which keys are exposed vs. dismissed (with
-// TODOs for batch / expiry / "show error lines", which the server can't filter
-// on yet).
+// stocktakeDetailFilters.tsx for which keys are exposed vs. dismissed (with a
+// TODO for batch).
 export type StocktakeLineFilter = NonNullable<
   StocktakeLinesVariables['filter']
 >;

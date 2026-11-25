@@ -8,6 +8,7 @@ import { type Column } from '@/ui/elements/table/DataTable';
 import {
   getCellDefinition,
   getNumberCell,
+  getTextCell,
 } from '@/ui/elements/table/tableHelpers';
 import { remToPx } from '@/ui/utils/rem';
 import { HStack } from '@/ui/layout/Stack/HStack';
@@ -442,7 +443,11 @@ export const rnrFormLineColumns = ({
   {
     c: { key: 'comment' },
     header: () => t('label.comment'),
-    ...getCellDefinition('comment'),
+    // A text box, not the comment-icon preset: that one is sized and capped
+    // for a glyph (3.5rem, 5rem cap), which left the box too narrow to read
+    // and the column undraggable (#1890). Room for a short comment, no cap.
+    ...getTextCell(),
+    size: remToPx(12),
     cardGroup: 'more',
     cell: info => {
       const line = info.row.original;

@@ -5,43 +5,61 @@ import type {
 } from './manageReports.generated';
 import type { ReportVersion } from './reportRegister';
 
-// Changing a version's active state (spec/manage-reports rules.md § activation,
-// contract.md § activation). Pure — the dialog owns only the signals.
+// Changing a version's active state and its report's store tags
+// (spec/manage-reports rules.md § activation and § store tags, contract.md §
+// activation and § store tags). Pure — the dialog owns only the signals.
 
 /**
  * The editable draft.
  *
- * ONE member, and that is the whole point: `UpdateReportInput` is
- * `{ id, isActive }`, so active state is the only property of an installed
- * report that can change (OMS-REG-MNG-06.21). Name, code, version, custom and
- * context are fixed at install and are shown read-only.
+ * `UpdateReportInput` is `{ id, isActive, storeTagIds }`, so active state and
+ * store tags are the only properties of an installed report that can change
+ * (OMS-REG-MNG-06.35). Name, code, version, custom and context are fixed at
+ * install and are shown read-only. Store tags belong to the report's code, so
+ * saving them from this version sets them for every version
+ * (OMS-REG-MNG-06.36).
  */
 export type ReportEditDraft = {
   id: string;
   isActive: boolean;
+  storeTagIds: string[];
 };
 
 export const draftFromVersion = (version: ReportVersion): ReportEditDraft => ({
   id: version.id,
   isActive: version.isActive,
+  storeTagIds: [...version.storeTagIds],
 });
 
+/** Same tags in any order: the order they were picked in means nothing. */
+const sameTags = (a: readonly string[], b: readonly string[]): boolean => {
+  const left = new Set(a);
+  const right = new Set(b);
+  return left.size === right.size && [...left].every(id => right.has(id));
+};
+
 /**
- * Saving is unavailable until the value actually differs from the stored one
- * (OMS-REG-MNG-06.17) — so reopening a version and closing it cannot rewrite
- * the row, and an unchanged dialog offers nothing to do.
+ * Saving is unavailable until a value actually differs from the stored one
+ * (OMS-REG-MNG-06.17, .37) — so reopening a version and closing it cannot
+ * rewrite the row, and an unchanged dialog offers nothing to do.
  */
 export const canSaveReport = (
   draft: ReportEditDraft,
   version: ReportVersion
-): boolean => draft.isActive !== version.isActive;
+): boolean =>
+  draft.isActive !== version.isActive ||
+  !sameTags(draft.storeTagIds, version.storeTagIds);
 
-/** The mutation's input — the draft is already exactly its shape. */
+/**
+ * The mutation's input — the draft is already exactly its shape. The tags
+ * always travel: an unchanged list is a no-op on the server.
+ */
 export const reportUpdateInput = (
   draft: ReportEditDraft
 ): UpdateReportVariables['input'] => ({
   id: draft.id,
   isActive: draft.isActive,
+  storeTagIds: draft.storeTagIds,
 });
 
 export type ReportSaveOutcome =

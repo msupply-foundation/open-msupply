@@ -29,6 +29,7 @@ use graphql_asset::{
 use graphql_asset_catalogue::AssetCatalogueMutations;
 use graphql_asset_catalogue::AssetCatalogueQueries;
 use graphql_batch_mutations::BatchMutations;
+use graphql_central_data::{CentralDataMutations, CentralDataQueries};
 use graphql_clinician::{ClinicianMutations, ClinicianQueries};
 use graphql_cold_chain::{ColdChainMutations, ColdChainQueries};
 use graphql_contact::ContactQueries;
@@ -64,7 +65,7 @@ use graphql_purchase_order_line::{PurchaseOrderLineMutations, PurchaseOrderLineQ
 use graphql_repack::{RepackMutations, RepackQueries};
 use graphql_reports::{CentralReportMutations, ReportQueries};
 use graphql_requisition::{RequisitionMutations, RequisitionQueries};
-use graphql_requisition_line::RequisitionLineMutations;
+use graphql_requisition_line::{RequisitionLineMutations, RequisitionLineQueries};
 use graphql_site::{CentralSiteMutations, CentralSiteQueries};
 use graphql_stock_line::{StockLineMutations, StockLineQueries};
 use graphql_stock_relocation::{StockRelocationMutations, StockRelocationQueries};
@@ -157,6 +158,10 @@ impl CentralServerMutationNode {
     async fn site(&self) -> CentralSiteMutations {
         CentralSiteMutations
     }
+
+    async fn central_data(&self) -> CentralDataMutations {
+        CentralDataMutations
+    }
 }
 
 #[derive(Default, Clone)]
@@ -173,6 +178,10 @@ impl CentralServerQueryNode {
 
     async fn site(&self) -> CentralSiteQueries {
         CentralSiteQueries
+    }
+
+    async fn central_data(&self) -> CentralDataQueries {
+        CentralDataQueries
     }
 
     async fn custom_field(&self) -> CustomFieldConfigQueries {
@@ -216,6 +225,7 @@ pub struct Queries(
     pub StocktakeLineQueries,
     pub GeneralQueries,
     pub RequisitionQueries,
+    pub RequisitionLineQueries,
     pub ReportQueries,
     pub StockLineQueries,
     pub PrescriptionRequestQueries,
@@ -255,6 +265,7 @@ impl Queries {
             StocktakeLineQueries,
             GeneralQueries,
             RequisitionQueries,
+            RequisitionLineQueries,
             ReportQueries,
             StockLineQueries,
             PrescriptionRequestQueries,

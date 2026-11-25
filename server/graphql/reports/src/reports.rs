@@ -1,6 +1,6 @@
 use ::serde::Serialize;
 use async_graphql::*;
-use graphql_core::simple_generic_errors::FailedTranslation;
+use graphql_core::simple_generic_errors::{FailedTranslation, RecordNotFound};
 use graphql_core::standard_graphql_error::{StandardGraphqlError, list_error_to_gql_err};
 use graphql_core::{ContextExt, map_filter};
 use graphql_core::{
@@ -14,6 +14,7 @@ use repository::{
 };
 use service::ListResult;
 use service::auth::{Resource, ResourceAccessRequest};
+use service::report::display::ReportDisplay;
 use service::report::report_service::{GetReportError, GetReportsError};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -101,6 +102,7 @@ pub struct ReportConnector {
 #[graphql(field(name = "description", ty = "String"))]
 pub enum QueryReportErrorInterface {
     ReportTranslationError(FailedTranslation),
+    RecordNotFound(RecordNotFound),
 }
 
 #[derive(Interface)]
@@ -122,6 +124,8 @@ pub struct QueryReportsError {
 #[derive(PartialEq, Debug)]
 pub struct ReportNode {
     row: Report,
+    store_tag_ids: Vec<String>,
+    is_displayed: bool,
 }
 
 #[Object]
@@ -165,11 +169,30 @@ impl ReportNode {
     pub async fn version(&self) -> &str {
         &self.row.report_row.version
     }
+
+    /// The store tags this report is displayed for on the Reports page. Set
+    /// per report code, so every version of a report has the same tags. Empty
+    /// means every store.
+    pub async fn store_tag_ids(&self) -> &Vec<String> {
+        &self.store_tag_ids
+    }
+
+    /// Whether the queried store sees this report on the Reports page without
+    /// pressing its category's "Show more": it has no store tags, or the store has one
+    /// of them. A report that isn't displayed can still be run.
+    pub async fn is_displayed(&self) -> bool {
+        self.is_displayed
+    }
 }
 
 impl ReportNode {
-    pub fn from_domain(row: Report) -> ReportNode {
-        ReportNode { row }
+    pub fn from_domain(row: Report, display: &ReportDisplay) -> ReportNode {
+        let code = &row.report_row.code;
+        ReportNode {
+            store_tag_ids: display.report_store_tag_ids(code),
+            is_displayed: display.is_displayed(code),
+            row,
+        }
     }
 
     pub fn row(&self) -> &Report {
@@ -178,13 +201,13 @@ impl ReportNode {
 }
 
 impl ReportConnector {
-    pub fn from_domain(reports: ListResult<Report>) -> ReportConnector {
+    pub fn from_domain(reports: ListResult<Report>, display: &ReportDisplay) -> ReportConnector {
         ReportConnector {
             total_count: reports.count,
             nodes: reports
                 .rows
                 .into_iter()
-                .map(ReportNode::from_domain)
+                .map(|row| ReportNode::from_domain(row, display))
                 .collect(),
         }
     }
@@ -206,10 +229,11 @@ pub fn report(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id, user.user_id)?;
+    let service_context = service_provider.context(store_id.clone(), user.user_id)?;
     let localisations = service_provider
         .localisations_service
         .get_localisations(&service_context.connection)?;
+    let display = ReportDisplay::load(&service_context.connection, &store_id)?;
 
     match service_provider.report_service.get_report(
         &service_context,
@@ -217,7 +241,9 @@ pub fn report(
         user_language,
         &id,
     ) {
-        Ok(report) => Ok(ReportResponse::Report(ReportNode { row: report })),
+        Ok(report) => Ok(ReportResponse::Report(ReportNode::from_domain(
+            report, &display,
+        ))),
         Err(err) => map_report_error(err),
     }
 }
@@ -239,11 +265,12 @@ pub fn reports(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id, user.user_id)?;
+    let service_context = service_provider.context(store_id.clone(), user.user_id)?;
 
     let localisations = service_provider
         .localisations_service
         .get_localisations(&service_context.connection)?;
+    let display = ReportDisplay::load(&service_context.connection, &store_id)?;
 
     match service_provider.report_service.query_reports(
         &service_context,
@@ -255,7 +282,10 @@ pub fn reports(
     ) {
         Ok(reports) => Ok(ReportsResponse::Response(ReportConnector {
             total_count: reports.len() as u32,
-            nodes: reports.into_iter().map(|row| ReportNode { row }).collect(),
+            nodes: reports
+                .into_iter()
+                .map(|row| ReportNode::from_domain(row, &display))
+                .collect(),
         })),
         Err(err) => map_reports_error(err),
     }
@@ -279,10 +309,11 @@ pub fn all_report_versions(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id, user.user_id)?;
+    let service_context = service_provider.context(store_id.clone(), user.user_id)?;
     let localisations = &service_provider
         .localisations_service
         .get_localisations(&service_context.connection)?;
+    let display = ReportDisplay::load(&service_context.connection, &store_id)?;
 
     let reports = match service_provider.report_service.query_all_report_versions(
         &service_context,
@@ -298,7 +329,7 @@ pub fn all_report_versions(
     };
 
     Ok(ReportsResponse::Response(ReportConnector::from_domain(
-        reports,
+        reports, &display,
     )))
 }
 
@@ -327,6 +358,9 @@ impl ReportSortInput {
 
 fn map_report_error(error: GetReportError) -> Result<ReportResponse> {
     match error {
+        GetReportError::ReportNotFound => Ok(ReportResponse::Error(QueryReportError {
+            error: QueryReportErrorInterface::RecordNotFound(RecordNotFound),
+        })),
         GetReportError::TranslationError(error) => Ok(ReportResponse::Error(QueryReportError {
             error: QueryReportErrorInterface::ReportTranslationError(FailedTranslation(
                 error.to_string(),

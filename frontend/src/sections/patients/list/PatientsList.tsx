@@ -43,14 +43,15 @@ import {
   buildCustomFieldDynamicFilter,
   type CustomFieldFilterState,
 } from '../../../domain/customFields';
-import { CreatePatientModal } from './CreatePatientModal';
+import { ChoosePatient } from './ChoosePatient';
 import { ExportPatientsAction } from './actions';
 
-// The patient list view (spec/patients S1). Site-wide (NOT store-scoped despite
-// storeId — contract › visibility wire trap), server-paginated, default sort by
-// creation date descending. Composed from library components (Page / Header /
-// FilterBar / DataTable / Pagination), so the page owns no CSS. Row selection
-// is OFF — patients have no delete (spec/patients cross-cutting › no delete).
+// The patient list view (spec/patients S1). This store's patients (those
+// visible in it — rules › visibility and store scope), server-paginated,
+// default sort by creation date descending. Composed from library components
+// (Page / Header / FilterBar / DataTable / Pagination), so the page owns no
+// CSS. Row selection is OFF — patients have no delete (spec/patients
+// cross-cutting › no delete).
 
 type PatientRow = PatientsResult['patients']['nodes'][number];
 type SortKey = NonNullable<PatientsVariables['sort']>[number]['key'];
@@ -84,6 +85,8 @@ const PatientsList: Component = () => {
     ...DEFAULT_STATE,
     first: initialPageSize(),
   });
+  // New patient opens the patient search first (spec/patients S2): the user
+  // checks the patient isn't already here, then goes on to the create form.
   const [createOpen, setCreateOpen] = createSignal(false);
 
   // Create/edit affordances are gated on patient-mutate permission
@@ -133,6 +136,7 @@ const PatientsList: Component = () => {
       ...stripEmpty(query().filter),
       // Custom-field filters become the dynamicFilter AST (undefined = no-op).
       dynamicFilter: buildCustomFieldDynamicFilter(query().cf, cfDefs()),
+      isVisible: true,
     },
     sort: query().sort,
     page: { first: query().first, offset: query().offset },
@@ -169,8 +173,9 @@ const PatientsList: Component = () => {
   const onCustomFieldChange = (cf: CustomFieldFilterState) =>
     setQuery({ ...query(), cf, offset: 0 });
 
-  const openRow = (row: PatientRow) =>
-    navigate(`/${params.storeId}/dispensary/patients/${row.id}`);
+  const rowHref = (row: PatientRow) =>
+    `/${params.storeId}/dispensary/patients/${row.id}`;
+  const openRow = (row: PatientRow) => navigate(rowHref(row));
 
   // The program-enrolments chip column (program module only, OMS-REG-DIS-02.53,
   // OMS-REG-DIS-01.20/.44): one chip per enrolment as "{registry name}
@@ -303,6 +308,7 @@ const PatientsList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
+        rowHref={rowHref}
         // One filter menu, in the table's OWN toolbar — never the page header
         // (ui-standards/tables § Toolbar, binding). The default patient
         // filters plus the patient scope's configured custom-field filters as
@@ -351,9 +357,10 @@ const PatientsList: Component = () => {
           },
         }}
       />
-      <CreatePatientModal
+      <ChoosePatient
         open={createOpen()}
         storeId={params.storeId}
+        title={t('button.new-patient')}
         onClose={() => setCreateOpen(false)}
       />
     </Page>

@@ -1,9 +1,9 @@
 WITH 
     this_month AS (
-        SELECT date_trunc('month', CURRENT_DATE) AS this_month
+        SELECT date_trunc('month', instant_to_calendar_date(now() AT TIME ZONE 'UTC', $timezone)) AS this_month
     ),
     six_months AS (
-        SELECT date_trunc('month', CURRENT_DATE + interval '6 months') AS six_months
+        SELECT date_trunc('month', instant_to_calendar_date(now() AT TIME ZONE 'UTC', $timezone) + interval '6 months') AS six_months
     )
 SELECT 
     s.id,

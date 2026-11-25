@@ -21,9 +21,9 @@ import {
   backdatedDatetime as computeBackdatedDatetime,
 } from '../stockCalc';
 import {
-  localTodayIso,
-  localIsoDaysAgo,
-} from '../../../ui/elements/inputs/dateTimeConvert';
+  todayCalendarDate,
+  calendarDateDaysAgo,
+} from '../../../intl/calendarDate';
 import {
   HistoricalStockLines,
   type StockLineDetailFragment,
@@ -75,7 +75,7 @@ const AdjustContent = (props: {
   const [reasonId, setReasonId] = createSignal<string | undefined>();
   // Local (wall-clock) today, not UTC — so a store whose date differs from UTC
   // never treats its own today as backdated (spec/stock S4).
-  const today = localTodayIso();
+  const today = todayCalendarDate();
   // The date field starts at today (spec/stock S4) — today means "not
   // backdated", so the default still submits with no backdatedDatetime.
   const [date, setDate] = createSignal<string | null>(today);
@@ -86,7 +86,7 @@ const AdjustContent = (props: {
   const backdating = () => prefs().backdating;
   const minDate = () => {
     const maxDays = backdating().maxDays;
-    return maxDays <= 0 ? undefined : localIsoDaysAgo(maxDays);
+    return maxDays <= 0 ? undefined : calendarDateDaysAgo(maxDays);
   };
 
   // A chosen date earlier than today means "backdated"; today (or unset) is
@@ -167,8 +167,9 @@ const AdjustContent = (props: {
   // (ui-standards › validation — don't pre-validate an action), which lands in
   // the banner beside the actions.
   const reasonRequired = () =>
-    reasonsOfKind(direction() === 'ADDITION' ? 'positive' : 'negative').length >
-    0;
+    reasonsOfKind(direction() === 'ADDITION' ? 'positive' : 'negative', {
+      isVaccine: isVaccine(),
+    }).length > 0;
 
   const onOk = async () => {
     if (!canConfirm()) return;
@@ -339,6 +340,7 @@ const AdjustContent = (props: {
         <FieldRow label={t('label.reason')} required={reasonRequired()}>
           <ReasonSelect
             kind={direction() === 'ADDITION' ? 'positive' : 'negative'}
+            isVaccine={isVaccine()}
             label={t('label.reason')}
             inputTestId="adjust-reason"
             hideLabel

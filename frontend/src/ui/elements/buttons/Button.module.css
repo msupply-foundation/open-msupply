@@ -44,6 +44,8 @@
      centring leaves the glyphs untouched. */
   line-height: 1;
   white-space: nowrap;
+  /* LinkButton renders this class on an <a>; a button has no underline. */
+  text-decoration: none;
   cursor: pointer;
   transition:
     background var(--motion-fast) ease,
@@ -181,13 +183,22 @@
 /* A page header whose labelled actions don't fit beside its title — Header
    MEASURES that and sets data-actions-collapsed (no breakpoint): every
    icon-bearing button in the cluster sheds its label to the icon, opted in or
-   not. Labels stay while they fit, so a tablet with room keeps them. */
-[data-actions-collapsed] > [data-header-buttons] .button:has(.icon) {
+   not. Labels stay while they fit, so a tablet with room keeps them.
+   `:not(dialog *)` stops it at a dialog's edge: a native <dialog> renders
+   where it is mounted, so one opened from a header action (Export/Print's
+   "Select a form") sits inside the cluster, but its footer is not part of the
+   header's row and keeps its labels (#1449). */
+[data-actions-collapsed]
+  > [data-header-buttons]
+  .button:has(.icon):not(dialog *) {
   min-inline-size: 3rem;
   padding-inline: 0.75rem;
 }
 
-[data-actions-collapsed] > [data-header-buttons] .button:has(.icon) .label {
+[data-actions-collapsed]
+  > [data-header-buttons]
+  .button:has(.icon):not(dialog *)
+  .label {
   position: absolute;
   inline-size: 1px;
   block-size: 1px;
@@ -246,26 +257,56 @@
   pointer-events: none;
 }
 
-.button[data-variant='ghost']:hover:not(:disabled)::before {
-  opacity: 0.08;
+/*
+ * Hover and press. Hover only where the primary pointer can hover: a touch
+ * screen keeps the last button tapped in :hover until something else is
+ * touched, so an outlined amount just pressed stayed blue — reading as
+ * "selected" when nothing is (the WidgetCard lift had the same latch, #317).
+ * On touch the same look shows while the finger is down (:active) and goes
+ * with it. Focus is untouched: the ring is :focus-visible, which a tap never
+ * sets, so keyboard users keep it.
+ */
+@media (hover: hover) {
+  .button[data-variant='ghost']:hover:not(:disabled)::before {
+    opacity: 0.08;
+  }
+
+  /* Filled variants darken + lift on hover. box-shadow is painted outside the
+     border box, so overflow:hidden (ripple clip) doesn't touch it. */
+  .button[data-variant='primary']:hover:not(:disabled) {
+    background: var(--secondary-dark);
+    box-shadow: var(--shadow-2);
+  }
+
+  .button[data-variant='danger']:hover:not(:disabled) {
+    background: var(--primary-dark);
+    box-shadow: var(--shadow-2);
+  }
+
+  /* Outlined secondary — edge + text take the action tone on hover. */
+  .button[data-variant='secondary']:hover:not(:disabled) {
+    border-color: var(--secondary-main);
+    color: var(--secondary-main);
+  }
 }
 
-/* Filled variants darken + lift on hover. box-shadow is painted outside the
-   border box, so overflow:hidden (ripple clip) doesn't touch it. */
-.button[data-variant='primary']:hover:not(:disabled) {
-  background: var(--secondary-dark);
-  box-shadow: var(--shadow-2);
-}
+@media (hover: none) {
+  .button[data-variant='ghost']:active:not(:disabled)::before {
+    opacity: 0.08;
+  }
 
-.button[data-variant='danger']:hover:not(:disabled) {
-  background: var(--primary-dark);
-  box-shadow: var(--shadow-2);
-}
+  .button[data-variant='primary']:active:not(:disabled) {
+    background: var(--secondary-dark);
+  }
 
-/* Outlined secondary — edge + text take the action tone on hover. */
-.button[data-variant='secondary']:hover:not(:disabled) {
-  border-color: var(--secondary-main);
-  color: var(--secondary-main);
+  .button[data-variant='danger']:active:not(:disabled) {
+    background: var(--primary-dark);
+  }
+
+  .button[data-variant='secondary']:active:not(:disabled) {
+    border-color: var(--secondary-main);
+    color: var(--secondary-main);
+  }
 }
 
 /* Loading spinner — replaces the icon while the action is in flight. A ring

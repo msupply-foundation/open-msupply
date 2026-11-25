@@ -4,6 +4,9 @@
 //! Dedup keeps only the newest row per (table_name, record_id, row_action) group
 //! and deletes the rest.
 //!
+//! No index or other DDL on `changelog`: a run only reads it and deletes in
+//! batches, so it never takes a lock that conflicts with an integration's inserts.
+//!
 //! These helpers MUST be called outside a `transaction_sync` (each statement
 //! autocommits): the per-batch deletes commit independently.
 
@@ -23,23 +26,20 @@ impl<'a> ChangelogRepository<'a> {
         }
         log::info!("changelog dedup: prepare_dead_set window ({marker}, {max}]");
 
-        // Index to support the window's row_number() and the step-2 join.
-        let t = Instant::now();
-        diesel::sql_query(
-            "CREATE INDEX IF NOT EXISTS index_changelog_dedup \
-             ON changelog (table_name, record_id, row_action, cursor DESC)",
-        )
-        .execute(self.connection.lock().connection())?;
-        log::info!(
-            "changelog dedup: built index_changelog_dedup in {:?}",
-            t.elapsed()
-        );
-
         // Fresh dead-set table each run (drop any leftover from an aborted run).
         diesel::sql_query("DROP TABLE IF EXISTS changelog_dead")
             .execute(self.connection.lock().connection())?;
 
+        // Both steps in one `CREATE TABLE AS`: Postgres can run it with parallel
+        // workers, which it never does for `INSERT … SELECT`.
+        //
         // Step 1: within the window, every row that is not the newest of its group.
+        //
+        // Step 2: handle records that reappear across the marker.
+        // Step 1 only looks inside the window, so it can't see a record's older row
+        // that lives below the marker (kept by a previous run). If such a record gets
+        // a new row in this window, that old row is now stale. So: for every group
+        // touched in the window, also mark its rows at/below the marker as dead.
         let t = Instant::now();
         diesel::sql_query(
             "CREATE TABLE changelog_dead AS \
@@ -49,24 +49,8 @@ impl<'a> ChangelogRepository<'a> {
                  ) AS rn \
                  FROM changelog \
                  WHERE cursor > $1 AND cursor <= $2 \
-             ) s WHERE rn > 1",
-        )
-        .bind::<BigInt, _>(marker)
-        .bind::<BigInt, _>(max)
-        .execute(self.connection.lock().connection())?;
-        log::info!(
-            "changelog dedup: step 1 (build dead-set) in {:?}",
-            t.elapsed()
-        );
-
-        // Step 2: handle records that reappear across the marker.
-        // Step 1 only looks inside the window, so it can't see a record's older row
-        // that lives below the marker (kept by a previous run). If such a record gets
-        // a new row in this window, that old row is now stale. So: for every group
-        // touched in the window, also mark its rows at/below the marker as dead.
-        let t = Instant::now();
-        diesel::sql_query(
-            "INSERT INTO changelog_dead \
+             ) s WHERE rn > 1 \
+             UNION ALL \
              SELECT old.cursor FROM changelog old \
              JOIN ( \
                  SELECT DISTINCT table_name, record_id, row_action \
@@ -78,7 +62,7 @@ impl<'a> ChangelogRepository<'a> {
         .bind::<BigInt, _>(max)
         .execute(self.connection.lock().connection())?;
         log::info!(
-            "changelog dedup: step 2 (old-part leftovers) in {:?}",
+            "changelog dedup: steps 1 and 2 (build dead-set) in {:?}",
             t.elapsed()
         );
 
@@ -127,15 +111,13 @@ impl<'a> ChangelogRepository<'a> {
         Ok(n as u64)
     }
 
-    /// Drop the dead-set table and the dedup index after a run (idempotent via
-    /// IF EXISTS for crash recovery).
+    /// Drop the dead-set table after a run (idempotent via IF EXISTS for crash
+    /// recovery).
     pub fn finish_dead_set(&self) -> Result<(), RepositoryError> {
         if !cfg!(feature = "postgres") {
             return Ok(());
         }
         diesel::sql_query("DROP TABLE IF EXISTS changelog_dead")
-            .execute(self.connection.lock().connection())?;
-        diesel::sql_query("DROP INDEX IF EXISTS index_changelog_dedup")
             .execute(self.connection.lock().connection())?;
         Ok(())
     }

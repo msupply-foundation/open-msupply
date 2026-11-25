@@ -30,11 +30,13 @@ pub(crate) fn validate_cookie_auth(
     validate_auth(auth_data, &request_auth_token(&request, auth_data))
 }
 
-/// Validates that a request comes from a signed-in Server Admin.
-pub(crate) fn validate_server_admin(
+/// Validates that a request comes from a signed-in user with access to a resource that
+/// isn't tied to a store.
+pub(crate) fn validate_resource_access(
     request: &HttpRequest,
     service_provider: &ServiceProvider,
     auth_data: &AuthData,
+    resource: Resource,
 ) -> Result<ValidatedUser, AuthError> {
     let service_context = service_provider.basic_context()?;
     service_provider.validation_service.validate(
@@ -43,9 +45,18 @@ pub(crate) fn validate_server_admin(
         &request_auth_token(request, auth_data),
         &None,
         &ResourceAccessRequest {
-            resource: Resource::ServerAdmin,
+            resource,
             store_id: None,
             require_central_standalone: false,
         },
     )
+}
+
+/// Validates that a request comes from a signed-in Server Admin.
+pub(crate) fn validate_server_admin(
+    request: &HttpRequest,
+    service_provider: &ServiceProvider,
+    auth_data: &AuthData,
+) -> Result<ValidatedUser, AuthError> {
+    validate_resource_access(request, service_provider, auth_data, Resource::ServerAdmin)
 }

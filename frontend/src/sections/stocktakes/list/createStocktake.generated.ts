@@ -49,19 +49,23 @@ export type StockLineCountVariables = {
     code?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     name?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     isAvailable?: boolean | null;
     itemCodeOrName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     search?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     itemId?: {
     equalTo?: string | null;
@@ -96,14 +100,17 @@ export type StockLineCountVariables = {
     name?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     code?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     codeOrName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     onHold?: boolean | null;
     assignedToAsset?: boolean | null;
@@ -140,18 +147,22 @@ export type StockLineCountVariables = {
     name?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     code?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     description?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     existsForName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     existsForNameId?: {
     equalTo?: string | null;
@@ -186,6 +197,7 @@ export type StockLineCountVariables = {
     notEqualAll?: Array<string> | null;
   } | null;
     onHold?: boolean | null;
+    isExpired?: boolean | null;
   } | null;
 };
 
@@ -214,6 +226,7 @@ export type NoStockItemCountVariables = {
     name?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     type?: {
     equalTo?: "SERVICE" | "STOCK" | "NON_STOCK" | null;
@@ -224,6 +237,7 @@ export type NoStockItemCountVariables = {
     code?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     categoryId?: string | null;
     categoryName?: string | null;
@@ -233,6 +247,7 @@ export type NoStockItemCountVariables = {
     codeOrName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     isActive?: boolean | null;
     isVaccine?: boolean | null;
@@ -252,7 +267,13 @@ export type NoStockItemCountVariables = {
     universalCode?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
+    notInRecord?: {
+    record: "stocktake" | "requisition" | "invoice";
+    id: string;
+  } | null;
+    notCountedSince?: string | null;
     dynamicFilter?: unknown | null;
   } | null;
 };

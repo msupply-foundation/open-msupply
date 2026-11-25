@@ -5,9 +5,10 @@ use std::{
 
 use chrono::Utc;
 use repository::{
-    ChangelogCondition, ChangelogFilter, EqualFilter, KeyType, KeyValueStoreRepository, Pagination,
+    ChangelogCondition, ChangelogFilter, EqualFilter, KeyType, KeyValueStoreRepository,
+    NameRowRepository, Pagination, PatientFilter, PatientRepository, PatientSort, PatientSortField,
     RepositoryError, SiteFilter, SiteRepository, SiteRow, SiteRowRepository, SourceSiteId,
-    StorageConnection, SyncBufferRepository, SyncVersion,
+    StorageConnection, SyncBufferRepository, SyncVersion, is_unnamed_patient_id,
     migrations::Version,
     syncv7::{SiteLockError, SyncError},
 };
@@ -485,19 +486,91 @@ pub async fn patient_search(
     tokio::task::spawn_blocking(move || {
         let (_, ctx) = validate_unpaused(&service_provider, &common)?;
 
-        let results =
-            service_provider
-                .patient_service
-                .get_patients(&ctx, None, Some(input), None, None)?;
+        let patient_search::Input {
+            filter,
+            limit,
+            offset,
+        } = input;
+        // Whatever the remote sent, central's search never returns a store's
+        // unnamed patient (spec/prescriptions rules › the unnamed patient):
+        // an older remote doesn't know to ask.
+        let filter = PatientFilter {
+            exclude_unnamed: true,
+            ..filter
+        };
 
-        Ok(results
-            .rows
-            .into_iter()
-            .map(name_row_to_patient_v4)
-            .collect())
+        let rows = match limit {
+            // A page: name order, then date of birth (ties broken by id, so
+            // pages don't overlap),
+            // and no count — the remote asks for one more than it shows to
+            // know whether there are more.
+            // Central has every site's patients, so a broad search can match
+            // millions, and sorting them is the slow part: the pages only
+            // cover the first SEARCH_MATCH_CAP found (PatientRepository::query_capped).
+            Some(limit) => PatientRepository::new(&ctx.connection).query_capped(
+                Pagination {
+                    limit,
+                    offset: offset.unwrap_or(0),
+                },
+                Some(filter),
+                Some(PatientSort {
+                    key: PatientSortField::Name,
+                    desc: None,
+                }),
+                None,
+                PatientRepository::SEARCH_MATCH_CAP,
+            )?,
+            // A remote from before the page was added, which shows every match
+            // it gets: at most SEARCH_MATCH_CAP of them, unsorted and
+            // uncounted, as a broad search would otherwise read and send
+            // millions.
+            None => PatientRepository::new(&ctx.connection).query(
+                Pagination {
+                    limit: PatientRepository::SEARCH_MATCH_CAP,
+                    offset: 0,
+                },
+                Some(filter),
+                None,
+                None,
+            )?,
+        };
+
+        Ok(patients_v4(&ctx.connection, rows)?)
     })
     .await
     .map_err(join_error)?
+}
+
+/// The patients central's search returns. A next of kin linked to a name shows
+/// as that name, as on the patient node.
+fn patients_v4(
+    connection: &StorageConnection,
+    rows: Vec<repository::NameRow>,
+) -> Result<Vec<PatientV4>, RepositoryError> {
+    let ids: Vec<String> = rows
+        .iter()
+        .filter_map(|row| row.next_of_kin_id.clone())
+        .collect();
+    let next_of_kin_names: HashMap<String, String> = NameRowRepository::new(connection)
+        .find_many_by_id(&ids)?
+        .into_iter()
+        .map(|row| (row.id, row.name))
+        .collect();
+
+    Ok(rows
+        .into_iter()
+        .map(|row| {
+            let linked_name = row
+                .next_of_kin_id
+                .as_ref()
+                .and_then(|id| next_of_kin_names.get(id).cloned());
+            let mut patient = name_row_to_patient_v4(row);
+            if linked_name.is_some() {
+                patient.next_of_kin_name = linked_name;
+            }
+            patient
+        })
+        .collect())
 }
 
 fn name_row_to_patient_v4(name: repository::NameRow) -> PatientV4 {
@@ -513,6 +586,8 @@ fn name_row_to_patient_v4(name: repository::NameRow) -> PatientV4 {
         gender: name.gender,
         code_2: name.national_health_number,
         is_deceased: name.is_deceased,
+        address1: name.address1,
+        next_of_kin_name: name.next_of_kin_name,
     }
 }
 
@@ -530,6 +605,15 @@ pub async fn patient_data_for_site(
             store_id,
             name_store_join_id,
         } = input;
+
+        // A store's unnamed patient is never linked to another store
+        // (spec/prescriptions rules › the unnamed patient), whatever the
+        // remote's version
+        if is_unnamed_patient_id(&patient_id) {
+            return Err(SyncError::Other(
+                "The unnamed patient can't be linked to a store".to_string(),
+            ));
+        }
 
         let nsj_id = ctx
             .connection
@@ -723,13 +807,20 @@ mod tests {
     use super::*;
     use crate::{
         sync::{synchroniser_driver::SyncTrigger, test_util_set_is_central_server},
+        sync_v7::sync::SyncRecordV7,
         test_helpers::{ServiceTestContext, setup_all_and_service_provider},
     };
     use httpmock::MockServer;
     use repository::{
-        KeyType, KeyValueStoreRepository, SyncVersion, migrations::Version, mock::MockDataInserts,
+        ChangelogTableName, IntegrationResult, KeyType, KeyValueStoreRepository, LocationRow,
+        LocationRowRepository, PermissionType, RowActionType, StoreRow, StoreRowRepository,
+        SyncVersion, UserPermissionRow, UserPermissionRowRepository, UserStoreJoinRow,
+        UserStoreJoinRowRepository,
+        migrations::Version,
+        mock::{MockDataInserts, mock_store_a, mock_store_b, mock_user_account_a},
         test_db::setup_all,
     };
+    use serde_json::{json, to_value};
 
     const SITE_NAME: &str = "test_site";
     const PASSWORD_SHA256: &str = "hashed_password_value";
@@ -770,7 +861,11 @@ mod tests {
     }
 
     async fn setup(name: &str) -> (ServiceTestContext, Common) {
-        let context = setup_all_and_service_provider(name, MockDataInserts::none()).await;
+        setup_with(name, MockDataInserts::none()).await
+    }
+
+    async fn setup_with(name: &str, inserts: MockDataInserts) -> (ServiceTestContext, Common) {
+        let context = setup_all_and_service_provider(name, inserts).await;
         CentralServerConfig::set_is_central_server_on_startup();
         KeyValueStoreRepository::new(&context.connection)
             .set_i32(KeyType::SettingsSyncSiteId, Some(CENTRAL_SITE_ID))
@@ -1329,6 +1424,217 @@ mod tests {
     }
 
     #[actix_rt::test]
+    async fn patient_search_returns_address_and_next_of_kin() {
+        use repository::{NameRow, NameRowRepository, NameRowType, PatientFilter, StringFilter};
+
+        let (
+            ServiceTestContext {
+                service_provider,
+                connection,
+                ..
+            },
+            common,
+        ) = setup("sync_v7_patient_search_fields").await;
+
+        let repo = NameRowRepository::new(&connection);
+        repo.upsert_one(&NameRow {
+            id: "kin".to_string(),
+            name: "Koné, Awa".to_string(),
+            code: "KIN-1".to_string(),
+            r#type: NameRowType::Patient,
+            ..Default::default()
+        })
+        .unwrap();
+        repo.upsert_one(&NameRow {
+            id: "linked".to_string(),
+            name: "Traoré, Moussa".to_string(),
+            code: "SEARCH-1".to_string(),
+            phone: Some("555 0100".to_string()),
+            address1: Some("12 Rue du Marché".to_string()),
+            next_of_kin_id: Some("kin".to_string()),
+            next_of_kin_name: Some("stale text".to_string()),
+            r#type: NameRowType::Patient,
+            ..Default::default()
+        })
+        .unwrap();
+        repo.upsert_one(&NameRow {
+            id: "text_only".to_string(),
+            name: "Traoré, Fanta".to_string(),
+            code: "SEARCH-2".to_string(),
+            next_of_kin_name: Some("Ibrahim Traoré".to_string()),
+            r#type: NameRowType::Patient,
+            ..Default::default()
+        })
+        .unwrap();
+
+        let search = |limit: Option<u32>| patient_search::Input {
+            filter: PatientFilter::new().code(StringFilter::starts_with("search-")),
+            limit,
+            offset: None,
+        };
+
+        // A page (this version's remotes)
+        let patients = patient_search(service_provider.clone(), common.clone(), search(Some(10)))
+            .await
+            .unwrap();
+        let linked = patients.iter().find(|p| p.id == "linked").unwrap();
+        assert_eq!(linked.phone, "555 0100");
+        assert_eq!(linked.address1.as_deref(), Some("12 Rue du Marché"));
+        assert_eq!(linked.next_of_kin_name.as_deref(), Some("Koné, Awa"));
+        let text_only = patients.iter().find(|p| p.id == "text_only").unwrap();
+        assert_eq!(
+            text_only.next_of_kin_name.as_deref(),
+            Some("Ibrahim Traoré")
+        );
+
+        // No page (an older remote): every match, with the same lookup
+        let patients = patient_search(service_provider, common, search(None))
+            .await
+            .unwrap();
+        assert_eq!(patients.len(), 2);
+        let linked = patients.iter().find(|p| p.id == "linked").unwrap();
+        assert_eq!(linked.next_of_kin_name.as_deref(), Some("Koné, Awa"));
+    }
+
+    #[actix_rt::test]
+    async fn patient_search_pages_in_name_then_date_of_birth_order() {
+        use chrono::NaiveDate;
+        use repository::{NameRow, NameRowRepository, NameRowType, PatientFilter, StringFilter};
+
+        let (
+            ServiceTestContext {
+                service_provider,
+                connection,
+                ..
+            },
+            common,
+        ) = setup("sync_v7_patient_search_paging").await;
+
+        let repo = NameRowRepository::new(&connection);
+        let patient = |id: &str, name: &str, born: Option<(i32, u32, u32)>| NameRow {
+            id: id.to_string(),
+            name: name.to_string(),
+            code: format!("PAGE-{id}"),
+            date_of_birth: born.map(|(y, m, d)| NaiveDate::from_ymd_opt(y, m, d).unwrap()),
+            r#type: NameRowType::Patient,
+            ..Default::default()
+        };
+        for row in [
+            patient("d1990", "Diallo, Awa", Some((1990, 1, 1))),
+            patient("camara", "Camara, Ibou", None),
+            patient("d1980", "diallo, awa", Some((1980, 1, 1))),
+            patient("bah", "Bah, Sira", None),
+        ] {
+            repo.upsert_one(&row).unwrap();
+        }
+
+        let page = |offset: Option<u32>| patient_search::Input {
+            filter: PatientFilter::new().code(StringFilter::starts_with("page-")),
+            limit: Some(2),
+            offset,
+        };
+        let ids = |patients: Vec<PatientV4>| -> Vec<String> {
+            patients.into_iter().map(|p| p.id).collect()
+        };
+
+        let first = patient_search(service_provider.clone(), common.clone(), page(None))
+            .await
+            .unwrap();
+        assert_eq!(ids(first), ["bah", "camara"]);
+        // Namesakes, ignoring case, in date of birth order
+        let second = patient_search(service_provider, common, page(Some(2)))
+            .await
+            .unwrap();
+        assert_eq!(ids(second), ["d1980", "d1990"]);
+    }
+
+    // OMS-REG-DIS-12.208, .211: central's search leaves every store's unnamed
+    // patient out whatever filter the remote sends, and central refuses to
+    // link one, whatever the remote's version
+    #[actix_rt::test]
+    async fn central_never_finds_or_links_a_stores_unnamed_patient() {
+        use repository::{
+            EqualFilter, NameRow, NameRowRepository, NameRowType, NameStoreJoinFilter,
+            NameStoreJoinRepository, PatientFilter, StringFilter, unnamed_patient_id,
+        };
+
+        let (
+            ServiceTestContext {
+                service_provider,
+                connection,
+                ..
+            },
+            common,
+        ) = setup_with(
+            "sync_v7_unnamed_patient",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+
+        let unnamed = unnamed_patient_id(&mock_store_a().id);
+        let repo = NameRowRepository::new(&connection);
+        repo.upsert_one(&NameRow {
+            id: unnamed.clone(),
+            name: "Unnamed patient".to_string(),
+            code: "UNNAMED".to_string(),
+            r#type: NameRowType::Patient,
+            ..Default::default()
+        })
+        .unwrap();
+        repo.upsert_one(&NameRow {
+            id: "registered".to_string(),
+            name: "Unnamed, Ali".to_string(),
+            code: "UNNAMED-2".to_string(),
+            r#type: NameRowType::Patient,
+            ..Default::default()
+        })
+        .unwrap();
+
+        // The filter a site sends, which doesn't ask for it to be left out:
+        // a page (this version's sites) and every match (an older site)
+        for limit in [Some(10), None] {
+            let found = patient_search(
+                service_provider.clone(),
+                common.clone(),
+                patient_search::Input {
+                    filter: PatientFilter::new().code(StringFilter::starts_with("unnamed")),
+                    limit,
+                    offset: None,
+                },
+            )
+            .await
+            .unwrap();
+            let ids: Vec<String> = found.into_iter().map(|patient| patient.id).collect();
+            assert_eq!(ids, ["registered"], "limit {limit:?}");
+        }
+
+        // Linking it to another store is refused, and no link is made
+        let result = patient_data_for_site(
+            service_provider,
+            common,
+            patient_data_for_site::Input {
+                patient_id: unnamed.clone(),
+                store_id: mock_store_b().id,
+                name_store_join_id: "unnamed_join".to_string(),
+            },
+        )
+        .await;
+        match result {
+            Err(SyncError::Other(message)) => assert!(message.contains("unnamed patient")),
+            Err(error) => panic!("refused for the wrong reason: {error:?}"),
+            Ok(_) => panic!("the unnamed patient was linked"),
+        }
+        assert!(
+            NameStoreJoinRepository::new(&connection)
+                .query_by_filter(
+                    NameStoreJoinFilter::new().name_id(EqualFilter::equal_to(unnamed.clone()))
+                )
+                .unwrap()
+                .is_empty()
+        );
+    }
+
+    #[actix_rt::test]
     async fn push_accepts_empty_batch() {
         let (
             ServiceTestContext {
@@ -1353,6 +1659,207 @@ mod tests {
         .unwrap();
 
         assert_eq!(count, 0);
+    }
+
+    /// #1639: a site's v7 push can't create, change or remove user permissions on central.
+    /// The new rows are the shape from the issue: every record's outer `storeId` is the
+    /// site's own store, while the row inside names another site's store.
+    #[actix_rt::test]
+    async fn push_cannot_change_user_permissions() {
+        use ChangelogTableName::{Location, UserPermission, UserStoreJoin};
+        use RowActionType::{Delete, Upsert};
+
+        let (
+            ServiceTestContext {
+                service_provider,
+                connection,
+                ..
+            },
+            common,
+        ) = setup_with(
+            "sync_v7_push_cannot_change_user_permissions",
+            MockDataInserts::none().names().stores().user_accounts(),
+        )
+        .await;
+        let site_id = 1;
+        let user_id = mock_user_account_a().id;
+        // store_a is the pushing site's own store; store_b belongs to site 2.
+        let own_store_id = mock_store_a().id;
+        let other_store_id = mock_store_b().id;
+        StoreRowRepository::new(&connection)
+            .upsert_one(&StoreRow {
+                site_id,
+                ..mock_store_a()
+            })
+            .unwrap();
+
+        // What central already holds, which the push tries to move and remove.
+        let existing_join = UserStoreJoinRow {
+            id: "existing_join".to_string(),
+            user_id: user_id.clone(),
+            store_id: own_store_id.clone(),
+            is_default: true,
+        };
+        let existing_permission = UserPermissionRow {
+            id: "existing_permission".to_string(),
+            user_id: user_id.clone(),
+            store_id: Some(own_store_id.clone()),
+            permission: PermissionType::StoreAccess,
+            context_id: None,
+        };
+        UserStoreJoinRowRepository::new(&connection)
+            .upsert_one(&existing_join)
+            .unwrap();
+        UserPermissionRowRepository::new(&connection)
+            .upsert_one(&existing_permission)
+            .unwrap();
+
+        let record = |table_name, record_id: &str, action, data| SyncRecordV7 {
+            cursor: 0,
+            record_id: record_id.to_string(),
+            table_name,
+            action,
+            data,
+            store_id: Some(own_store_id.clone()),
+            transfer_store_id: None,
+            patient_id: None,
+        };
+        let grant = |id: &str, permission| {
+            let row = UserPermissionRow {
+                id: id.to_string(),
+                user_id: user_id.clone(),
+                store_id: Some(other_store_id.clone()),
+                permission,
+                context_id: None,
+            };
+            record(UserPermission, id, Upsert, to_value(row).unwrap())
+        };
+        let location = LocationRow {
+            id: "pushed_location".to_string(),
+            name: "Shelf 1".to_string(),
+            code: "S1".to_string(),
+            store_id: own_store_id.clone(),
+            ..Default::default()
+        };
+
+        let records = vec![
+            // The batch from the issue.
+            record(
+                UserStoreJoin,
+                "pushed_join",
+                Upsert,
+                to_value(UserStoreJoinRow {
+                    id: "pushed_join".to_string(),
+                    user_id: user_id.clone(),
+                    store_id: other_store_id.clone(),
+                    is_default: false,
+                })
+                .unwrap(),
+            ),
+            grant("pushed_store_access", PermissionType::StoreAccess),
+            grant("pushed_server_admin", PermissionType::ServerAdmin),
+            grant("pushed_report", PermissionType::Report),
+            // Changing and removing rows central already has.
+            record(
+                UserStoreJoin,
+                &existing_join.id,
+                Upsert,
+                to_value(UserStoreJoinRow {
+                    store_id: other_store_id.clone(),
+                    ..existing_join.clone()
+                })
+                .unwrap(),
+            ),
+            record(UserPermission, &existing_permission.id, Delete, json!({})),
+            // An ordinary record for the site's own store, in the same batch.
+            record(
+                Location,
+                &location.id,
+                Upsert,
+                to_value(location.clone()).unwrap(),
+            ),
+        ];
+        let pushed = records.len() as i64;
+
+        let count = push(
+            service_provider.clone(),
+            common,
+            SyncBatchV7 {
+                site_id,
+                max_cursor: 0,
+                last_cursor_in_batch: 0,
+                // Not the last batch, so push doesn't start integration in the
+                // background; the test runs it below instead.
+                remaining: 1,
+                records,
+            },
+        )
+        .await
+        .unwrap();
+        assert_eq!(count, pushed);
+
+        integrate_for_site(&service_provider, site_id).unwrap();
+
+        // Nothing granted, moved or removed.
+        let permission_repo = UserPermissionRowRepository::new(&connection);
+        for id in [
+            "pushed_store_access",
+            "pushed_server_admin",
+            "pushed_report",
+        ] {
+            assert_eq!(permission_repo.find_one_by_id(id).unwrap(), None, "{id}");
+        }
+        assert_eq!(
+            permission_repo
+                .find_one_by_id(&existing_permission.id)
+                .unwrap(),
+            Some(existing_permission)
+        );
+        assert_eq!(
+            UserStoreJoinRowRepository::new(&connection)
+                .find_many_by_user_id(&user_id)
+                .unwrap(),
+            vec![existing_join]
+        );
+
+        // The ordinary record still integrates.
+        assert_eq!(
+            LocationRowRepository::new(&connection)
+                .find_one_by_id(&location.id)
+                .unwrap(),
+            Some(location)
+        );
+
+        let buffer_rows: Vec<_> = SyncBufferRepository::new(&connection)
+            .get_all()
+            .unwrap()
+            .into_iter()
+            .filter(|row| row.source_site_id == site_id)
+            .collect();
+        assert_eq!(buffer_rows.len() as i64, pushed);
+        for row in buffer_rows {
+            if row.table_name == Location.to_string() {
+                assert_eq!(
+                    row.integration_result,
+                    Some(IntegrationResult::Success),
+                    "{:?}",
+                    row.integration_error
+                );
+            } else {
+                assert_eq!(
+                    row.integration_result,
+                    Some(IntegrationResult::Ignored),
+                    "{} {}",
+                    row.table_name,
+                    row.record_id
+                );
+                assert!(
+                    row.integration_error
+                        .unwrap()
+                        .contains("only editable by the central site")
+                );
+            }
+        }
     }
 
     #[actix_rt::test]

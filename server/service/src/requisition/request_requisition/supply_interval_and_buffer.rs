@@ -1,9 +1,12 @@
 //! A store's supply interval and safety buffer, from its facility record (the store name's
-//! `properties`). Their sum is a general internal order's default target months of stock,
-//! and the [`CanChangeTargetMonthsOfStock`] preference can fix the target
-//! to it.
+//! `properties`), and its delivery lead time, from its store preferences (`months_lead_time`,
+//! synced from mSupply). Their sum is a general internal order's default target months of
+//! stock, and the [`CanChangeTargetMonthsOfStock`] preference can fix the target to it.
 
-use crate::preference::{CanChangeTargetMonthsOfStock, Preference};
+use crate::{
+    preference::{CanChangeTargetMonthsOfStock, Preference},
+    store_preference::get_store_preferences,
+};
 use repository::{
     EqualFilter, NameFilter, NameRepository, NameRowRepository, RepositoryError, StorageConnection,
     StoreRowRepository,
@@ -18,22 +21,29 @@ pub struct SupplyIntervalAndBuffer {
     pub supply_interval_months: f64,
     /// Zero when the facility record carries none
     pub safety_buffer_months: f64,
+    /// How long an order takes to arrive: the store preference `months_lead_time`, zero when
+    /// unset
+    pub delivery_lead_time_months: f64,
 }
 
 impl SupplyIntervalAndBuffer {
-    /// Supply interval + safety buffer
+    /// Supply interval + safety buffer + delivery lead time
     pub fn total_months(&self) -> f64 {
-        self.supply_interval_months + self.safety_buffer_months
+        self.supply_interval_months + self.safety_buffer_months + self.delivery_lead_time_months
     }
 
     /// None without a supply interval.
-    fn from_properties(properties: &Map<String, Value>) -> Option<Self> {
+    fn from_properties(
+        properties: &Map<String, Value>,
+        delivery_lead_time_months: f64,
+    ) -> Option<Self> {
         Some(SupplyIntervalAndBuffer {
             supply_interval_months: properties.get("supply_interval")?.as_f64()?,
             safety_buffer_months: properties
                 .get("buffer_stock")
                 .and_then(Value::as_f64)
                 .unwrap_or_default(),
+            delivery_lead_time_months,
         })
     }
 }
@@ -72,32 +82,42 @@ pub(crate) fn store_properties(
         .unwrap_or_default())
 }
 
-/// The store's supply interval and safety buffer, None when its facility record carries no
-/// supply interval.
+/// The store's supply interval, safety buffer and delivery lead time, None when its facility
+/// record carries no supply interval.
 pub fn store_supply_interval_and_buffer(
     connection: &StorageConnection,
     store_id: &str,
 ) -> Result<Option<SupplyIntervalAndBuffer>, RepositoryError> {
-    Ok(SupplyIntervalAndBuffer::from_properties(&store_properties(
-        connection, store_id,
-    )?))
+    Ok(SupplyIntervalAndBuffer::from_properties(
+        &store_properties(connection, store_id)?,
+        get_store_preferences(connection, store_id)?.months_lead_time,
+    ))
 }
 
 /// The supply interval and safety buffer of the name `name_id` (e.g. a customer ordering
-/// from `store_id`).
+/// from `store_id`), with the delivery lead time of its store, zero when it isn't one.
 pub fn name_supply_interval_and_buffer(
     connection: &StorageConnection,
     store_id: &str,
     name_id: &str,
 ) -> Result<Option<SupplyIntervalAndBuffer>, RepositoryError> {
-    Ok(SupplyIntervalAndBuffer::from_properties(&name_properties(
-        connection,
-        store_id,
-        NameFilter::new().id(EqualFilter::equal_to(name_id.to_string())),
-    )?))
+    let delivery_lead_time_months =
+        match StoreRowRepository::new(connection).find_one_by_name_id(name_id)? {
+            Some(store) => get_store_preferences(connection, &store.id)?.months_lead_time,
+            None => 0.0,
+        };
+    Ok(SupplyIntervalAndBuffer::from_properties(
+        &name_properties(
+            connection,
+            store_id,
+            NameFilter::new().id(EqualFilter::equal_to(name_id.to_string())),
+        )?,
+        delivery_lead_time_months,
+    ))
 }
 
-/// A new general order's target months: the store's supply interval + safety buffer, else
+/// A new general order's target months: the store's supply interval + safety buffer +
+/// delivery lead time, else
 /// [`DEFAULT_TARGET_MONTHS_OF_STOCK`].
 pub fn default_target_months_of_stock(
     connection: &StorageConnection,
@@ -132,9 +152,11 @@ mod test {
             UpdateRequestRequisitionError as UpdateError,
         },
         service_provider::ServiceProvider,
+        store_preference::get_store_preferences,
     };
     use repository::{
-        NameRowRepository, PreferenceRow, PreferenceRowRepository,
+        NameRowRepository, PreferenceRow, PreferenceRowRepository, StorePreferenceRow,
+        StorePreferenceRowRepository,
         mock::{
             MockDataInserts, mock_name_store_a, mock_name_store_c, mock_store_a,
             mock_user_account_a,
@@ -158,6 +180,16 @@ mod test {
         let set_properties = |properties: Option<&str>| {
             NameRowRepository::new(&connection)
                 .update_properties(&mock_name_store_a().id, &properties.map(str::to_string))
+                .unwrap();
+        };
+        let set_lead_time = |months_lead_time: f64| {
+            StorePreferenceRowRepository::new(&connection)
+                .upsert_one(&StorePreferenceRow {
+                    // The default row a store without one reads back has no id
+                    id: mock_store_a().id,
+                    months_lead_time,
+                    ..get_store_preferences(&connection, &mock_store_a().id).unwrap()
+                })
                 .unwrap();
         };
         let insert = |id: &str, max_months_of_stock: Option<f64>| {
@@ -200,6 +232,14 @@ mod test {
         // No buffer counts as zero
         set_properties(Some(r#"{"supply_interval": 7}"#));
         assert_eq!(insert("no_buffer", None), 7.0);
+        // The store's delivery lead time adds to them
+        set_lead_time(1.0);
+        set_properties(Some(r#"{"supply_interval": 3, "buffer_stock": 0.5}"#));
+        assert_eq!(insert("with_lead_time", None), 4.5);
+        // A lead time alone, with no supply interval, sets no target
+        set_properties(None);
+        assert_eq!(insert("lead_time_only", None), 1.0);
+        set_lead_time(0.0);
         set_properties(Some(r#"{"supply_interval": 3, "buffer_stock": 0.5}"#));
 
         // The preference unset: the target changes
@@ -231,6 +271,15 @@ mod test {
         // target is sent
         assert_eq!(insert("fixed_given_target", Some(1.0)), 3.5);
         assert_eq!(insert("fixed_no_target", None), 3.5);
+        // ...plus its delivery lead time, which a change can then only move onto
+        set_lead_time(1.0);
+        assert_eq!(insert("fixed_with_lead_time", None), 4.5);
+        assert_eq!(
+            update(Some(3.0), None),
+            Err(UpdateError::CannotChangeTargetMonthsOfStock)
+        );
+        assert_eq!(update(Some(4.5), None), Ok(4.5));
+        set_lead_time(0.0);
 
         // Off on a store with no supply interval: the target changes
         set_properties(None);

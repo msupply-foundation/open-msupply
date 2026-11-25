@@ -85,6 +85,7 @@ export type RequisitionsVariables = {
     otherPartyName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     otherPartyId?: {
     equalTo?: string | null;
@@ -103,10 +104,12 @@ export type RequisitionsVariables = {
     theirReference?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     comment?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     orderType?: {
     equalTo?: string | null;

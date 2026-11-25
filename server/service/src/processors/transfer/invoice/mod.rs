@@ -20,8 +20,9 @@ use crate::{
 };
 use repository::{
     ChangelogCondition, ChangelogRepository, ChangelogRow, ChangelogTableName, CursorAndLimit,
-    EqualFilter, FilterBuilder, Invoice, InvoiceFilter, InvoiceRepository, InvoiceStatus,
-    InvoiceType, KeyType, RepositoryError, Requisition, RowActionType, StorageConnection,
+    EqualFilter, FilterBuilder, Invoice, InvoiceFilter, InvoiceRepository, InvoiceRow,
+    InvoiceRowRepository, InvoiceStatus, InvoiceType, KeyType, RepositoryError, Requisition,
+    RowActionType, StorageConnection,
 };
 use thiserror::Error;
 
@@ -36,6 +37,8 @@ pub(crate) mod update_inbound_invoice;
 pub(crate) mod update_outbound_invoice_status;
 pub(crate) mod update_outbound_received_quantity;
 
+#[cfg(test)]
+mod stale_record_test;
 #[cfg(test)]
 pub(crate) mod test;
 
@@ -115,6 +118,28 @@ fn process_change_log(
             RowActionType::Delete => get_delete_operation(&ctx.connection, log)
                 .map_err(Error::GetDeleteOperationError)?,
         };
+
+    // Legacy mSupply cancels a finalised invoice by saving a copy of it with is_cancellation set.
+    // A cancellation is never half of a transfer: mSupply leaves the other store's half alone, and
+    // so do we. Otherwise a cancelled customer invoice becomes a second inbound shipment, and a
+    // cancelled supplier invoice is taken as the receipt of its outbound shipment.
+    if let Operation::Upsert {
+        invoice,
+        linked_invoice,
+        ..
+    } = &operation
+    {
+        let linked_is_cancellation = linked_invoice
+            .as_ref()
+            .is_some_and(|linked| linked.invoice_row.is_cancellation);
+        if invoice.invoice_row.is_cancellation || linked_is_cancellation {
+            log::debug!(
+                "Invoice transfer - skipped: invoice {} is or is linked to a cancellation",
+                invoice.invoice_row.id
+            );
+            return Ok(());
+        }
+    }
 
     let record = InvoiceTransferProcessorRecord {
         operation,
@@ -231,10 +256,14 @@ fn get_upsert_operation(
                 .map_err(|e| DatabaseError(id.to_string(), e))?
                 .ok_or_else(|| LinkedInvoiceNotFound(id.to_string()))?,
         ),
+        // A legacy mSupply cancellation keeps the link of the invoice it cancels, so an outbound
+        // shipment can have both a supplier invoice and its cancellation pointing at it. Only the
+        // supplier invoice is the other half of the transfer.
         None => repo
-            .query_one(InvoiceFilter::new_match_linked_invoice_id(
-                &invoice.invoice_row.id,
-            ))
+            .query_one(
+                InvoiceFilter::new_match_linked_invoice_id(&invoice.invoice_row.id)
+                    .is_cancellation(false),
+            )
             .map_err(|e| DatabaseError(invoice.invoice_row.id.clone(), e))?,
     };
 
@@ -271,7 +300,8 @@ fn get_delete_operation(
 ) -> Result<Operation, RepositoryError> {
     let linked_invoice = InvoiceRepository::new(connection).query_one(
         InvoiceFilter::new()
-            .linked_invoice_id(EqualFilter::equal_to(changelog_row.record_id.to_string())),
+            .linked_invoice_id(EqualFilter::equal_to(changelog_row.record_id.to_string()))
+            .is_cancellation(false),
     )?;
 
     Ok(Operation::Delete { linked_invoice })
@@ -327,9 +357,28 @@ trait InvoiceTransferProcessor {
     }
 
     /// Caller MUST guarantee that source invoice.name_id is a store active on this site
+    ///
+    /// The record's invoices were read before this step's transaction, and before the steps that
+    /// ran ahead of it on the same record, so the API or an earlier step may have changed them
+    /// since. A step that writes an invoice re-reads and locks it here with `lock_invoice_row`,
+    /// checks its conditions against that row and changes only the fields it owns. Writing back
+    /// the record's copy would undo the newer change, e.g. put a shipped outbound back to Picked.
+    /// API mutations don't take the lock, so on Postgres an API save that read the invoice before
+    /// the step committed can still write its copy over the step's change.
     fn try_process_record(
         &self,
         ctx: &ServiceContext,
         record: &InvoiceTransferProcessorRecord,
     ) -> Result<InvoiceTransferOutput, RepositoryError>;
+}
+
+/// The invoice as it is now, for a step about to write it. The record's copy can be out of date,
+/// see `try_process_record`. On Postgres the row stays locked until the step's transaction ends,
+/// so nothing can change it between this read and the step's write. None if the invoice has been
+/// deleted since the record was read.
+fn lock_invoice_row(
+    connection: &StorageConnection,
+    invoice: &Invoice,
+) -> Result<Option<InvoiceRow>, RepositoryError> {
+    InvoiceRowRepository::new(connection).find_one_by_id_for_update(&invoice.invoice_row.id)
 }

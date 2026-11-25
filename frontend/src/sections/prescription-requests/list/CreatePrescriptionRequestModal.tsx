@@ -9,13 +9,16 @@ import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { DateField } from '../../../ui/elements/inputs/DateField';
-import { localTodayIso } from '../../../ui/elements/inputs/dateTimeConvert';
-import { PatientSearch, type PatientOption } from '../../../domain/patient';
+import { todayCalendarDate } from '../../../intl/calendarDate';
+import {
+  minimalPatientOption,
+  type PatientOption,
+} from '../../../domain/patient';
 import {
   ClinicianSelect,
   clinicianMatchingUser,
 } from '../../../domain/clinician';
-import { CreatePatientModal } from '../../patients';
+import { PatientField } from '../../patients';
 import { newPrescriptionRequestDate } from '../detail/prescriptionRequestUpdate';
 import { InsertPrescriptionRequest } from './createPrescriptionRequest.generated';
 
@@ -45,16 +48,13 @@ export const CreatePrescriptionRequestModal: Component<
   const navigate = useNavigate();
 
   const [patient, setPatient] = createSignal<PatientOption | null>(null);
-  const [date, setDate] = createSignal<string>(localTodayIso());
+  const [date, setDate] = createSignal<string>(todayCalendarDate());
   const [clinicianId, setClinicianId] = createSignal<string>();
   // The default only ever applies to an UNTOUCHED field: once the user has
   // picked (or cleared) a clinician, the seed below leaves it alone.
   const [clinicianTouched, setClinicianTouched] = createSignal(false);
   const [busy, setBusy] = createSignal(false);
   const [error, setError] = createSignal<string>();
-  // The create-patient-on-no-match sub-flow (the patients vertical's create
-  // modal over this dialog); on success the new patient is selected here.
-  const [createPatientOpen, setCreatePatientOpen] = createSignal(false);
 
   // Seed the default. An EFFECT rather than an initial value, because the
   // clinician list loads asynchronously — the match is unknown while the
@@ -67,7 +67,7 @@ export const CreatePrescriptionRequestModal: Component<
 
   const reset = () => {
     setPatient(null);
-    setDate(localTodayIso());
+    setDate(todayCalendarDate());
     setClinicianId(undefined);
     setClinicianTouched(false);
     setError(undefined);
@@ -115,15 +115,15 @@ export const CreatePrescriptionRequestModal: Component<
     );
   };
 
-  // The patient picker is the dialog's only required field, so it takes
+  // The patient is the dialog's only required field, so its picker takes
   // initial focus (ui-standards › accessibility › keyboard).
-  const patientSearch = createFocusTarget();
+  const patientChange = createFocusTarget();
 
   return (
     <Dialog
       open={props.open}
       onClose={close}
-      initialFocus={patientSearch}
+      initialFocus={patientChange}
       title={t('button.new-prescription')}
       testId="create-prescription-request-modal"
       actionsLead={
@@ -153,15 +153,20 @@ export const CreatePrescriptionRequestModal: Component<
         </>
       }
     >
+      {/* The search opens by itself as the dialog does (#631): the patient
+          is the one field it can't do without. */}
       <FieldRow label={t('label.patient')}>
-        <PatientSearch
+        <PatientField
+          storeId={params.storeId}
           label={t('label.patient')}
           hideLabel
-          storeId={params.storeId}
-          selected={patient() ?? undefined}
-          focusTarget={patientSearch}
-          onSelect={setPatient}
-          onCreatePatient={() => setCreatePatientOpen(true)}
+          testId="create-prescription-request-patient"
+          patient={patient() ?? undefined}
+          chooseOnOpen={props.open}
+          focusTarget={patientChange}
+          onChange={chosen =>
+            setPatient(minimalPatientOption(chosen.id, chosen.name))
+          }
         />
       </FieldRow>
       <FieldRow label={t('label.date')}>
@@ -170,8 +175,8 @@ export const CreatePrescriptionRequestModal: Component<
           hideLabel
           testId="date-field"
           value={date()}
-          max={localTodayIso()}
-          onChange={value => setDate(value ?? localTodayIso())}
+          max={todayCalendarDate()}
+          onChange={value => setDate(value ?? todayCalendarDate())}
         />
       </FieldRow>
       <FieldRow label={t('label.clinician')}>
@@ -190,15 +195,6 @@ export const CreatePrescriptionRequestModal: Component<
           }}
         />
       </FieldRow>
-      <CreatePatientModal
-        open={createPatientOpen()}
-        storeId={params.storeId}
-        onClose={() => setCreatePatientOpen(false)}
-        onCreated={created => {
-          setPatient(created);
-          setCreatePatientOpen(false);
-        }}
-      />
     </Dialog>
   );
 };

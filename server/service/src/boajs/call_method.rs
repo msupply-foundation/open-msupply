@@ -2,8 +2,10 @@ use std::{path::Path, rc::Rc};
 
 use boa_engine::{
     Context, JsError, JsObject, JsValue, Module, Source, builtins::promise::PromiseState,
-    js_string, module::SimpleModuleLoader,
+    context::HostHooks, js_string, module::SimpleModuleLoader,
 };
+use chrono::{DateTime, Offset, TimeZone};
+use util::timezone::Tz;
 
 use serde::{Serialize, de::DeserializeOwned};
 use thiserror::Error;
@@ -43,6 +45,31 @@ impl PartialEq for BoaJsError {
     }
 }
 
+/// Makes JS local time (`getDate()`, `setHours()`, `toString()`...) the given timezone's, rather
+/// than whatever boa gets from the host: with the `time` crate that is UTC on unix, since it
+/// refuses to read the local offset in a multithreaded process, but the server's own timezone on
+/// Windows.
+///
+/// Known limitation: boa also calls this hook to turn a local time into UTC, passing the local
+/// time as if it were UTC, and the hook can't tell the two apart. So building a local time from
+/// its parts (`new Date(2026, 8, 27)`, `setHours(0, 0, 0, 0)`) can be an hour out within a few hours
+/// of a daylight saving change - on the day Auckland's starts, local midnight lands on 23:00 the
+/// day before. Reading an instant's local parts (`getDate()`) is always right.
+struct TimezoneHooks(Tz);
+
+impl HostHooks for TimezoneHooks {
+    fn local_timezone_offset_seconds(&self, unix_time_seconds: i64) -> i32 {
+        DateTime::from_timestamp(unix_time_seconds, 0)
+            .map(|utc| {
+                self.0
+                    .offset_from_utc_datetime(&utc.naive_utc())
+                    .fix()
+                    .local_minus_utc()
+            })
+            .unwrap_or(0)
+    }
+}
+
 pub(crate) fn call_method<I, O>(
     input: I,
     // A path to exported method, plugins export { plugins: { plugin_name }}, thus we look for vec!["plugins", "plugin_name"]
@@ -54,10 +81,29 @@ where
     I: Serialize,
     O: DeserializeOwned,
 {
+    call_method_in_timezone(input, export_location, bundle, Tz::UTC)
+}
+
+/// [`call_method`] with JS local time in `timezone` - a report's `convert_data` runs in the
+/// report's timezone. Everything else (plugins) runs in UTC, the same on every platform, so a
+/// server never needs a timezone set up.
+pub(crate) fn call_method_in_timezone<I, O>(
+    input: I,
+    export_location: Vec<&str>,
+    bundle: &Vec<u8>,
+    timezone: Tz,
+) -> Result<O, BoaJsError>
+where
+    I: Serialize,
+    O: DeserializeOwned,
+{
     use BoaJsError as Error;
     // Initialise context with loader
     let loader = Rc::new(SimpleModuleLoader::new(Path::new("."))?);
-    let context = &mut Context::builder().module_loader(loader.clone()).build()?;
+    let context = &mut Context::builder()
+        .module_loader(loader.clone())
+        .host_hooks(Rc::new(TimezoneHooks(timezone)))
+        .build()?;
 
     // Add plugin code as module
     let module = Module::parse(Source::from_bytes(bundle), None, context)?;
@@ -115,4 +161,30 @@ fn find_callable_in_exports(
     }
 
     Ok(path)
+}
+
+#[cfg(test)]
+mod test {
+    use util::timezone::Tz;
+
+    use super::{call_method, call_method_in_timezone};
+
+    const BUNDLE: &str = r#"
+        export function run() {
+            return new Date("2026-01-05T23:30:00Z").getHours();
+        }
+    "#;
+
+    /// JS local time is the timezone asked for, else UTC - whatever the host's timezone is.
+    #[test]
+    fn local_time_is_the_timezone_asked_for_else_utc() {
+        let bundle = BUNDLE.as_bytes().to_vec();
+
+        let hours: i64 =
+            call_method_in_timezone((), vec!["run"], &bundle, Tz::Pacific__Auckland).unwrap();
+        assert_eq!(hours, 12);
+
+        let hours: i64 = call_method((), vec!["run"], &bundle).unwrap();
+        assert_eq!(hours, 23);
+    }
 }

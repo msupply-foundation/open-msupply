@@ -1,9 +1,9 @@
 WITH 
     this_month AS (
-        SELECT date('now') AS this_month
+        SELECT date(instant_to_calendar_date(datetime('now'), $timezone)) AS this_month
     ),
     six_months AS (
-        SELECT date('now', '+6 months') AS six_months
+        SELECT date(instant_to_calendar_date(datetime('now'), $timezone), '+6 months') AS six_months
     )
 SELECT 
     stock_line.id,

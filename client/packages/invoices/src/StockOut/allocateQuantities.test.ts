@@ -99,10 +99,7 @@ describe('Allocate quantities - with differing pack sizes', () => {
 
 describe('Allocated quantities - skips invalid lines', () => {
   it('does not allocate any quantity to invalid lines', () => {
-    const now = Date.now();
-    const expiredDate = new Date(now - 100000).toISOString();
-
-    const expiredLine = createTestLine({ expiryDate: expiredDate });
+    const expiredLine = createTestLine({ expiryDate: '2023-01-01' });
     const onHoldLine = createTestLine({ onHold: true });
     const unavailableLine = createTestLine({ availablePacks: 0 });
     const allocatableLine = createTestLine({ availablePacks: 10 });

@@ -23,6 +23,7 @@ import {
   getFlagCell,
 } from '../../../ui/elements/table/tableHelpers';
 import { remToPx } from '../../../ui/utils/rem';
+import { flashOnArrival } from '../../../ui/utils/createArrivalFlash';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
 import { PauseIcon, PlusCircleIcon } from '../../../ui/icons';
@@ -85,8 +86,10 @@ const DEFAULT_STATE: StockListState = {
   // The search (batch or item code/name) is the list's default filter
   // (ui-standards § tables → filtering): seeded present-as-null so its chip is
   // on the bar from the start; stripEmpty keeps it out of the query until
-  // typed.
-  filter: { search: null },
+  // typed. Expired stock is hidden on open (#1820) — a removable chip, not a
+  // gate. A link that carries its own filter (the dashboard's expiry stats)
+  // replaces this whole default, so it lands on exactly the lines it counts.
+  filter: { search: null, isExpired: false },
   sort: [{ key: 'itemName', desc: false }],
   offset: 0,
   first: DEFAULT_PAGE_SIZE,
@@ -164,8 +167,8 @@ const StockList: Component = () => {
   const onFilterChange = (filter: StockFilter) =>
     setQuery({ ...query(), filter, offset: 0 });
 
-  const openLine = (id: string) =>
-    navigate(`/${params.storeId}/inventory/stock/${id}`);
+  const lineHref = (id: string) => `/${params.storeId}/inventory/stock/${id}`;
+  const openLine = (id: string) => navigate(lineHref(id));
 
   // A units figure with the dose equivalent appended as a suffix for vaccine
   // rows when manageVaccinesInDoses is on (spec/stock OMS-REG-INV-02.54) —
@@ -307,7 +310,7 @@ const StockList: Component = () => {
       header: () => t('label.location-code'),
       cardGroup: 'more',
       // 'locationCode', not 'location': this column's header is the longer
-      // "Location code", which needs its own width and no growth cap (#601).
+      // "Location code", which needs its own width.
       ...getCellDefinition('locationCode'),
     },
     {
@@ -479,6 +482,7 @@ const StockList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={row => openLine(row.id)}
+        rowHref={row => lineHref(row.id)}
         showCardToggle
         cardGroups={CARD_GROUPS}
         emptyMessage={t('error.no-stock')}
@@ -507,6 +511,8 @@ const StockList: Component = () => {
         onClose={() => setCreateOpen(false)}
         onCreated={id => {
           setCreateOpen(false);
+          // The new line's screen confirms the create (OMS-REG-SMV-02.48).
+          flashOnArrival(id, t('messages.stock-line-added'));
           openLine(id);
         }}
       />

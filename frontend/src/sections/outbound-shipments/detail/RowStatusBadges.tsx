@@ -8,7 +8,6 @@ import {
   InfoIcon,
   PauseIcon,
 } from '@/ui/icons';
-import type { getCellDefinition } from '@/ui/elements/table/tableHelpers';
 
 // The row-status badge cluster (ui-standards § table interaction;
 // OMS-REG-DIST-03.37/.38, D111/D112), shared by the detail table (beside the
@@ -78,7 +77,7 @@ export const RowStatusBadges = (props: {
       {tooltip => (
         <span title={tooltip()}>
           <StatusBadge
-            label={t('label.not-for-this-campaign')}
+            label={t('label.not-for-this-activity')}
             testId="row-badge-other-campaign"
             icon={<InfoIcon />}
           />
@@ -87,15 +86,3 @@ export const RowStatusBadges = (props: {
     </Show>
   </span>
 );
-
-// The cluster's companion column fix: the chips beside a batch value fill the
-// `code` preset's 7rem growth cap exactly, and `maxSize` is a HARD cap — a
-// column sitting at it can't be dragged wider at all (the #601 trap). This
-// drops the cap while keeping the preset's cell + width floor. The shared
-// config expresses cap-less as a per-key `maxSize: null`; at a call site the
-// key has to be removed outright — an explicit `maxSize: undefined` would
-// override TanStack's own default rather than fall back to it.
-export const uncapped = <T,>({
-  maxSize: _cap,
-  ...rest
-}: ReturnType<typeof getCellDefinition<T>>) => rest;

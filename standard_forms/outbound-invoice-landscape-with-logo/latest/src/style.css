@@ -110,6 +110,14 @@
   border-bottom: 0.5px solid black;
 }
 
+.charges_heading td {
+  font-family: Tahoma;
+  font-size: 8pt;
+  font-weight: bold;
+  padding-top: 8pt;
+  border-bottom: 0.5px solid black;
+}
+
 hr {
   width: 100%;
   margin-inline-start: 8px;

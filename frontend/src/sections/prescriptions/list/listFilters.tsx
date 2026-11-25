@@ -162,6 +162,7 @@ const FILTERS: Filter<PrescriptionFilter>[] =
     requisitionId: null,
     linkedInvoiceId: null,
     isProgramInvoice: null,
+    isForUnnamedPatient: null,
     purchaseOrderId: null,
     purchaseOrderNumber: null,
     prescriptionRequestId: null,

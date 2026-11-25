@@ -6,7 +6,9 @@ export type PaginationState = 'hidden' | 'full';
 export interface PaginationExtent {
   offset: number;
   pageSize: number;
-  total: number;
+  /** Undefined for a list with no total; `more` then says if there's a next page. */
+  total?: number;
+  more?: boolean;
 }
 
 /*
@@ -31,4 +33,7 @@ export interface PaginationExtent {
  * past-the-end page with no pager to get back to page 1.
  */
 export const paginationState = (extent: PaginationExtent): PaginationState =>
-  extent.total <= extent.pageSize && extent.offset === 0 ? 'hidden' : 'full';
+  extent.offset === 0 &&
+  (extent.total === undefined ? !extent.more : extent.total <= extent.pageSize)
+    ? 'hidden'
+    : 'full';

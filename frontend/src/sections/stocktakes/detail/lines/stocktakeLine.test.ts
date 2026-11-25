@@ -6,7 +6,9 @@ import {
   differenceSize,
   isUncounted,
   lineDifference,
+  newBatchSellPrice,
   packSizeEditable,
+  savedSellFollowsDefault,
   type CountLine,
   type ReasonRequirement,
 } from './stocktakeLine';
@@ -281,5 +283,86 @@ describe('OMS-REG-INV-03.91 — the editor lists batches soonest expiry first, t
     expect(ids(rows)).toEqual(['line-m', 'stock-a', 'stock-z']);
     // The same rows handed over in any other order land the same way.
     expect(ids([...rows].reverse())).toEqual(['line-m', 'stock-a', 'stock-z']);
+  });
+});
+
+// A new batch's sell price (spec/stock rules › Default sell price for new
+// stock): the store's default sell price carried to the batch's pack size.
+describe('newBatchSellPrice', () => {
+  const item = { defaultPackSize: 10, defaultSellPricePerPack: 5 };
+
+  it('is the default sell price at the default pack size', () => {
+    expect(newBatchSellPrice(item, 10)).toBe(5);
+  });
+
+  it('scales the default to another pack size', () => {
+    expect(newBatchSellPrice(item, 20)).toBe(10);
+    expect(newBatchSellPrice(item, 1)).toBe(0.5);
+  });
+
+  it('is back at the default after a change away and back', () => {
+    newBatchSellPrice(item, 7);
+    expect(newBatchSellPrice(item, 10)).toBe(5);
+  });
+
+  it('is blank with no default sell price or no default pack size', () => {
+    expect(
+      newBatchSellPrice({ defaultPackSize: 10, defaultSellPricePerPack: 0 }, 10)
+    ).toBeNull();
+    expect(
+      newBatchSellPrice({ defaultPackSize: 0, defaultSellPricePerPack: 5 }, 10)
+    ).toBeNull();
+  });
+
+  it('is blank with no pack size yet', () => {
+    expect(newBatchSellPrice(item, null)).toBeNull();
+  });
+});
+
+// Whether a saved line's sell price follows its pack size when the editor
+// loads it.
+describe('savedSellFollowsDefault', () => {
+  const item = { defaultPackSize: 10, defaultSellPricePerPack: 5 };
+
+  it('follows on a batch with no stock behind it, still at the default', () => {
+    expect(
+      savedSellFollowsDefault(
+        { stockLine: null, packSize: 20, sellPricePerPack: 10 },
+        item
+      )
+    ).toBe(true);
+  });
+
+  it('keeps a sell price that differs from the default', () => {
+    expect(
+      savedSellFollowsDefault(
+        { stockLine: null, packSize: 20, sellPricePerPack: 12 },
+        item
+      )
+    ).toBe(false);
+  });
+
+  it('keeps the price on a batch with stock behind it', () => {
+    expect(
+      savedSellFollowsDefault(
+        { stockLine: { id: 'stock-1' }, packSize: 10, sellPricePerPack: 5 },
+        item
+      )
+    ).toBe(false);
+  });
+
+  it('follows on a line with no sell price', () => {
+    expect(
+      savedSellFollowsDefault(
+        { stockLine: null, packSize: 10, sellPricePerPack: null },
+        item
+      )
+    ).toBe(true);
+    expect(
+      savedSellFollowsDefault(
+        { stockLine: null, packSize: 10, sellPricePerPack: null },
+        { defaultPackSize: 10, defaultSellPricePerPack: 0 }
+      )
+    ).toBe(true);
   });
 });

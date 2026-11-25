@@ -6,6 +6,7 @@ use crate::{
     barcode::{BarcodeService, BarcodeServiceTrait},
     campaign::{CampaignService, CampaignServiceTrait},
     catalogue::{AssetCatalogueServiceTrait, CatalogueService},
+    central_data::{CentralDataService, CentralDataServiceTrait},
     clinician::{ClinicianService, ClinicianServiceTrait},
     cold_chain::{ColdChainService, ColdChainServiceTrait},
     contact::{ContactService, ContactServiceTrait},
@@ -159,6 +160,7 @@ pub struct ServiceProvider {
     pub site_auth_service: Box<dyn SiteAuthTrait>,
     pub sync_status_service: Box<dyn SyncStatusTrait>,
     pub standalone_central_service: Box<dyn StandaloneCentralServiceTrait>,
+    pub central_data_service: Box<dyn CentralDataServiceTrait>,
     // Triggers
     processors_trigger: ProcessorsTrigger,
     pub sync_trigger: SyncTrigger,
@@ -231,7 +233,6 @@ pub struct ServiceProvider {
     pub subscription_trigger: SubscriptionTriggerHandle,
     // Yaml only fields ----- Not stored in KV store
     pub(crate) batch_size: BatchSize,
-    pub(crate) disable_integration_transaction: bool,
     pub(crate) relax_hardware_id_token_checks: bool,
 }
 
@@ -242,7 +243,6 @@ pub struct ServiceContext {
     pub user_id: String,
     pub store_id: String,
     pub batch_size: BatchSize,
-    pub disable_integration_transaction: bool,
     pub relax_hardware_id_token_checks: bool,
 }
 
@@ -264,7 +264,6 @@ impl ServiceProvider {
             SubscriptionTriggerHandle::new_void(),
             BatchSize::default(),
             false,
-            false,
         )
     }
 
@@ -278,7 +277,6 @@ impl ServiceProvider {
         settings: Option<Settings>,
         subscription_trigger: SubscriptionTriggerHandle,
         batch_size: BatchSize,
-        disable_integration_transaction: bool,
         relax_hardware_id_token_checks: bool,
     ) -> Self {
         ServiceProvider {
@@ -319,6 +317,7 @@ impl ServiceProvider {
             site_auth_service: Box::new(SiteAuthService),
             sync_status_service: Box::new(SyncStatusService),
             standalone_central_service: Box::new(StandaloneCentralService),
+            central_data_service: Box::new(CentralDataService),
             processors_trigger,
             sync_trigger,
             site_is_initialised_trigger,
@@ -367,7 +366,6 @@ impl ServiceProvider {
             shipping_method_service: Box::new(ShippingMethodService {}),
             stock_relocation_service: Box::new(StockRelocationService),
             subscription_trigger,
-            disable_integration_transaction,
             relax_hardware_id_token_checks,
         }
     }
@@ -381,7 +379,6 @@ impl ServiceProvider {
             store_id: "".to_string(),
             frontend_plugins_cache: self.frontend_plugins_cache.clone(),
             batch_size: self.batch_size.clone(),
-            disable_integration_transaction: self.disable_integration_transaction,
             relax_hardware_id_token_checks: self.relax_hardware_id_token_checks,
         })
     }
@@ -397,7 +394,6 @@ impl ServiceProvider {
             store_id: store_id.unwrap_or("".to_string()),
             frontend_plugins_cache: self.frontend_plugins_cache.clone(),
             batch_size: self.batch_size.clone(),
-            disable_integration_transaction: self.disable_integration_transaction,
             relax_hardware_id_token_checks: self.relax_hardware_id_token_checks,
         })
     }
@@ -414,7 +410,6 @@ impl ServiceProvider {
             store_id,
             frontend_plugins_cache: self.frontend_plugins_cache.clone(),
             batch_size: self.batch_size.clone(),
-            disable_integration_transaction: self.disable_integration_transaction,
             relax_hardware_id_token_checks: self.relax_hardware_id_token_checks,
         })
     }
@@ -435,7 +430,6 @@ impl ServiceContext {
             store_id: "".to_string(),
             frontend_plugins_cache: FrontendPluginCache::new(),
             batch_size: BatchSize::default(),
-            disable_integration_transaction: false,
             relax_hardware_id_token_checks: false,
         }
     }

@@ -4,10 +4,12 @@ import { localisedDate } from '../../../intl/formatDateTime';
 import { graphqlFetch } from '../../../api/graphql';
 import { HStack } from '../../../ui/layout/Stack/HStack';
 import { DateField } from '../../../ui/elements/inputs/DateField';
-import { dateToIsoDate } from '../../../ui/elements/inputs/dateTimeConvert';
+import { dateToCalendarDate } from '../../../intl/calendarDate';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
 import {
+  DeleteOutboundLines,
+  OutboundLineIds,
   OutboundLines,
   OutboundStocktakeConflict,
 } from './outboundDetail.generated';
@@ -28,9 +30,11 @@ import {
 // off / past NEW). Picking an earlier day confirms first — the line-removal
 // warning (OMS-REG-DIST-04.24) and, when a stocktake was counted on or after
 // that day, the stocktake-conflict warning (OMS-REG-DIST-04.27) — before
-// setting backdatedDatetime; the parent's field save then re-issues against
-// historical availability and stamps future statuses at the backdated time
-// (server-side). The picker is bounded to [today − (maxDays − 1), today] —
+// deleting the shipment's lines (the server rejects backdating a shipment
+// that has any — the caller deletes them, as prescriptions do,
+// open-msupply#12615) and setting backdatedDatetime; the parent's field save
+// then re-issues against historical availability and stamps future statuses
+// at the backdated time (server-side). The picker is bounded to [today − (maxDays − 1), today] —
 // maxDays 0/unset = unbounded past (backdating.ts) — so a future or over-limit
 // day can't be chosen (the remaining OMS-REG-DIST-04.23 rejections). The pure
 // gate/date/warning logic lives in ./backdating (unit-tested); this component
@@ -46,6 +50,10 @@ export interface PickedDateFieldProps {
    * keeps showing the chosen day until then, so the confirmed pick never
    * flickers back to the old day for the save round-trip. */
   onBackdate: (backdatedDatetime: string) => Promise<void>;
+  /** The line delete before a backdate failed or its outcome is unknown
+   * (a lost reply may still have committed) — the parent refetches the lines
+   * and totals so the page shows what the server holds. */
+  onLinesChanged: () => Promise<void>;
 }
 
 export const PickedDateField: Component<PickedDateFieldProps> = props => {
@@ -75,7 +83,7 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
   // The effective "as of" day: the backdated day if set, else picked, else the
   // creation day.
   const effectiveDay = () =>
-    dateToIsoDate(
+    dateToCalendarDate(
       new Date(
         props.node.backdatedDatetime ??
           props.node.pickedDatetime ??
@@ -84,6 +92,49 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
     );
   const shown = () => draft() ?? effectiveDay();
   const bounds = () => backdateBounds(new Date(), backdating()?.maxDays ?? 0);
+
+  // Delete every line on the shipment (stock, placeholder and service — the
+  // server counts them all) through the same batch the bulk delete uses, so
+  // each releases what it reserved (OMS-REG-SMV-03.13). False when either
+  // call failed (graphqlFetch has already raised the error modal). A line
+  // that individually refuses to delete is left to the backdate save, which
+  // the server then rejects with its own message.
+  const deleteAllLines = async (): Promise<boolean> => {
+    const ids = await graphqlFetch(OutboundLineIds, {
+      storeId: props.storeId,
+      invoiceId: props.node.id,
+    });
+    if (ids.kind !== 'success') return false;
+    const lines = ids.data.invoiceLines.nodes;
+    const byType = (type: (typeof lines)[number]['type']) =>
+      lines.filter(line => line.type === type).map(line => ({ id: line.id }));
+    const result = await graphqlFetch(DeleteOutboundLines, {
+      storeId: props.storeId,
+      stockLines: byType('STOCK_OUT'),
+      placeholders: byType('UNALLOCATED_STOCK'),
+      serviceLines: byType('SERVICE'),
+    });
+    return result.kind === 'success';
+  };
+
+  // Confirmed: lines first (when there were any), then the backdate. The
+  // draft holds the chosen day until the node reflects the save. A failed
+  // delete stops before the backdate but still refreshes the page: a lost
+  // reply may have committed, and the table must not keep showing deleted
+  // lines (onBackdate refreshes on the success path).
+  const applyConfirmed = async (info: {
+    backdatedDatetime: string;
+    warningKeys: BackdateWarningKey[];
+  }) => {
+    const hasLines = info.warningKeys.includes(
+      'messages.confirm-backdate-picked-date'
+    );
+    if (hasLines && !(await deleteAllLines())) {
+      await props.onLinesChanged();
+      return;
+    }
+    await props.onBackdate(info.backdatedDatetime);
+  };
 
   const onPick = async (day: string) => {
     if (!day || day === effectiveDay()) {
@@ -210,7 +261,7 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
           const info = pending();
           if (!info) return;
           confirmInFlight = true;
-          void props.onBackdate(info.backdatedDatetime).then(() => {
+          void applyConfirmed(info).then(() => {
             confirmInFlight = false;
             setDraft(undefined);
           });

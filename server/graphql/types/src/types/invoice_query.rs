@@ -127,6 +127,13 @@ impl InvoiceNode {
         self.invoice.other_party_id()
     }
 
+    /// Whether the invoice is for a store's unnamed patient, so a list can show
+    /// its translated label without loading each row's patient
+    /// (spec/prescriptions rules › the unnamed patient)
+    pub async fn is_for_unnamed_patient(&self) -> bool {
+        repository::is_unnamed_patient_id(self.invoice.other_party_id())
+    }
+
     /// User that last edited invoice, if user is not found in system default unknown user is returned
     /// Null is returned for transfers, where inbound has not been edited yet
     /// Null is also returned for system created invoices like inventory adjustments

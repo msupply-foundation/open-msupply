@@ -11,6 +11,7 @@ pub mod patient_updated;
 mod query;
 mod search;
 mod search_central;
+mod unnamed_patient;
 mod update_custom_fields;
 mod update_patient;
 mod upsert_program_patient;
@@ -19,6 +20,7 @@ pub use self::insert_patient::*;
 pub use self::query::*;
 pub use self::search::*;
 pub use self::search_central::*;
+pub use self::unnamed_patient::*;
 pub use self::update_custom_fields::*;
 pub use self::update_patient::*;
 pub use self::upsert_program_patient::*;
@@ -47,6 +49,18 @@ pub trait PatientServiceTrait: Sync + Send {
         allowed_ctx: Option<&[String]>,
     ) -> Result<ListResult<Patient>, RepositoryError> {
         get_patients(ctx, pagination, filter, sort, allowed_ctx)
+    }
+
+    fn get_patients_with_count_limit(
+        &self,
+        ctx: &ServiceContext,
+        pagination: Option<PaginationOption>,
+        filter: Option<PatientFilter>,
+        sort: Option<PatientSort>,
+        allowed_ctx: Option<&[String]>,
+        count_limit: Option<u32>,
+    ) -> Result<ListResult<Patient>, RepositoryError> {
+        get_patients_with_count_limit(ctx, pagination, filter, sort, allowed_ctx, count_limit)
     }
 
     fn upsert_program_patient(
@@ -78,6 +92,14 @@ pub trait PatientServiceTrait: Sync + Send {
         input: InsertPatient,
     ) -> Result<Patient, InsertPatientError> {
         insert_patient(ctx, service_provider, store_id, input)
+    }
+
+    fn get_or_create_unnamed_patient(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+    ) -> Result<Patient, GetOrCreateUnnamedPatientError> {
+        get_or_create_unnamed_patient(ctx, store_id)
     }
 
     fn update_patient(

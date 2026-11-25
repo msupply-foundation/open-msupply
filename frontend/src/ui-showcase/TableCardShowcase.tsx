@@ -1,10 +1,10 @@
 import { createMemo, createSignal, Show } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import {
-  dateToIsoDate,
-  localDayToUtc,
-  utcToLocalDay,
-} from '../ui/elements/inputs/dateTimeConvert';
+  dateToCalendarDate,
+  calendarDateToInstant,
+  instantToCalendarDate,
+} from '../intl/calendarDate';
 import {
   DataTable,
   type CardGroup,
@@ -60,6 +60,7 @@ import {
   type AnatomyNode,
 } from './common';
 import type { PageMetadata } from './metadata';
+import { createLocalPagination } from '../ui/elements/table/createLocalPagination';
 
 /*
  * The Table & Card anatomy page (Layout Elements) — the interactive companion
@@ -146,7 +147,7 @@ const PACK_SIZES = [1, 10, 20, 30, 50, 100];
 // A stored instant for the given local calendar day, via the shared
 // conversion — so the mock rows display the intended day in any timezone.
 const isoDay = (month: number, day: number, year: number): string =>
-  localDayToUtc(dateToIsoDate(new Date(year, month - 1, day)));
+  calendarDateToInstant(dateToCalendarDate(new Date(year, month - 1, day)));
 
 // Expiry dates are generated RELATIVE to today so the near-expiry red tone
 // (getExpiryDateCell: ≤3 months out, past included) always has live examples
@@ -498,8 +499,6 @@ const WorkingTable = () => {
     desc: false,
   });
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
-  const [offset, setOffset] = createSignal(0);
-  const [pageSize, setPageSize] = createSignal(10);
   const [filter, setFilter] = createSignal<DemoFilter>({});
   const { config, setConfig } = createViewConfig('table');
   // Reset is offered only when the user has overridden a column (visibility /
@@ -512,7 +511,7 @@ const WorkingTable = () => {
   // offset may be past the end of the narrowed result set.
   const onFilterChange = (next: DemoFilter) => {
     setFilter(next);
-    setOffset(0);
+    page.reset();
   };
 
   // Client-side stand-in for the server's WHERE: search matches code OR name;
@@ -547,10 +546,15 @@ const WorkingTable = () => {
       return desc ? -cmp : cmp;
     });
   });
-  const rows = () => sorted().slice(offset(), offset() + pageSize());
+  // Pages the FILTERED set, so the page total tracks the active filter.
+  // Changeable page size, with nowhere to keep the choice.
+  const page = createLocalPagination(sorted, {
+    pageSize: 10,
+    onPageSizeChange: () => {},
+  });
   const onSort = (key: SortKey, desc: boolean) => {
     setSort({ key, desc });
-    setOffset(0);
+    page.reset();
   };
 
   const columns = (): Column<StockLine, SortKey>[] => [
@@ -607,7 +611,7 @@ const WorkingTable = () => {
   return (
     <DataTable
       columns={columns()}
-      rows={rows()}
+      rows={page.rows()}
       rowKey={r => r.id}
       // Filters live in the table's own toolbar (ui-standards § tables →
       // filtering); the page owns the filter state, like a real list.
@@ -632,18 +636,7 @@ const WorkingTable = () => {
       setConfig={setConfig}
       configIsDefault={configIsDefault()}
       emptyMessage="No items"
-      pagination={{
-        offset: offset(),
-        pageSize: pageSize(),
-        // The pager counts the FILTERED set, so the page total tracks the
-        // active filter.
-        total: filtered().length,
-        onOffsetChange: setOffset,
-        onPageSizeChange: size => {
-          setPageSize(size);
-          setOffset(0);
-        },
-      }}
+      pagination={page.pagination()}
     />
   );
 };
@@ -1337,7 +1330,7 @@ const SAMPLE_BATCHES: Batch[] = [
     batch: 'BN2044',
     numberOfPacks: 12,
     packSize: 100,
-    expiryDate: utcToLocalDay(monthsFromNow(14, 12)),
+    expiryDate: instantToCalendarDate(monthsFromNow(14, 12)),
     costPrice: 3.5,
     sellPrice: 4.73,
     location: 'A.01',
@@ -1348,7 +1341,7 @@ const SAMPLE_BATCHES: Batch[] = [
     batch: 'BN3120',
     numberOfPacks: 6,
     packSize: 50,
-    expiryDate: utcToLocalDay(monthsFromNow(2, 8)),
+    expiryDate: instantToCalendarDate(monthsFromNow(2, 8)),
     costPrice: 5.2,
     sellPrice: 7.02,
     location: 'COLD.1',
@@ -1645,6 +1638,61 @@ const ConditionalPaginationDemo = () => {
   );
 };
 
+// The pager with no total: a search over a large register can't afford to
+// count every match, so it fetches one row past the page and passes `more`.
+// The face is Previous · the pages so far · Next; Next is live while `more`
+// holds. Here the "server" has 4 pages.
+const NoTotalPaginationDemo = () => {
+  const [offset, setOffset] = createSignal(0);
+  const pageSize = 20;
+  return (
+    <Pagination
+      offset={offset()}
+      pageSize={pageSize}
+      more={offset() < pageSize * 3}
+      onOffsetChange={setOffset}
+    />
+  );
+};
+
+// An empty table two ways: the full empty state (illustration + "Nothing
+// here"), which suits a screen's own list, and `emptyGraphic={false}` — the
+// message alone, at a line's height, for a table among other content such as
+// a dialog's search results.
+const EmptyTablesDemo = () => {
+  const columns: Column<StockLine, SortKey>[] = [
+    { c: { key: 'code' }, header: () => 'Code' },
+    { c: { key: 'name' }, header: () => 'Name' },
+    { c: { key: 'quantity' }, header: () => 'Quantity' },
+  ];
+  return (
+    <Stack gap="md">
+      <div>
+        <Text variant="subtitle">The full empty state</Text>
+        <DataTable
+          columns={columns}
+          rows={[]}
+          rowKey={r => r.id}
+          showFullScreen={false}
+          emptyMessage="No items"
+        />
+      </div>
+      <div>
+        <Text variant="subtitle">emptyGraphic=&#123;false&#125;</Text>
+        <DataTable
+          columns={columns}
+          rows={[]}
+          rowKey={r => r.id}
+          showFullScreen={false}
+          emptyGraphic={false}
+          emptyMessage="No matching items"
+          empty={<Button variant="ghost">Create a new one</Button>}
+        />
+      </div>
+    </Stack>
+  );
+};
+
 // Mask the shell's full-screen context for this teaching page so every demo
 // table's full-screen button falls back to DataTable's standalone path — a
 // fixed, viewport-covering overlay (its `.fullScreen` rule) — instead of the
@@ -1688,6 +1736,11 @@ export const tableCardMetadata: PageMetadata = {
       id: 'table-card-pagination',
       title: 'Pagination',
       searchTerms: ['pager', 'page', 'rows per page', 'offset', 'footer'],
+    },
+    {
+      id: 'table-card-empty',
+      title: 'Empty tables',
+      searchTerms: ['empty state', 'nothing here', 'no results', 'no rows'],
     },
     {
       id: 'table-card-model',
@@ -1889,6 +1942,30 @@ export const TableCardShowcase = () => (
             width so a crowded bar wraps it whole.
           </Lead>
           <ConditionalPaginationDemo />
+          <Lead>
+            A list too costly to count passes <code>more</code> instead of{' '}
+            <code>total</code>: it fetches one row past the page, and that row
+            says whether there's another. The pager is then Previous · the pages
+            so far · Next, with no last page or jump box, since there's no end
+            to jump to; a DataTable given such a pager shows no row count in its
+            toolbar either.
+          </Lead>
+          <NoTotalPaginationDemo />
+        </DashboardCard>
+
+        <DashboardCard
+          id="table-card-empty"
+          title="Table basics · Empty tables"
+        >
+          <Lead>
+            With no rows the table keeps its headers and frame, with the empty
+            state inside. A screen's own list gets the full one, illustration
+            and all; a table among other content — a dialog's search results —
+            passes <code>emptyGraphic=&#123;false&#125;</code> for the message
+            alone at a line's height. <code>empty</code> adds an action after
+            the message in either: a ghost button, no icon, that reads inline.
+          </Lead>
+          <EmptyTablesDemo />
         </DashboardCard>
 
         <Text variant="heading">Cards</Text>

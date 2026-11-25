@@ -1,0 +1,180 @@
+/* The usual amounts, then the another-amount button, on one row. Equal
+   columns so the buttons line up from card to card, and pushed to the card's
+   bottom edge so they line up across a row of cards too, however many lines
+   a medicine's name takes. */
+.amounts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  align-items: center;
+  gap: var(--space-2);
+  margin-block-start: auto;
+  padding-block-start: var(--space-1);
+}
+
+/* The another-amount button always takes the last column, so a card with fewer
+   than three usual amounts still lines its button up with the others. */
+.another {
+  grid-column: 4;
+}
+
+/* A phone's one-row card (DetailCard layout="inline"): the amounts at the
+   inline end, each key a fixed width so they line up down the page and the
+   name keeps what is left. The number is the key's whole label, so it needs
+   none of a labelled button's 4rem floor or side padding. `button.key` (not
+   `.key`) so this outranks the library button's own size rule whichever
+   stylesheet loads first. */
+.amounts[data-one-row] {
+  grid-template-columns: repeat(3, 2.75rem) auto;
+  margin-block-start: 0;
+  padding-block-start: 0;
+}
+
+.amounts[data-one-row] > button.key:not(.another) {
+  min-inline-size: 0;
+  padding-inline: 0;
+}
+
+/*
+ * Touch: the keys are thumb-sized — at least 48px tall, the touch-target
+ * standard (spec/ui-standards accessibility › touch targets) — and the
+ * another-amount key is a 48px square beside them: the standard field's touch
+ * height (--input-height-touch), so they match each line's amount field. A
+ * fine pointer keeps the compact keys. The row's height decides, and the keys
+ * stretch to it.
+ */
+@media (pointer: coarse) {
+  .amounts {
+    grid-auto-rows: var(--input-height-touch);
+    align-items: stretch;
+  }
+
+  .amounts > button.key {
+    block-size: auto;
+  }
+
+  .amounts > button.another {
+    inline-size: var(--input-height-touch);
+  }
+}
+
+/* What the list holds of a medicine — shown where the list is out of sight
+   (a phone, or the list wrapped under the cards). Hidden while the list is
+   docked beside the cards, where it would repeat the list: they sit side by
+   side once the columns hold both flex bases, 20rem of cards + the list's
+   24rem (--side-panel-width; a container query can't read a property). */
+@container simple-columns (min-width: 44rem) {
+  .onList {
+    display: none;
+  }
+}
+
+/* The cards beside the list (DispensingList.module.css › .panel): the body's
+   one scroller, filling it (Page fillBody), with the list docked at its
+   inline end. The cards take the room; the list wraps under them where the
+   body is too narrow for both — intrinsic, no breakpoint. */
+.columns {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  min-block-size: 0;
+  overflow: auto;
+  /* Whether the list sits beside the cards is this box's width (the cards'
+     on-the-list badge answers to it). */
+  container: simple-columns / inline-size;
+}
+
+/* Phone (< compact, as the Page frame's own rule): the whole main column
+   scrolls, so this box must not be a scroller of its own — the list's bar
+   sticks to the bottom of the main column's scroll (DispensingList.module.css),
+   and a sticky box sticks to its nearest scroller. */
+@media (max-width: 599px) {
+  .columns {
+    overflow: visible;
+  }
+}
+
+/* At least one card column (CardGrid's 17rem floor) and the body's padding,
+   which this column carries itself: the docked list sits flush with the
+   body's edges. */
+.cardsColumn {
+  flex: 999 1 20rem;
+  min-inline-size: 0;
+  padding: var(--space-5);
+}
+
+/* A numbered step: the number in a filled circle, the step's name and an
+   optional hint. One look for all three steps, whatever has been done. */
+.stepHeading {
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: var(--weight-regular);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+}
+
+.cardsColumn > .stepHeading {
+  margin-block-end: var(--space-3);
+}
+
+.stepNumber {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  border-radius: 50%;
+  background: var(--primary-main);
+  color: var(--primary-contrast);
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+.stepLabel {
+  font-weight: var(--weight-semibold);
+}
+
+.stepHint {
+  color: var(--text-secondary);
+}
+
+/* The search for any medicine, between step 2's heading and the cards. */
+.search {
+  margin-block-end: var(--space-4);
+}
+
+/* The amount box (AmountDialog): the usual amounts, then the field. */
+.amountBox {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.amountChoices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.amountChoicesLabel {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+/* Three keys at most, never stretched across the whole box. */
+.amountChoices > .amounts {
+  grid-template-columns: repeat(3, minmax(4rem, 6rem));
+  justify-content: start;
+}
+
+/* Correct the stock's body: the medicine and what the system shows. */
+.correctFigure {
+  margin: 0;
+}
+
+/* In Correct the stock's place for staff who can't adjust stock: who can. */
+.correctHint {
+  font-size: var(--text-xs);
+}

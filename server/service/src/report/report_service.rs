@@ -1,5 +1,6 @@
 use base64::prelude::*;
 use chrono::{DateTime, Utc};
+use chrono_tz::Tz;
 use log::error;
 use repository::{
     EqualFilter, Pagination, PaginationOption, Report, ReportFilter, ReportMetaData,
@@ -8,6 +9,7 @@ use repository::{
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{BTreeMap, HashMap},
+    sync::LazyLock,
     time::SystemTime,
 };
 use thiserror::Error;
@@ -15,9 +17,10 @@ use util::{format_error, sanitize_filename, uuid::uuid};
 
 use crate::{
     ListError, ListResult, UploadedFile,
-    boajs::{BoaJsError, call_method},
+    boajs::{BoaJsError, call_method_in_timezone},
     get_pagination_or_default, i64_to_u32,
     localisations::{Localisations, TranslationError},
+    preference::{Preference, ReportStoreTags},
     service_provider::ServiceContext,
     settings::Settings,
     standard_reports::{ReportsData, StandardReports},
@@ -31,8 +34,10 @@ use super::{
         ConvertDataType, GraphQlQuery, ReportDefinition, ReportDefinitionEntry, ReportRef,
         SQLQuery, TeraTemplate,
     },
+    display::set_report_store_tags,
     html_printing::html_to_pdf,
     qr_code::qr_code_svg,
+    timezone::arguments_timezone,
     utils::translate_report_arugment_schema,
 };
 
@@ -81,6 +86,32 @@ pub enum UpdateReportError {
     RepositoryError(RepositoryError),
     #[error("Report not found")]
     ReportNotFound,
+    #[error("Store tag not found: {0}")]
+    StoreTagNotFound(String),
+    #[error("Not running as central server")]
+    NotACentralServer,
+}
+
+impl From<RepositoryError> for UpdateReportError {
+    fn from(error: RepositoryError) -> Self {
+        UpdateReportError::RepositoryError(error)
+    }
+}
+
+/// What an `update_report` call changes. `store_tag_ids` applies to the
+/// report's code, so to every version of it (#2033); `None` leaves it as is.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct UpdateReport {
+    pub id: String,
+    pub is_active: bool,
+    pub store_tag_ids: Option<Vec<String>>,
+}
+
+/// The updated version, and the store tags of its report as saved.
+#[derive(Debug, Clone, PartialEq)]
+pub struct UpdatedReport {
+    pub row: repository::ReportRow,
+    pub store_tag_ids: Vec<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -249,10 +280,9 @@ pub trait ReportServiceTrait: Sync + Send {
     fn update_report(
         &self,
         ctx: &ServiceContext,
-        id: &str,
-        is_active: bool,
-    ) -> Result<repository::ReportRow, UpdateReportError> {
-        update_report(ctx, id, is_active)
+        input: UpdateReport,
+    ) -> Result<UpdatedReport, UpdateReportError> {
+        update_report(ctx, input)
     }
 }
 
@@ -400,6 +430,9 @@ impl ReportServiceTrait for ReportService {}
 
 #[derive(Debug)]
 pub enum GetReportError {
+    /// No report has this id — an ordinary outcome for a stale or mistyped
+    /// link, not a repository failure.
+    ReportNotFound,
     TranslationError(TranslationError),
     RepositoryError(RepositoryError),
 }
@@ -414,7 +447,7 @@ fn get_report(
         .query_by_filter(ReportFilter::new().id(EqualFilter::equal_to(id.to_string())))
         .map_err(GetReportError::RepositoryError)?
         .pop()
-        .ok_or(GetReportError::RepositoryError(RepositoryError::NotFound))?;
+        .ok_or(GetReportError::ReportNotFound)?;
 
     let report = translate_report_arugment_schema(report, localisations, &user_language)
         .map_err(GetReportError::TranslationError)?;
@@ -495,20 +528,38 @@ fn query_all_report_versions(
 
 fn update_report(
     ctx: &ServiceContext,
-    id: &str,
-    is_active: bool,
-) -> Result<repository::ReportRow, UpdateReportError> {
-    let repo = ReportRowRepository::new(&ctx.connection);
-    let mut row = repo
-        .find_one_by_id(id)
-        .map_err(UpdateReportError::RepositoryError)?
-        .ok_or(UpdateReportError::ReportNotFound)?;
+    UpdateReport {
+        id,
+        is_active,
+        store_tag_ids,
+    }: UpdateReport,
+) -> Result<UpdatedReport, UpdateReportError> {
+    ctx.connection
+        .transaction_sync(|connection| {
+            let repo = ReportRowRepository::new(connection);
+            let mut row = repo
+                .find_one_by_id(&id)
+                .map_err(UpdateReportError::RepositoryError)?
+                .ok_or(UpdateReportError::ReportNotFound)?;
 
-    row.is_active = is_active;
-    repo.upsert_one(&row)
-        .map_err(UpdateReportError::RepositoryError)?;
+            if row.is_active != is_active {
+                row.is_active = is_active;
+                repo.upsert_one(&row)
+                    .map_err(UpdateReportError::RepositoryError)?;
+            }
 
-    Ok(row)
+            let store_tag_ids = match store_tag_ids {
+                Some(tag_ids) => set_report_store_tags(connection, &row.code, tag_ids)?,
+                None => ReportStoreTags
+                    .load(connection, None)
+                    .map_err(|e| UpdateReportError::RepositoryError(e.into_repository_error()))?
+                    .remove(&row.code)
+                    .unwrap_or_default(),
+            };
+
+            Ok(UpdatedReport { row, store_tag_ids })
+        })
+        .map_err(|error| error.to_inner_error())
 }
 
 fn report_filter_method(reports: Vec<ReportMetaData>, app_version: Version) -> Vec<String> {
@@ -643,6 +694,7 @@ fn transform_data(
     data: ReportData,
     convert_data: Option<String>,
     convert_data_type: &ConvertDataType,
+    timezone: Tz,
 ) -> Result<ReportData, ConvertDataError> {
     let Some(convert_data) = convert_data else {
         return Ok(data);
@@ -650,7 +702,7 @@ fn transform_data(
 
     match convert_data_type {
         // Mapping to string via format_error since it's better then debug output on error
-        ConvertDataType::BoaJs => transform_data_boajs(data, convert_data)
+        ConvertDataType::BoaJs => transform_data_boajs(data, convert_data, timezone)
             .map_err(|e| ConvertDataError::BoaJs(format_error(&e))),
         ConvertDataType::Extism => Err(ConvertDataError::Extism(anyhow::anyhow!(
             "Extism convert data no longer implemented."
@@ -658,12 +710,82 @@ fn transform_data(
     }
 }
 
-fn transform_data_boajs(data: ReportData, convert_data: String) -> Result<ReportData, BoaJsError> {
-    call_method(
+fn transform_data_boajs(
+    data: ReportData,
+    convert_data: String,
+    timezone: Tz,
+) -> Result<ReportData, BoaJsError> {
+    call_method_in_timezone(
         data,
         vec!["convert_data"],
         &BASE64_STANDARD.decode(convert_data).unwrap(),
+        timezone,
     )
+}
+
+/// Tera's built-in `now()`, in the report's timezone rather than the server's.
+/// Keeps the built-in's `utc` and `timestamp` arguments.
+fn now_function(
+    timezone: Tz,
+) -> impl Fn(&HashMap<String, serde_json::Value>) -> tera::Result<tera::Value> + Send + Sync {
+    move |args| now_at(Utc::now(), timezone, args)
+}
+
+fn now_at(
+    now: DateTime<Utc>,
+    timezone: Tz,
+    args: &HashMap<String, serde_json::Value>,
+) -> tera::Result<tera::Value> {
+    let flag = |name: &str| match args.get(name) {
+        Some(value) => value.as_bool().ok_or_else(|| {
+            tera::Error::msg(format!(
+                "Function `now` received {name}={value} but `{name}` can only be a boolean"
+            ))
+        }),
+        None => Ok(false),
+    };
+    let utc = flag("utc")?;
+    if flag("timestamp")? {
+        return Ok(now.timestamp().into());
+    }
+    let datetime = if utc {
+        now.to_rfc3339()
+    } else {
+        now.with_timezone(&timezone).fixed_offset().to_rfc3339()
+    };
+    Ok(datetime.into())
+}
+
+/// Tera's own `date` filter, which [`date_in_timezone`] wraps.
+static TERA_DATE: LazyLock<tera::Tera> = LazyLock::new(tera::Tera::default);
+
+/// Tera's `date` filter, with `timezone` defaulting to the report's; a template's own `timezone=`
+/// still wins. Calendar dates (`2026-01-05`) are shown as the day they name.
+///
+/// An instant with no zone written (`2026-01-05T23:30:00` from postgres' `row_to_json`,
+/// `2026-01-05 23:30:00` from sqlite) is read as UTC, as the database stores it. Tera on its own
+/// ignores `timezone` for the first and refuses the second.
+fn date_in_timezone(timezone: Tz) -> impl tera::Filter {
+    move |value: &tera::Value, args: &HashMap<String, tera::Value>| {
+        let mut args = args.clone();
+        args.entry("timezone".to_string())
+            .or_insert_with(|| tera::Value::String(timezone.name().to_string()));
+        let value = match value.as_str().and_then(zoneless_instant_as_utc) {
+            Some(utc) => tera::Value::String(utc),
+            None => value.clone(),
+        };
+        TERA_DATE.get_filter("date")?.filter(&value, &args)
+    }
+}
+
+/// `2026-01-05T23:30:00` or `2026-01-05 23:30:00` (fractional seconds or not) as
+/// `2026-01-05T23:30:00+00:00`. `None` for anything else - an instant that already has a zone, a
+/// calendar date, or not a date at all - which goes to Tera as it is.
+fn zoneless_instant_as_utc(value: &str) -> Option<String> {
+    ["%Y-%m-%dT%H:%M:%S%.f", "%Y-%m-%d %H:%M:%S%.f"]
+        .iter()
+        .find_map(|format| chrono::NaiveDateTime::parse_from_str(value, format).ok())
+        .map(|naive| naive.and_utc().to_rfc3339())
 }
 
 fn generate_report(
@@ -673,11 +795,13 @@ fn generate_report(
     localisations: &Localisations,
     current_language: Option<String>,
 ) -> Result<GeneratedReport, ReportError> {
+    let timezone = arguments_timezone(&arguments);
     let report_data = ReportData { data, arguments };
     let report_data = transform_data(
         report_data,
         report.convert_data.clone(),
         &report.convert_data_type,
+        timezone,
     )
     .map_err(|err| {
         error!(
@@ -696,6 +820,7 @@ fn generate_report(
     context.insert("isRtl", &is_rtl_locale(&current_language));
 
     let mut tera = tera::Tera::default();
+    tera.register_filter("date", date_in_timezone(timezone));
 
     tera.register_function(
         "qr_code",
@@ -716,6 +841,10 @@ fn generate_report(
         "t",
         localisations.get_translation_function(current_language),
     );
+
+    // Replaces Tera's built-in now(), which is the server's clock - UTC on
+    // Docker-hosted servers - so printed dates follow the user's clock instead.
+    tera.register_function("now", now_function(timezone));
 
     let mut templates: HashMap<String, String> = report
         .templates
@@ -917,6 +1046,81 @@ impl From<RepositoryError> for ReportError {
 impl From<std::io::Error> for ReportError {
     fn from(_err: std::io::Error) -> Self {
         ReportError::TranslationError
+    }
+}
+
+#[cfg(test)]
+mod report_timezone_test {
+    use std::collections::HashMap;
+
+    use base64::prelude::*;
+    use serde_json::json;
+    use tera::Filter;
+    use util::timezone::Tz;
+
+    use super::{ReportData, date_in_timezone, transform_data_boajs};
+
+    #[test]
+    fn date_filter_defaults_to_the_report_timezone() {
+        let filter = date_in_timezone(Tz::Pacific__Auckland);
+        let date = |value: &str, args: &[(&str, &str)]| {
+            let mut map = HashMap::from([("format".to_string(), json!("%d/%m/%Y %H:%M"))]);
+            for (key, value) in args {
+                map.insert(key.to_string(), json!(value));
+            }
+            filter.filter(&json!(value), &map).unwrap()
+        };
+
+        // An instant is shown in the report's timezone...
+        assert_eq!(
+            date("2026-01-05T23:30:00+00:00", &[]),
+            json!("06/01/2026 12:30")
+        );
+        // ...unless the template names its own
+        assert_eq!(
+            date("2026-01-05T23:30:00+00:00", &[("timezone", "UTC")]),
+            json!("05/01/2026 23:30")
+        );
+        // An instant with no zone written is UTC, as the database stores it: postgres'
+        // `row_to_json` form, and sqlite's (which Tera alone refuses)
+        assert_eq!(date("2026-01-05T23:30:00", &[]), json!("06/01/2026 12:30"));
+        assert_eq!(
+            date("2026-01-05 23:30:00.123456", &[]),
+            json!("06/01/2026 12:30")
+        );
+        // A calendar date is the day it names
+        assert_eq!(date("2026-01-05", &[]), json!("05/01/2026 00:00"));
+    }
+
+    #[test]
+    fn convert_data_local_time_is_the_report_timezone() {
+        // 23:30 UTC on the 5th is the 6th in Auckland, and still the 5th in Los Angeles
+        let bundle = BASE64_STANDARD.encode(
+            r#"
+            export function convert_data({ data, arguments: args }) {
+                const instant = new Date("2026-01-05T23:30:00Z");
+                return { data: { day: instant.getDate(), hours: instant.getHours() }, arguments: args };
+            }
+            "#,
+        );
+        let run = |timezone: Tz| {
+            transform_data_boajs(
+                ReportData {
+                    data: json!({}),
+                    arguments: None,
+                },
+                bundle.clone(),
+                timezone,
+            )
+            .unwrap()
+            .data
+        };
+
+        assert_eq!(run(Tz::Pacific__Auckland), json!({ "day": 6, "hours": 12 }));
+        assert_eq!(
+            run(Tz::America__Los_Angeles),
+            json!({ "day": 5, "hours": 15 })
+        );
     }
 }
 
@@ -1127,6 +1331,114 @@ mod report_generation_test {
 }
 
 #[cfg(test)]
+mod now_test {
+    use std::collections::HashMap;
+
+    use chrono::{TimeZone, Utc};
+    use chrono_tz::Tz;
+    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use serde_json::json;
+
+    use super::{ResolvedReportDefinition, generate_report, now_at};
+    use crate::{
+        report::definition::{ReportOutputType, TeraTemplate},
+        service_provider::ServiceProvider,
+    };
+
+    #[test]
+    fn now_is_in_the_users_timezone() {
+        let now = Utc.with_ymd_and_hms(2026, 11, 6, 1, 10, 0).unwrap();
+        let no_args = HashMap::new();
+
+        let kabul = now_at(now, Tz::Asia__Kabul, &no_args).unwrap();
+        assert_eq!(kabul, json!("2026-11-06T05:40:00+04:30"));
+
+        // Behind UTC, so the printed date is the day before
+        let los_angeles = now_at(now, Tz::America__Los_Angeles, &no_args).unwrap();
+        assert_eq!(los_angeles, json!("2026-11-05T17:10:00-08:00"));
+    }
+
+    #[test]
+    fn now_keeps_the_built_in_arguments() {
+        let now = Utc.with_ymd_and_hms(2026, 11, 6, 1, 10, 0).unwrap();
+        let kabul = Tz::Asia__Kabul;
+
+        let utc = now_at(
+            now,
+            kabul,
+            &HashMap::from([("utc".to_string(), json!(true))]),
+        );
+        assert_eq!(utc.unwrap(), json!("2026-11-06T01:10:00+00:00"));
+
+        let timestamp = now_at(
+            now,
+            kabul,
+            &HashMap::from([("timestamp".to_string(), json!(true))]),
+        );
+        assert_eq!(timestamp.unwrap(), json!(now.timestamp()));
+
+        let not_a_boolean = now_at(
+            now,
+            kabul,
+            &HashMap::from([("utc".to_string(), json!("yes"))]),
+        );
+        assert!(not_a_boolean.is_err());
+    }
+
+    #[actix_rt::test]
+    async fn report_now_follows_the_timezone_argument() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "report_now_follows_the_timezone_argument",
+            MockDataInserts::none(),
+        )
+        .await;
+        let localisations = ServiceProvider::new(connection_manager)
+            .localisations_service
+            .get_localisations(&connection)
+            .unwrap();
+
+        let template = TeraTemplate {
+            template: r#"{{ now() | date(format="%z") }}|{{ now() | date(format="%z", timezone="Asia/Kabul") }}"#
+                .to_string(),
+            output: ReportOutputType::Html,
+        };
+        let report = ResolvedReportDefinition {
+            name: "now.html".to_string(),
+            template: "now.html".to_string(),
+            templates: HashMap::from([("now.html".to_string(), template)]),
+            ..Default::default()
+        };
+        let render = |arguments| {
+            generate_report(
+                &report,
+                json!(null),
+                arguments,
+                &localisations,
+                Some("en".to_string()),
+            )
+            .unwrap()
+            .document
+        };
+
+        // Templates that already convert to the user's timezone are unaffected
+        assert_eq!(
+            render(Some(json!({ "timezone": "Asia/Kabul" }))),
+            "+0430|+0430"
+        );
+        // A zone without daylight saving, as this reads the real clock
+        assert_eq!(
+            render(Some(json!({ "timezone": "Pacific/Pago_Pago" }))),
+            "-1100|+0430"
+        );
+
+        // Without a timezone, or with an unknown one, now() is UTC rather than the server's
+        // clock, so a server never needs a timezone set up
+        assert_eq!(render(None), "+0000|+0430");
+        assert_eq!(render(Some(json!({ "timezone": "Narnia" }))), "+0000|+0430");
+    }
+}
+
+#[cfg(test)]
 mod report_filter_test {
     use crate::{report::report_service::report_filter_method, service_provider::ServiceProvider};
     use repository::{
@@ -1270,5 +1582,37 @@ mod report_filter_test {
             .find(|r| r.id == result.clone().into_iter().next().unwrap())
             .unwrap();
         assert_eq!(report.version, Version::from_str("2.8.2"));
+    }
+}
+
+#[cfg(test)]
+mod get_report_test {
+    use crate::{report::report_service::GetReportError, service_provider::ServiceProvider};
+    use repository::{mock::MockDataInserts, test_db::setup_all};
+
+    // An unknown id is its own typed outcome, not a repository failure, so a
+    // detail screen can say "not found" instead of raising an error (#1746).
+    #[actix_rt::test]
+    async fn get_report_unknown_id_is_report_not_found() {
+        let (_, _, connection_manager, _) = setup_all(
+            "get_report_unknown_id_is_report_not_found",
+            MockDataInserts::none().reports(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let ctx = service_provider.basic_context().unwrap();
+        let localisations = service_provider
+            .localisations_service
+            .get_localisations(&ctx.connection)
+            .unwrap();
+
+        let result = service_provider.report_service.get_report(
+            &ctx,
+            &localisations,
+            "en".to_string(),
+            "not_a_report_id",
+        );
+        assert!(matches!(result, Err(GetReportError::ReportNotFound)));
     }
 }

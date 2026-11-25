@@ -24,8 +24,6 @@ import { InstalledPlugins } from './InstalledPlugins';
  *    would buffer the whole database in memory). Android: navigation is a
  *    silent no-op in the WebView (#1169), so the platform save flow instead —
  *    the SAF picker, then the shell streams the same endpoint into the pick.
- *    SET-04.5's client-mode gate (disabled + message.database-not-local)
- *    awaits client mode itself — this build has no client mode to gate.
  *
  * Plus one read-only block, Installed plugins. It sits here rather than in a
  * section of its own because it answers the same question the two tools above

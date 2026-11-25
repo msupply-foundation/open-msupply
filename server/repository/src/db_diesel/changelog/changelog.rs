@@ -78,6 +78,7 @@ diesel_string_enum! {
         Category,
         Clinician,
         ClinicianStoreJoin,
+        ConsumptionEstimate,
         Contact,
         ContactForm,
         ContactTrace,
@@ -689,6 +690,28 @@ impl ChangelogFilter {
     // Push from OMS remote
     pub fn all_data_edited_on_site(site_id: i32) -> ChangelogCondition::Inner {
         ChangelogCondition::source_site_id::equal(site_id)
+    }
+}
+
+impl ChangelogFilter {
+    /// Push from OMS remote over v6: records edited on this site, in tables tagged for
+    /// v6, for one of this site's stores or with no store.
+    pub fn all_data_edited_on_site_for_v6(site_id: i32) -> ChangelogCondition::Inner {
+        use ChangelogCondition as C;
+
+        let table_names: Vec<_> = ChangelogTableName::iter()
+            // OMS central takes all records that have a V6 transport tag
+            .filter(|table| table.sync_style().transport.is_v6)
+            .collect();
+
+        C::And(vec![
+            Self::all_data_edited_on_site(site_id),
+            C::table_name::any(table_names),
+            C::Or(vec![
+                C::store_id::is_null(),
+                C::store_site_id::matching(site_id),
+            ]),
+        ])
     }
 }
 

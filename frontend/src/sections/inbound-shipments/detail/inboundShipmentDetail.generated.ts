@@ -418,6 +418,7 @@ export type InboundShipmentLinesVariables = {
     itemCodeOrName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     type?: {
     equalTo?: "STOCK_IN" | "STOCK_OUT" | "UNALLOCATED_STOCK" | "SERVICE" | null;
@@ -485,9 +486,29 @@ export type InboundShipmentLinesVariables = {
     notEqualAll?: Array<string> | null;
   } | null;
     isProgramInvoice?: boolean | null;
+    batch?: {
+    equalTo?: string | null;
+    like?: string | null;
+    startsWith?: string | null;
+  } | null;
+    expiryDate?: {
+    equalTo?: string | null;
+    beforeOrEqualTo?: string | null;
+    afterOrEqualTo?: string | null;
+  } | null;
+    locationCode?: {
+    equalTo?: string | null;
+    like?: string | null;
+    startsWith?: string | null;
+  } | null;
+    manufactureDate?: {
+    equalTo?: string | null;
+    beforeOrEqualTo?: string | null;
+    afterOrEqualTo?: string | null;
+  } | null;
   } | null;
   sort?: Array<{
-    key: "itemCode" | "itemName" | "batch" | "expiryDate" | "packSize" | "locationName" | "requestedQuantity";
+    key: "itemCode" | "itemName" | "batch" | "expiryDate" | "packSize" | "locationName" | "manufactureDate" | "requestedQuantity";
     desc?: boolean | null;
   }> | null;
   page?: {
@@ -550,6 +571,7 @@ export type InboundServiceLinesVariables = {
     itemCodeOrName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     type?: {
     equalTo?: "STOCK_IN" | "STOCK_OUT" | "UNALLOCATED_STOCK" | "SERVICE" | null;
@@ -617,6 +639,26 @@ export type InboundServiceLinesVariables = {
     notEqualAll?: Array<string> | null;
   } | null;
     isProgramInvoice?: boolean | null;
+    batch?: {
+    equalTo?: string | null;
+    like?: string | null;
+    startsWith?: string | null;
+  } | null;
+    expiryDate?: {
+    equalTo?: string | null;
+    beforeOrEqualTo?: string | null;
+    afterOrEqualTo?: string | null;
+  } | null;
+    locationCode?: {
+    equalTo?: string | null;
+    like?: string | null;
+    startsWith?: string | null;
+  } | null;
+    manufactureDate?: {
+    equalTo?: string | null;
+    beforeOrEqualTo?: string | null;
+    afterOrEqualTo?: string | null;
+  } | null;
   } | null;
 };
 
@@ -776,6 +818,7 @@ export type BatchInboundShipmentVariables = {
     purchaseOrderLineId?: string | null;
     reasonOptionId?: string | null;
     barcode?: string | null;
+    status?: "PENDING" | "PASSED" | "REJECTED" | null;
   }> | null;
     insertFromInternalOrderLines?: Array<{
     invoiceId: string;
@@ -940,6 +983,7 @@ export type BatchInboundShipmentExternalVariables = {
     purchaseOrderLineId?: string | null;
     reasonOptionId?: string | null;
     barcode?: string | null;
+    status?: "PENDING" | "PASSED" | "REJECTED" | null;
   }> | null;
     insertFromInternalOrderLines?: Array<{
     invoiceId: string;

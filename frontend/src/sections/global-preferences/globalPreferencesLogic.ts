@@ -8,6 +8,7 @@ import type {
   UpsertGlobalPreferencesVariables,
 } from './globalPreferences.generated';
 import {
+  asDispensingScreen,
   groupCatalogue,
   PREFERENCE_GROUPS,
   type CatalogueGroup,
@@ -55,9 +56,13 @@ const GROUP_OF: Partial<
   expiredStockPreventIssue: PREFERENCE_GROUPS.expiredStock,
   expiredStockIssueThreshold: PREFERENCE_GROUPS.expiredStock,
   backdating: PREFERENCE_GROUPS.backdating,
+  dispensingScreen: PREFERENCE_GROUPS.dispensing,
+  useUnnamedPatient: PREFERENCE_GROUPS.dispensing,
+  startWithUnnamedPatient: PREFERENCE_GROUPS.dispensing,
+  askForPatientType: PREFERENCE_GROUPS.dispensing,
 };
 
-/** The served catalogue split into ungrouped rows and the four groups, both
+/** The served catalogue split into ungrouped rows and the five groups, both
  *  in served order (OMS-REG-GPREF-01.2). */
 export const groupPreferences = (preferences: GlobalPreference[]) =>
   groupCatalogue(preferences, GROUP_OF);
@@ -193,6 +198,9 @@ const BOOL_PREFERENCE_KEYS = [
   'isGaps',
   'displayPopulationBasedForecasting',
   'receivePaymentsFromPrescriptions',
+  'useUnnamedPatient',
+  'startWithUnnamedPatient',
+  'askForPatientType',
 ] as const satisfies readonly GlobalPreferenceKeyOf<boolean>[];
 const NUMBER_PREFERENCE_KEYS = [
   'preventTransfersMonthsBeforeInitialisation',
@@ -212,16 +220,19 @@ const NUMBER_PREFERENCE_KEYS = [
  * explicitly: customTranslationsV2 saves through the editor's own path;
  * customTranslations (legacy) only ever rides along with it;
  * globalTableConfigs is the table-configuration feature's
- * (src/api/tableConfig.graphql), never this page's.
+ * (src/api/tableConfig.graphql), never this page's. Strings are in the net
+ * too — globalLogo, the one string, saves through its own editor (S5).
  */
 export type EveryGlobalPreferenceHandled<
   Unhandled extends never = Exclude<
-    GlobalPreferenceKeyOf<boolean | number | object>,
+    GlobalPreferenceKeyOf<boolean | number | string | object>,
     | (typeof BOOL_PREFERENCE_KEYS)[number]
     | (typeof NUMBER_PREFERENCE_KEYS)[number]
     | GlobalPreferenceKeyOf<object> // arrays (store-scoped) + composites, handled below/elsewhere
     | 'genderOptions'
     | 'backdating'
+    | 'globalLogo'
+    | 'dispensingScreen'
   >,
 > = Unhandled;
 
@@ -237,8 +248,8 @@ const isNumberKey = (
 /*
  * One changed preference as the mutation input — a one-field input, the
  * others untouched (contract § Editing). Undefined for keys this page never
- * auto-saves (the translations editor has its own save path; store-typed keys
- * never appear in a GLOBAL read).
+ * auto-saves (the translations and logo editors have their own save paths;
+ * store-typed keys never appear in a GLOBAL read).
  */
 export const buildAutoSaveInput = (
   key: GlobalPreference['key'],
@@ -258,6 +269,9 @@ export const buildAutoSaveInput = (
   }
   if (key === 'backdating') {
     return { backdating: asBackdatingParts(value) };
+  }
+  if (key === 'dispensingScreen') {
+    return { dispensingScreen: asDispensingScreen(value) };
   }
   return undefined;
 };

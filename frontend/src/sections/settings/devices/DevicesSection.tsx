@@ -1,5 +1,5 @@
 import { createEffect, createResource, createSignal, Show } from 'solid-js';
-import { useNavigate, useParams } from '@solidjs/router';
+import { useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
 import { PRINT_LABEL_TEST_URL } from '../../../config';
 import { getLabelPrinterUseUsb, setLabelPrinterUseUsb } from '../../../appData';
@@ -12,6 +12,7 @@ import { TextField } from '../../../ui/elements/inputs/TextField';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
 import { ToggleSwitch } from '../../../ui/elements/inputs/ToggleSwitch';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { LinkButton } from '../../../ui/elements/buttons/LinkButton';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { SaveIcon, ZapIcon } from '../../../ui/icons';
 import { t } from '../../../intl';
@@ -41,7 +42,6 @@ import { HStack } from '../../../ui/layout/Stack/HStack';
  */
 export const DevicesSection = () => {
   const params = useParams<{ storeId: string }>();
-  const navigate = useNavigate();
 
   // Stored printer settings (store-wide). Non-suspending read (kdd/solid-
   // reactivity-pitfalls § no remounts).
@@ -263,13 +263,13 @@ export const DevicesSection = () => {
       <FormSection title={t('settings.barcode-scanner')} headingLevel="h3">
         <ScannerSources showCameraEngine={import.meta.env.DEV} />
         <HStack justify="end" gap="md">
-          <Button
+          <LinkButton
             variant="secondary"
-            onClick={() => navigate(`/${params.storeId}/settings/test-scanner`)}
+            href={`/${params.storeId}/settings/test-scanner`}
             data-testid="test-scanner"
           >
             {t('label.barcode-scanner-test')}
-          </Button>
+          </LinkButton>
         </HStack>
       </FormSection>
     </Stack>

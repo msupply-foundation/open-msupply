@@ -114,7 +114,7 @@ const FILTERS: Filter<PurchaseOrderFilter>[] =
       ),
     },
     // Requested delivery date — a NaiveDate, so type="date" passes the plain
-    // ISO date through, and the future is NOT disabled: a requested delivery
+    // calendar date through, and the future is NOT disabled: a requested delivery
     // date is normally ahead of today.
     requestedDeliveryDate: {
       label: () => t('label.requested-delivery-date'),

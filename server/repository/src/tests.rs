@@ -321,7 +321,7 @@ mod repository_test {
         requisition_row::RequisitionStatus,
         test_db,
     };
-    use crate::{DateFilter, EqualFilter, StringFilter};
+    use crate::{DateFilter, EqualFilter, Pagination, StringFilter};
     use chrono::Duration;
     use diesel::{RunQueryDsl, sql_query, sql_types::Text};
 
@@ -1004,6 +1004,86 @@ mod repository_test {
         #[diesel(sql_type = Text)]
         id: String,
     }
+
+    /// The two boolean sub-select filters partition the requisitions, and
+    /// `a_shipment_has_been_created(false)` is not blanked by the shipments
+    /// raised without a requisition (a NULL `requisition_id` in the set).
+    #[actix_rt::test]
+    async fn test_requisition_shipment_and_outstanding_filters() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "test_requisition_shipment_and_outstanding_filters",
+            MockDataInserts::all(),
+        )
+        .await;
+        let repository = RequisitionRepository::new(&connection);
+        let ids = |filter: RequisitionFilter| -> Vec<String> {
+            let mut ids: Vec<String> = repository
+                .query(
+                    Pagination {
+                        offset: 0,
+                        limit: 1000,
+                    },
+                    Some(filter),
+                    None,
+                )
+                .unwrap()
+                .into_iter()
+                .map(|requisition| requisition.requisition_row.id)
+                .collect();
+            ids.sort();
+            ids
+        };
+
+        let all = ids(RequisitionFilter::new());
+        let with_shipment = ids(RequisitionFilter::new().a_shipment_has_been_created(true));
+        let without_shipment = ids(RequisitionFilter::new().a_shipment_has_been_created(false));
+
+        // This needs an invoice with no requisition: its NULL in the
+        // sub-select would blank the "no shipment" set.
+        let unlinked_invoices = sql_query(r#"select id from invoice where requisition_id is null"#)
+            .load::<Id>(connection.lock().connection())
+            .unwrap();
+        assert!(!unlinked_invoices.is_empty()); // Sanity check
+
+        // The requisitions some mock invoice links to.
+        let linked: Vec<String> = sql_query(
+            r#"select distinct requisition_id as id from invoice
+                    where requisition_id is not null order by id asc"#,
+        )
+        .load::<Id>(connection.lock().connection())
+        .unwrap()
+        .into_iter()
+        .map(|row| row.id)
+        .filter(|id| all.contains(id))
+        .collect();
+        assert!(!linked.is_empty()); // Sanity check
+        assert!(linked.len() < all.len()); // Sanity check
+        assert_eq!(with_shipment, linked);
+        assert_eq!(
+            without_shipment,
+            all.iter()
+                .filter(|id| !linked.contains(id))
+                .cloned()
+                .collect::<Vec<_>>()
+        );
+        assert_eq!(
+            repository
+                .count(Some(
+                    RequisitionFilter::new().a_shipment_has_been_created(false)
+                ))
+                .unwrap(),
+            without_shipment.len() as i64
+        );
+
+        let outstanding = ids(RequisitionFilter::new().has_outstanding_lines(true));
+        let not_outstanding = ids(RequisitionFilter::new().has_outstanding_lines(false));
+        assert!(!outstanding.is_empty());
+        assert!(outstanding.iter().all(|id| !not_outstanding.contains(id)));
+        let mut both = [outstanding, not_outstanding].concat();
+        both.sort();
+        assert_eq!(both, all);
+    }
+
     #[actix_rt::test]
     async fn test_requisition_repository() {
         let (_, connection, _, _) =
@@ -1369,7 +1449,8 @@ mod repository_test {
 
     #[actix_rt::test]
     async fn test_activity_log_row_repository() {
-        let settings = test_db::get_test_db_settings("omsupply-database-store-repository");
+        let settings =
+            test_db::get_test_db_settings("omsupply-database-activity-log-row-repository");
         let connection_manager = test_db::setup(&settings).await;
         let connection = connection_manager.connection().unwrap();
 

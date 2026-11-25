@@ -61,6 +61,7 @@ import {
 } from '../sections/inbound-shipments/detail/inboundShipmentStatus';
 import { linkedOrderOf } from '../sections/inbound-shipments/linkedOrder';
 import { RecordLink } from '../ui/elements/typography/RecordLink';
+import { createLocalPagination } from '../ui/elements/table/createLocalPagination';
 
 // The List-page demo: the SAME assembly as the real InboundShipmentsList — a
 // Page frame with a header (breadcrumb + New shipment), and the shared
@@ -263,8 +264,6 @@ const TableShowcaseDemo = () => {
     desc: true,
   });
   const [filter, setFilter] = createSignal<InboundListFilter>({});
-  const [offset, setOffset] = createSignal(0);
-  const [pageSize, setPageSize] = createSignal(20);
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
 
   // The supplier colour swatch is editable inline (spec S1 column 1). No
@@ -332,16 +331,19 @@ const TableShowcaseDemo = () => {
       return desc ? -cmp : cmp;
     });
   });
-  const rows = () => sorted().slice(offset(), offset() + pageSize());
-  const total = () => filtered().length;
+  // Changeable page size, with nowhere to keep the choice.
+  const page = createLocalPagination(sorted, {
+    pageSize: 20,
+    onPageSizeChange: () => {},
+  });
 
   const onSort = (key: SortKey, desc: boolean) => {
     setSort({ key, desc });
-    setOffset(0);
+    page.reset();
   };
   const onFilterChange = (next: InboundListFilter) => {
     setFilter(next);
-    setOffset(0);
+    page.reset();
     setSelectedIds([]);
   };
 
@@ -553,7 +555,7 @@ const TableShowcaseDemo = () => {
       <DataTable
         columns={columns()}
         cardGroups={CARD_GROUPS}
-        rows={rows()}
+        rows={page.rows()}
         rowKey={r => r.id}
         // Filters live in the table's own toolbar (ui-standards § tables →
         // filtering), matching the real page.
@@ -635,16 +637,7 @@ const TableShowcaseDemo = () => {
         config={tableConfig()}
         setConfig={setConfig}
         configIsDefault={isConfigDefault()}
-        pagination={{
-          offset: offset(),
-          pageSize: pageSize(),
-          total: total(),
-          onOffsetChange: setOffset,
-          onPageSizeChange: size => {
-            setPageSize(size);
-            setOffset(0);
-          },
-        }}
+        pagination={page.pagination()}
       />
     </Page>
   );

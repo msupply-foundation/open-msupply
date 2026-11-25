@@ -60,12 +60,14 @@ fragment ForecastMethodOption on ForecastMethodOptionNode {
   unavailableReason
 }
 
-# The ordering store's supply interval and safety buffer (spec/internal-orders
-# › target months of stock): their sum is the default — and, with the
-# changing-target-months preference off, the fixed — target of a general order.
+# The ordering store's supply interval, safety buffer and delivery lead time
+# (spec/internal-orders › target months of stock): their sum is the default —
+# and, with the changing-target-months preference off, the fixed — target of a
+# general order.
 # A vertical repeats this selection on its RequisitionNode (see ForecastLine
 # above); ForecastBlock takes this fragment's type for its target-months caption.
 fragment SupplyIntervalAndBuffer on SupplyIntervalAndBufferNode {
   supplyIntervalMonths
   safetyBufferMonths
+  deliveryLeadTimeMonths
 }

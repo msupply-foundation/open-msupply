@@ -138,6 +138,7 @@ export type SentPurchaseOrdersVariables = {
     supplier?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     number?: {
     equalTo?: number | null;

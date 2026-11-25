@@ -3,6 +3,7 @@ pub mod bundled_item;
 pub mod item;
 pub mod item_variant;
 pub mod packaging_variant;
+pub mod upsert;
 use ancillary_item::{
     DeleteAncillaryItem, DeleteAncillaryItemError, SetSupplyWastageRate, SetSupplyWastageRateError,
     UpsertAncillaryItem, UpsertAncillaryItemError, delete_ancillary_item, get_ancillary_items,

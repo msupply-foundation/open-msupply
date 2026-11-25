@@ -16,10 +16,12 @@ export type AllReportVersionsVariables = {
     name?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     code?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     context?: {
     equalTo?: "ASSET" | "INBOUND_SHIPMENT" | "OUTBOUND_SHIPMENT" | "REQUISITION" | "STOCKTAKE" | "RESOURCE" | "PATIENT" | "DISPENSARY" | "REPACK" | "OUTBOUND_RETURN" | "INBOUND_RETURN" | "REPORT" | "PRESCRIPTION" | "INTERNAL_ORDER" | "PURCHASE_ORDER" | "SUPPLIER_RETURN" | "CUSTOMER_RETURN" | "STOCK_MOVEMENT" | "PRESCRIPTION_REQUEST" | null;
@@ -58,6 +60,7 @@ export type AllReportVersionsResult = {
   version: string;
   isActive: boolean;
   isCustom: boolean;
+  storeTagIds: Array<string>;
 }>;
 }) | ({
   __typename: "QueryReportsError";
@@ -70,7 +73,7 @@ export type AllReportVersionsResult = {
 };
 
 export const AllReportVersions = {
-  query: "query allReportVersions($storeId: String!, $userLanguage: String!, $filter: ReportFilterInput, $sort: [ReportSortInput!], $page: PaginationInput) {\n  allReportVersions(\n    storeId: $storeId\n    userLanguage: $userLanguage\n    filter: $filter\n    sort: $sort\n    page: $page\n  ) {\n    __typename\n    ... on ReportConnector {\n      totalCount\n      nodes {\n        id\n        name\n        code\n        version\n        isActive\n        isCustom\n      }\n    }\n    ... on QueryReportsError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}",
+  query: "query allReportVersions($storeId: String!, $userLanguage: String!, $filter: ReportFilterInput, $sort: [ReportSortInput!], $page: PaginationInput) {\n  allReportVersions(\n    storeId: $storeId\n    userLanguage: $userLanguage\n    filter: $filter\n    sort: $sort\n    page: $page\n  ) {\n    __typename\n    ... on ReportConnector {\n      totalCount\n      nodes {\n        id\n        name\n        code\n        version\n        isActive\n        isCustom\n        storeTagIds\n      }\n    }\n    ... on QueryReportsError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}",
 } as TypedDocument<AllReportVersionsResult, AllReportVersionsVariables>;
 
 export type InstallUploadedReportsVariables = {
@@ -93,6 +96,7 @@ export type UpdateReportVariables = {
   input: {
     id: string;
     isActive: boolean;
+    storeTagIds?: Array<string> | null;
   };
 };
 
@@ -102,11 +106,29 @@ export type UpdateReportResult = {
   updateReport: {
   id: string;
   isActive: boolean;
+  storeTagIds: Array<string>;
 };
 };
 };
 };
 
 export const UpdateReport = {
-  query: "mutation updateReport($input: UpdateReportInput!) {\n  centralServer {\n    reports {\n      updateReport(input: $input) {\n        id\n        isActive\n      }\n    }\n  }\n}",
+  query: "mutation updateReport($input: UpdateReportInput!) {\n  centralServer {\n    reports {\n      updateReport(input: $input) {\n        id\n        isActive\n        storeTagIds\n      }\n    }\n  }\n}",
 } as TypedDocument<UpdateReportResult, UpdateReportVariables>;
+
+export type NameTagsVariables = {
+  storeId: string;
+};
+
+export type NameTagsResult = {
+  nameTags: {
+  nodes: Array<{
+  id: string;
+  name: string;
+}>;
+};
+};
+
+export const NameTags = {
+  query: "query nameTags($storeId: String!) {\n  nameTags(storeId: $storeId) {\n    nodes {\n      id\n      name\n    }\n  }\n}",
+} as TypedDocument<NameTagsResult, NameTagsVariables>;

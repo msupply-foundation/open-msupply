@@ -34,7 +34,7 @@ import {
   SectionTOC,
   type AnatomyNode,
 } from './common';
-import { localisedDate } from '../intl';
+import { formatNumber, localisedDate } from '../intl';
 import type { PageMetadata } from './metadata';
 import styles from './SidePanelShowcase.module.css';
 
@@ -111,7 +111,7 @@ const ANATOMY: AnatomyNode[] = [
 // A plain home-currency formatter for the demo — the real panels format via
 // the intl currency layer; here static representative values are enough.
 const money = (value: number): string =>
-  `$${value.toLocaleString('en-US', {
+  `$${formatNumber(value, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;

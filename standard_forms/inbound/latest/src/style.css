@@ -90,11 +90,30 @@
   font-family: Tahoma;
 }
 
+.body_total_section {
+  font-weight: bold;
+}
+
+/* the empty cells take up the width, keeping each label and value against the right edge */
+.body_total_section .cost_price,
+.body_total_section .total_extension {
+  width: 1%;
+  white-space: nowrap;
+}
+
 .body_section tr.body_column_label th {
   border-bottom: 0.5px solid black;
 }
 
 .body_value td {
+  border-bottom: 0.5px solid black;
+}
+
+.charges_heading td {
+  font-family: Tahoma;
+  font-size: 8pt;
+  font-weight: bold;
+  padding-top: 8pt;
   border-bottom: 0.5px solid black;
 }
 
