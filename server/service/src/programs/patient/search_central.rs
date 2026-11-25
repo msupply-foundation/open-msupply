@@ -2,7 +2,7 @@ use chrono::NaiveDate;
 use log::{error, info};
 use repository::{
     DateFilter, KeyType, KeyValueStoreRepository, PatientFilter, RepositoryError, StringFilter,
-    is_unnamed_patient_id,
+    has_search_words, is_unnamed_patient_id,
 };
 use thiserror::Error;
 use url::Url;
@@ -83,8 +83,17 @@ fn central_search_filter(params: &CentralPatientSearch) -> PatientFilter {
 }
 
 /// Whether legacy mSupply has anything to filter on: it ignores a date of
-/// birth range.
+/// birth range. A name of only symbols finds no one here, as it finds no one
+/// locally, rather than reaching legacy mSupply, where `@` is a wildcard and
+/// "@" alone would return every patient (OMS-REG-DIS-01.88).
 fn legacy_can_filter(params: &CentralPatientSearch) -> bool {
+    let finds_no_one = |name: &Option<String>| {
+        name.as_deref()
+            .is_some_and(|name| !name.trim().is_empty() && !has_search_words(name))
+    };
+    if finds_no_one(&params.first_name) || finds_no_one(&params.last_name) {
+        return false;
+    }
     params.code.is_some()
         || params.first_name.is_some()
         || params.last_name.is_some()
@@ -590,6 +599,27 @@ mod test {
         }));
         assert!(legacy_can_filter(&CentralPatientSearch {
             date_of_birth: Some(date(1984, 3, 14)),
+            ..Default::default()
+        }));
+    }
+
+    // OMS-REG-DIS-01.88: a name of only symbols finds no one, and isn't sent
+    // to legacy mSupply, where `@` alone would match every patient
+    #[test]
+    fn legacy_is_not_asked_with_a_name_of_only_symbols() {
+        for name in ["@", "%", " - ", "_"] {
+            assert!(!legacy_can_filter(&CentralPatientSearch {
+                last_name: Some(name.to_string()),
+                ..Default::default()
+            }));
+            assert!(!legacy_can_filter(&CentralPatientSearch {
+                first_name: Some(name.to_string()),
+                code: Some("ABC".to_string()),
+                ..Default::default()
+            }));
+        }
+        assert!(legacy_can_filter(&CentralPatientSearch {
+            last_name: Some("N'Guessan".to_string()),
             ..Default::default()
         }));
     }

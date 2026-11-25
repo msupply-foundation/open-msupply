@@ -366,10 +366,11 @@ impl<'a> PatientRepository<'a> {
                 // On Postgres, the start of a code is a range on its lowercase
                 // form, which the code indexes (migration
                 // add_patient_search_indexes) serve; ILIKE can't use an index.
+                // On SQLite it's LIKE with `%`, `_` and `\` escaped, so they
+                // match themselves as on Postgres rather than any text.
                 // `starts_with` combined with another operator then means
                 // (either code starts with it) AND (either code matches the
-                // other), not per code as on SQLite; nothing combines them.
-                #[cfg(feature = "postgres")]
+                // other), not per code; nothing combines them.
                 let filter = {
                     let mut filter = filter;
                     if let Some(text) = filter.starts_with.take() {
@@ -512,6 +513,30 @@ fn not_visible_in_store(query: BoxedNameQuery, store_id: String) -> BoxedNameQue
                 .filter(name_store_join::visible.eq(true))
                 .select(name_store_join::name_id),
         ),
+    )
+}
+
+/// Either code starts with `text`, ignoring ASCII case: LIKE with its
+/// wildcards and escape character escaped, so `text` matches only itself.
+#[cfg(not(feature = "postgres"))]
+fn code_or_code_2_prefix(
+    text: &str,
+) -> Box<dyn diesel::BoxableExpression<name::table, DBType, SqlType = diesel::sql_types::Bool>> {
+    let escape = UNNAMED_PATIENT_LIKE_ESCAPE;
+    let pattern = format!(
+        "{}%",
+        text.replace(escape, &format!("{escape}{escape}"))
+            .replace('%', &format!("{escape}%"))
+            .replace('_', &format!("{escape}_"))
+    );
+    Box::new(
+        name::code
+            .like(pattern.clone())
+            .escape(escape)
+            .or(name::national_health_number
+                .like(pattern)
+                .escape(escape)
+                .assume_not_null()),
     )
 }
 
@@ -1181,6 +1206,15 @@ mod tests {
         assert!(
             ids(PatientFilter::new().code_or_code_2(StringFilter::starts_with("777"))).is_empty()
         );
+        // `%` and `_` match only themselves, the same on both databases
+        // (OMS-REG-DIS-01.88)
+        let code_starts =
+            |text: &str| ids(PatientFilter::new().code_or_code_2(StringFilter::starts_with(text)));
+        assert!(code_starts("%").is_empty());
+        assert!(code_starts("_").is_empty());
+        assert!(code_starts("a%").is_empty());
+        assert!(code_starts("ab_").is_empty());
+        assert!(code_starts("\\").is_empty());
         // Other operators apply to both columns too
         assert_eq!(
             ids(PatientFilter::new().code_or_code_2(StringFilter::equal_to("ZZZ-1"))),
@@ -1262,8 +1296,18 @@ mod tests {
         // Not the middle of a word
         assert!(last("san").is_empty());
         assert!(last("an").is_empty());
-        // Text with no words doesn't filter
-        assert_eq!(first("-"), ids(PatientFilter::new()));
+        // Text with no words finds no one, `%` and `_` included: they're
+        // punctuation like any other (OMS-REG-DIS-01.88)
+        assert!(first("-").is_empty());
+        assert!(last("%").is_empty());
+        assert!(last("_").is_empty());
+        assert!(last(" %_ ").is_empty());
+        // and split words as other punctuation does
+        assert_eq!(last("st%john"), ["dotted"]);
+        assert_eq!(last("st_john"), ["dotted"]);
+        // Blank text doesn't filter
+        assert_eq!(first(""), ids(PatientFilter::new()));
+        assert_eq!(last("  "), ids(PatientFilter::new()));
         // ANDs with the other name and the filter's other operators
         assert_eq!(
             ids(PatientFilter::new()
