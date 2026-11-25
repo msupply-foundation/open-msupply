@@ -61,11 +61,6 @@ pub(super) fn protected_error(row: &Row, what: &str) -> RowError {
     )
 }
 
-/// On the column the row found the master list by.
-pub(super) fn not_found_error(row: &Row) -> RowError {
-    row.not_found(row.reference_column(MASTER_LIST_NAME, MASTER_LIST_ID))
-}
-
 /// For an export's filter: not the placeholder master list's records.
 pub(super) fn not_placeholder() -> Option<EqualFilter<String>> {
     Some(EqualFilter {
