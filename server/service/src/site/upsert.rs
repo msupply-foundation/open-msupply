@@ -1,6 +1,6 @@
 use crate::service_provider::ServiceContext;
 use bcrypt::{DEFAULT_COST, hash};
-use repository::{RepositoryError, SiteRow, SiteRowRepository, StorageConnection};
+use repository::{RepositoryError, SiteRow, SiteRowRepository, StorageConnection, SyncVersion};
 
 #[derive(PartialEq, Debug)]
 pub enum UpsertSiteError {
@@ -113,7 +113,9 @@ fn generate(
         hardware_id: existing_hardware_id,
         is_multi_device: existing_is_multi_device,
         token: existing_token,
-        sync_version: existing_sync_version.unwrap_or_default(),
+        // A new site is V7: the upsertSite mutation is standalone-central only
+        // (`require_central_standalone`), and there's no legacy central to upgrade a V5_V6 site
+        sync_version: existing_sync_version.unwrap_or(SyncVersion::V7),
         app_name: existing_app_name,
         app_version: existing_app_version,
         last_connection_datetime: existing_last_connection,
@@ -255,6 +257,8 @@ mod tests {
         let site = repo.find_one_by_id(1).unwrap().unwrap();
         assert_eq!(site.code, "code1");
         assert_eq!(site.name, "Site A");
+        // OMS-FUN-SYC-002.43
+        assert_eq!(site.sync_version, SyncVersion::V7);
     }
 
     #[actix_rt::test]
@@ -331,8 +335,10 @@ mod tests {
         let repo = SiteRowRepository::new(&connection);
         let mut site = repo.find_one_by_id(1).unwrap().unwrap();
         site.token = Some("existing_token".to_string());
+        site.sync_version = SyncVersion::V5V6;
         repo.upsert(&site).unwrap();
 
+        // OMS-FUN-SYC-002.22
         upsert_site(
             &context,
             UpsertSite {
@@ -346,5 +352,6 @@ mod tests {
 
         let site = repo.find_one_by_id(1).unwrap().unwrap();
         assert_eq!(site.token.as_deref(), Some("existing_token"));
+        assert_eq!(site.sync_version, SyncVersion::V5V6);
     }
 }
