@@ -73,6 +73,25 @@ The majority rendering is the one to use. A split shows the minority count.
 | tab                 | ټب                                                          | 4 of 4                                                                                                 |
 | nothing             | هیڅ شی                                                      | 9 of 13                                                                                                |
 
+### Terms settled in the 2026-11-26 backlog drafts
+
+Settled by the drafts, not yet by a Pashto reviewer.
+
+| English                       | Pashto                | Notes                                                        |
+| ----------------------------- | --------------------- | ------------------------------------------------------------ |
+| dispensing record             | د توزیع ریکارډ        | _نسخه_ is kept for a prescription; see open questions        |
+| dispense (button) / dispensed | توزیع کړئ / توزیع شوی |                                                              |
+| unnamed patient               | بې نومه ناروغ         |                                                              |
+| visit                         | لیدنه                 |                                                              |
+| medicine / common medicines   | درمل / عام درمل       |                                                              |
+| stock                         | ذخیره                 | catalog 124 vs _سټاک_ 113                                    |
+| store                         | پلورنځی               | 76 of 83                                                     |
+| delivery lead time            | د سپارنې موده         | `label.lead-time` _د میاشتې مخکښ وخت_ is a calque            |
+| tag                           | ټګ                    | from `label.tag-colour`                                      |
+| short (a stock deficit)       | کم                    | not _لنډ_ (short in length)                                  |
+| couldn't be loaded            | بار نه شو             |                                                              |
+| press / click a named button  | په 'X' کلیک وکړئ      | straight single quotes, as the catalog does (25 vs 0 for «») |
+
 ## Right-to-left notes
 
 - **Arrows point the reading direction.** The one catalog string that translates `→`
@@ -107,6 +126,12 @@ The majority rendering is the one to use. A split shows the minority count.
   `label.status-change`.
 - **Unchanged.** _بې بدلونه_ vs _بې بدله_, one string each.
 - **Excel.** Latin (`error.failed-to-generate-excel`) vs _اکسل_ (`button.export-excel`).
+- **Dispensing record.** _نسخه_ (17, e.g. `button.view-prescription`,
+  `messages.deleted-prescriptions_other`) vs _د توزیع ریکارډ_ (5, `button.new-dispensing-record`,
+  `messages.confirm-delete-dispensing-records_other`). _نسخه_ is also the prescription in the
+  prescription-request screens, so the 2026-11-26 drafts use _د توزیع ریکارډ_.
+- **Batch** is split three ways: _بیچ_ 22, _بسته_ 17, _بست_ 16 (plus _ډله_ in
+  `label.batch-count_one`).
 - **Import and export as a screen name.** _واردات او صادرات_ reads as trade in goods.
   Supply-chain users may read it as customs, so the drafts use the verbal nouns _واردول او
   صادرول_.
