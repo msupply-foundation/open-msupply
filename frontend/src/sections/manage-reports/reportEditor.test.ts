@@ -12,7 +12,8 @@ import type { UpdateReportResult } from './manageReports.generated';
 // Anchors: spec/manage-reports/cases/OMS-REG-MNG-06.
 //   .17 — saving is unavailable until the active state differs
 //   .18 — abandoning an edit leaves the version as it was
-//   .21 — active state is the only property that can be changed
+//   .35 — active state and store tags are the only properties that change
+//   .37 — a store-tag change alone makes the version saveable
 
 const version = (overrides: Partial<ReportVersion> = {}): ReportVersion => ({
   id: 'stock-detail_2_6_6_false',
@@ -21,6 +22,7 @@ const version = (overrides: Partial<ReportVersion> = {}): ReportVersion => ({
   version: '2.6.6',
   isActive: true,
   isCustom: false,
+  storeTagIds: [],
   ...overrides,
 });
 
@@ -57,18 +59,66 @@ describe('OMS-REG-MNG-06.18 — an abandoned edit writes nothing', () => {
   });
 });
 
-describe('OMS-REG-MNG-06.21 — active state is the only mutable property', () => {
-  it('builds an input carrying exactly id and isActive', () => {
-    const input = reportUpdateInput({ id: 'r1', isActive: false });
-    expect(input).toEqual({ id: 'r1', isActive: false });
+describe('OMS-REG-MNG-06.35 — active state and store tags are the only mutable properties', () => {
+  it('builds an input carrying exactly id, isActive and storeTagIds', () => {
+    const input = reportUpdateInput({
+      id: 'r1',
+      isActive: false,
+      storeTagIds: ['tag-a'],
+    });
+    expect(input).toEqual({
+      id: 'r1',
+      isActive: false,
+      storeTagIds: ['tag-a'],
+    });
     // Nothing else can travel: name, code, version, custom and context are
     // fixed at install time.
-    expect(Object.keys(input).sort()).toEqual(['id', 'isActive']);
+    expect(Object.keys(input).sort()).toEqual([
+      'id',
+      'isActive',
+      'storeTagIds',
+    ]);
   });
 
-  it('carries nothing from the version beyond its id and active state', () => {
-    const draft = draftFromVersion(version());
-    expect(Object.keys(draft).sort()).toEqual(['id', 'isActive']);
+  it('carries nothing from the version beyond its id, active state and tags', () => {
+    const draft = draftFromVersion(version({ storeTagIds: ['tag-a'] }));
+    expect(draft).toEqual({
+      id: 'stock-detail_2_6_6_false',
+      isActive: true,
+      storeTagIds: ['tag-a'],
+    });
+  });
+});
+
+describe('OMS-REG-MNG-06.37 — a store-tag change alone is saveable', () => {
+  it('can save once a tag is added, with the active state unchanged', () => {
+    const v = version();
+    expect(
+      canSaveReport({ ...draftFromVersion(v), storeTagIds: ['tag-a'] }, v)
+    ).toBe(true);
+  });
+
+  it('can save once every tag is removed (OMS-REG-MNG-06.38)', () => {
+    const v = version({ storeTagIds: ['tag-a'] });
+    expect(canSaveReport({ ...draftFromVersion(v), storeTagIds: [] }, v)).toBe(
+      true
+    );
+  });
+
+  it('cannot save the same tags picked in another order', () => {
+    const v = version({ storeTagIds: ['tag-a', 'tag-b'] });
+    expect(
+      canSaveReport(
+        { ...draftFromVersion(v), storeTagIds: ['tag-b', 'tag-a'] },
+        v
+      )
+    ).toBe(false);
+  });
+
+  it('copies the tags, so editing the draft leaves the version as it was', () => {
+    const v = version({ storeTagIds: ['tag-a'] });
+    draftFromVersion(v).storeTagIds.push('tag-b');
+    expect(v.storeTagIds).toEqual(['tag-a']);
   });
 });
 
@@ -78,7 +128,9 @@ describe('the save outcome', () => {
       kind: 'success',
       data: {
         centralServer: {
-          reports: { updateReport: { id: 'r1', isActive: false } },
+          reports: {
+            updateReport: { id: 'r1', isActive: false, storeTagIds: [] },
+          },
         },
       },
     };
