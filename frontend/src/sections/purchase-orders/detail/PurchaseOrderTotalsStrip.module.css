@@ -51,3 +51,11 @@
   font-weight: var(--weight-semibold);
   font-variant-numeric: tabular-nums;
 }
+
+/* The currency's code after a "$" total — says whose dollar, without
+   competing with the figure. */
+.code {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-regular);
+}

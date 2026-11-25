@@ -1,6 +1,7 @@
 import type {
   PurchaseOrderDetailLineFragment,
   PurchaseOrderInfoFragment,
+  PurchaseOrderLineSetResult,
 } from './purchaseOrderDetail.generated';
 
 // An order's money, as the screen assembles it (spec/purchase-orders rules §
@@ -9,9 +10,9 @@ import type {
 // A line's cost is the server's stored `lineTotal` with the order's supplier
 // discount apportioned to it, read straight off the row as
 // `lineTotalAfterSupplierDiscount` (rules § pricing and totals) — nothing here
-// recomputes it for a saved line. Above the lines, the subtotal and the
-// discounted total come off the node: the server's `purchase_order_stats` view
-// sums the lines' stored totals, service lines included.
+// recomputes it for a saved line. The order total comes off the node: the
+// server's `purchase_order_stats` view sums the lines' stored totals, service
+// lines included, less the supplier discount.
 
 type Quantities = Pick<
   PurchaseOrderDetailLineFragment,
@@ -61,21 +62,52 @@ export const projectedLineCost = (
   (isService ? 1 : supplierDiscountFactor(order));
 
 /**
- * The totals band's three figures, left to right. `supplierDiscountAmount` is
- * the server's own resolution of the stored percentage against the subtotal,
- * so the band's arithmetic reads across.
+ * Everything taken off a line: its packs at the before-discount price, less
+ * the cost the table shows. That is the line's own discount and, on an order
+ * still carrying a supplier discount, the line's share of it — so the row
+ * reads across as packs × price − discount = line cost (rules § pricing and
+ * totals). Never below zero: float noise on an undiscounted line would
+ * otherwise format as "-0.00".
+ */
+export const lineDiscount = (
+  line: Quantities &
+    Pick<
+      PurchaseOrderDetailLineFragment,
+      'pricePerPackBeforeDiscount' | 'lineTotalAfterSupplierDiscount'
+    >
+): number =>
+  Math.max(
+    0,
+    linePacks(line) * line.pricePerPackBeforeDiscount -
+      line.lineTotalAfterSupplierDiscount
+  );
+
+type LineSetLine = Extract<
+  PurchaseOrderLineSetResult['purchaseOrderLines'],
+  { __typename: 'PurchaseOrderLineConnector' }
+>['nodes'][number];
+
+/**
+ * The totals band's figures, left to right: the stock lines' cost, the
+ * service lines' (the order's charges), and the order total they add up to.
+ * The total is the server's; the charges are summed from the whole line set,
+ * and the subtotal is what is left — so the band always reads across as
+ * subtotal + charges = order total, a supplier discount included (rules §
+ * pricing and totals).
  */
 export const orderTotals = (
-  node: Pick<
-    PurchaseOrderInfoFragment,
-    | 'orderTotalBeforeDiscount'
-    | 'orderTotalAfterDiscount'
-    | 'supplierDiscountAmount'
-    | 'supplierDiscountPercentage'
-  >
-) => ({
-  subtotal: node.orderTotalBeforeDiscount,
-  discount: node.supplierDiscountAmount,
-  discountPercentage: node.supplierDiscountPercentage ?? 0,
-  total: node.orderTotalAfterDiscount,
-});
+  node: Pick<PurchaseOrderInfoFragment, 'orderTotalAfterDiscount'>,
+  lines: readonly Pick<LineSetLine, 'item' | 'lineTotalAfterSupplierDiscount'>[]
+) => {
+  const service = lines.filter(line => line.item.type === 'SERVICE');
+  const charges = service.reduce(
+    (sum, line) => sum + line.lineTotalAfterSupplierDiscount,
+    0
+  );
+  return {
+    subtotal: node.orderTotalAfterDiscount - charges,
+    charges,
+    hasCharges: service.length > 0,
+    total: node.orderTotalAfterDiscount,
+  };
+};
