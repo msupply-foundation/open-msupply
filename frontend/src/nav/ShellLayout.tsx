@@ -26,7 +26,10 @@ import {
   upperNav,
   type NavLeaf,
 } from '../ui/layout/AppShell/navModel';
-import { ShellSectionContext } from '../ui/layout/AppShell/shellContext';
+import {
+  createParentRegistry,
+  ShellSectionContext,
+} from '../ui/layout/AppShell/shellContext';
 import { authUser, logout, userDisplayName } from '../auth/authContext';
 import { storeCustomColour } from '../store/storeContext';
 import { isCentralServer } from '../api/serverInfo';
@@ -166,6 +169,9 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   const sectionIcon = () =>
     sectionIconForPath(relativePath()) ??
     pluginSectionIconForPath(relativePath());
+
+  // The page breadcrumb's parent crumb, for Escape (KB-X5).
+  const parentCrumb = createParentRegistry();
 
   /*
    * A destination's URL, via the ONE join rule for store addresses
@@ -324,6 +330,7 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
           onSyncNow={syncNow}
           onSyncOpen={openSync}
           onLogoutRequest={() => setLogoutConfirmOpen(true)}
+          breadcrumbParent={parentCrumb.current}
         />
         {/* The cold-chain notification band, above the page's own app bar
             (spec/cold-chain-monitoring ui-surface S5 § layout). Renders
@@ -353,7 +360,12 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
         >
           {/* Wraps the PAGE, not the shell chrome: the only consumer is the
               page header's breadcrumb. */}
-          <ShellSectionContext.Provider value={{ icon: sectionIcon }}>
+          <ShellSectionContext.Provider
+            value={{
+              icon: sectionIcon,
+              registerParent: parentCrumb.register,
+            }}
+          >
             {props.children}
           </ShellSectionContext.Provider>
         </Show>

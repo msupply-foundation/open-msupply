@@ -4,6 +4,7 @@ import {
   createUniqueId,
   For,
   Show,
+  type JSX,
 } from 'solid-js';
 import {
   formatCurrency,
@@ -14,16 +15,27 @@ import {
 } from '@/intl';
 import { NumberField } from '@/ui/elements/inputs/NumberField';
 import { Button } from '@/ui/elements/buttons/Button';
+import { LinkButton } from '@/ui/elements/buttons/LinkButton';
 import { IconButton } from '@/ui/elements/buttons/IconButton';
 import { Alert } from '@/ui/elements/feedback/Alert';
-import { CheckCircleIcon, ChevronDownIcon, TrashIcon } from '@/ui/icons';
+import { Popover } from '@/ui/elements/feedback/Popover';
+import {
+  CheckCircleIcon,
+  ChevronDownIcon,
+  MoreHorizontalIcon,
+  TrashIcon,
+} from '@/ui/icons';
 import { createMediaQuery } from '@/ui/utils/createMediaQuery';
+import { createFocusTargets } from '@/ui/utils/createFocusTarget';
 import {
   linePrice,
+  stockFor,
   type ListLine,
   type MedicineCard,
 } from './simpleDispensingLogic';
+import type { VisitLine } from './dispensedVisit';
 import { StepHeading } from './StepHeading';
+import { CorrectStockAction } from './CorrectStockDialog';
 import styles from './DispensingList.module.css';
 
 /*
@@ -45,6 +57,37 @@ import styles from './DispensingList.module.css';
  * (spec/ui-standards tables › wrapping), and a medicine's name has to be read
  * whole at the counter, in a column a third of a narrow panel wide.
  */
+/** A dispensed visit, as the list shows it in its place. */
+export interface OpenVisit {
+  /** When it was dispensed (or cancelled, or created). */
+  heading: string;
+  /** Who it was for, and their code. Undefined until it is read. */
+  forName: string | undefined;
+  /** Undefined until it is read; `message` says why. */
+  lines: readonly VisitLine[] | undefined;
+  total: number | undefined;
+  /** In place of the lines: loading, couldn't be read, not found. */
+  message?: JSX.Element;
+  /** Why it can't be edited, where that is the whole answer. */
+  reason?: string;
+  /** Its one action (Cancel, or Edit), at the foot's inline end. */
+  action?: JSX.Element;
+}
+
+/**
+ * A dispensed visit being edited (rules › editing a dispensed visit): the
+ * list is its medicines, Clear discards the changes, Dispense saves them, and
+ * the visit can be deleted.
+ */
+export interface EditingVisit {
+  /** Which visit is being edited, by when it was dispensed. */
+  heading: string;
+  /** Who it was for, and their code. */
+  forName: string | undefined;
+  /** Ask to delete it: from the menu, or Save with nothing on the list. */
+  onDelete: () => void;
+}
+
 export const DispensingList = (props: {
   /** The patient's name, once someone is chosen. */
   forName: string | undefined;
@@ -53,6 +96,16 @@ export const DispensingList = (props: {
   cardOf: (itemId: string) => MedicineCard | undefined;
   onAmount: (itemId: string, units: number | undefined) => void;
   onRemove: (itemId: string) => void;
+  /**
+   * Correct the stock of a line's medicine, from a line that stopped at the
+   * stock or was left short (rules › correcting the stock). `allowed` false
+   * says who can instead. `open` gets where focus goes once it saves: the
+   * line's amount, the next thing to change or check.
+   */
+  correctStock: {
+    allowed: boolean;
+    open: (itemId: string, refocus: () => void) => void;
+  };
   /** Empty the list. Nothing was saved, so nothing else changes. */
   onClear: () => void;
   /** Save the visit (rules › dispensing the visit). */
@@ -77,9 +130,22 @@ export const DispensingList = (props: {
    * stopped on short stock or a changed price. Shown in the list itself —
    * never a toast (ui-standards › action feedback).
    */
-  notice?: { severity: 'success' | 'warning' | 'error'; text: string };
+  notice?: {
+    severity: 'success' | 'info' | 'warning' | 'error';
+    text: string;
+    /** Where View goes: the visit the message says was dispensed. */
+    viewHref?: string;
+  };
   /** A phone: the list is the bottom bar and its sheet. */
   isPhone: boolean;
+  /**
+   * A dispensed visit open in the list's place (rules › a dispensed visit):
+   * its head, lines and total, read only, and its own actions in place of
+   * Clear and Dispense. The list in progress waits, untouched, until it goes.
+   */
+  visit?: OpenVisit;
+  /** A dispensed visit being edited in the list. */
+  editing?: EditingVisit;
 }) => {
   const priceOfLine = (line: ListLine): number =>
     linePrice(props.cardOf(line.itemId), line.units);
@@ -89,6 +155,10 @@ export const DispensingList = (props: {
     return sum;
   };
   const hasLines = () => props.lines.length > 0;
+  // The total the panel shows: the dispensed visit's once it is read, else
+  // the list's once something is on it.
+  const shownTotal = (): number | undefined =>
+    props.visit ? props.visit.total : hasLines() ? total() : undefined;
 
   // The phone's sheet. Closed whenever the screen is not a phone, so it opens
   // closed if the screen turns back into one.
@@ -108,16 +178,51 @@ export const DispensingList = (props: {
   // standard size, to match the keys on the cards (ui-surface S9 › touch).
   const isTouch = createMediaQuery('(pointer: coarse)');
 
-  const dispenseButton = (testId: string, cls?: string) => (
+  // Each line's amount field, for focus to land on after correcting the stock.
+  const amountFields = createFocusTargets();
+
+  // Correct the stock beside a line's message (ui-surface S9).
+  const correctAction = (itemId: string, variant: 'secondary' | 'ghost') => (
+    <CorrectStockAction
+      allowed={props.correctStock.allowed}
+      disabled={props.locked}
+      variant={variant}
+      onCorrect={() =>
+        props.correctStock.open(itemId, () => amountFields.focus(itemId))
+      }
+    />
+  );
+
+  // While editing with nothing left on the list, saving means deleting the
+  // visit (rules › editing a dispensed visit).
+  const deletes = () => props.editing !== undefined && !hasLines();
+  // The foot's button names what it does while editing; the phone bar's
+  // keeps its one id.
+  const dispenseButton = (testId: string, cls?: string, foot = false) => (
     <Button
       class={cls}
-      icon={<CheckCircleIcon />}
-      disabled={!hasLines() || !props.canDispense || props.looking}
+      variant={deletes() ? 'danger' : undefined}
+      icon={deletes() ? <TrashIcon /> : <CheckCircleIcon />}
+      disabled={
+        (!hasLines() && !props.editing) || !props.canDispense || props.looking
+      }
       loading={props.dispensing}
-      data-testid={testId}
-      onClick={() => props.onDispense()}
+      data-testid={
+        foot && props.editing
+          ? deletes()
+            ? 'delete-dispense-button'
+            : 'save-changes-button'
+          : testId
+      }
+      onClick={() =>
+        deletes() ? props.editing?.onDelete() : props.onDispense()
+      }
     >
-      {t('button.dispense')}
+      {props.editing
+        ? deletes()
+          ? t('button.delete-dispensing-record')
+          : t('button.save-changes')
+        : t('button.dispense')}
     </Button>
   );
 
@@ -163,17 +268,22 @@ export const DispensingList = (props: {
               {t('heading.check-and-dispense')}
             </span>
             <span class={styles.barCount} data-testid="dispensing-bar-count">
-              {hasLines()
-                ? tPlural('label.medicine-count', props.lines.length)
-                : t('label.nothing-on-the-list')}
+              {props.visit
+                ? props.visit.heading
+                : hasLines()
+                  ? tPlural('label.medicine-count', props.lines.length)
+                  : t('label.nothing-on-the-list')}
             </span>
-            <Show when={hasLines()}>
+            <Show when={shownTotal() !== undefined}>
               <span class={styles.barTotal} data-testid="dispensing-bar-total">
-                {formatCurrency(total())}
+                {formatCurrency(shownTotal() ?? 0)}
               </span>
             </Show>
           </button>
-          {dispenseButton('dispensing-bar-dispense-button', styles.barAction)}
+          {/* A dispensed visit has nothing to dispense. */}
+          <Show when={!props.visit}>
+            {dispenseButton('dispensing-bar-dispense-button', styles.barAction)}
+          </Show>
         </div>
 
         {/* What the last Dispense did: above the bar on a phone, so it shows
@@ -184,10 +294,25 @@ export const DispensingList = (props: {
               <Alert
                 severity={notice().severity}
                 compact
+                class={styles.noticeAlert}
                 testId="dispense-notice"
               >
                 {notice().text}
               </Alert>
+              {/* Beside the message, not in it: the alert is a message
+                  panel, with no controls of its own. */}
+              <Show when={notice().viewHref}>
+                {href => (
+                  <LinkButton
+                    href={href()}
+                    variant="ghost"
+                    size="small"
+                    data-testid="view-dispensed-visit-button"
+                  >
+                    {t('button.view')}
+                  </LinkButton>
+                )}
+              </Show>
             </div>
           )}
         </Show>
@@ -196,238 +321,419 @@ export const DispensingList = (props: {
             the sheet the bar opens on a phone. */}
         <div id={sheetId} class={styles.sheet}>
           <header class={styles.head}>
-            <div class={styles.titleRow}>
-              <StepHeading
-                n={3}
-                label={t('heading.check-and-dispense')}
-                heading
-              />
-              <Show when={hasLines()}>
-                <span class={styles.count} data-testid="dispensing-list-count">
-                  {tPlural('label.medicine-count', props.lines.length)}
-                </span>
-              </Show>
-            </div>
-            <p class={styles.for} data-testid="dispensing-list-for">
-              {props.forName === undefined
-                ? t('label.for-not-chosen-yet')
-                : t('label.for-patient', { name: props.forName })}
-            </p>
-          </header>
-
-          <div class={styles.body}>
             <Show
-              when={hasLines()}
+              when={props.visit}
               fallback={
-                <p class={styles.empty}>{t('messages.no-medicines-added')}</p>
+                <>
+                  <div class={styles.titleRow}>
+                    {/* Editing, the visit being edited in the step's place,
+                        with no number: it is not a step of a new visit. */}
+                    <Show
+                      when={props.editing}
+                      fallback={
+                        <StepHeading
+                          n={3}
+                          label={t('heading.check-and-dispense')}
+                          heading
+                        />
+                      }
+                    >
+                      {editing => (
+                        <h2
+                          class={styles.visitHeading}
+                          data-testid="editing-dispense-heading"
+                        >
+                          {editing().heading}
+                        </h2>
+                      )}
+                    </Show>
+                    <span class={styles.titleEnd}>
+                      <Show when={hasLines()}>
+                        <span
+                          class={styles.count}
+                          data-testid="dispensing-list-count"
+                        >
+                          {tPlural('label.medicine-count', props.lines.length)}
+                        </span>
+                      </Show>
+                      {/* Delete is rare and can't be undone: out of the foot,
+                          behind the menu, so Discard and Save stand alone. */}
+                      <Show when={props.editing}>
+                        {editing => (
+                          <Popover
+                            trigger={<MoreHorizontalIcon aria-hidden="true" />}
+                            triggerLabel={t('label.more-actions')}
+                            triggerClass={styles.moreActions}
+                            triggerTestId="edit-more-actions-button"
+                            placement="bottom-end"
+                          >
+                            {closeMenu => (
+                              <Button
+                                variant="ghost"
+                                icon={<TrashIcon />}
+                                class={styles.deleteAction}
+                                disabled={props.locked}
+                                data-testid="delete-dispense-menu-item"
+                                onClick={() => {
+                                  closeMenu();
+                                  editing().onDelete();
+                                }}
+                              >
+                                {t('button.delete-dispensing-record')}
+                              </Button>
+                            )}
+                          </Popover>
+                        )}
+                      </Show>
+                    </span>
+                  </div>
+                  <p class={styles.for} data-testid="dispensing-list-for">
+                    {props.editing
+                      ? t('label.for-patient', {
+                          name: props.editing.forName ?? '',
+                        })
+                      : props.forName === undefined
+                        ? t('label.for-not-chosen-yet')
+                        : t('label.for-patient', { name: props.forName })}
+                  </p>
+                </>
               }
             >
-              <table class={styles.lines}>
-                <thead>
-                  <tr>
-                    <th scope="col">{t('label.item')}</th>
-                    <th scope="col" data-numeric>
-                      {t('label.qty')}
-                    </th>
-                    <th scope="col" data-numeric>
-                      {t('label.price')}
-                    </th>
-                    {/* The remove buttons' column: nothing to head it with. */}
-                    <td />
-                  </tr>
-                </thead>
-                {/* The page's store rows, keyed by medicine: editing one
+              {visit => (
+                <>
+                  {/* In the step's place, with no number: a dispensed visit
+                      is not a step of this one. */}
+                  <h2
+                    class={styles.visitHeading}
+                    data-testid="dispensed-visit-heading"
+                  >
+                    {visit().heading}
+                  </h2>
+                  <Show when={visit().forName}>
+                    {name => (
+                      <p class={styles.for} data-testid="dispensing-list-for">
+                        {t('label.for-patient', { name: name() })}
+                      </p>
+                    )}
+                  </Show>
+                </>
+              )}
+            </Show>
+          </header>
+
+          <Show when={props.visit}>
+            {visit => (
+              <div class={styles.body} data-testid="dispensed-visit">
+                <Show when={visit().lines} fallback={visit().message}>
+                  {lines => (
+                    <table class={styles.lines}>
+                      <thead>
+                        <tr>
+                          <th scope="col">{t('label.item')}</th>
+                          <th scope="col" data-numeric>
+                            {t('label.qty')}
+                          </th>
+                          <th scope="col" data-numeric>
+                            {t('label.price')}
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <For each={lines()}>
+                          {line => (
+                            <tr
+                              data-testid={`dispensed-visit-line-${line.itemId}`}
+                            >
+                              <td>
+                                <span class={styles.name}>{line.name}</span>
+                                <Show when={line.unit}>
+                                  {unit => (
+                                    <span class={styles.unit}>{unit()}</span>
+                                  )}
+                                </Show>
+                              </td>
+                              <td data-numeric data-testid="line-amount">
+                                {line.units === undefined
+                                  ? ''
+                                  : roundedText(line.units)}
+                              </td>
+                              <td data-numeric data-testid="line-price">
+                                {formatCurrency(line.price)}
+                              </td>
+                            </tr>
+                          )}
+                        </For>
+                      </tbody>
+                    </table>
+                  )}
+                </Show>
+              </div>
+            )}
+          </Show>
+
+          <Show when={!props.visit}>
+            <div class={styles.body}>
+              <Show
+                when={hasLines()}
+                fallback={
+                  <p class={styles.empty}>{t('messages.no-medicines-added')}</p>
+                }
+              >
+                <table class={styles.lines}>
+                  <thead>
+                    <tr>
+                      <th scope="col">{t('label.item')}</th>
+                      <th scope="col" data-numeric>
+                        {t('label.qty')}
+                      </th>
+                      <th scope="col" data-numeric>
+                        {t('label.price')}
+                      </th>
+                      {/* The remove buttons' column: nothing to head it with. */}
+                      <td />
+                    </tr>
+                  </thead>
+                  {/* The page's store rows, keyed by medicine: editing one
                     line's amount never rebuilds its row. Each line is a body
                     of its own, so what it has to say sits under it. */}
-                <For each={props.lines}>
-                  {line => {
-                    const card = () => props.cardOf(line.itemId);
-                    const name = () => card()?.item.name ?? '';
-                    const unit = () => card()?.item.unitName ?? '';
-                    const stock = () => card()?.stock ?? 0;
-                    // The unit as set up, never pluralised (#666); an item
-                    // with no unit leaves no gap.
-                    const amountText = (key: LocaleKey, quantity: number) =>
-                      t(key, {
-                        quantity: roundedText(quantity),
-                        unit: unit(),
-                      }).replace(/\s+/g, ' ');
-                    return (
-                      <tbody
-                        data-testid={`dispensing-list-line-${line.itemId}`}
-                      >
-                        <tr>
-                          <td>
-                            <span class={styles.name}>{name()}</span>
-                            <Show when={card()?.item.unitName}>
-                              {unit => (
-                                <span class={styles.unit}>{unit()}</span>
-                              )}
-                            </Show>
-                          </td>
-                          <td class={styles.qty}>
-                            <NumberField
-                              label={t('label.amount-of', { item: name() })}
-                              hideLabel
-                              size={isTouch() ? 'default' : 'small'}
-                              // Fills the column, so every line's field is one
-                              // width and lines up under its heading.
-                              width="full"
-                              decimalLimit={2}
-                              // No max: the page stops an amount at the stock
-                              // itself, so the line can say why. It answers
-                              // inside onChange, even with the value it held.
-                              parentAnswersSynchronously
-                              disabled={props.locked}
-                              value={line.units}
-                              data-testid="line-amount-input"
-                              onChange={units =>
-                                props.onAmount(line.itemId, units)
-                              }
-                            />
-                          </td>
-                          <td data-numeric data-testid="line-price">
-                            {formatCurrency(priceOfLine(line))}
-                          </td>
-                          <td class={styles.remove}>
-                            <IconButton
-                              icon={<TrashIcon />}
-                              size="small"
-                              class={styles.removeButton}
-                              label={t('label.remove-item', { item: name() })}
-                              data-testid="remove-line-button"
-                              disabled={props.locked}
-                              onClick={() => props.onRemove(line.itemId)}
-                            />
-                          </td>
-                        </tr>
-                        {/* Typed above the stock: the amount stopped there,
-                            and this says why. */}
-                        <Show when={line.capped && line.units <= stock()}>
-                          <tr class={styles.note}>
-                            <td colSpan={4}>
-                              <p
-                                class={styles.limit}
-                                data-testid="line-stock-limit"
-                              >
-                                {amountText(
-                                  'messages.only-units-in-stock',
-                                  stock()
+                  <For each={props.lines}>
+                    {line => {
+                      const card = () => props.cardOf(line.itemId);
+                      const name = () => card()?.item.name ?? '';
+                      const unit = () => card()?.item.unitName ?? '';
+                      const stock = () => stockFor(card(), line.units);
+                      // The unit as set up, never pluralised (#666); an item
+                      // with no unit leaves no gap.
+                      const amountText = (key: LocaleKey, quantity: number) =>
+                        t(key, {
+                          quantity: roundedText(quantity),
+                          unit: unit(),
+                        }).replace(/\s+/g, ' ');
+                      return (
+                        <tbody
+                          data-testid={`dispensing-list-line-${line.itemId}`}
+                        >
+                          <tr>
+                            <td>
+                              <span class={styles.name}>{name()}</span>
+                              <Show when={card()?.item.unitName}>
+                                {unit => (
+                                  <span class={styles.unit}>{unit()}</span>
                                 )}
-                              </p>
+                              </Show>
+                            </td>
+                            <td class={styles.qty}>
+                              <NumberField
+                                label={t('label.amount-of', { item: name() })}
+                                hideLabel
+                                size={isTouch() ? 'default' : 'small'}
+                                // Fills the column, so every line's field
+                                // is one width and lines up under its
+                                // heading.
+                                width="full"
+                                decimalLimit={2}
+                                // No max: the page stops an amount at the stock
+                                // itself, so the line can say why. It answers
+                                // inside onChange, even with the value it held.
+                                parentAnswersSynchronously
+                                disabled={props.locked}
+                                value={line.units}
+                                ref={amountFields.ref(line.itemId)}
+                                data-testid="line-amount-input"
+                                onChange={units =>
+                                  props.onAmount(line.itemId, units)
+                                }
+                              />
+                            </td>
+                            <td data-numeric data-testid="line-price">
+                              {formatCurrency(priceOfLine(line))}
+                            </td>
+                            <td class={styles.remove}>
+                              <IconButton
+                                icon={<TrashIcon />}
+                                size="small"
+                                class={styles.removeButton}
+                                label={t('label.remove-item', { item: name() })}
+                                data-testid="remove-line-button"
+                                disabled={props.locked}
+                                onClick={() => props.onRemove(line.itemId)}
+                              />
                             </td>
                           </tr>
-                        </Show>
-                        {/* Dispense found less stock than the line holds:
+                          {/* Typed above the stock: the amount stopped there,
+                            and this says why. */}
+                          <Show when={line.capped && line.units <= stock()}>
+                            <tr class={styles.note}>
+                              <td colSpan={4}>
+                                <div class={styles.limitRow}>
+                                  <p
+                                    class={styles.limit}
+                                    data-testid="line-stock-limit"
+                                  >
+                                    {amountText(
+                                      'messages.only-units-in-stock',
+                                      stock()
+                                    )}
+                                  </p>
+                                  {correctAction(line.itemId, 'secondary')}
+                                </div>
+                              </td>
+                            </tr>
+                          </Show>
+                          {/* Dispense found less stock than the line holds:
                             nothing was saved, and staff choose. */}
-                        <Show when={line.units > stock()}>
-                          <tr class={styles.note}>
-                            <td colSpan={4}>
-                              <div
-                                class={styles.lineWarning}
-                                data-testid="line-stock-warning"
-                              >
-                                <p>
-                                  <strong>
-                                    {t('messages.stock-went-down')}
-                                  </strong>{' '}
-                                  {stock() > 0
-                                    ? amountText(
-                                        'messages.stock-now-shows',
-                                        stock()
-                                      )
-                                    : t('messages.stock-now-shows-none')}
-                                </p>
-                                <Show
-                                  when={stock() > 0}
-                                  fallback={
-                                    <Button
-                                      variant="secondary"
-                                      size="small"
-                                      disabled={props.locked}
-                                      data-testid="line-warning-remove-button"
-                                      onClick={() =>
-                                        props.onRemove(line.itemId)
+                          <Show when={line.units > stock()}>
+                            <tr class={styles.note}>
+                              <td colSpan={4}>
+                                <div
+                                  class={styles.lineWarning}
+                                  data-testid="line-stock-warning"
+                                >
+                                  <p>
+                                    <strong>
+                                      {t('messages.stock-went-down')}
+                                    </strong>{' '}
+                                    {stock() > 0
+                                      ? amountText(
+                                          'messages.stock-now-shows',
+                                          stock()
+                                        )
+                                      : t('messages.stock-now-shows-none')}
+                                  </p>
+                                  <div class={styles.lineActions}>
+                                    <Show
+                                      when={stock() > 0}
+                                      fallback={
+                                        <Button
+                                          variant="secondary"
+                                          size="small"
+                                          disabled={props.locked}
+                                          data-testid="line-warning-remove-button"
+                                          onClick={() =>
+                                            props.onRemove(line.itemId)
+                                          }
+                                        >
+                                          {t('label.remove')}
+                                        </Button>
                                       }
                                     >
-                                      {t('label.remove')}
-                                    </Button>
-                                  }
-                                >
-                                  <Button
-                                    variant="secondary"
-                                    size="small"
-                                    disabled={props.locked}
-                                    data-testid="give-instead-button"
-                                    onClick={() =>
-                                      props.onAmount(line.itemId, stock())
-                                    }
-                                  >
-                                    {t('button.give-instead', {
-                                      quantity: roundedText(stock()),
-                                    })}
-                                  </Button>
-                                </Show>
-                              </div>
-                            </td>
-                          </tr>
-                        </Show>
-                        {/* Dispense found the line's price changed: nothing
+                                      <Button
+                                        variant="secondary"
+                                        size="small"
+                                        disabled={props.locked}
+                                        data-testid="give-instead-button"
+                                        onClick={() =>
+                                          props.onAmount(line.itemId, stock())
+                                        }
+                                      >
+                                        {t('button.give-instead', {
+                                          quantity: roundedText(stock()),
+                                        })}
+                                      </Button>
+                                    </Show>
+                                    {correctAction(line.itemId, 'ghost')}
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          </Show>
+                          {/* Dispense found the line's price changed: nothing
                             was saved, and staff check the total. A short
                             line says it is short instead. */}
-                        <Show when={line.repriced && line.units <= stock()}>
-                          <tr class={styles.note}>
-                            <td colSpan={4}>
-                              <div
-                                class={styles.lineWarning}
-                                data-testid="line-price-warning"
-                              >
-                                <p>
-                                  <strong>{t('messages.price-changed')}</strong>{' '}
-                                  {t('messages.price-now', {
-                                    price: formatCurrency(priceOfLine(line)),
-                                  })}
-                                </p>
-                              </div>
-                            </td>
-                          </tr>
-                        </Show>
-                      </tbody>
-                    );
-                  }}
-                </For>
-              </table>
-            </Show>
-          </div>
+                          <Show when={line.repriced && line.units <= stock()}>
+                            <tr class={styles.note}>
+                              <td colSpan={4}>
+                                <div
+                                  class={styles.lineWarning}
+                                  data-testid="line-price-warning"
+                                >
+                                  <p>
+                                    <strong>
+                                      {t('messages.price-changed')}
+                                    </strong>{' '}
+                                    {t('messages.price-now', {
+                                      price: formatCurrency(priceOfLine(line)),
+                                    })}
+                                  </p>
+                                </div>
+                              </td>
+                            </tr>
+                          </Show>
+                        </tbody>
+                      );
+                    }}
+                  </For>
+                </table>
+              </Show>
+            </div>
+          </Show>
 
           <footer class={styles.foot}>
-            <Show when={hasLines()}>
+            <Show when={shownTotal() !== undefined}>
               <div class={styles.total}>
                 <span>{t('label.total')}</span>
                 <span
                   class={styles.totalValue}
                   data-testid="dispensing-list-total"
                 >
-                  {formatCurrency(total())}
+                  {formatCurrency(shownTotal() ?? 0)}
                 </span>
               </div>
             </Show>
-            {/* The panel's actions, at its inline end, Dispense last. */}
-            <div class={styles.actions}>
-              {/* Hidden, not disabled, with nothing to clear (ui-surface S9). */}
-              <Show when={hasLines()}>
-                <Button
-                  variant="ghost"
-                  disabled={props.locked}
-                  loading={props.looking}
-                  data-testid="clear-list-button"
-                  onClick={() => props.onClear()}
+            {/* The panel's actions, at its inline end, Dispense last; a
+                dispensed visit's own in their place. */}
+            <Show when={props.visit}>
+              {visit => (
+                <Show when={visit().reason || visit().action}>
+                  <div class={styles.actions}>
+                    <Show when={visit().reason}>
+                      {reason => (
+                        <p
+                          class={styles.reason}
+                          data-testid="dispensed-visit-reason"
+                        >
+                          {reason()}
+                        </p>
+                      )}
+                    </Show>
+                    {visit().action}
+                  </div>
+                </Show>
+              )}
+            </Show>
+            <Show when={!props.visit}>
+              <div class={styles.actions}>
+                {/* Hidden, not disabled, with nothing to clear (ui-surface S9).
+                    While editing it discards the changes, so it is always
+                    there. */}
+                <Show
+                  when={props.editing}
+                  fallback={
+                    <Show when={hasLines()}>
+                      <Button
+                        variant="ghost"
+                        disabled={props.locked}
+                        loading={props.looking}
+                        data-testid="clear-list-button"
+                        onClick={() => props.onClear()}
+                      >
+                        {t('common.clear')}
+                      </Button>
+                    </Show>
+                  }
                 >
-                  {t('common.clear')}
-                </Button>
-              </Show>
-              {dispenseButton('dispense-button')}
-            </div>
+                  <Button
+                    variant="ghost"
+                    disabled={props.locked}
+                    data-testid="discard-changes-button"
+                    onClick={() => props.onClear()}
+                  >
+                    {t('button.discard-changes')}
+                  </Button>
+                </Show>
+                {dispenseButton('dispense-button', undefined, true)}
+              </div>
+            </Show>
           </footer>
         </div>
       </section>

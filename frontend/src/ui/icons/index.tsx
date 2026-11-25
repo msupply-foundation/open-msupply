@@ -618,6 +618,15 @@ export const EditIcon = (props: IconProps) => (
   </Stroke>
 );
 
+/* Hugeicons: MoreHorizontalIcon — a "More actions" trigger. */
+export const MoreHorizontalIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" stroke-width="2.5" {...props}>
+    <path d="M11.9959 12H12.0049" />
+    <path d="M17.9998 12H18.0088" />
+    <path d="M5.99981 12H6.00879" />
+  </Stroke>
+);
+
 /* Hugeicons: UserSquareIcon */
 export const UserIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>

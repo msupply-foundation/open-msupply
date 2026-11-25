@@ -7,6 +7,7 @@ import { startKeyboardDispatcher } from './keyboardDispatcher';
 import { createAction } from '../ui/utils/keyActions';
 import { MOD_K } from '../ui/utils/shortcuts';
 import { useFullScreen } from '../ui/layout/AppShell/shellContext';
+import { isRegistryPlace, placeAbove } from '../nav/placeAbove';
 import { storePath, storeRelativePath } from '../nav/storeRelativePath';
 
 /*
@@ -32,6 +33,8 @@ export interface KeyboardHostProps {
   onSyncOpen: () => void;
   /** Ask to confirm, then log out (OMS-REG-KBD-01.11). */
   onLogoutRequest: () => void;
+  /** The page breadcrumb's parent link, if any — where KB-X5 goes. */
+  breadcrumbParent?: () => string | undefined;
 }
 
 export const KeyboardHost = (props: KeyboardHostProps) => {
@@ -57,20 +60,14 @@ export const KeyboardHost = (props: KeyboardHostProps) => {
    * KB-X5: "navigates up one level — from a detail screen to its list, and so
    * on toward the root."
    *
-   * One segment off the path, which IS the hierarchy the routes already encode:
-   * a detail's id drops to its list, a list drops to its section's entry page,
-   * and the last segment drops to the store root (which is Home).
-   * Deriving it from the URL rather than keeping a stack means it stays correct
-   * however the user arrived — deep link, back button, or a palette jump.
+   * Up is the breadcrumb's parent crumb, so the key and the crumb are one
+   * exit (D103). With none (a list, or a trail still loading), the nearest
+   * ancestor that is a screen, else Home.
    */
   const navigateUp = () => {
-    const segments = relativePath().split('/').filter(Boolean);
-    if (segments.length <= 1) {
-      // Already at a top-level destination (or the root): the root is home.
-      go('');
-      return;
-    }
-    go(segments.slice(0, -1).join('/'));
+    const parent = props.breadcrumbParent?.();
+    if (parent) navigate(parent);
+    else go(placeAbove(relativePath(), isRegistryPlace));
   };
 
   createGlobalActions({

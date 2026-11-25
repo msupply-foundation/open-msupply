@@ -311,8 +311,11 @@
   --radius-button: 1.5rem; /* 24px pill buttons */
 
   /* --- Typography (theme.ts → typography) ----------------------------- */
+  /* 'Phetsarath OT Lao' covers only the Lao block (fonts.css), so Lao text in
+     any language draws in Laos' official font; Lao itself overrides below. */
   --font-sans:
-    'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    'Inter Variable', 'Phetsarath OT Lao', system-ui, -apple-system, 'Segoe UI',
+    Roboto, sans-serif;
   /* Monospace — codes, batches, location IDs & dense identifiers
      (ui-standards › typography). A system stack, no webfont bundled: fixed-
      width glyphs align in columns and disambiguate 0/O and 1/l/I.
@@ -521,6 +524,16 @@
      duration is never the answer — it pins the element to one keyframe. */
   --motion-spin: 700ms; /* indeterminate spinner ring */
   --motion-pulse: 2s; /* sync-progress active-step pulse */
+}
+
+/*
+ * Lao: Phetsarath OT, Laos' official font, is the primary font, Latin letters
+ * and digits included (open-msupply-internal#2597). App.tsx owns <html lang>.
+ */
+:root:lang(lo) {
+  --font-sans:
+    'Phetsarath OT', 'Inter Variable', system-ui, -apple-system, 'Segoe UI',
+    Roboto, sans-serif;
 }
 
 /*

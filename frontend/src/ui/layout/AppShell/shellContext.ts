@@ -1,5 +1,6 @@
 import {
   createContext,
+  createSignal,
   useContext,
   type Accessor,
   type Component,
@@ -58,7 +59,29 @@ export const useShellNav = () => useContext(ShellNavContext);
 export interface ShellSection {
   /** The current route's section glyph, undefined outside the nav tree. */
   icon: Accessor<Component<IconProps> | undefined>;
+  /**
+   * The breadcrumb registers its parent crumb's link here while mounted, for
+   * Escape (KB-X5); the returned function withdraws it.
+   */
+  registerParent?: (parent: Accessor<string | undefined>) => () => void;
 }
+
+/**
+ * The shell's side of `registerParent`; the newest registration wins. A list,
+ * not one slot: on a route change the incoming trail can mount before the
+ * outgoing one withdraws.
+ */
+export const createParentRegistry = () => {
+  const [entries, setEntries] = createSignal<Accessor<string | undefined>[]>(
+    []
+  );
+  const register = (parent: Accessor<string | undefined>) => {
+    setEntries(list => [...list, parent]);
+    return () => setEntries(list => list.filter(entry => entry !== parent));
+  };
+  const current = (): string | undefined => entries().at(-1)?.();
+  return { register, current };
+};
 
 export const ShellSectionContext = createContext<ShellSection>();
 

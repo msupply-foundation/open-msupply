@@ -255,6 +255,7 @@ const ReportsList: Component = () => {
         {version => (
           <ReportEditModal
             version={version()}
+            storeId={params.storeId}
             onClose={() => setEditing(undefined)}
             onSaved={onSaved}
           />

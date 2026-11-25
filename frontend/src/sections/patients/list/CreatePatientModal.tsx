@@ -18,6 +18,7 @@ import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
+import { flashOnArrival } from '../../../ui/utils/createArrivalFlash';
 import { HStack } from '../../../ui/layout/Stack/HStack';
 import { Stack } from '../../../ui/layout/Stack/Stack';
 import { FormErrorSummary } from '../../../ui/layout/Form/FormErrorSummary';
@@ -339,7 +340,9 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
   ) => setDraft(key, value);
 
   // Hand the new patient back to the caller and close
-  // (OMS-REG-DIS-01.4/.7/.32), or open its detail.
+  // (OMS-REG-DIS-01.4/.7/.32), or open its detail, which confirms the create
+  // in its footer (OMS-REG-DIS-01.86). The caller's surface confirms nothing:
+  // the patient it now holds is the result.
   const finish = (id: string, firstName: string, lastName: string) => {
     if (props.onCreated) {
       const name = [lastName, firstName].filter(Boolean).join(', ');
@@ -348,6 +351,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
       return;
     }
     props.onClose();
+    flashOnArrival(id, t('messages.patient-created'));
     navigate(`/${props.storeId}/dispensary/patients/${id}`);
   };
 

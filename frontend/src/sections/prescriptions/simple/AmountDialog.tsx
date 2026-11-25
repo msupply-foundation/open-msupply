@@ -11,6 +11,7 @@ import {
   canAddTyped,
   type MedicineCard,
 } from './simpleDispensingLogic';
+import { CorrectStockAction } from './CorrectStockDialog';
 import styles from './SimpleDispensing.module.css';
 
 /*
@@ -28,6 +29,16 @@ export const AmountDialog = (props: {
    * dispensing the visit).
    */
   locked: boolean;
+  /**
+   * Correct the stock from the box, when the amount typed is more than is
+   * available or none is (rules › correcting the stock). `allowed` false
+   * says who can instead. `open` gets the amount typed, which the notice
+   * after saving counts as this patient's, and where focus goes once it saves.
+   */
+  correctStock: {
+    allowed: boolean;
+    open: (typed: number, refocus: () => void) => void;
+  };
   onAdd: (units: number) => void;
   onClose: () => void;
 }) => {
@@ -70,6 +81,19 @@ export const AmountDialog = (props: {
     }).replace(/\s+/g, ' ');
   };
 
+  // Under the field's error, or the notice that none is available.
+  const correctAction = () => (
+    <div>
+      <CorrectStockAction
+        allowed={props.correctStock.allowed}
+        disabled={props.locked}
+        onCorrect={() =>
+          props.correctStock.open(typed() ?? 0, () => amountField.focus())
+        }
+      />
+    </div>
+  );
+
   return (
     <Dialog
       open
@@ -109,9 +133,12 @@ export const AmountDialog = (props: {
       <Show
         when={!none()}
         fallback={
-          <Alert severity="warning" compact testId="amount-modal-none">
-            {t('messages.none-available', { item: name() })}
-          </Alert>
+          <div class={styles.amountBox}>
+            <Alert severity="warning" compact testId="amount-modal-none">
+              {t('messages.none-available', { item: name() })}
+            </Alert>
+            {correctAction()}
+          </div>
         }
       >
         <div class={styles.amountBox}>
@@ -163,6 +190,7 @@ export const AmountDialog = (props: {
             errorTestId="amount-modal-error"
             data-testid="amount-modal-input"
           />
+          <Show when={tooMany()}>{correctAction()}</Show>
         </div>
       </Show>
     </Dialog>
