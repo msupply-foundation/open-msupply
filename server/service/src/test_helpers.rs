@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use actix_rt::task::JoinHandle;
 use repository::{
-    StorageConnection, StorageConnectionManager,
+    RepositoryError, StorageConnection, StorageConnectionManager,
     mock::{MockData, MockDataInserts},
     test_db::setup_all_with_data,
 };
@@ -157,4 +157,18 @@ pub(crate) fn wait_for_system_log_messages(
         std::thread::sleep(std::time::Duration::from_millis(50));
     }
     read()
+}
+
+/// Saves a record as an import does: refused with `errors`, every rule it breaks, if there are
+/// any; otherwise written by `write`.
+pub(crate) fn save_checked<E>(
+    errors: Result<Vec<E>, RepositoryError>,
+    write: impl FnOnce() -> Result<(), RepositoryError>,
+) -> Result<(), Vec<E>> {
+    let errors = errors.unwrap();
+    if !errors.is_empty() {
+        return Err(errors);
+    }
+    write().unwrap();
+    Ok(())
 }

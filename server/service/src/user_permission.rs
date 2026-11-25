@@ -1,22 +1,19 @@
 use crate::{
-    user_on_store::{UserOnStoreError, check_new_user_and_store, check_not_protected},
+    user_on_store::{is_deleted_user, is_protected},
     user_store_join::{find_user_store_join, is_last_store_on_site, store_access},
 };
 use repository::{
-    ContextRowRepository, EqualFilter, PermissionType, RepositoryError, StorageConnection,
-    UserPermissionFilter, UserPermissionRepository, UserPermissionRow, UserPermissionRowRepository,
-    UserStoreJoinRow, UserStoreJoinRowRepository,
+    EqualFilter, PermissionType, RepositoryError, StorageConnection, UserPermissionFilter,
+    UserPermissionRepository, UserPermissionRow, UserPermissionRowRepository, UserStoreJoinRow,
+    UserStoreJoinRowRepository,
 };
 use util::uuid::uuid;
 
 #[derive(Debug, PartialEq)]
 pub enum UpsertUserPermissionError {
-    UserNotFound,
     UserDeleted,
     /// See `protected_user_ids`.
     Protected,
-    StoreNotFound,
-    ContextNotFound,
     /// `store_id` is NOT NULL in the database.
     StoreRequired,
     /// Nothing would check it.
@@ -27,27 +24,6 @@ pub enum UpsertUserPermissionError {
     },
     /// A saved record's user, store, permission or context. Delete it and add another.
     RecordChanged,
-    DatabaseError(RepositoryError),
-}
-
-impl From<UserOnStoreError> for UpsertUserPermissionError {
-    fn from(error: UserOnStoreError) -> Self {
-        match error {
-            UserOnStoreError::Protected => UpsertUserPermissionError::Protected,
-            UserOnStoreError::UserNotFound => UpsertUserPermissionError::UserNotFound,
-            UserOnStoreError::UserDeleted => UpsertUserPermissionError::UserDeleted,
-            UserOnStoreError::StoreNotFound => UpsertUserPermissionError::StoreNotFound,
-            UserOnStoreError::DatabaseError(error) => {
-                UpsertUserPermissionError::DatabaseError(error)
-            }
-        }
-    }
-}
-
-impl From<RepositoryError> for UpsertUserPermissionError {
-    fn from(error: RepositoryError) -> Self {
-        UpsertUserPermissionError::DatabaseError(error)
-    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -78,36 +54,27 @@ pub fn new_user_permission_id(row: &UserPermissionRow) -> String {
     }
 }
 
-/// Store access also adds the user's store join, so they can log in. Joins the caller's
-/// transaction. `protected` is `protected_user_ids`, read once by a caller that saves many.
-pub fn upsert_user_permission(
+/// Adds one user permission, which `user_permission_errors` has passed. Store access also adds the
+/// user's store join, so they can log in.
+pub fn upsert_user_permission_unchecked(
     connection: &StorageConnection,
-    protected: &[String],
     row: &UserPermissionRow,
-) -> Result<(), UpsertUserPermissionError> {
+) -> Result<(), RepositoryError> {
     connection
-        .transaction_sync(|connection| -> Result<(), UpsertUserPermissionError> {
-            let repo = UserPermissionRowRepository::new(connection);
-            let saved = repo.find_one_by_id(&row.id)?;
-            validate(connection, protected, saved.as_ref(), row)?;
-            save(connection, row)?;
+        .transaction_sync(|connection| {
+            UserPermissionRowRepository::new(connection).upsert_one(row)?;
+            if row.permission == PermissionType::StoreAccess
+                && let Some(store_id) = &row.store_id
+            {
+                add_store_join(connection, &row.user_id, store_id)?;
+            }
             Ok(())
         })
         .map_err(|error| error.to_inner_error())
 }
 
-fn save(connection: &StorageConnection, row: &UserPermissionRow) -> Result<(), RepositoryError> {
-    UserPermissionRowRepository::new(connection).upsert_one(row)?;
-    if row.permission == PermissionType::StoreAccess
-        && let Some(store_id) = &row.store_id
-    {
-        add_store_join(connection, &row.user_id, store_id)?;
-    }
-    Ok(())
-}
-
 /// Taking store access away also removes the store join. `deleting_user_id` can't lock themselves
-/// out. `protected` is as for `upsert_user_permission`.
+/// out. `protected` is `protected_user_ids`, read once by a caller that saves many.
 pub fn delete_user_permission(
     connection: &StorageConnection,
     protected: &[String],
@@ -120,8 +87,9 @@ pub fn delete_user_permission(
             let Some(saved) = repo.find_one_by_id(id)? else {
                 return Ok(());
             };
-            check_not_protected(protected, &saved.user_id, None)
-                .map_err(|_| DeleteUserPermissionError::Protected)?;
+            if is_protected(protected, &saved.user_id, None) {
+                return Err(DeleteUserPermissionError::Protected);
+            }
             // Before deleting: inside an import's transaction an error doesn't roll back.
             let removes_store = removes_store(connection, &saved)?;
             if saved.user_id == deleting_user_id && locks_out(connection, &saved, removes_store)? {
@@ -157,45 +125,46 @@ pub fn find_user_permission(
     })
 }
 
-/// A saved record never changes: its store join and the lockout check `delete_user_permission`
-/// makes would be left behind. Re-saving it unchanged passes, even if it no longer would as new.
-fn validate(
+/// Every rule `row` breaks. A saved record never changes: its store join and the lockout check
+/// `delete_user_permission` makes would be left behind. Re-saving it unchanged passes, even if it
+/// no longer would as new. `protected` is `protected_user_ids`, read once by a caller that saves many.
+pub fn user_permission_errors(
     connection: &StorageConnection,
     protected: &[String],
     saved: Option<&UserPermissionRow>,
     row: &UserPermissionRow,
-) -> Result<(), UpsertUserPermissionError> {
-    check_not_protected(
+) -> Result<Vec<UpsertUserPermissionError>, RepositoryError> {
+    let mut errors = Vec::new();
+    if is_protected(
         protected,
         &row.user_id,
         saved.map(|saved| saved.user_id.as_str()),
-    )?;
+    ) {
+        errors.push(UpsertUserPermissionError::Protected);
+    }
     if let Some(saved) = saved {
         if saved != row {
-            return Err(UpsertUserPermissionError::RecordChanged);
+            errors.push(UpsertUserPermissionError::RecordChanged);
         }
-        return Ok(());
+        return Ok(errors);
     }
 
     if matches!(row.permission, PermissionType::Unknown(_)) {
-        return Err(UpsertUserPermissionError::UnknownPermission);
+        errors.push(UpsertUserPermissionError::UnknownPermission);
     }
-    let Some(store_id) = &row.store_id else {
-        return Err(UpsertUserPermissionError::StoreRequired);
-    };
-    check_new_user_and_store(connection, &row.user_id, store_id)?;
-    if let Some(context_id) = &row.context_id
-        && !ContextRowRepository::new(connection).check_exists_by_id(context_id)?
-    {
-        return Err(UpsertUserPermissionError::ContextNotFound);
+    if row.store_id.is_none() {
+        errors.push(UpsertUserPermissionError::StoreRequired);
+    }
+    if is_deleted_user(connection, &row.user_id)? {
+        errors.push(UpsertUserPermissionError::UserDeleted);
     }
     if let Some(other) = find_user_permission(connection, row)?
         .into_iter()
         .find(|other| other.id != row.id)
     {
-        return Err(UpsertUserPermissionError::DuplicatePermission { other_id: other.id });
+        errors.push(UpsertUserPermissionError::DuplicatePermission { other_id: other.id });
     }
-    Ok(())
+    Ok(errors)
 }
 
 /// On any store.
@@ -264,13 +233,29 @@ fn add_store_join(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_helpers::save_checked;
     use crate::user_account::upsert::protected_user_ids;
     use chrono::NaiveDate;
     use repository::{
-        ChangelogCondition, ChangelogRepository, ChangelogTableName, ContextRow, CursorAndLimit,
-        KeyType, KeyValueStoreRepository, RowActionType, StoreRow, StoreRowRepository,
-        UserAccountRow, UserAccountRowRepository, mock::MockDataInserts, test_db::setup_all,
+        ChangelogCondition, ChangelogRepository, ChangelogTableName, ContextRow,
+        ContextRowRepository, CursorAndLimit, KeyType, KeyValueStoreRepository, RowActionType,
+        StoreRow, StoreRowRepository, UserAccountRow, UserAccountRowRepository,
+        mock::MockDataInserts, test_db::setup_all,
     };
+
+    fn save(
+        connection: &StorageConnection,
+        protected: &[String],
+        row: &UserPermissionRow,
+    ) -> Result<(), Vec<UpsertUserPermissionError>> {
+        let saved = UserPermissionRowRepository::new(connection)
+            .find_one_by_id(&row.id)
+            .unwrap();
+        save_checked(
+            user_permission_errors(connection, protected, saved.as_ref(), row),
+            || upsert_user_permission_unchecked(connection, row),
+        )
+    }
 
     fn protected(connection: &StorageConnection) -> Vec<String> {
         protected_user_ids(connection).unwrap()
@@ -339,19 +324,19 @@ mod tests {
     async fn a_user_gets_a_known_permission_once_per_store_and_context() {
         let connection = setup("upsert_user_permission").await;
         let reading = permission("a", "anna", PermissionType::StocktakeQuery);
-        upsert_user_permission(&connection, &protected(&connection), &reading).unwrap();
+        save(&connection, &protected(&connection), &reading).unwrap();
         assert_eq!(
-            upsert_user_permission(
+            save(
                 &connection,
                 &protected(&connection),
                 &permission("b", "anna", PermissionType::StocktakeQuery)
             ),
-            Err(UpsertUserPermissionError::DuplicatePermission {
+            Err(vec![UpsertUserPermissionError::DuplicatePermission {
                 other_id: "a".to_string()
-            })
+            }])
         );
         // In a context, it's another permission.
-        upsert_user_permission(
+        save(
             &connection,
             &protected(&connection),
             &UserPermissionRow {
@@ -361,41 +346,22 @@ mod tests {
         )
         .unwrap();
 
-        let refused = |row: UserPermissionRow| {
-            upsert_user_permission(&connection, &protected(&connection), &row).unwrap_err()
-        };
-        assert_eq!(
-            refused(permission("d", "nobody", PermissionType::StocktakeQuery)),
-            UpsertUserPermissionError::UserNotFound
-        );
+        let refused =
+            |row: UserPermissionRow| save(&connection, &protected(&connection), &row).unwrap_err();
         assert_eq!(
             refused(permission("d", "gone", PermissionType::StocktakeQuery)),
-            UpsertUserPermissionError::UserDeleted
+            vec![UpsertUserPermissionError::UserDeleted]
         );
         assert_eq!(
             refused(permission("d", "admin", PermissionType::StocktakeQuery)),
-            UpsertUserPermissionError::Protected
-        );
-        assert_eq!(
-            refused(UserPermissionRow {
-                store_id: Some("no_store".to_string()),
-                ..permission("d", "anna", PermissionType::StocktakeMutate)
-            }),
-            UpsertUserPermissionError::StoreNotFound
-        );
-        assert_eq!(
-            refused(UserPermissionRow {
-                context_id: Some("no_program".to_string()),
-                ..permission("d", "anna", PermissionType::StocktakeMutate)
-            }),
-            UpsertUserPermissionError::ContextNotFound
+            vec![UpsertUserPermissionError::Protected]
         );
         assert_eq!(
             refused(UserPermissionRow {
                 store_id: None,
                 ..permission("d", "anna", PermissionType::ServerAdmin)
             }),
-            UpsertUserPermissionError::StoreRequired
+            vec![UpsertUserPermissionError::StoreRequired]
         );
         assert_eq!(
             refused(permission(
@@ -403,7 +369,7 @@ mod tests {
                 "anna",
                 PermissionType::Unknown("FUTURE".to_string())
             )),
-            UpsertUserPermissionError::UnknownPermission
+            vec![UpsertUserPermissionError::UnknownPermission]
         );
     }
 
@@ -411,18 +377,18 @@ mod tests {
     async fn store_access_lets_the_user_log_in_to_the_store_until_it_is_taken_away() {
         let connection = setup("user_permission_store_access").await;
         let access = permission("access", "anna", PermissionType::StoreAccess);
-        upsert_user_permission(&connection, &protected(&connection), &access).unwrap();
+        save(&connection, &protected(&connection), &access).unwrap();
         // First store, so default; adding it again makes no second join.
         assert_eq!(joins(&connection, "anna"), [("store".to_string(), true)]);
         UserPermissionRowRepository::new(&connection)
             .delete("access")
             .unwrap();
-        upsert_user_permission(&connection, &protected(&connection), &access).unwrap();
+        save(&connection, &protected(&connection), &access).unwrap();
         assert_eq!(joins(&connection, "anna"), [("store".to_string(), true)]);
 
         // Another permission leaves the join; store access takes it away.
         let reading = permission("reading", "anna", PermissionType::StocktakeQuery);
-        upsert_user_permission(&connection, &protected(&connection), &reading).unwrap();
+        save(&connection, &protected(&connection), &reading).unwrap();
         delete_user_permission(&connection, &protected(&connection), "admin", "reading").unwrap();
         assert_eq!(joins(&connection, "anna").len(), 1);
         delete_user_permission(&connection, &protected(&connection), "admin", "access").unwrap();
@@ -448,7 +414,7 @@ mod tests {
             })
             .unwrap();
         let access = permission("access", "anna", PermissionType::StoreAccess);
-        upsert_user_permission(&connection, &protected(&connection), &access).unwrap();
+        save(&connection, &protected(&connection), &access).unwrap();
 
         for changed in [
             UserPermissionRow {
@@ -469,8 +435,8 @@ mod tests {
             },
         ] {
             assert_eq!(
-                upsert_user_permission(&connection, &protected(&connection), &changed),
-                Err(UpsertUserPermissionError::RecordChanged),
+                save(&connection, &protected(&connection), &changed),
+                Err(vec![UpsertUserPermissionError::RecordChanged]),
                 "{changed:?}"
             );
         }
@@ -484,13 +450,13 @@ mod tests {
             .unwrap()
             .and_hms_opt(0, 0, 0);
         users.upsert_one(&anna).unwrap();
-        upsert_user_permission(&connection, &protected(&connection), &access).unwrap();
+        save(&connection, &protected(&connection), &access).unwrap();
     }
 
     #[actix_rt::test]
     async fn taking_store_access_away_syncs_the_store_join_removal() {
         let connection = setup("user_permission_store_join_delete_syncs").await;
-        upsert_user_permission(
+        save(
             &connection,
             &protected(&connection),
             &permission("access", "anna", PermissionType::StoreAccess),
@@ -531,7 +497,7 @@ mod tests {
     #[actix_rt::test]
     async fn the_user_keeps_the_store_while_a_duplicate_store_access_remains() {
         let connection = setup("user_permission_duplicate_store_access").await;
-        upsert_user_permission(
+        save(
             &connection,
             &protected(&connection),
             &permission("access", "anna", PermissionType::StoreAccess),
@@ -615,8 +581,7 @@ mod tests {
             ("on_second", "second"),
             ("off_site", "store"),
         ] {
-            upsert_user_permission(&connection, &protected(&connection), &access(id, store_id))
-                .unwrap();
+            save(&connection, &protected(&connection), &access(id, store_id)).unwrap();
         }
         // A duplicate keeps the store.
         UserPermissionRowRepository::new(&connection)

@@ -8,17 +8,8 @@ use util::constants::{PLUGIN_USER_ID, SYSTEM_USER_ID};
 #[derive(Debug, PartialEq)]
 pub enum UpsertUserError {
     Username(UsernameError),
-    /// See `protected_user_ids`.
-    Protected,
     /// The user saving made themselves inactive or deleted, so they couldn't log in again.
     LocksOutSelf,
-    DatabaseError(RepositoryError),
-}
-
-impl From<RepositoryError> for UpsertUserError {
-    fn from(error: RepositoryError) -> Self {
-        UpsertUserError::DatabaseError(error)
-    }
 }
 
 /// What `validate` refuses: only username errors, so `create_user`, which runs just `validate`,
@@ -38,15 +29,6 @@ pub enum UsernameError {
 impl From<RepositoryError> for UsernameError {
     fn from(error: RepositoryError) -> Self {
         UsernameError::DatabaseError(error)
-    }
-}
-
-impl From<UsernameError> for UpsertUserError {
-    fn from(error: UsernameError) -> Self {
-        match error {
-            UsernameError::DatabaseError(error) => UpsertUserError::DatabaseError(error),
-            error => UpsertUserError::Username(error),
-        }
     }
 }
 
@@ -91,33 +73,13 @@ pub fn ends_sessions(saved: Option<&UserAccountRow>, user: &UserAccountRow) -> b
     })
 }
 
-/// Saves `row` as given, `hashed_password` included, as `by`, the user saving. Joins the caller's
-/// transaction when there is one, so an import's earlier rows count.
-pub fn save_user(
+/// Saves `row` as given, `hashed_password` included, for a caller that has refused a user in
+/// `protected_user_ids` and checked `row` with `user_errors`.
+pub fn save_user_unchecked(
     connection: &StorageConnection,
-    by: &str,
     row: &UserAccountRow,
-) -> Result<(), UpsertUserError> {
-    connection
-        .transaction_sync(|connection| -> Result<(), UpsertUserError> {
-            let repo = UserAccountRowRepository::new(connection);
-            let saved = repo.find_one_by_id(&row.id)?;
-            // Even one whose row is missing, so a save can't make it.
-            if protected_user_ids(connection)?.contains(&row.id) {
-                return Err(UpsertUserError::Protected);
-            }
-            // Only a save that brings it in, as a user can't be logged in to lock themselves out.
-            if row.id == by
-                && locks_out(row)
-                && saved.as_ref().is_some_and(|saved| !locks_out(saved))
-            {
-                return Err(UpsertUserError::LocksOutSelf);
-            }
-            validate(connection, saved.as_ref(), row)?;
-            repo.upsert_one(row)?;
-            Ok(())
-        })
-        .map_err(|error| error.to_inner_error())
+) -> Result<(), RepositoryError> {
+    UserAccountRowRepository::new(connection).upsert_one(row)
 }
 
 /// Marks the user deleted, as `by`, the user deleting. A deleted user stays on what refers to
@@ -153,6 +115,26 @@ pub fn delete_user(
             Ok(())
         })
         .map_err(|error| error.to_inner_error())
+}
+
+/// Every rule `row` breaks when `by` saves it, except being protected.
+pub fn user_errors(
+    connection: &StorageConnection,
+    by: &str,
+    saved: Option<&UserAccountRow>,
+    row: &UserAccountRow,
+) -> Result<Vec<UpsertUserError>, RepositoryError> {
+    let mut errors = Vec::new();
+    // Only a save that brings it in, as a user can't be logged in to lock themselves out.
+    if row.id == by && locks_out(row) && saved.is_some_and(|saved| !locks_out(saved)) {
+        errors.push(UpsertUserError::LocksOutSelf);
+    }
+    match validate(connection, saved, row) {
+        Ok(()) => {}
+        Err(UsernameError::DatabaseError(error)) => return Err(error),
+        Err(error) => errors.push(UpsertUserError::Username(error)),
+    }
+    Ok(errors)
 }
 
 fn locks_out(user: &UserAccountRow) -> bool {
@@ -195,6 +177,7 @@ pub(super) fn validate(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_helpers::save_checked;
     use repository::{mock::MockDataInserts, test_db::setup_all};
 
     fn user(id: &str, username: &str) -> UserAccountRow {
@@ -205,8 +188,25 @@ mod tests {
         }
     }
 
-    fn upsert(connection: &StorageConnection, row: &UserAccountRow) -> Result<(), UpsertUserError> {
-        save_user(connection, "", row)
+    /// As `by` saves it.
+    fn save_as(
+        connection: &StorageConnection,
+        by: &str,
+        row: &UserAccountRow,
+    ) -> Result<(), Vec<UpsertUserError>> {
+        let saved = UserAccountRowRepository::new(connection)
+            .find_one_by_id(&row.id)
+            .unwrap();
+        save_checked(user_errors(connection, by, saved.as_ref(), row), || {
+            save_user_unchecked(connection, row)
+        })
+    }
+
+    fn upsert(
+        connection: &StorageConnection,
+        row: &UserAccountRow,
+    ) -> Result<(), Vec<UpsertUserError>> {
+        save_as(connection, "", row)
     }
 
     #[actix_rt::test]
@@ -215,20 +215,20 @@ mod tests {
             setup_all("save_user_duplicate_username", MockDataInserts::none()).await;
         assert_eq!(
             upsert(&connection, &user("a", " ")),
-            Err(UpsertUserError::Username(UsernameError::Required))
+            Err(vec![UpsertUserError::Username(UsernameError::Required)])
         );
         assert_eq!(
             upsert(&connection, &user("a", "Anna ")),
-            Err(UpsertUserError::Username(UsernameError::Padded))
+            Err(vec![UpsertUserError::Username(UsernameError::Padded)])
         );
         upsert(&connection, &user("a", "Anna")).unwrap();
 
         for username in ["Anna", "anna", "ANNA"] {
             assert_eq!(
                 upsert(&connection, &user("b", username)),
-                Err(UpsertUserError::Username(UsernameError::Duplicate {
+                Err(vec![UpsertUserError::Username(UsernameError::Duplicate {
                     other_id: "a".to_string()
-                })),
+                })]),
                 "{username}"
             );
         }
@@ -271,7 +271,7 @@ mod tests {
     // covers: OMS-REG-CDIO-01.90
 
     #[actix_rt::test]
-    async fn a_protected_user_cannot_be_changed_or_deleted() {
+    async fn a_protected_user_cannot_be_deleted() {
         let (_, connection, _, _) = setup_all("save_user_protected", MockDataInserts::none()).await;
         let repo = UserAccountRowRepository::new(&connection);
         for row in [user(SYSTEM_USER_ID, "system"), user("admin", "admin")] {
@@ -284,24 +284,7 @@ mod tests {
             )
             .unwrap();
 
-        // With its row missing, it still can't be made.
-        repo.delete_by_id(PLUGIN_USER_ID).unwrap();
-        assert_eq!(
-            upsert(&connection, &user(PLUGIN_USER_ID, "plugin")),
-            Err(UpsertUserError::Protected)
-        );
-        assert_eq!(repo.find_one_by_id(PLUGIN_USER_ID).unwrap(), None);
-
         for id in [SYSTEM_USER_ID, "admin"] {
-            let edited = UserAccountRow {
-                job_title: Some("Pharmacist".to_string()),
-                ..repo.find_one_by_id(id).unwrap().unwrap()
-            };
-            assert_eq!(
-                upsert(&connection, &edited),
-                Err(UpsertUserError::Protected),
-                "{id}"
-            );
             assert_eq!(
                 delete_user(&connection, "", id),
                 Err(DeleteUserError::Protected),
@@ -336,8 +319,8 @@ mod tests {
 
         for row in [&inactive, &deleted] {
             assert_eq!(
-                save_user(&connection, "anna", row),
-                Err(UpsertUserError::LocksOutSelf)
+                save_as(&connection, "anna", row),
+                Err(vec![UpsertUserError::LocksOutSelf])
             );
         }
         assert_eq!(
@@ -345,9 +328,9 @@ mod tests {
             Err(DeleteUserError::DeletingSelf)
         );
         // Someone else may.
-        save_user(&connection, "ben", &inactive).unwrap();
+        save_as(&connection, "ben", &inactive).unwrap();
         // Already locked out, so saving them as they are locks out no one.
-        save_user(&connection, "anna", &inactive).unwrap();
+        save_as(&connection, "anna", &inactive).unwrap();
     }
 
     #[actix_rt::test]
