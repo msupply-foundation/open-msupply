@@ -1,11 +1,12 @@
 use super::{
     CentralDataTable, Change, ExportFilter, ImportTable, RecordCount, RowFailure, RowOutcome,
-    SheetImport, SheetStart,
+    SheetImport, SheetStart, add_error,
     cells::{Row, RowError, collect},
     delete::{DELETE_COLUMN, already_deleted_by, check_delete, is_delete},
+    fail_if_any,
     lookup::{
         InMemory, KeyPart, SavedCode, active_first, differs, find_by_id_or_composite_key,
-        find_reference, key_conflict, key_or, read_contexts,
+        find_reference, find_saved, key_conflict, key_or, read_contexts,
     },
     sheet::Value,
     sorted_by, stores_with_names,
@@ -19,7 +20,8 @@ use crate::{
     user_account::upsert::{protected_user_ids, server_user_ids},
     user_permission::{
         DeleteUserPermissionError, UpsertUserPermissionError, delete_user_permission,
-        find_user_permission, new_user_permission_id, upsert_user_permission,
+        find_user_permission, new_user_permission_id, upsert_user_permission_unchecked,
+        user_permission_errors,
     },
 };
 use repository::{
@@ -184,14 +186,12 @@ impl SheetImport for UserPermissionSheet {
                 contexts
             })?;
         let permission = row.choice(PERMISSION, &PERMISSIONS);
+        let references_found =
+            user_id.is_ok() && store_id.is_ok() && context_id.is_ok() && permission.is_ok();
         let user_id = collect(&mut errors, user_id).flatten();
         let store_id = collect(&mut errors, store_id);
         let context_id = collect(&mut errors, context_id);
         let permission = collect(&mut errors, permission);
-        // Then a missing reference is that error, not "required".
-        if !errors.is_empty() {
-            return Err(RowFailure::Invalid(errors));
-        }
 
         let key = Key {
             user_id,
@@ -200,7 +200,13 @@ impl SheetImport for UserPermissionSheet {
             context_id,
         };
         let id = row.text(ID);
-        let existing = self.find_permission(connection, row, id.as_deref(), &key, delete)??;
+        let existing = find_saved(
+            references_found,
+            id.as_deref(),
+            &mut errors,
+            || self.find_permission(connection, row, id.as_deref(), &key, delete),
+            |id| UserPermissionRowRepository::new(connection).find_one_by_id(id),
+        )?;
         if let Some(user_id) = existing
             .as_ref()
             .map(|saved| saved.user_id.as_str())
@@ -208,9 +214,41 @@ impl SheetImport for UserPermissionSheet {
         {
             let (locked, change) =
                 locked_users(&self.protected, &self.server_users, delete, "permissions");
-            check_not_protected(row, locked, &self.users, user_id, &change)?;
+            if let Err(error) = check_not_protected(row, locked, &self.users, user_id, &change) {
+                add_error(&mut errors, error);
+            }
+        }
+        // A new permission's checks.
+        if !delete && existing.is_none() {
+            if references_found {
+                row.require_for_new(
+                    &mut errors,
+                    "user permission",
+                    &[
+                        (USERNAME, key.user_id.is_none()),
+                        (
+                            STORE_CODE,
+                            key.store_id.as_ref().is_none_or(Option::is_none),
+                        ),
+                        (PERMISSION, key.permission.is_none()),
+                    ],
+                );
+            }
+            if let (Some(admin), Some(user_id), Some(store)) = (
+                &self.setup_admin,
+                &key.user_id,
+                key.store_id
+                    .clone()
+                    .flatten()
+                    .and_then(|id| self.stores.get(&id)),
+            ) && let Err(error) =
+                admin.check_store(row, &self.users, user_id, store, "permissions")
+            {
+                add_error(&mut errors, error);
+            }
         }
         if delete {
+            fail_if_any(&mut errors)?;
             let Some(saved) = existing else {
                 // Named by the row's user, store, permission and context, as found.
                 return already_deleted_by(row, key.record(), |key| self.record(&key));
@@ -218,6 +256,7 @@ impl SheetImport for UserPermissionSheet {
             return self.delete(connection, row, saved);
         }
         if let Some(saved) = existing {
+            fail_if_any(&mut errors)?;
             return Ok(RowOutcome {
                 record: self.record(&saved),
                 record_id: saved.id,
@@ -226,21 +265,6 @@ impl SheetImport for UserPermissionSheet {
             });
         }
 
-        row.require_for_new(
-            &mut errors,
-            "user permission",
-            &[
-                (USERNAME, key.user_id.is_none()),
-                (
-                    STORE_CODE,
-                    key.store_id.as_ref().is_none_or(Option::is_none),
-                ),
-                (PERMISSION, key.permission.is_none()),
-            ],
-        );
-        if !errors.is_empty() {
-            return Err(RowFailure::Invalid(errors));
-        }
         let mut new = UserPermissionRow {
             id: String::new(),
             user_id: key.user_id.unwrap_or_default(),
@@ -249,14 +273,21 @@ impl SheetImport for UserPermissionSheet {
             context_id: key.context_id.flatten(),
         };
         new.id = id.unwrap_or_else(|| new_user_permission_id(&new));
-        if let (Some(admin), Some(store)) = (
-            &self.setup_admin,
-            new.store_id.as_deref().and_then(|id| self.stores.get(id)),
-        ) {
-            admin.check_store(row, &self.users, &new.user_id, store, "permissions")?;
+        let user = self.users.get(&new.user_id);
+        for error in user_permission_errors(connection, &self.server_users, None, &new)? {
+            // The row's required columns report a blank store, and `find_permission` turns a
+            // saved key into a match.
+            if matches!(
+                error,
+                UpsertUserPermissionError::StoreRequired
+                    | UpsertUserPermissionError::DuplicatePermission { .. }
+            ) {
+                continue;
+            }
+            upsert_failure(row, &new, user, error).add_to(&mut errors)?;
         }
-        upsert_user_permission(connection, &self.server_users, &new)
-            .map_err(|error| upsert_failure(row, &new, self.users.get(&new.user_id), error))?;
+        fail_if_any(&mut errors)?;
+        upsert_user_permission_unchecked(connection, &new)?;
         Ok(RowOutcome {
             record: self.record(&new),
             record_id: new.id,
@@ -476,13 +507,6 @@ fn upsert_failure(
                 format!("{username} is deleted, so they can't be given a permission"),
             )
             .into(),
-        UpsertUserPermissionError::UserNotFound => row.not_found(user_column).into(),
-        UpsertUserPermissionError::StoreNotFound => row
-            .not_found(row.reference_column(STORE_CODE, STORE_ID))
-            .into(),
-        UpsertUserPermissionError::ContextNotFound => row
-            .not_found(row.reference_column(CONTEXT_NAME, CONTEXT_ID))
-            .into(),
         UpsertUserPermissionError::StoreRequired => row
             .error(
                 STORE_CODE,
@@ -508,7 +532,6 @@ fn upsert_failure(
                 "A user permission can't change: delete it and add another",
             )
             .into(),
-        UpsertUserPermissionError::DatabaseError(error) => RowFailure::Database(error),
     }
 }
 

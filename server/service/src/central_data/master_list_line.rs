@@ -1,16 +1,16 @@
 use super::{
     CentralDataTable, Change, ExportFilter, ImportTable, RecordCount, RowFailure, RowOutcome,
-    SheetImport, SheetStart,
+    SheetImport, SheetStart, add_error,
     cells::{Row, RowError, collect},
     delete::{DELETE_COLUMN, already_deleted_by, check_delete, is_delete},
-    field_changes,
+    fail_if_any, field_changes,
     lookup::{
         InMemory, KeyPart, KeyedTable, SavedCode, differs, find_by_id_or_composite_key,
-        find_reference_record, key_conflict, key_or,
+        find_reference_record, find_saved, key_conflict, key_or,
     },
     master_list_refs::{
         MASTER_LIST_ID, MASTER_LIST_NAME, check_not_placeholder, find_master_list,
-        master_list_part, not_found_error, not_placeholder, protected_error, read_master_lists,
+        master_list_part, not_placeholder, protected_error, read_master_lists,
     },
     name_with_code,
     sheet::Value,
@@ -20,7 +20,7 @@ use crate::{
     i64_to_u32,
     master_list::upsert_line::{
         UpsertMasterListLineError, delete_master_list_line, find_master_list_lines,
-        upsert_master_list_line,
+        master_list_line_errors, upsert_master_list_line_unchecked,
     },
 };
 use repository::{
@@ -156,29 +156,36 @@ impl SheetImport for MasterListLineSheet {
             ITEM_ID,
             |items| items,
         )?;
+        let references_found = master_list_id.is_ok() && item.is_ok();
         let master_list_id = collect(&mut errors, master_list_id).flatten();
         let item = collect(&mut errors, item).flatten();
         let item_id = item.as_ref().map(|item| item.id.clone());
-        // Then a missing reference is that error, not "required".
-        if !errors.is_empty() {
-            return Err(RowFailure::Invalid(errors));
-        }
 
         let id = row.text(ID);
-        let existing = self.find_line(
-            connection,
-            row,
+        let existing = find_saved(
+            references_found,
             id.as_deref(),
-            master_list_id.as_deref(),
-            item_id.as_deref(),
-        )??;
+            &mut errors,
+            || {
+                self.find_line(
+                    connection,
+                    row,
+                    id.as_deref(),
+                    master_list_id.as_deref(),
+                    item_id.as_deref(),
+                )
+            },
+            |id| MasterListLineRowRepository::new(connection).find_one_by_id(id),
+        )?;
         let saved = existing.as_ref();
-        check_not_placeholder(
+        if let Err(error) = check_not_placeholder(
             row,
             saved.map(|line| line.master_list_id.as_str()),
             master_list_id.as_deref(),
             PROTECTED,
-        )?;
+        ) {
+            add_error(&mut errors, error);
+        }
         // A row never changes its item, as `find_line` makes that a conflict. Read only when the
         // row leaves its item blank, as a row with only an id does.
         let item_id = item_id.or(saved.map(|line| line.item_id.clone()));
@@ -188,6 +195,7 @@ impl SheetImport for MasterListLineSheet {
             (None, None) => None,
         };
         if delete {
+            fail_if_any(&mut errors)?;
             let Some(saved) = existing else {
                 // Named by the row's master list and item, as found.
                 return already_deleted_by(
@@ -200,16 +208,15 @@ impl SheetImport for MasterListLineSheet {
         }
 
         let master_list_id = master_list_id.or(saved.map(|line| line.master_list_id.clone()));
-        row.require_for_new(
-            &mut errors,
-            "master list line",
-            &[
-                (MASTER_LIST_NAME, master_list_id.is_none()),
-                (ITEM_CODE, item_id.is_none()),
-            ],
-        );
-        if !errors.is_empty() {
-            return Err(RowFailure::Invalid(errors));
+        if references_found {
+            row.require_for_new(
+                &mut errors,
+                "master list line",
+                &[
+                    (MASTER_LIST_NAME, master_list_id.is_none()),
+                    (ITEM_CODE, item_id.is_none()),
+                ],
+            );
         }
 
         let new = MasterListLineRow {
@@ -227,8 +234,15 @@ impl SheetImport for MasterListLineSheet {
         };
         let change = Change::between_upserts(saved, &new);
         if change != Change::Unchanged {
-            upsert_master_list_line(connection, &new)
-                .map_err(|error| self.upsert_failure(row, &new, item.as_ref(), error))?;
+            for error in master_list_line_errors(connection, saved, &new)? {
+                let reads = reads(&error);
+                self.upsert_failure(row, &new, item.as_ref(), error)
+                    .add_rule(reads, &mut errors)?;
+            }
+        }
+        fail_if_any(&mut errors)?;
+        if change != Change::Unchanged {
+            upsert_master_list_line_unchecked(connection, &new)?;
         }
         let master_list = self.master_lists.get(&new.master_list_id);
         let item_code = item.as_ref().map(|item| item.code.as_str());
@@ -339,19 +353,13 @@ impl MasterListLineSheet {
         error: UpsertMasterListLineError,
     ) -> RowFailure {
         match error {
-            // Not reached here: `find_master_list` and `find_reference_record` find them among the
-            // saved records.
-            UpsertMasterListLineError::MasterListNotFound => not_found_error(row).into(),
-            UpsertMasterListLineError::ItemNotFound => row
-                .not_found(row.reference_column(ITEM_CODE, ITEM_ID))
-                .into(),
             UpsertMasterListLineError::NegativePrice => row
                 .error(PRICE_PER_UNIT, "price_per_unit can't be negative")
                 .into(),
-            // Unreachable here: `import_row` refuses it first.
+            // Also refused by `check_not_placeholder`, on the same column.
             UpsertMasterListLineError::Protected => protected_error(row, PROTECTED).into(),
-            // Unreachable here: `find_line` turns a saved master list and item into a match or a
-            // conflict.
+            // Unreachable here: `find_line` turns a found master list and item into a match or a
+            // conflict, and with one not found `reads` skips it.
             UpsertMasterListLineError::DuplicateLine { other_id } => row
                 .error(
                     row.reference_column(ITEM_CODE, ITEM_ID),
@@ -362,8 +370,18 @@ impl MasterListLineSheet {
                     ),
                 )
                 .into(),
-            UpsertMasterListLineError::DatabaseError(error) => RowFailure::Database(error),
         }
+    }
+}
+
+/// The columns `error`'s rule reads beside the one it's reported on: a key half not found is the
+/// saved line's.
+fn reads(error: &UpsertMasterListLineError) -> &'static [&'static str] {
+    match error {
+        UpsertMasterListLineError::DuplicateLine { .. } => {
+            &[MASTER_LIST_NAME, MASTER_LIST_ID, ITEM_CODE, ITEM_ID]
+        }
+        _ => &[],
     }
 }
 

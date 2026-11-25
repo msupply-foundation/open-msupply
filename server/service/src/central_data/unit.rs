@@ -2,11 +2,11 @@ use super::{
     CentralDataTable, Change, ExportFilter, FieldChange, ImportTable, RecordCount, RowFailure,
     RowOutcome, SheetImport, SheetStart,
     cells::{Row, collect, keep_or_saved},
-    field_changes,
+    fail_if_any, field_changes,
     lookup::{duplicate_name_error, find_by_id_or_name},
     sheet::Value,
 };
-use crate::unit::{UpsertUnitError, upsert_unit};
+use crate::unit::{UpsertUnitError, unit_errors, upsert_unit_unchecked};
 use repository::{RepositoryError, StorageConnection, UnitRow, UnitRowRepository};
 use util::uuid::uuid;
 
@@ -109,9 +109,6 @@ impl SheetImport for UnitSheet {
                 (IS_ACTIVE, is_active.is_none()),
             ],
         );
-        if !errors.is_empty() {
-            return Err(RowFailure::Invalid(errors));
-        }
 
         let unit = UnitRow {
             id: existing
@@ -132,13 +129,14 @@ impl SheetImport for UnitSheet {
 
         let change = Change::between(existing.as_ref(), &unit, |unit| unit.is_active);
         if change != Change::Unchanged {
-            upsert_unit(connection, &unit).map_err(|error| match error {
-                UpsertUnitError::NameRequired => row.error(NAME, "name is required").into(),
-                UpsertUnitError::DuplicateName { other_id } => {
-                    duplicate_name_error(row, "unit", &other_id, &unit.name).into()
-                }
-                UpsertUnitError::DatabaseError(error) => RowFailure::Database(error),
-            })?;
+            for error in unit_errors(connection, &unit)? {
+                let reads = reads(&error);
+                upsert_failure(row, &unit, error).add_rule(reads, &mut errors)?;
+            }
+        }
+        fail_if_any(&mut errors)?;
+        if change != Change::Unchanged {
+            upsert_unit_unchecked(connection, &unit)?;
         }
         Ok(RowOutcome {
             fields: existing
@@ -169,4 +167,22 @@ fn cells(unit: &UnitRow) -> Vec<Value> {
 
 fn changed_fields(old: &UnitRow, new: &UnitRow) -> Vec<FieldChange> {
     field_changes(COLUMNS, cells(old), cells(new))
+}
+
+/// The columns `error`'s rule reads beside the one it's reported on.
+fn reads(error: &UpsertUnitError) -> &'static [&'static str] {
+    match error {
+        // Only active records hold on to their name.
+        UpsertUnitError::DuplicateName { .. } => &[IS_ACTIVE],
+        _ => &[],
+    }
+}
+
+fn upsert_failure(row: &Row, unit: &UnitRow, error: UpsertUnitError) -> RowFailure {
+    match error {
+        UpsertUnitError::NameRequired => row.error(NAME, "name is required").into(),
+        UpsertUnitError::DuplicateName { other_id } => {
+            duplicate_name_error(row, "unit", &other_id, &unit.name).into()
+        }
+    }
 }
