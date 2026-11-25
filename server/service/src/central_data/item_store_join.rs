@@ -180,22 +180,35 @@ impl SheetImport for ItemStoreJoinSheet {
             |items| items,
         )?;
         let store_id = find_reference(&self.stores, row, STORE_CODE, STORE_ID, |stores| stores)?;
+        let references_found = item.is_ok() && store_id.is_ok();
         let item = collect(&mut errors, item).flatten();
         let item_id = item.as_ref().map(|item| item.id.clone());
         let store_id = collect(&mut errors, store_id).flatten();
-        // Then a missing reference is that error, not "required".
-        if !errors.is_empty() {
-            return Err(RowFailure::Invalid(errors));
-        }
 
         let id = row.text(ID);
-        let existing = self.find_join(
-            connection,
-            row,
-            id.as_deref(),
-            item_id.as_deref(),
-            store_id.as_deref(),
-        )??;
+        // A missing item or store is that error, not a conflict or "required", so the record
+        // is found by its key only when both are; by id, for its store and price, otherwise.
+        let existing = if references_found {
+            match self.find_join(
+                connection,
+                row,
+                id.as_deref(),
+                item_id.as_deref(),
+                store_id.as_deref(),
+            )? {
+                Ok(existing) => existing,
+                // Another item or store: the row's location and price can't be checked.
+                Err(error) => {
+                    errors.push(error);
+                    return Err(RowFailure::Invalid(errors));
+                }
+            }
+        } else {
+            match &id {
+                Some(id) => ItemStoreJoinRowRepository::new(connection).find_one_by_id(id)?,
+                None => None,
+            }
+        };
         let saved = existing.as_ref();
         // `find_join` makes another item or store a conflict, so these are the saved join's.
         let item_id = item_id.or(saved.map(|join| join.item_id.clone()));
@@ -204,7 +217,8 @@ impl SheetImport for ItemStoreJoinSheet {
             connection,
             saved.and_then(|join| join.default_location_id.as_deref()),
         )?;
-        let row_location = if repeats_location(row, saved_location.as_ref()) {
+        let repeats = repeats_location(row, saved_location.as_ref());
+        let row_location = if repeats {
             // Kept as it is, even one of another store, as legacy mSupply can send it, so an
             // unedited export imports and a `DELETE` row for it runs.
             Some(saved_location.clone())
@@ -225,14 +239,38 @@ impl SheetImport for ItemStoreJoinSheet {
                 )? {
                     Ok(location) => location,
                     Err(error) => {
-                        return Err(self
-                            .location_error(connection, row, store_id, error)?
-                            .into());
+                        errors.push(self.location_error(connection, row, store_id, error)?);
+                        None
                     }
                 },
                 None => None,
             }
         };
+        if !delete {
+            // Found by id, a location can be another store's.
+            if let (false, Some(Some(location)), Some(store_id)) =
+                (repeats, &row_location, &store_id)
+                && &location.store_id != store_id
+            {
+                errors.push(row.error(
+                    row.reference_column(LOCATION_CODE, LOCATION_ID),
+                    self.in_another_store(
+                        &location.code,
+                        std::slice::from_ref(&location.store_id),
+                        store_id,
+                    ),
+                ));
+            }
+            if let Some(price) = price
+                && price < 0.0
+                && saved.is_none_or(|join| join.default_sell_price_per_pack != price)
+            {
+                errors.push(row.error(PRICE, format!("{PRICE} can't be negative")));
+            }
+        }
+        if !errors.is_empty() {
+            return Err(RowFailure::Invalid(errors));
+        }
         // Read only when the row leaves its item blank, as a row with only an id does.
         let item = match (item, &item_id) {
             (Some(item), _) => Some(item),

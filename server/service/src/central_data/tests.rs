@@ -11541,6 +11541,61 @@ async fn an_item_store_join_price_cannot_be_negative() {
     assert_eq!(summary.tables[0].updated, 2);
 }
 
+// covers: OMS-REG-CDIO-01.207
+
+#[actix_rt::test]
+async fn an_item_store_join_row_lists_all_its_errors_at_once() {
+    let (_, service_provider, dir) = item_store_setup("central_data_item_store_all_errors").await;
+    let ctx = service_provider.basic_context().unwrap();
+
+    let path = write_file(
+        dir.path(),
+        item_store_sheet(vec![
+            item_store_row(&[
+                ("id", "isj_ward_para"),
+                ("ignore_for_orders", "maybe"),
+                ("default_location_code", "FRIDGE"),
+                ("default_sell_price_per_pack", "-1"),
+            ]),
+            item_store_row(&[
+                ("item_code", "IBU"),
+                ("store_code", "W1"),
+                ("margin", "x"),
+                ("default_location_id", "fridge_main"),
+                ("default_sell_price_per_pack", "-2"),
+            ]),
+            // A missing item still leaves the location and price to check.
+            new_item_store_row(&[
+                ("item_code", "NOPE"),
+                ("store_code", "W1"),
+                ("default_location_code", "FRIDGE"),
+                ("default_sell_price_per_pack", "-3"),
+            ]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    let fridge = "FRIDGE is a location of store MS, not of store W1";
+    let negative = "default_sell_price_per_pack can't be negative";
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                2,
+                Some("ignore_for_orders"),
+                "\"maybe\" must be TRUE, FALSE, 1 or 0"
+            ),
+            (2, Some("default_location_code"), fridge),
+            (2, Some("default_sell_price_per_pack"), negative),
+            (3, Some("margin"), "\"x\" must be a number"),
+            (3, Some("default_location_id"), fridge),
+            (3, Some("default_sell_price_per_pack"), negative),
+            (4, Some("item_code"), "item_code \"NOPE\" not found"),
+            (4, Some("default_location_code"), fridge),
+            (4, Some("default_sell_price_per_pack"), negative),
+        ]
+    );
+}
+
 // covers: OMS-REG-CDIO-01.200
 
 #[actix_rt::test]
