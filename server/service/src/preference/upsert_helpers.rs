@@ -4,6 +4,12 @@ use crate::sync::CentralServerConfig;
 
 use super::UpsertPreferenceError;
 
+/// The id of a key's global preference row. There is only ever one global row
+/// per key, and this id shape is what makes saving it an upsert.
+pub fn global_preference_id(key: &str) -> String {
+    format!("{key}_global")
+}
+
 pub fn upsert_global(
     connection: &StorageConnection,
     key: String,
@@ -17,7 +23,7 @@ pub fn upsert_global(
 
     let pref = PreferenceRow {
         // We should only ever have one global preference per key - ID shape ensures upsert
-        id: format!("{key}_global"),
+        id: global_preference_id(&key),
         key,
         value,
         store_id: None,

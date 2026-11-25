@@ -105,7 +105,7 @@ const ids = () => {
 };
 
 describe('visitListLines (rules › editing a dispensed visit)', () => {
-  // OMS-REG-DIS-12.261
+  // OMS-REG-DIS-12.285
   it('puts each medicine on the list once, with the amount the visit gave', () => {
     const early = batch('early');
     const late = batch('late', { expiryDate: '2031-01-01' });
@@ -123,7 +123,7 @@ describe('visitListLines (rules › editing a dispensed visit)', () => {
 });
 
 describe('withOwnStock (rules › editing a dispensed visit)', () => {
-  // OMS-REG-DIS-12.262
+  // OMS-REG-DIS-12.286
   it('adds back what the visit took from a batch, at the price it was charged', () => {
     const b = batch('b', { availableNumberOfPacks: 4, sellPricePerPack: 2 });
     const [para] = withOwnStock(
@@ -135,7 +135,7 @@ describe('withOwnStock (rules › editing a dispensed visit)', () => {
     ]);
   });
 
-  // OMS-REG-DIS-12.262
+  // OMS-REG-DIS-12.286
   it('brings back a batch the visit emptied, from the visit’s own line', () => {
     const emptied = batch('gone', { availableNumberOfPacks: 0 });
     const [para] = withOwnStock(
@@ -158,7 +158,7 @@ describe('withOwnStock (rules › editing a dispensed visit)', () => {
     expect(same).toBe(amox);
   });
 
-  // OMS-REG-DIS-12.262, rules › editing a dispensed visit: a medicine on the
+  // OMS-REG-DIS-12.286, rules › editing a dispensed visit: a medicine on the
   // default price list whose price went up after the visit. The server keeps
   // an updated line's price and charges a new line today's default, so the
   // list must price the same way.
@@ -221,7 +221,7 @@ describe('editInput (contract › editing a dispensed visit)', () => {
     ]);
   });
 
-  // OMS-REG-DIS-12.264
+  // OMS-REG-DIS-12.288
   it('deletes the lines of a medicine taken off the list, and adds one put on it', () => {
     const amox = batch('a');
     const input = editInput(
@@ -376,7 +376,7 @@ describe('saveChanges (rules › editing a dispensed visit)', () => {
     return { calls: made, saved };
   };
 
-  // OMS-REG-DIS-12.263
+  // OMS-REG-DIS-12.287
   it('saves the difference to the same record', async () => {
     const { calls: c, saved } = calls();
     expect(await saveChanges('rx', listed, c)).toEqual({ kind: 'saved' });
@@ -393,7 +393,7 @@ describe('saveChanges (rules › editing a dispensed visit)', () => {
     expect(saved).toEqual([]);
   });
 
-  // OMS-REG-DIS-12.270
+  // OMS-REG-DIS-12.294
   it('stops, saving nothing, when a line holds more than the stock', async () => {
     const { calls: c, saved } = calls();
     const end = await saveChanges('rx', [{ itemId: 'para', units: 11 }], c);
@@ -429,7 +429,7 @@ describe('saveChanges (rules › editing a dispensed visit)', () => {
     expect(await saveChanges('rx', listed, c)).toEqual({ kind: 'unsure' });
   });
 
-  // OMS-REG-DIS-12.272
+  // OMS-REG-DIS-12.296
   it('fails, saving nothing, when the save is refused', async () => {
     const { calls: c } = calls({
       save: async (): Promise<SaveReply> => ({
@@ -467,7 +467,7 @@ describe('afterDeleteRead (rules › editing a dispensed visit)', () => {
     ).toBe('not-editable');
   });
 
-  // OMS-REG-DIS-12.274
+  // OMS-REG-DIS-12.298
   it('can’t tell when the record can’t be read', () => {
     expect(afterDeleteRead(undefined)).toBe('unknown');
   });

@@ -68,6 +68,19 @@ impl<'a> MasterListLineRowRepository<'a> {
         Ok(result)
     }
 
+    /// The lines that put the item on the master list, in id order. Reads only the lines, not
+    /// their items.
+    pub fn find_by_master_list_and_item(
+        &self,
+        list_id: &str,
+        line_item_id: &str,
+    ) -> Result<Vec<MasterListLineRow>, RepositoryError> {
+        Ok(master_list_line
+            .filter(master_list_id.eq(list_id).and(item_id.eq(line_item_id)))
+            .order(id.asc())
+            .load(self.connection.lock().connection())?)
+    }
+
     pub fn find_many_by_id(
         &self,
         ids: &[String],

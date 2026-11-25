@@ -425,6 +425,7 @@ pub enum PreferenceKey {
     ReceivePaymentsFromPrescriptions,
     GlobalLogo,
     DecimalPlacesForNumbers,
+    ReportStoreTags,
     // Store preferences
     BlindStocktake,
     ManageVaccinesInDoses,

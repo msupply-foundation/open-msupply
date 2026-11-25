@@ -5,6 +5,7 @@ use super::{
     field_changes,
     lookup::{NOT_FOUND, NamesOfType, active_first, find_record, find_reference},
     name::{TYPES as NAME_TYPES, type_label},
+    name_refs::{NAME_CODE, NAME_ID, NAME_NAME, NAME_TYPE},
     name_with_code,
     sheet::Value,
 };
@@ -22,11 +23,7 @@ const CODE: &str = "code";
 const SITE_ID: &str = "site_id";
 const STORE_MODE: &str = "store_mode";
 const IS_DISABLED: &str = "is_disabled";
-const NAME_CODE: &str = "name_code";
-const NAME_TYPE: &str = "name_type";
-const NAME_ID: &str = "name_id";
 const CREATED_DATE: &str = "created_date";
-const NAME_NAME: &str = "name_name";
 
 // No `logo`: a base64 image is longer than the 32,767 characters an Excel cell holds, so it
 // couldn't round-trip. Import leaves it as saved.

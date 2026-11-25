@@ -1,9 +1,13 @@
-import { describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it } from 'vitest';
+import { setDictionaries, setLocale } from '@/intl/intl';
+import commonEn from '@/intl/locales/en/common.json';
+import commonFr from '@/intl/locales/fr/common.json';
 import {
   blockedByZeroLines,
   currentStep,
   isFinalised,
   nextStatuses,
+  statusLabel,
   statusSteps,
 } from './stockMovementStatus';
 import type { StockMovementInfoFragment } from './stockMovementDetail.generated';
@@ -71,5 +75,24 @@ describe('lifecycle indicator steps (ui-surface § status footer)', () => {
       undefined,
     ]);
     expect(currentStep('CONFIRMED')).toBe(1);
+  });
+});
+
+// The status Confirmed is a status word, not the "Confirmed" date heading,
+// which French reads as "Date de confirmation". The list shows each
+// movement's status (OMS-REG-SMV-10.2).
+describe('OMS-REG-SMV-10.2 — the status Confirmed reads as a status', () => {
+  setDictionaries({ en: commonEn, fr: commonFr });
+  afterAll(() => setLocale('en'));
+
+  it('reads "Confirmed" in English', () => {
+    setLocale('en');
+    expect(statusLabel('CONFIRMED')).toBe('Confirmed');
+  });
+
+  it('reads "Confirmé" in French, not the date heading', () => {
+    setLocale('fr');
+    expect(statusLabel('CONFIRMED')).toBe('Confirmé');
+    expect(statusLabel('CONFIRMED')).not.toBe(commonFr['label.confirmed']);
   });
 });

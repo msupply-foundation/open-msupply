@@ -300,6 +300,8 @@ pub enum CentralDataTableNode {
     User,
     Item,
     MasterList,
+    MasterListLine,
+    MasterListNameJoin,
     NameStoreJoin,
     UserStoreJoin,
     UserPermission,

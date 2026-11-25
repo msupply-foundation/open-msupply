@@ -1,6 +1,6 @@
 use crate::{
-    EqualFilter, ItemRow, ItemType, MasterListRepository, Pagination, Sort,
-    diesel_macros::{apply_equal_filter, apply_sort_no_case},
+    EqualFilter, ItemRow, ItemType, MasterListRepository, Pagination, Sort, StringFilter,
+    diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
     item_store_join::item_store_join,
     repository_error::RepositoryError,
 };
@@ -30,6 +30,8 @@ pub struct MasterListLineFilter {
     pub item_type: Option<EqualFilter<ItemType>>,
     pub master_list: Option<MasterListFilter>,
     pub ignore_for_orders: Option<bool>,
+    /// The master list's name or the item's code.
+    pub master_list_name_or_item_code: Option<StringFilter>,
 }
 
 pub enum MasterListLineSortField {
@@ -70,6 +72,17 @@ impl<'a> MasterListLineRepository<'a> {
         let result = query.load::<MasterListLineJoin>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
+    }
+
+    /// Each line with its item's code and name, in no set order. Reads no other item column, so
+    /// not the item's legacy record.
+    pub fn query_with_item_code_and_name(
+        &self,
+        filter: MasterListLineFilter,
+    ) -> Result<Vec<(MasterListLineRow, String, String)>, RepositoryError> {
+        Ok(Self::create_filtered_query(Some(filter), None)?
+            .select((master_list_line::all_columns, item::code, item::name))
+            .load(self.connection.lock().connection())?)
     }
 
     pub fn query(
@@ -113,6 +126,17 @@ impl<'a> MasterListLineRepository<'a> {
         let mut query = query().into_boxed();
 
         if let Some(f) = filter {
+            if let Some(text) = f.master_list_name_or_item_code {
+                let mut master_lists = master_list::table.into_boxed::<DBType>();
+                apply_string_filter!(master_lists, Some(text.clone()), master_list::name);
+                let mut items = item::table.into_boxed::<DBType>();
+                apply_string_filter!(items, Some(text), item::code);
+                query = query.filter(
+                    master_list_line::master_list_id
+                        .eq_any(master_lists.select(master_list::id))
+                        .or(master_list_line::item_id.eq_any(items.select(item::id))),
+                );
+            }
             apply_equal_filter!(query, f.id, master_list_line::id);
             apply_equal_filter!(query, f.item_id, item::id);
             apply_equal_filter!(query, f.master_list_id, master_list_line::master_list_id);

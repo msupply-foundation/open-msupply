@@ -423,7 +423,12 @@ impl Selectors {
     }
 
     fn rows_and_cells<'a>(&'a self) -> Vec<Vec<ElementRef<'a>>> {
-        let rows_selector = Selector::parse("tbody tr:not([excel-type=\"total-row\"])").unwrap();
+        // `total-row` is laid out separately (see `total_rows`); `ignore` is a row that exists
+        // only in the printed form (e.g. a line's comment row) and has no place in the sheet.
+        let rows_selector = Selector::parse(
+            "tbody tr:not([excel-type=\"total-row\"]):not([excel-type=\"ignore\"])",
+        )
+        .unwrap();
         let cells_selector = Selector::parse("td").unwrap();
         self.html
             .select(&rows_selector)
@@ -647,6 +652,62 @@ mod report_to_excel_test {
         // Blank row before the total row
         assert_eq!(get_value("B4"), "");
         assert_eq!(get_value("B5"), "Total:");
+    }
+
+    /// A row marked `excel-type="ignore"` exists only in the printed form (e.g. a purchase
+    /// order line's comment, which spans the row under its line) and must not appear in the
+    /// sheet at all — neither as a data row nor a total row — leaving the real rows and their
+    /// columns untouched.
+    #[test]
+    fn test_generate_excel_skips_ignored_rows() {
+        let report: GeneratedReport = GeneratedReport {
+            document: r#"
+          <table>
+            <thead>
+              <tr><th>Item</th><th>Unit</th><th>Price</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Acetylsalicylic Acid 100mg tabs</td>
+                <td>Tablets</td>
+                <td>10.00</td>
+              </tr>
+              <tr class="comment" excel-type="ignore">
+                <td></td>
+                <td colspan="2"><span>Note:</span> handle with care</td>
+              </tr>
+              <tr>
+                <td>Ibuprofen 200mg tabs</td>
+                <td>Tablets</td>
+                <td>15.00</td>
+              </tr>
+            </tbody>
+          </table>
+        "#
+            .to_string(),
+            header: None,
+            footer: None,
+        };
+
+        let mut book = umya_spreadsheet::new_file();
+        book.set_sheet_name(0, "test").unwrap();
+        let sheet = book.get_sheet_by_name_mut("test").unwrap();
+
+        apply_report(sheet, report, "test");
+
+        let get_value = |coord: &str| get_value(sheet, coord);
+
+        // The two real lines sit in consecutive rows, right after the header — the ignored
+        // comment row neither takes a row of its own nor spills "Note:" into a data column.
+        assert_eq!(get_value("A1"), "Item");
+        assert_eq!(get_value("A2"), "Acetylsalicylic Acid 100mg tabs");
+        assert_eq!(get_value("A3"), "Ibuprofen 200mg tabs");
+        assert_eq!(get_value("B3"), "Tablets");
+        // `15.00` reads as a number, so the sheet stores it as `15` (see leading-zeros test).
+        assert_eq!(get_value("C3"), "15");
+        // Nothing was written below the last real line.
+        assert_eq!(get_value("A4"), "");
+        assert_eq!(get_value("B4"), "");
     }
 
     /// An item code like `030063` is text that happens to be digits: as a number Excel would
