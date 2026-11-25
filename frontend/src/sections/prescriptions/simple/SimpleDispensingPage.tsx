@@ -162,7 +162,15 @@ const SimpleDispensingPage: Component = () => {
       return result.data.commonMedicines;
     }
   );
-  const medicines = () => gated(medicineList) ?? medicinesRead();
+  // Compared by value: the read landing sets the kept copy and then settles
+  // the resource, and the kept copy and a fresh read of the same list are
+  // equal. Each would otherwise start another read of the cards' stock
+  // (kdd/solid-reactivity-pitfalls §16).
+  const medicines = createMemo(
+    () => gated(medicineList) ?? medicinesRead(),
+    undefined,
+    { equals: sameFetchedValue }
+  );
   // Read, and no list came back, now or kept: the list itself couldn't be
   // read.
   const medicinesUnread = () =>
