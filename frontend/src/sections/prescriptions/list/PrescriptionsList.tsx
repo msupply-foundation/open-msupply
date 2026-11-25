@@ -223,8 +223,12 @@ const PrescriptionsList: Component = () => {
     void refetch();
   };
 
+  // A store that dispenses on the Simple screen opens a past visit there
+  // (rules › a dispensed visit); any other, on the record screen.
   const rowHref = (row: PrescriptionRow) =>
-    `/${params.storeId}/dispensary/dispensing/${row.id}`;
+    simpleStore()
+      ? `/${params.storeId}/dispensary/dispensing/simple/${row.id}`
+      : `/${params.storeId}/dispensary/dispensing/${row.id}`;
   const openRow = (row: PrescriptionRow) => navigate(rowHref(row));
 
   const rowStatus = (row: Pick<PrescriptionRow, 'status'>) =>
