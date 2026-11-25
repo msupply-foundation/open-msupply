@@ -19,12 +19,12 @@ describe('printableVisit (spec/prescriptions rules › printing a dispensed visi
     namedId: undefined,
   };
 
-  // OMS-REG-DIS-12.299
+  // OMS-REG-DIS-12.301
   it('prints the visit just dispensed while the message names it', () => {
     expect(printableVisit({ ...screen, namedId: 'rx-1' })).toBe('rx-1');
   });
 
-  // OMS-REG-DIS-12.300
+  // OMS-REG-DIS-12.302
   it('prints the visit open on the screen, once read', () => {
     expect(printableVisit({ ...screen, viewing: true, openedId: 'rx-2' })).toBe(
       'rx-2'
@@ -34,7 +34,7 @@ describe('printableVisit (spec/prescriptions rules › printing a dispensed visi
     ).toBeUndefined();
   });
 
-  // OMS-REG-DIS-12.301
+  // OMS-REG-DIS-12.303
   it('prints nothing with a visit on the list, or with no visit named', () => {
     expect(
       printableVisit({ ...screen, listed: 2, namedId: 'rx-1' })
@@ -42,7 +42,7 @@ describe('printableVisit (spec/prescriptions rules › printing a dispensed visi
     expect(printableVisit(screen)).toBeUndefined();
   });
 
-  // OMS-REG-DIS-12.302
+  // OMS-REG-DIS-12.304
   it('prints nothing while a visit is being edited', () => {
     expect(
       printableVisit({ ...screen, editing: true, listed: 2 })

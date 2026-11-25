@@ -7,7 +7,7 @@ use crate::{
     service_provider::ServiceContext,
 };
 use repository::{
-    InvoiceLineRow, InvoiceRow, InvoiceStatus, ItemRow, StockLine, StockLineRow,
+    InvoiceLineRow, InvoiceRow, InvoiceStatus, InvoiceType, ItemRow, StockLine, StockLineRow,
     vvm_status::vvm_status_log_row::VVMStatusLogRow,
 };
 
@@ -35,6 +35,7 @@ pub fn generate(
             &existing_line,
             &batch_pair,
             adjust_total_number_of_packs,
+            &invoice.r#type,
         ),
         previous_batch_option: generate_previous_batch_update(
             &existing_line,
@@ -87,6 +88,7 @@ fn generate_batch_update(
     existing_line: &InvoiceLineRow,
     batch_pair: &BatchPair,
     adjust_total_number_of_packs: bool,
+    invoice_type: &InvoiceType,
 ) -> StockLine {
     let mut update_batch = batch_pair.main_batch.clone();
 
@@ -98,9 +100,10 @@ fn generate_batch_update(
         update_batch.stock_line_row.total_volume -=
             update_batch.stock_line_row.volume_per_pack * reduction;
     }
-    // Only a VVM status given changes the batch's: a prescription line update
-    // takes none, and an amount change must not clear it.
-    if input.vvm_status_id.is_some() {
+    // A prescription line update takes no VVM status, so an amount change
+    // there must leave the batch's alone. Other lines send the status they
+    // show every time, and sending none is how a status is cleared.
+    if input.vvm_status_id.is_some() || *invoice_type != InvoiceType::Prescription {
         update_batch.stock_line_row.vvm_status_id = input.vvm_status_id.clone();
     }
 

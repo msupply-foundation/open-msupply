@@ -72,6 +72,7 @@ import {
   setAmount,
   shortLines,
   startsWithUnnamed,
+  stockFor,
   unitsListed,
   unnamedAfterDispense,
   unnamedStillChosen,
@@ -107,6 +108,7 @@ import {
   editOutcome,
   saveChanges,
   visitListLines,
+  withKeptAmounts,
   withOwnStock,
   type EditInput,
   type RecordLine,
@@ -189,6 +191,12 @@ const SimpleDispensingPage: Component = () => {
     const edited = editing();
     return edited ? withOwnStock(fetched, edited.lines) : fetched;
   };
+  // And each medicine the visit gave knows how much, so a line left at that
+  // amount stays as the visit saved it.
+  const withKept = (built: MedicineCard[]): MedicineCard[] => {
+    const edited = editing();
+    return edited ? withKeptAmounts(built, edited.lines) : built;
+  };
 
   // Undefined until the store context resolves, so "loading" is never shown
   // as "none set up".
@@ -261,7 +269,9 @@ const SimpleDispensingPage: Component = () => {
       // list kept across a trip shows its names, prices and stock at once.
       const fetched = gated(items) ?? cardsRead();
       if (!list || fetched === undefined) return undefined;
-      return buildCards(list, withOwn(fetched), prescriptionPreferences());
+      return withKept(
+        buildCards(list, withOwn(fetched), prescriptionPreferences())
+      );
     },
     undefined,
     { equals: sameFetchedValue }
@@ -298,10 +308,12 @@ const SimpleDispensingPage: Component = () => {
   const searched = createMemo<MedicineCard[]>(
     () => {
       const fetched = searchedRead();
-      return buildCards(
-        medicinesFor(searchedIds(), []),
-        withOwn(fetched ?? []),
-        prescriptionPreferences()
+      return withKept(
+        buildCards(
+          medicinesFor(searchedIds(), []),
+          withOwn(fetched ?? []),
+          prescriptionPreferences()
+        )
       );
     },
     [],
@@ -327,6 +339,10 @@ const SimpleDispensingPage: Component = () => {
     cards()?.find(card => card.item.id === itemId) ??
     searched().find(card => card.item.id === itemId);
   const stockOf = (itemId: string) => cardOf(itemId)?.stock ?? 0;
+  // The stock a line of this many units is checked against: at least its
+  // amount when it is still what an edited visit gave.
+  const lineStock = (itemId: string, units: number) =>
+    stockFor(cardOf(itemId), units);
 
   // Who the visit is for (rules › who it's for and the list): nothing can be
   // added until someone is chosen, and choosing someone else keeps the list.
@@ -359,9 +375,12 @@ const SimpleDispensingPage: Component = () => {
   const update = (next: ListLine[]) =>
     setLines(reconcile(next, { key: 'itemId' }));
   // Below zero once the check finds less stock than the list holds: the card
-  // then says how much it is short.
-  const available = (card: MedicineCard) =>
-    round9(stockOf(card.item.id) - unitsListed(lines, card.item.id));
+  // then says how much it is short. A line left at what an edited visit gave
+  // is never short, so its card offers nothing more instead.
+  const available = (card: MedicineCard) => {
+    const listed = unitsListed(lines, card.item.id);
+    return round9(lineStock(card.item.id, listed) - listed);
+  };
   // Nothing is added while the visit is locked (rules › dispensing the
   // visit): an amount box can open mid-save, once its medicine's batches
   // load.
@@ -448,10 +467,13 @@ const SimpleDispensingPage: Component = () => {
     // error dialog would offer a reload that loses the visit.
     const fetched = await fetchItems(storeOpened, ids, true);
     if (!fetched) return undefined;
-    return buildCards(
-      medicinesFor(ids, settings.medicines),
-      withOwnStock(fetched, own),
-      settings.prefs
+    return withKeptAmounts(
+      buildCards(
+        medicinesFor(ids, settings.medicines),
+        withOwnStock(fetched, own),
+        settings.prefs
+      ),
+      own
     );
   };
 
@@ -1146,7 +1168,7 @@ const SimpleDispensingPage: Component = () => {
   // Lines holding more than the stock now shows, and lines whose price
   // changed. While there are any (and Dispense isn't checking again), the
   // notice that the visit wasn't dispensed, naming each of them.
-  const short = () => shortLines(lines, stockOf);
+  const short = () => shortLines(lines, lineStock);
   const repriced = () => lines.filter(line => line.repriced);
   const named = (listed: readonly ListLine[]) =>
     new Intl.ListFormat(locale(), { type: 'conjunction' }).format(
@@ -1493,7 +1515,9 @@ const SimpleDispensingPage: Component = () => {
           // to it does (rules › dispensing the visit).
           onAmount={(itemId, units) => {
             setNotice(undefined);
-            update(setAmount(lines, itemId, units, stockOf(itemId)));
+            update(
+              setAmount(lines, itemId, units, lineStock(itemId, units ?? 0))
+            );
           }}
           onRemove={itemId => {
             setNotice(undefined);

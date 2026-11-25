@@ -1113,6 +1113,72 @@ mod test {
         );
     }
 
+    // Outbound lines send the VVM status they show on every save, so a line
+    // update with none clears the batch's: that is how staff clear it in the
+    // outbound line editor. Only prescription lines keep it.
+    #[actix_rt::test]
+    async fn update_stock_out_line_outbound_clears_vvm_status() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "update_stock_out_line_outbound_clears_vvm_status",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_b().id, "".to_string())
+            .unwrap();
+        let invoice_line_service = service_provider.invoice_line_service;
+        let stock_line_repo = StockLineRowRepository::new(&connection);
+
+        let batch = StockLineRow {
+            vvm_status_id: Some(mock_vvm_status_a().id),
+            ..mock_stock_line_b()
+        };
+        stock_line_repo.upsert_one(&batch).unwrap();
+
+        let shipment = InvoiceRow {
+            id: "outbound_vvm_clear".to_string(),
+            name_id: mock_name_store_a().id,
+            r#type: InvoiceType::OutboundShipment,
+            store_id: context.store_id.clone(),
+            status: InvoiceStatus::New,
+            ..Default::default()
+        };
+        InvoiceRowRepository::new(&context.connection)
+            .upsert_one(&shipment)
+            .unwrap();
+        invoice_line_service
+            .insert_stock_out_line(
+                &context,
+                InsertStockOutLine {
+                    id: "outbound_vvm_clear-1".to_string(),
+                    r#type: StockOutType::OutboundShipment,
+                    invoice_id: shipment.id.clone(),
+                    stock_line_id: batch.id.clone(),
+                    number_of_packs: 1.0,
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        invoice_line_service
+            .update_stock_out_line(
+                &context,
+                UpdateStockOutLine {
+                    id: "outbound_vvm_clear-1".to_string(),
+                    r#type: Some(StockOutType::OutboundShipment),
+                    number_of_packs: Some(1.0),
+                    vvm_status_id: None,
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let after = stock_line_repo.find_one_by_id(&batch.id).unwrap().unwrap();
+        assert_eq!(after.vvm_status_id, None);
+    }
+
     // The other half of the fix above: a line update that does give a VVM
     // status still sets the batch's, and logs the change against the line.
     #[actix_rt::test]

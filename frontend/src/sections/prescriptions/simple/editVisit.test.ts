@@ -10,6 +10,7 @@ import {
   givesListed,
   saveChanges,
   visitListLines,
+  withKeptAmounts,
   withOwnStock,
   type EditCalls,
   type EditInput,
@@ -19,6 +20,8 @@ import {
 import {
   buildCards,
   linePrice,
+  shortLines,
+  stockFor,
   type CardItem,
   type ListLine,
   type MedicineCard,
@@ -268,6 +271,129 @@ describe('editInput (contract › editing a dispensed visit)', () => {
       ids()
     );
     expect(changesNothing(input)).toBe(true);
+  });
+});
+
+// A batch the visit took that dispensing wouldn't take now: expired since,
+// or put on hold. The record screen's line editor leaves a line alone until
+// its quantity is typed again, and only then allocates afresh from the
+// batches it may take; the Simple screen does the same.
+describe('a batch the visit took that dispensing wouldn’t take now (rules › editing a dispensed visit)', () => {
+  const expired = batch('expired', {
+    availableNumberOfPacks: 0,
+    expiryDate: '2026-11-01',
+    sellPricePerPack: 2,
+  });
+  const held = batch('held', { availableNumberOfPacks: 0, onHold: true });
+  const fresh = batch('fresh', {
+    expiryDate: '2031-01-01',
+    sellPricePerPack: 0.5,
+  });
+  const cardsFor = (shelf: CardItem[], lines: readonly RecordLine[]) =>
+    withKeptAmounts(cardsOf(withOwnStock(shelf, lines)), lines);
+  const stockOf = (cards: MedicineCard[]) => (itemId: string, units: number) =>
+    stockFor(
+      cards.find(card => card.item.id === itemId),
+      units
+    );
+
+  // OMS-REG-DIS-12.299
+  it('leaves a medicine at its amount on the expired batch, at what it was charged, with other stock on the shelf', () => {
+    const own = [recordLine('l1', 'para', expired, 6)];
+    const cards = cardsFor([item('para', [fresh])], own);
+    const listed = [{ itemId: 'para', units: 6 }];
+    expect(shortLines(listed, stockOf(cards))).toEqual([]);
+    expect(linePrice(cards[0], 6)).toBeCloseTo(12, 9);
+    expect(changesNothing(editInput('rx', own, listed, cards, ids()))).toBe(
+      true
+    );
+  });
+
+  // OMS-REG-DIS-12.299
+  it('leaves a medicine at its amount on a batch now on hold, with no other stock', () => {
+    const own = [recordLine('l1', 'para', held, 4)];
+    const cards = cardsFor([item('para')], own);
+    const listed = [{ itemId: 'para', units: 4 }];
+    expect(shortLines(listed, stockOf(cards))).toEqual([]);
+    expect(changesNothing(editInput('rx', own, listed, cards, ids()))).toBe(
+      true
+    );
+  });
+
+  // OMS-REG-DIS-12.299
+  it('saves nothing for it when another medicine changes', async () => {
+    const amox = batch('a', { availableNumberOfPacks: 5 });
+    const own = [
+      recordLine('l1', 'para', expired, 6),
+      recordLine('l2', 'amox', amox, 2),
+    ];
+    const cards = cardsFor([item('para', [fresh]), item('amox', [amox])], own);
+    const input = editInput(
+      'rx',
+      own,
+      [
+        { itemId: 'para', units: 6 },
+        { itemId: 'amox', units: 3 },
+      ],
+      cards,
+      ids()
+    );
+    expect(input).toEqual({
+      insertPrescriptionLines: [],
+      updatePrescriptionLines: [{ id: 'l2', numberOfPacks: 3 }],
+      deletePrescriptionLines: [],
+      continueOnError: false,
+    });
+  });
+
+  // OMS-REG-DIS-12.300
+  it('allocates a changed amount afresh from the batches dispensing may take', () => {
+    const own = [recordLine('l1', 'para', expired, 6)];
+    const cards = cardsFor([item('para', [fresh])], own);
+    const listed = [{ itemId: 'para', units: 4 }];
+    expect(shortLines(listed, stockOf(cards))).toEqual([]);
+    expect(linePrice(cards[0], 4)).toBeCloseTo(2, 9);
+    expect(editInput('rx', own, listed, cards, ids())).toEqual({
+      insertPrescriptionLines: [
+        {
+          id: 'new-fresh-1',
+          invoiceId: 'rx',
+          stockLineId: 'fresh',
+          numberOfPacks: 4,
+        },
+      ],
+      updatePrescriptionLines: [],
+      deletePrescriptionLines: [{ id: 'l1' }],
+      continueOnError: false,
+    });
+  });
+
+  // OMS-REG-DIS-12.300
+  it('is short once changed when only the held batch had it', () => {
+    const own = [recordLine('l1', 'para', held, 4)];
+    const cards = cardsFor([item('para')], own);
+    const listed = [{ itemId: 'para', units: 3 }];
+    expect(shortLines(listed, stockOf(cards))).toEqual(listed);
+  });
+
+  // OMS-REG-DIS-12.299
+  it('saves with nothing to send when the list is as the visit gave it', async () => {
+    const own = [recordLine('l1', 'para', expired, 6)];
+    const shelf = [item('para', [fresh])];
+    const before = cardsFor(shelf, own);
+    const saved: EditInput[] = [];
+    const end = await saveChanges('rx', [{ itemId: 'para', units: 6 }], {
+      read: async () => ({ kind: 'read', record: record(own) }),
+      check: async (_, lines) => cardsFor(shelf, lines),
+      save: async input => {
+        saved.push(input);
+        return { kind: 'reply', outcome: 'saved' };
+      },
+      before: itemId => before.find(card => card.item.id === itemId),
+      lineIdFor: batchId => `new-${batchId}`,
+    });
+    expect(end).toEqual({ kind: 'saved' });
+    expect(saved).toEqual([]);
   });
 });
 
