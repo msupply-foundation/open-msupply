@@ -267,6 +267,18 @@ describe('supporting destinations (OMS-REG-NAV-01.24–.26)', () => {
 });
 
 describe('routeAccess (OMS-REG-NAV-01.16, .19)', () => {
+  it('still judges an unknown path under a gated section by that section (D70)', () => {
+    expect(routeAccess('cold-chain/no-such-screen')).toEqual({
+      kind: 'blocked',
+    });
+  });
+
+  it("sends a section's own URL Home (OMS-REG-NAV-01.27)", () => {
+    expect(routeAccess('inventory')).toEqual({ kind: 'blocked' });
+    expect(routeAccess('replenishment')).toEqual({ kind: 'blocked' });
+    expect(routeAccess('inventory/stocktakes')).toEqual({ kind: 'ok' });
+  });
+
   it('blocks a capability-gated destination and its subpaths (.16)', () => {
     expect(routeAccess('cold-chain/equipment')).toEqual({ kind: 'blocked' });
     expect(routeAccess('cold-chain/equipment/some-asset-id')).toEqual({
