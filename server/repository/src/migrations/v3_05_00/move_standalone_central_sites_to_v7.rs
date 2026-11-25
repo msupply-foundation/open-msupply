@@ -1,7 +1,7 @@
 use crate::migrations::*;
 
-/// A standalone central's sites, but its own, to v7: it has no legacy central to upgrade a V5_V6
-/// site. No changelog, as sites sync only to a legacy central.
+/// Moves every site but a standalone central's own to V7: there is no legacy central to upgrade a
+/// V5_V6 site. No changelog, as sites sync only to a legacy central.
 pub(crate) struct Migrate;
 
 impl MigrationFragment for Migrate {
