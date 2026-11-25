@@ -3012,13 +3012,13 @@ async fn item_references_are_found_by_code_or_id() {
                 Some("unit_name"),
                 "unit_name and unit_id conflict: Vial resolves to vial but unit_id contains tab"
             ),
-            (3, Some("unit_name"), "referenced record not found"),
+            (3, Some("unit_name"), "unit_name \"Box\" not found"),
             (
                 3,
                 Some("restricted_location_type_code"),
-                "referenced record not found"
+                "restricted_location_type_code \"WARM\" not found"
             ),
-            (4, Some("unit_id"), "referenced record not found"),
+            (4, Some("unit_id"), "unit_id \"missing_unit\" not found"),
         ]
     );
 
@@ -5336,11 +5336,15 @@ async fn name_references_are_found_by_code_or_id() {
             (
                 2,
                 Some("supplying_store_code"),
-                "referenced record not found"
+                "supplying_store_code \"NOPE\" not found"
             ),
             // Row 3's id alone is saved as given, as sync saves it.
-            (4, Some("supplying_store_id"), "referenced record not found"),
-            (5, Some("currency_code"), "referenced record not found"),
+            (
+                4,
+                Some("supplying_store_id"),
+                "supplying_store_id \"other\" not found"
+            ),
+            (5, Some("currency_code"), "currency_code \"EUR\" not found"),
             (6, Some("custom_data"), "custom_data must be JSON, or blank"),
             (
                 7,
@@ -5932,7 +5936,7 @@ async fn a_store_finds_a_store_name_by_code_or_by_id() {
     assert_eq!(
         row_errors(&summary),
         vec![
-            (2, Some("name_code"), "referenced record not found"),
+            (2, Some("name_code"), "name_code \"NOPE\" not found"),
             (
                 3,
                 Some("name_id"),
@@ -6241,7 +6245,7 @@ async fn a_name_finds_a_supplying_store_the_store_sheet_adds() {
     let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
     let not_found: Vec<_> = row_errors(&summary)
         .into_iter()
-        .filter(|(_, _, message)| *message == "referenced record not found")
+        .filter(|(_, _, message)| message.ends_with("not found"))
         .collect();
     assert_eq!(
         not_found,
@@ -6249,14 +6253,18 @@ async fn a_name_finds_a_supplying_store_the_store_sheet_adds() {
             (
                 2,
                 Some("supplying_store_code"),
-                "referenced record not found"
+                "supplying_store_code \"GONE\" not found"
             ),
             (
                 3,
                 Some("supplying_store_code"),
-                "referenced record not found"
+                "supplying_store_code \"NEW2\" not found"
             ),
-            (4, Some("supplying_store_id"), "referenced record not found"),
+            (
+                4,
+                Some("supplying_store_id"),
+                "supplying_store_id \"not_synced_yet\" not found"
+            ),
         ]
     );
     // Counted against the name sheet, though found after the store sheet ran.
@@ -6303,7 +6311,7 @@ async fn without_a_store_sheet_a_missing_supplying_store_is_saved_by_its_id() {
         vec![(
             2,
             Some("supplying_store_code"),
-            "referenced record not found"
+            "supplying_store_code \"GONE\" not found"
         )]
     );
     assert_eq!(summary.tables[0].inserted, 2);
@@ -6818,7 +6826,7 @@ async fn a_name_store_join_finds_its_store_and_name_by_code_or_id() {
     assert_eq!(
         row_errors(&summary),
         vec![
-            (2, Some("store_code"), "referenced record not found"),
+            (2, Some("store_code"), "store_code \"NOPE\" not found"),
             (
                 3,
                 Some("name_code"),
@@ -6834,7 +6842,7 @@ async fn a_name_store_join_finds_its_store_and_name_by_code_or_id() {
                 Some("name_id"),
                 "Inventory adjustments (invad) is a system name, as the server needs it, so import can't change which stores see it"
             ),
-            (6, Some("name_code"), "referenced record not found"),
+            (6, Some("name_code"), "name_code \"invad\" not found"),
             (
                 7,
                 Some("name_type"),
@@ -7036,7 +7044,7 @@ async fn a_name_store_join_finds_a_store_the_store_sheet_adds_and_a_missing_refe
         .unwrap();
     assert_eq!(
         row_errors(&summary),
-        vec![(3, Some("store_code"), "referenced record not found")]
+        vec![(3, Some("store_code"), "store_code \"NOPE\" not found")]
     );
     assert_eq!(joins_of(&connection, "store_main"), before);
 }
@@ -7727,7 +7735,7 @@ async fn a_user_permission_finds_its_references_and_cannot_change_them() {
                 Some("context_id"),
                 "context_id and id conflict: anna: DOCUMENT_QUERY for Immunisation in store MS has context_id immunisation and id anna_documents, but this row has a blank context_id and id anna_documents"
             ),
-            (6, Some("store_code"), "referenced record not found"),
+            (6, Some("store_code"), "store_code \"XX\" not found"),
             (
                 7,
                 Some("store_code"),
@@ -8050,9 +8058,13 @@ async fn a_delete_row_with_a_missing_reference_applies_nothing() {
     assert_eq!(
         row_errors(&summary),
         vec![
-            (3, Some("username"), "referenced record not found"),
-            (4, Some("store_code"), "referenced record not found"),
-            (5, Some("context_name"), "referenced record not found"),
+            (3, Some("username"), "username \"nobody\" not found"),
+            (4, Some("store_code"), "store_code \"NOPE\" not found"),
+            (
+                5,
+                Some("context_name"),
+                "context_name \"No such program\" not found"
+            ),
         ]
     );
     // Row 2's delete is rolled back with the rest.
@@ -8091,11 +8103,11 @@ async fn a_name_delete_row_with_a_missing_reference_applies_nothing() {
     assert_eq!(
         row_errors(&summary),
         vec![
-            (3, Some("currency_code"), "referenced record not found"),
+            (3, Some("currency_code"), "currency_code \"XXX\" not found"),
             (
                 4,
                 Some("supplying_store_code"),
-                "referenced record not found"
+                "supplying_store_code \"NOPE\" not found"
             ),
         ]
     );
@@ -8584,7 +8596,7 @@ async fn a_user_store_finds_its_references_and_cannot_change_them() {
                 Some("id"),
                 "id conflict: anna in store MS has id anna_store_ms, but this row has id copy"
             ),
-            (7, Some("store_code"), "referenced record not found"),
+            (7, Some("store_code"), "store_code \"XX\" not found"),
         ]
     );
     assert_eq!(summary.tables[0].unchanged, 1);
@@ -9129,8 +9141,8 @@ async fn a_user_store_delete_row_with_a_missing_reference_applies_nothing() {
     assert_eq!(
         row_errors(&summary),
         vec![
-            (3, Some("username"), "referenced record not found"),
-            (4, Some("store_code"), "referenced record not found"),
+            (3, Some("username"), "username \"nobody\" not found"),
+            (4, Some("store_code"), "store_code \"NOPE\" not found"),
         ]
     );
     // Row 2's delete is rolled back with the rest.
@@ -9829,13 +9841,17 @@ async fn a_master_list_line_finds_its_references_and_cannot_change_them() {
     assert_eq!(
         row_errors(&summary),
         vec![
-            (2, Some("master_list_name"), "referenced record not found"),
+            (
+                2,
+                Some("master_list_name"),
+                "master_list_name \"Nope\" not found"
+            ),
             (
                 3,
                 Some("master_list_name"),
                 "ambiguous reference, please provide id instead"
             ),
-            (4, Some("item_code"), "referenced record not found"),
+            (4, Some("item_code"), "item_code \"NOPE\" not found"),
             (
                 5,
                 Some("master_list_name"),
@@ -9919,7 +9935,7 @@ async fn a_master_list_line_delete_row_with_a_missing_reference_applies_nothing(
         .unwrap();
     assert_eq!(
         row_errors(&summary),
-        vec![(3, Some("item_code"), "referenced record not found")]
+        vec![(3, Some("item_code"), "item_code \"NOPE\" not found")]
     );
     assert_eq!(lines_of(&connection, "eml"), before);
 }
@@ -10357,7 +10373,11 @@ async fn a_master_list_name_join_finds_its_references_and_cannot_change_them() {
     assert_eq!(
         row_errors(&summary),
         vec![
-            (2, Some("master_list_name"), "referenced record not found"),
+            (
+                2,
+                Some("master_list_name"),
+                "master_list_name \"Nope\" not found"
+            ),
             (
                 3,
                 Some("master_list_name"),
@@ -10378,7 +10398,7 @@ async fn a_master_list_name_join_finds_its_references_and_cannot_change_them() {
                 Some("name_id"),
                 "Inventory adjustments (invad) is a system name, as the server needs it, so import can't change which master lists are given to it"
             ),
-            (7, Some("name_code"), "referenced record not found"),
+            (7, Some("name_code"), "name_code \"invad\" not found"),
             (
                 8,
                 Some("name_type"),
@@ -10517,7 +10537,7 @@ async fn a_master_list_name_join_delete_row_with_a_missing_reference_applies_not
         .unwrap();
     assert_eq!(
         row_errors(&summary),
-        vec![(3, Some("name_code"), "referenced record not found")]
+        vec![(3, Some("name_code"), "name_code \"NOPE\" not found")]
     );
     assert_eq!(name_joins_of(&connection, "eml"), before);
 }
@@ -11248,9 +11268,9 @@ async fn an_item_store_join_finds_its_references_and_cannot_change_them() {
     assert_eq!(
         row_errors(&summary),
         vec![
-            (2, Some("item_code"), "referenced record not found"),
-            (3, Some("store_code"), "referenced record not found"),
-            (4, Some("item_id"), "referenced record not found"),
+            (2, Some("item_code"), "item_code \"NOPE\" not found"),
+            (3, Some("store_code"), "store_code \"NOPE\" not found"),
+            (4, Some("item_id"), "item_id \"nope\" not found"),
             (
                 5,
                 Some("store_code"),
@@ -11284,6 +11304,33 @@ async fn an_item_store_join_finds_its_default_location_among_its_stores() {
     let (connection, service_provider, dir) =
         item_store_setup("central_data_item_store_location").await;
     let ctx = service_provider.basic_context().unwrap();
+    NameRowRepository::new(&connection)
+        .upsert_one(&NameRow {
+            id: "ward_2_name".to_string(),
+            code: "WARD2".to_string(),
+            name: "Ward 2".to_string(),
+            r#type: NameRowType::Store,
+            ..Default::default()
+        })
+        .unwrap();
+    StoreRowRepository::new(&connection)
+        .upsert_one(&StoreRow {
+            id: "store_ward_2".to_string(),
+            name_id: "ward_2_name".to_string(),
+            code: "W2".to_string(),
+            ..Default::default()
+        })
+        .unwrap();
+    for (id, store_id) in [("cold_main", "store_main"), ("cold_ward_2", "store_ward_2")] {
+        LocationRowRepository::new(&connection)
+            .upsert_one(&LocationRow {
+                id: id.to_string(),
+                code: "COLD".to_string(),
+                store_id: store_id.to_string(),
+                ..Default::default()
+            })
+            .unwrap();
+    }
 
     let path = write_file(
         dir.path(),
@@ -11308,6 +11355,7 @@ async fn an_item_store_join_finds_its_default_location_among_its_stores() {
                 ("default_location_id", "fridge_main"),
             ]),
             item_store_row(&[("id", "isj_main_para"), ("default_location_id", "nowhere")]),
+            item_store_row(&[("id", "isj_ward_para"), ("default_location_code", "COLD")]),
         ]),
     );
     let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
@@ -11317,7 +11365,7 @@ async fn an_item_store_join_finds_its_default_location_among_its_stores() {
             (
                 4,
                 Some("default_location_code"),
-                "referenced record not found"
+                "FRIDGE is a location of store MS, not of store W1"
             ),
             (
                 5,
@@ -11332,7 +11380,12 @@ async fn an_item_store_join_finds_its_default_location_among_its_stores() {
             (
                 7,
                 Some("default_location_id"),
-                "referenced record not found"
+                "default_location_id \"nowhere\" not found"
+            ),
+            (
+                8,
+                Some("default_location_code"),
+                "COLD is a location of stores MS, W2, not of store W1"
             ),
         ]
     );
@@ -11358,7 +11411,7 @@ async fn an_item_store_join_finds_its_default_location_among_its_stores() {
         vec![(
             3,
             Some("default_location_code"),
-            "referenced record not found"
+            "default_location_code \"ATTIC\" not found"
         )]
     );
     assert_eq!(item_store_joins_of(&connection, "store_main"), before);
@@ -11517,7 +11570,7 @@ async fn an_item_store_join_delete_row_with_a_missing_reference_applies_nothing(
         .unwrap();
     assert_eq!(
         row_errors(&summary),
-        vec![(3, Some("store_code"), "referenced record not found")]
+        vec![(3, Some("store_code"), "store_code \"NOPE\" not found")]
     );
     assert_eq!(item_store_joins_of(&connection, "store_main"), before);
 }

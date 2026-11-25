@@ -320,13 +320,16 @@ pub enum LookupError {
     Conflict { resolved: String, provided: String },
 }
 
-pub const NOT_FOUND: &str = "referenced record not found";
+/// _not found_: `item_code "PARA" not found`.
+pub fn not_found(column: &str, value: &str) -> String {
+    format!("{column} \"{value}\" not found")
+}
 
 impl LookupError {
     /// `code` is the code cell; the columns name a conflict.
     pub fn message(&self, code: &str, code_column: &str, id_column: &str) -> String {
         match self {
-            LookupError::NotFound => NOT_FOUND.to_string(),
+            LookupError::NotFound => not_found(code_column, code),
             LookupError::Ambiguous => "ambiguous reference, please provide id instead".to_string(),
             LookupError::Conflict { resolved, provided } => format!(
                 "{code_column} and {id_column} conflict: {code} resolves to {resolved} but {id_column} contains {provided}"
@@ -652,6 +655,7 @@ pub fn find_reference_record<T: KeyedTable>(
                     code_column,
                     id_column,
                     code.as_deref(),
+                    id.as_deref(),
                 )
             }),
     )
@@ -665,8 +669,8 @@ pub struct ReferenceError {
 }
 
 impl ReferenceError {
-    /// The error on the sheet's row, in the id column when the id is to blame. `code` is the
-    /// row's code cell, which the message quotes.
+    /// The error on the sheet's row, in the id column when the id is to blame. The message quotes
+    /// the row's `code` and `id` cells.
     pub fn to_row_error(
         &self,
         sheet: &str,
@@ -674,21 +678,22 @@ impl ReferenceError {
         code_column: &str,
         id_column: &str,
         code: Option<&str>,
+        id: Option<&str>,
     ) -> RowError {
+        let (column, message) = if self.unknown_id {
+            (id_column, not_found(id_column, id.unwrap_or_default()))
+        } else {
+            (
+                code_column,
+                self.error
+                    .message(code.unwrap_or_default(), code_column, id_column),
+            )
+        };
         RowError {
             sheet: sheet.to_string(),
             row: Some(row),
-            column: Some(
-                if self.unknown_id {
-                    id_column
-                } else {
-                    code_column
-                }
-                .to_string(),
-            ),
-            message: self
-                .error
-                .message(code.unwrap_or_default(), code_column, id_column),
+            column: Some(column.to_string()),
+            message,
         }
     }
 }
@@ -910,6 +915,41 @@ mod tests {
         assert_eq!(
             resolve(Some("b"), true, Some(&[])),
             Err(LookupError::NotFound)
+        );
+    }
+
+    // covers: OMS-REG-CDIO-01.206
+
+    #[test]
+    fn not_found_names_the_column_and_value() {
+        let error = |unknown_id| ReferenceError {
+            error: LookupError::NotFound,
+            unknown_id,
+        };
+        let row_error = |unknown_id| {
+            let e = error(unknown_id).to_row_error(
+                "item",
+                2,
+                "unit_name",
+                "unit_id",
+                Some("Box"),
+                Some("u1"),
+            );
+            (e.column, e.message)
+        };
+        assert_eq!(
+            row_error(false),
+            (
+                Some("unit_name".to_string()),
+                "unit_name \"Box\" not found".to_string()
+            )
+        );
+        assert_eq!(
+            row_error(true),
+            (
+                Some("unit_id".to_string()),
+                "unit_id \"u1\" not found".to_string()
+            )
         );
     }
 }

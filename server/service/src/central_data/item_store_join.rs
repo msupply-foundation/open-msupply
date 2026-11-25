@@ -5,7 +5,7 @@ use super::{
     delete::{DELETE_COLUMN, already_deleted_by, check_delete, is_delete},
     field_changes,
     lookup::{
-        InMemory, KeyPart, KeyedTable, LocationsOfStore, NOT_FOUND, SavedCode, differs,
+        InMemory, KeyPart, KeyedTable, LocationsOfStore, SavedCode, differs,
         find_by_id_or_composite_key, find_reference, find_reference_record, key_conflict, key_or,
     },
     name_with_code,
@@ -213,7 +213,7 @@ impl SheetImport for ItemStoreJoinSheet {
             // error for its store below. For a `DELETE` row too, so a missing location stops the
             // import.
             match &store_id {
-                Some(store_id) => find_reference_record(
+                Some(store_id) => match find_reference_record(
                     &LocationsOfStore {
                         repo: LocationRowRepository::new(connection),
                         store_id,
@@ -222,7 +222,14 @@ impl SheetImport for ItemStoreJoinSheet {
                     LOCATION_CODE,
                     LOCATION_ID,
                     |locations| locations,
-                )??,
+                )? {
+                    Ok(location) => location,
+                    Err(error) => {
+                        return Err(self
+                            .location_error(connection, row, store_id, error)?
+                            .into());
+                    }
+                },
                 None => None,
             }
         };
@@ -403,6 +410,56 @@ impl ItemStoreJoinSheet {
         })
     }
 
+    /// A code no location of the store has names the stores whose location has it.
+    fn location_error(
+        &self,
+        connection: &StorageConnection,
+        row: &Row,
+        store_id: &str,
+        error: RowError,
+    ) -> Result<RowError, RepositoryError> {
+        let Some(code) = row
+            .text(LOCATION_CODE)
+            .filter(|_| error.column.as_deref() == Some(LOCATION_CODE))
+        else {
+            return Ok(error);
+        };
+        let repo = LocationRowRepository::new(connection);
+        if !repo
+            .find_by_store_and_trimmed_code(store_id, &code)?
+            .is_empty()
+        {
+            return Ok(error);
+        }
+        let mut stores: Vec<String> = repo
+            .find_by_trimmed_code(&code)?
+            .into_iter()
+            .map(|location| location.store_id)
+            .collect();
+        stores.dedup();
+        if stores.is_empty() {
+            return Ok(error);
+        }
+        Ok(row.error(
+            LOCATION_CODE,
+            self.in_another_store(&code, &stores, store_id),
+        ))
+    }
+
+    /// `BACK is a location of store STB, not of store STA`.
+    fn in_another_store(&self, code: &str, location_stores: &[String], store_id: &str) -> String {
+        let codes: Vec<&str> = location_stores
+            .iter()
+            .map(|id| self.stores.key_or_id(id))
+            .collect();
+        let of = if codes.len() == 1 { "store" } else { "stores" };
+        format!(
+            "{code} is a location of {of} {}, not of store {}",
+            codes.join(", "),
+            self.stores.key_or_id(store_id)
+        )
+    }
+
     fn upsert_failure(
         &self,
         row: &Row,
@@ -414,25 +471,19 @@ impl ItemStoreJoinSheet {
         match error {
             // Not reached here: the row's references are found among the saved records.
             UpsertItemStoreJoinError::ItemNotFound => row
-                .error(row.reference_column(ITEM_CODE, ITEM_ID), NOT_FOUND)
+                .not_found(row.reference_column(ITEM_CODE, ITEM_ID))
                 .into(),
             UpsertItemStoreJoinError::StoreNotFound => row
-                .error(row.reference_column(STORE_CODE, STORE_ID), NOT_FOUND)
+                .not_found(row.reference_column(STORE_CODE, STORE_ID))
                 .into(),
-            UpsertItemStoreJoinError::LocationNotFound => {
-                row.error(location_column, NOT_FOUND).into()
-            }
+            UpsertItemStoreJoinError::LocationNotFound => row.not_found(location_column).into(),
             UpsertItemStoreJoinError::LocationInAnotherStore {
                 location_code,
                 location_store_id,
             } => row
                 .error(
                     location_column,
-                    format!(
-                        "{location_code} is a location of store {}, not of store {}",
-                        self.stores.key_or_id(&location_store_id),
-                        self.stores.key_or_id(&join.store_id),
-                    ),
+                    self.in_another_store(&location_code, &[location_store_id], &join.store_id),
                 )
                 .into(),
             UpsertItemStoreJoinError::NegativePrice => row

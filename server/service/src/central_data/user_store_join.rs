@@ -5,8 +5,8 @@ use super::{
     delete::{DELETE_COLUMN, already_deleted_by, check_delete, is_delete},
     field_changes,
     lookup::{
-        InMemory, KeyPart, NOT_FOUND, active_first, differs, find_by_id_or_composite_key,
-        find_reference, key_conflict,
+        InMemory, KeyPart, active_first, differs, find_by_id_or_composite_key, find_reference,
+        key_conflict,
     },
     sheet::Value,
     sorted_by, stores_with_names,
@@ -513,7 +513,7 @@ impl UserStoreJoinSheet {
         let username = self.users.key_or_id(&join.user_id);
         match error {
             UpsertUserStoreJoinError::UserNotFound => row
-                .error(row.reference_column(USERNAME, USER_ID), NOT_FOUND)
+                .not_found(row.reference_column(USERNAME, USER_ID))
                 .into(),
             UpsertUserStoreJoinError::UserDeleted => row
                 .error(
@@ -525,7 +525,7 @@ impl UserStoreJoinSheet {
                 protected_error(row, username, "change their stores").into()
             }
             UpsertUserStoreJoinError::StoreNotFound => row
-                .error(row.reference_column(STORE_CODE, STORE_ID), NOT_FOUND)
+                .not_found(row.reference_column(STORE_CODE, STORE_ID))
                 .into(),
             // Unreachable here: `find_join` finds a saved user and store, so a row never adds a
             // second.

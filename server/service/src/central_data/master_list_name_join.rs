@@ -3,7 +3,7 @@ use super::{
     SheetImport, SheetStart,
     cells::{Row, RowError, choice_cell, collect},
     delete::{DELETE_COLUMN, already_deleted_by, check_delete, is_delete},
-    lookup::{InMemory, NOT_FOUND, find_by_id_or_composite_key, key_conflict},
+    lookup::{InMemory, find_by_id_or_composite_key, key_conflict},
     master_list_refs::{
         MASTER_LIST_ID, MASTER_LIST_NAME, check_not_placeholder, find_master_list,
         master_list_part, not_found_error, not_placeholder, protected_error, read_master_lists,
@@ -323,7 +323,7 @@ impl MasterListNameJoinSheet {
             // Not reached here: `find_reference` and `find_name` find them among the saved
             // records.
             UpsertMasterListNameJoinError::MasterListNotFound => not_found_error(row).into(),
-            UpsertMasterListNameJoinError::NameNotFound => row.error(name_column, NOT_FOUND).into(),
+            UpsertMasterListNameJoinError::NameNotFound => row.not_found(name_column).into(),
             UpsertMasterListNameJoinError::NameDeleted => row
                 .error(
                     name_column,

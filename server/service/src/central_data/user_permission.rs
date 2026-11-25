@@ -4,8 +4,8 @@ use super::{
     cells::{Row, RowError, collect},
     delete::{DELETE_COLUMN, already_deleted_by, check_delete, is_delete},
     lookup::{
-        InMemory, KeyPart, NOT_FOUND, SavedCode, active_first, differs,
-        find_by_id_or_composite_key, find_reference, key_conflict, key_or, read_contexts,
+        InMemory, KeyPart, SavedCode, active_first, differs, find_by_id_or_composite_key,
+        find_reference, key_conflict, key_or, read_contexts,
     },
     sheet::Value,
     sorted_by, stores_with_names,
@@ -476,12 +476,12 @@ fn upsert_failure(
                 format!("{username} is deleted, so they can't be given a permission"),
             )
             .into(),
-        UpsertUserPermissionError::UserNotFound => row.error(user_column, NOT_FOUND).into(),
+        UpsertUserPermissionError::UserNotFound => row.not_found(user_column).into(),
         UpsertUserPermissionError::StoreNotFound => row
-            .error(row.reference_column(STORE_CODE, STORE_ID), NOT_FOUND)
+            .not_found(row.reference_column(STORE_CODE, STORE_ID))
             .into(),
         UpsertUserPermissionError::ContextNotFound => row
-            .error(row.reference_column(CONTEXT_NAME, CONTEXT_ID), NOT_FOUND)
+            .not_found(row.reference_column(CONTEXT_NAME, CONTEXT_ID))
             .into(),
         UpsertUserPermissionError::StoreRequired => row
             .error(

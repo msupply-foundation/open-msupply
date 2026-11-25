@@ -3,7 +3,7 @@ use super::{
     RowOutcome, SheetImport, SheetStart,
     cells::{Row, RowError, choice_cell, collect, keep_or_saved},
     field_changes,
-    lookup::{NOT_FOUND, NamesOfType, active_first, find_record, find_reference},
+    lookup::{NamesOfType, active_first, find_record, find_reference},
     name::{TYPES as NAME_TYPES, type_label},
     name_refs::{NAME_CODE, NAME_ID, NAME_NAME, NAME_TYPE},
     name_with_code,
@@ -288,7 +288,7 @@ fn upsert_failure(
             .error(CODE, format!("Store {other_code} already has this code"))
             .into(),
         // Not checked here: `find_name` finds it among the saved names.
-        UpsertStoreError::NameNotFound => row.error(name_column, NOT_FOUND).into(),
+        UpsertStoreError::NameNotFound => row.not_found(name_column).into(),
         UpsertStoreError::NameNotStore => row
             .error(
                 name_column,

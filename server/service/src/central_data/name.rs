@@ -5,8 +5,8 @@ use super::{
     delete::{DELETE, DELETE_COLUMN, already_deleted, check_delete, is_delete},
     field_changes,
     lookup::{
-        InMemory, LookupError, NOT_FOUND, NamesOfType, active_first, find_record, find_reference,
-        lookup_reference_record, record_conflict,
+        InMemory, LookupError, NamesOfType, active_first, find_record, find_reference,
+        lookup_reference_record, not_found, record_conflict,
     },
     name_with_code,
     sheet::Value,
@@ -506,7 +506,10 @@ impl NameSheet {
                     sheet: later.sheet,
                     row: Some(later.row),
                     column: Some(SUPPLYING_STORE_ID.to_string()),
-                    message: NOT_FOUND.to_string(),
+                    message: not_found(
+                        SUPPLYING_STORE_ID,
+                        name.supplying_store_id.as_deref().unwrap_or_default(),
+                    ),
                 }),
             }
         }
@@ -591,7 +594,14 @@ fn find_supplying_store(
             .map_err(|error| {
                 (
                     error.error == LookupError::NotFound,
-                    error.to_row_error(sheet, row, SUPPLYING_STORE_CODE, SUPPLYING_STORE_ID, code),
+                    error.to_row_error(
+                        sheet,
+                        row,
+                        SUPPLYING_STORE_CODE,
+                        SUPPLYING_STORE_ID,
+                        code,
+                        id,
+                    ),
                 )
             }),
     )
@@ -648,7 +658,9 @@ fn upsert_failure(row: &Row, name: &NameRow, error: UpsertNameError) -> RowFailu
             .error(CUSTOM_DATA, "custom_data must be JSON, or blank")
             .into(),
         // Not checked here: `find_reference` finds them among the saved records.
-        UpsertNameError::CurrencyNotFound => row.error(CURRENCY_ID, NOT_FOUND).into(),
+        UpsertNameError::CurrencyNotFound => row
+            .not_found(row.reference_column(CURRENCY_CODE, CURRENCY_ID))
+            .into(),
         UpsertNameError::DatabaseError(error) => RowFailure::Database(error),
     }
 }

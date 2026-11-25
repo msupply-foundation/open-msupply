@@ -113,6 +113,14 @@ impl<'a> LocationRowRepository<'a> {
             .load(self.connection.lock().connection())?)
     }
 
+    /// Every store's locations with the code, by store. Spaces around either code don't count.
+    pub fn find_by_trimmed_code(&self, code: &str) -> Result<Vec<LocationRow>, RepositoryError> {
+        Ok(location::table
+            .filter(trim(location::code).eq(trim_spaces(code)))
+            .order((location::store_id.asc(), location::id.asc()))
+            .load(self.connection.lock().connection())?)
+    }
+
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         let changelog = LocationRow::generate_changelog(
             RowOrId::Id(id),

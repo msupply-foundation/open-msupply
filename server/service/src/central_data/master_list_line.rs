@@ -5,7 +5,7 @@ use super::{
     delete::{DELETE_COLUMN, already_deleted_by, check_delete, is_delete},
     field_changes,
     lookup::{
-        InMemory, KeyPart, KeyedTable, NOT_FOUND, SavedCode, differs, find_by_id_or_composite_key,
+        InMemory, KeyPart, KeyedTable, SavedCode, differs, find_by_id_or_composite_key,
         find_reference_record, key_conflict, key_or,
     },
     master_list_refs::{
@@ -343,7 +343,7 @@ impl MasterListLineSheet {
             // saved records.
             UpsertMasterListLineError::MasterListNotFound => not_found_error(row).into(),
             UpsertMasterListLineError::ItemNotFound => row
-                .error(row.reference_column(ITEM_CODE, ITEM_ID), NOT_FOUND)
+                .not_found(row.reference_column(ITEM_CODE, ITEM_ID))
                 .into(),
             UpsertMasterListLineError::NegativePrice => row
                 .error(PRICE_PER_UNIT, "price_per_unit can't be negative")
