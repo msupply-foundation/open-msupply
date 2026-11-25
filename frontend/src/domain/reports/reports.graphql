@@ -33,6 +33,7 @@ query reports(
         name
         context
         subContext
+        isDisplayed
         argumentSchema {
           id
           type

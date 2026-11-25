@@ -6801,6 +6801,16 @@ type NameStoreJoinNode {
 	nameId: String!
 }
 
+type NameTagConnector {
+	totalCount: Int!
+	nodes: [NameTagNode!]!
+}
+
+type NameTagNode {
+	id: String!
+	name: String!
+}
+
 union NamesResponse = NameConnector
 
 type NoPermissionForThisStore implements InsertDemographicIndicatorErrorInterface & InsertDemographicProjectionErrorInterface & UpdateDemographicIndicatorErrorInterface & UpdateDemographicProjectionErrorInterface & InsertAssetErrorInterface {
@@ -7386,6 +7396,7 @@ enum PreferenceKey {
 	receivePaymentsFromPrescriptions
 	globalLogo
 	decimalPlacesForNumbers
+	reportStoreTags
 	blindStocktake
 	manageVaccinesInDoses
 	manageVvmStatusForStock
@@ -8372,6 +8383,10 @@ type Queries {
 		"""
 		sort: [NameSortInput!]
 	): NamesResponse!
+	"""
+	Every name tag (maintained in legacy mSupply), sorted by name
+	"""
+	nameTags(storeId: String!): NameTagConnector!
 	store(id: String!): StoreResponse!
 	stores(
 		"""
@@ -9258,6 +9273,18 @@ type ReportNode {
 	isActive: Boolean!
 	argumentSchema: FormSchemaNode
 	version: String!
+	"""
+	The store tags this report is displayed for on the Reports page. Set
+	per report code, so every version of a report has the same tags. Empty
+	means every store.
+	"""
+	storeTagIds: [String!]!
+	"""
+	Whether the queried store sees this report on the Reports page without
+	pressing its category's "Show more": it has no store tags, or the store has one
+	of them. A report that isn't displayed can still be run.
+	"""
+	isDisplayed: Boolean!
 }
 
 union ReportResponse = ReportNode | QueryReportError
@@ -11953,11 +11980,18 @@ union UpdatePurchaseOrderResponse = IdResponse | UpdatePurchaseOrderError
 input UpdateReportInput {
 	id: String!
 	isActive: Boolean!
+	"""
+	The store tags the report is displayed for on the Reports page. Applies
+	to the report's code, so to every version of it. An empty list displays
+	it for every store. Leave out to keep the current tags.
+	"""
+	storeTagIds: [String!]
 }
 
 type UpdateReportNode {
 	id: String!
 	isActive: Boolean!
+	storeTagIds: [String!]!
 }
 
 type UpdateRequestRequisitionError {

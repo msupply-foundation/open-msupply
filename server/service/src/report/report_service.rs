@@ -20,6 +20,7 @@ use crate::{
     boajs::{BoaJsError, call_method_in_timezone},
     get_pagination_or_default, i64_to_u32,
     localisations::{Localisations, TranslationError},
+    preference::{Preference, ReportStoreTags},
     service_provider::ServiceContext,
     settings::Settings,
     standard_reports::{ReportsData, StandardReports},
@@ -33,6 +34,7 @@ use super::{
         ConvertDataType, GraphQlQuery, ReportDefinition, ReportDefinitionEntry, ReportRef,
         SQLQuery, TeraTemplate,
     },
+    display::set_report_store_tags,
     html_printing::html_to_pdf,
     qr_code::qr_code_svg,
     timezone::arguments_timezone,
@@ -84,6 +86,32 @@ pub enum UpdateReportError {
     RepositoryError(RepositoryError),
     #[error("Report not found")]
     ReportNotFound,
+    #[error("Store tag not found: {0}")]
+    StoreTagNotFound(String),
+    #[error("Not running as central server")]
+    NotACentralServer,
+}
+
+impl From<RepositoryError> for UpdateReportError {
+    fn from(error: RepositoryError) -> Self {
+        UpdateReportError::RepositoryError(error)
+    }
+}
+
+/// What an `update_report` call changes. `store_tag_ids` applies to the
+/// report's code, so to every version of it (#2033); `None` leaves it as is.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct UpdateReport {
+    pub id: String,
+    pub is_active: bool,
+    pub store_tag_ids: Option<Vec<String>>,
+}
+
+/// The updated version, and the store tags of its report as saved.
+#[derive(Debug, Clone, PartialEq)]
+pub struct UpdatedReport {
+    pub row: repository::ReportRow,
+    pub store_tag_ids: Vec<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -252,10 +280,9 @@ pub trait ReportServiceTrait: Sync + Send {
     fn update_report(
         &self,
         ctx: &ServiceContext,
-        id: &str,
-        is_active: bool,
-    ) -> Result<repository::ReportRow, UpdateReportError> {
-        update_report(ctx, id, is_active)
+        input: UpdateReport,
+    ) -> Result<UpdatedReport, UpdateReportError> {
+        update_report(ctx, input)
     }
 }
 
@@ -501,20 +528,38 @@ fn query_all_report_versions(
 
 fn update_report(
     ctx: &ServiceContext,
-    id: &str,
-    is_active: bool,
-) -> Result<repository::ReportRow, UpdateReportError> {
-    let repo = ReportRowRepository::new(&ctx.connection);
-    let mut row = repo
-        .find_one_by_id(id)
-        .map_err(UpdateReportError::RepositoryError)?
-        .ok_or(UpdateReportError::ReportNotFound)?;
+    UpdateReport {
+        id,
+        is_active,
+        store_tag_ids,
+    }: UpdateReport,
+) -> Result<UpdatedReport, UpdateReportError> {
+    ctx.connection
+        .transaction_sync(|connection| {
+            let repo = ReportRowRepository::new(connection);
+            let mut row = repo
+                .find_one_by_id(&id)
+                .map_err(UpdateReportError::RepositoryError)?
+                .ok_or(UpdateReportError::ReportNotFound)?;
 
-    row.is_active = is_active;
-    repo.upsert_one(&row)
-        .map_err(UpdateReportError::RepositoryError)?;
+            if row.is_active != is_active {
+                row.is_active = is_active;
+                repo.upsert_one(&row)
+                    .map_err(UpdateReportError::RepositoryError)?;
+            }
 
-    Ok(row)
+            let store_tag_ids = match store_tag_ids {
+                Some(tag_ids) => set_report_store_tags(connection, &row.code, tag_ids)?,
+                None => ReportStoreTags
+                    .load(connection, None)
+                    .map_err(|e| UpdateReportError::RepositoryError(e.into_repository_error()))?
+                    .remove(&row.code)
+                    .unwrap_or_default(),
+            };
+
+            Ok(UpdatedReport { row, store_tag_ids })
+        })
+        .map_err(|error| error.to_inner_error())
 }
 
 fn report_filter_method(reports: Vec<ReportMetaData>, app_version: Version) -> Vec<String> {

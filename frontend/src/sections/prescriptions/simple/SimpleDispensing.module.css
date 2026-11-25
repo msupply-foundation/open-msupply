@@ -168,3 +168,13 @@
   grid-template-columns: repeat(3, minmax(4rem, 6rem));
   justify-content: start;
 }
+
+/* Correct the stock's body: the medicine and what the system shows. */
+.correctFigure {
+  margin: 0;
+}
+
+/* In Correct the stock's place for staff who can't adjust stock: who can. */
+.correctHint {
+  font-size: var(--text-xs);
+}

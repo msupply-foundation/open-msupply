@@ -37,6 +37,8 @@ pub enum PrefKey {
     ReceivePaymentsFromPrescriptions,
     GlobalLogo,
     DecimalPlacesForNumbers,
+    // Edited through updateReport, not listed with the other preferences (#2033)
+    ReportStoreTags,
 
     // Store preferences
     BlindStocktake,
