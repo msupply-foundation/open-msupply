@@ -54,7 +54,7 @@ const record = (fields: Partial<DispensedRecord> = {}): DispensedRecord => ({
 });
 
 describe('visitLines (spec/prescriptions rules › a dispensed visit)', () => {
-  // OMS-REG-DIS-12.247
+  // OMS-REG-DIS-12.271
   it('lists each medicine once, with the amount given in its unit and its price, by name', () => {
     expect(
       visitLines([
@@ -79,7 +79,7 @@ describe('visitLines (spec/prescriptions rules › a dispensed visit)', () => {
     ]);
   });
 
-  // OMS-REG-DIS-12.247: a medicine given from two batches
+  // OMS-REG-DIS-12.271: a medicine given from two batches
   it('adds up a medicine given from two batches, amounts and prices both', () => {
     expect(
       visitLines([
@@ -89,7 +89,7 @@ describe('visitLines (spec/prescriptions rules › a dispensed visit)', () => {
     ).toEqual([expect.objectContaining({ units: 20, price: 420 })]);
   });
 
-  // OMS-REG-DIS-12.247: lines giving nothing are left out, as on Dispensing
+  // OMS-REG-DIS-12.271: lines giving nothing are left out, as on Dispensing
   // records
   it('leaves out a placeholder awaiting stock and a line of none', () => {
     expect(
@@ -101,7 +101,7 @@ describe('visitLines (spec/prescriptions rules › a dispensed visit)', () => {
     ).toEqual(['Paracetamol 500mg']);
   });
 
-  // OMS-REG-DIS-12.247: a service shows its price and no amount
+  // OMS-REG-DIS-12.271: a service shows its price and no amount
   it('shows a service with its price and no amount', () => {
     expect(
       visitLines([
@@ -118,7 +118,7 @@ describe('visitLines (spec/prescriptions rules › a dispensed visit)', () => {
     ]);
   });
 
-  // OMS-REG-DIS-12.247 and .216: the open visit gives the same medicines, in
+  // OMS-REG-DIS-12.271 and .216: the open visit gives the same medicines, in
   // the same order and amounts, as the record's row in Dispensing records.
   it('agrees with Dispensing records on what the record gave', () => {
     const lines = [
@@ -135,7 +135,7 @@ describe('visitLines (spec/prescriptions rules › a dispensed visit)', () => {
     expect(medicines).toBe(medicinesGiven(lines, String));
   });
 
-  // OMS-REG-DIS-12.247: two items can share a name, and their amounts are in
+  // OMS-REG-DIS-12.271: two items can share a name, and their amounts are in
   // different units.
   it('keeps two medicines that share a name apart', () => {
     expect(
@@ -151,7 +151,7 @@ describe('visitLines (spec/prescriptions rules › a dispensed visit)', () => {
 });
 
 describe('visitHeading (spec/prescriptions rules › a dispensed visit)', () => {
-  // OMS-REG-DIS-12.246: the dispensed date and time, as on Dispensing records
+  // OMS-REG-DIS-12.270: the dispensed date and time, as on Dispensing records
   it('says when the visit was dispensed: the backdated time, else created', () => {
     expect(visitHeading(record())).toEqual({
       kind: 'dispensed',
@@ -162,7 +162,7 @@ describe('visitHeading (spec/prescriptions rules › a dispensed visit)', () => 
     ).toEqual({ kind: 'dispensed', at: '2026-11-19T15:00:00Z' });
   });
 
-  // OMS-REG-DIS-12.255
+  // OMS-REG-DIS-12.279
   it('says when a cancelled visit was cancelled, as well as dispensed', () => {
     expect(
       visitHeading(
@@ -184,7 +184,7 @@ describe('visitHeading (spec/prescriptions rules › a dispensed visit)', () => 
 });
 
 describe('cannotEditReason (spec/prescriptions rules › a dispensed visit)', () => {
-  // OMS-REG-DIS-12.253, .255
+  // OMS-REG-DIS-12.277, .279
   it('says why a finished, cancelled or New record can’t be edited', () => {
     expect(cannotEditReason(record({ status: 'VERIFIED' }))).toBe(
       'messages.finished-cannot-edit'
@@ -197,19 +197,19 @@ describe('cannotEditReason (spec/prescriptions rules › a dispensed visit)', ()
     );
   });
 
-  // OMS-REG-DIS-12.256
+  // OMS-REG-DIS-12.280
   it('says nothing for a Picked visit', () => {
     expect(cannotEditReason(record({ status: 'PICKED' }))).toBeUndefined();
   });
 });
 
 describe('canCancelVisit (spec/prescriptions rules › a dispensed visit)', () => {
-  // OMS-REG-DIS-12.253
+  // OMS-REG-DIS-12.277
   it('lets a finished visit be cancelled', () => {
     expect(canCancelVisit(record({ status: 'VERIFIED' }))).toBe(true);
   });
 
-  // OMS-REG-DIS-12.255, .256
+  // OMS-REG-DIS-12.279, .280
   it('never offers to cancel a Picked, New or cancelled visit', () => {
     for (const status of ['PICKED', 'NEW', 'CANCELLED'] as const)
       expect(canCancelVisit(record({ status }))).toBe(false);
@@ -223,21 +223,21 @@ describe('canCancelVisit (spec/prescriptions rules › a dispensed visit)', () =
 });
 
 describe('afterCancelRead (spec/prescriptions rules › a dispensed visit)', () => {
-  // OMS-REG-DIS-12.273: the reply was lost, but the cancel went through.
+  // OMS-REG-DIS-12.297: the reply was lost, but the cancel went through.
   it('says a record that now reads cancelled was cancelled', () => {
     expect(
       afterCancelRead({ kind: 'read', record: record({ status: 'CANCELLED' }) })
     ).toBe('cancelled');
   });
 
-  // OMS-REG-DIS-12.259
+  // OMS-REG-DIS-12.283
   it('says nothing changed only when the record still reads finished', () => {
     expect(
       afterCancelRead({ kind: 'read', record: record({ status: 'VERIFIED' }) })
     ).toBe('not-cancelled');
   });
 
-  // OMS-REG-DIS-12.273
+  // OMS-REG-DIS-12.297
   it('can’t tell when the record can’t be read', () => {
     expect(afterCancelRead(undefined)).toBe('unknown');
     expect(afterCancelRead({ kind: 'gone' })).toBe('unknown');
