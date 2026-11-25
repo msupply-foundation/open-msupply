@@ -248,3 +248,101 @@ async fn common_medicines_report_a_database_error_as_one() {
         Err(UpsertCommonMedicinesError::DatabaseError(_))
     ));
 }
+
+/// The store's `common_medicine` changelog rows after `cursor`.
+fn changelog_after(ctx: &ServiceContext, cursor: u64) -> Vec<repository::ChangelogRow> {
+    use repository::{ChangelogCondition, ChangelogTableName, CursorAndLimit, FilterBuilder};
+    ChangelogRepository::new(&ctx.connection)
+        .query(
+            ChangelogCondition::table_name::equal(ChangelogTableName::CommonMedicine),
+            CursorAndLimit {
+                cursor: cursor as i64,
+                limit: 100,
+            },
+        )
+        .unwrap()
+        .rows
+}
+
+// OMS-REG-DIS-12.236: a medicine taken off the list leaves a delete for the
+// store's site to push, so central drops it too
+#[actix_rt::test]
+async fn taking_a_medicine_off_the_list_syncs_its_removal() {
+    use repository::RowActionType;
+
+    let ctx = context("common_medicines_removal_syncs").await;
+    let store_a = mock_store_a().id;
+    let item_a = mock_item_a().id;
+    let item_b = mock_item_b().id;
+    upsert_common_medicines(
+        &ctx,
+        &store_a,
+        vec![medicine(&item_a, &[10.0]), medicine(&item_b, &[20.0])],
+    )
+    .unwrap();
+    let b_row = CommonMedicineRowRepository::new(&ctx.connection)
+        .find_many_by_store(&store_a)
+        .unwrap()
+        .into_iter()
+        .find(|row| row.item_id == item_b)
+        .unwrap();
+    let cursor = ChangelogRepository::new(&ctx.connection)
+        .max_cursor()
+        .unwrap();
+
+    upsert_common_medicines(&ctx, &store_a, vec![medicine(&item_a, &[10.0])]).unwrap();
+
+    // One change only: B's row deleted, under the store, so it routes to the
+    // store's site and central as the upsert did.
+    let changes: Vec<_> = changelog_after(&ctx, cursor)
+        .into_iter()
+        .map(|row| (row.record_id, row.row_action, row.store_id))
+        .collect();
+    assert_eq!(
+        changes,
+        vec![(b_row.id, RowActionType::Delete, Some(store_a.clone()))]
+    );
+}
+
+// OMS-REG-DIS-12.133, .236: when a merge has left two rows for one item, saving
+// the list keeps the first row for that item and deletes the other
+#[actix_rt::test]
+async fn saving_after_a_merge_keeps_one_row_for_the_merged_item() {
+    let ctx = context("common_medicines_save_after_merge").await;
+    let store_a = mock_store_a().id;
+    let item_a = mock_item_a().id;
+    let item_b = mock_item_b().id;
+    let repo = CommonMedicineRowRepository::new(&ctx.connection);
+    upsert_common_medicines(
+        &ctx,
+        &store_a,
+        vec![medicine(&item_a, &[1.0]), medicine(&item_b, &[2.0])],
+    )
+    .unwrap();
+    let a_row_id = repo
+        .find_many_by_store(&store_a)
+        .unwrap()
+        .into_iter()
+        .find(|row| row.item_id == item_a)
+        .unwrap()
+        .id;
+
+    // Item A is merged into item B: both rows now read as B, A's first.
+    ItemLinkRowRepository::new(&ctx.connection)
+        .upsert_one(&ItemLinkRow {
+            id: item_a.clone(),
+            item_id: item_b.clone(),
+        })
+        .unwrap();
+    assert_eq!(repo.find_many_by_store(&store_a).unwrap().len(), 2);
+
+    upsert_common_medicines(&ctx, &store_a, vec![medicine(&item_b, &[3.0])]).unwrap();
+
+    let rows = repo.find_many_by_store(&store_a).unwrap();
+    assert_eq!(rows.len(), 1);
+    assert_eq!(rows[0].id, a_row_id);
+    assert_eq!(
+        get_common_medicines(&ctx.connection, &store_a),
+        Ok(vec![medicine(&item_b, &[3.0])])
+    );
+}

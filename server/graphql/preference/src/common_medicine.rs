@@ -87,7 +87,9 @@ impl CommonMedicineMutations {
                 UpsertCommonMedicinesError::InvalidValue(_) => {
                     StandardGraphqlError::BadUserInput(error.to_string()).extend()
                 }
-                UpsertCommonMedicinesError::DatabaseError(_) => error.into(),
+                UpsertCommonMedicinesError::DatabaseError(error) => {
+                    StandardGraphqlError::from_repository_error(error)
+                }
             },
         )?;
 

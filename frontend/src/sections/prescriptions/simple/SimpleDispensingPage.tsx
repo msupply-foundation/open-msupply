@@ -119,6 +119,8 @@ const SimpleDispensingPage: Component = () => {
     setSearchedRead,
     cardsRead,
     setCardsRead,
+    medicinesRead,
+    setMedicinesRead,
     checked,
     setChecked,
     dispensedCount,
@@ -138,8 +140,11 @@ const SimpleDispensingPage: Component = () => {
   // card order. Store data, read for the store the screen opened in rather
   // than with the store's settings. In the background like the cards: a
   // visit may already be on the screen, and the app's error dialog would
-  // offer a reload that loses it. Undefined until read, so "loading" is never
-  // shown as "none set up"; a read that fails says so in the card area.
+  // offer a reload that loses it. Until this screen's read lands, and if it
+  // fails, the kept visit's last read: a visit kept across a trip keeps its
+  // cards and its lines' names, prices and stock (rules › Dispensing
+  // records). Undefined with neither, so "loading" is never shown as "none
+  // set up"; a read that fails with nothing kept says so in the card area.
   const [medicineList, { refetch: refetchMedicines }] = createResource(
     () => storeOpened,
     async storeId => {
@@ -148,13 +153,14 @@ const SimpleDispensingPage: Component = () => {
         { storeId },
         { background: true }
       );
-      return result.kind === 'success'
-        ? result.data.commonMedicines
-        : undefined;
+      if (result.kind !== 'success') return undefined;
+      setMedicinesRead(result.data.commonMedicines);
+      return result.data.commonMedicines;
     }
   );
-  const medicines = () => gated(medicineList);
-  // Read, and none came back: the list itself couldn't be read.
+  const medicines = () => gated(medicineList) ?? medicinesRead();
+  // Read, and no list came back, now or kept: the list itself couldn't be
+  // read.
   const medicinesUnread = () =>
     medicineList.state === 'ready' && medicines() === undefined;
 
