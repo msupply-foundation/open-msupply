@@ -38,16 +38,17 @@ pub fn is_unnamed_patient_id(id: &str) -> bool {
     id.starts_with(UNNAMED_PATIENT_ID_PREFIX)
 }
 
-/// The escape character for [`unnamed_patient_id_like`].
-pub(crate) const UNNAMED_PATIENT_LIKE_ESCAPE: char = '\\';
+/// The escape character for this module's `LIKE` patterns: the unnamed
+/// patient id ([`unnamed_patient_id_like`]) and a typed patient ID's start.
+pub(crate) const LIKE_ESCAPE: char = '\\';
 
 /// A `LIKE` pattern matching every store's unnamed patient id, to use with
-/// `.escape(UNNAMED_PATIENT_LIKE_ESCAPE)`. The prefix's underscores are
+/// `.escape(LIKE_ESCAPE)`. The prefix's underscores are
 /// escaped, as a bare `_` would match any character.
 pub(crate) fn unnamed_patient_id_like() -> String {
     format!(
         "{}%",
-        UNNAMED_PATIENT_ID_PREFIX.replace('_', &format!("{UNNAMED_PATIENT_LIKE_ESCAPE}_"))
+        UNNAMED_PATIENT_ID_PREFIX.replace('_', &format!("{LIKE_ESCAPE}_"))
     )
 }
 
@@ -447,7 +448,7 @@ impl<'a> PatientRepository<'a> {
                 query = query.filter(
                     name::id
                         .not_like(unnamed_patient_id_like())
-                        .escape(UNNAMED_PATIENT_LIKE_ESCAPE),
+                        .escape(LIKE_ESCAPE),
                 );
             }
 
@@ -522,7 +523,7 @@ fn not_visible_in_store(query: BoxedNameQuery, store_id: String) -> BoxedNameQue
 fn code_or_code_2_prefix(
     text: &str,
 ) -> Box<dyn diesel::BoxableExpression<name::table, DBType, SqlType = diesel::sql_types::Bool>> {
-    let escape = UNNAMED_PATIENT_LIKE_ESCAPE;
+    let escape = LIKE_ESCAPE;
     let pattern = format!(
         "{}%",
         text.replace(escape, &format!("{escape}{escape}"))
@@ -540,9 +541,6 @@ fn code_or_code_2_prefix(
     )
 }
 
-/// The ids of names whose `column` starts with `text`, ignoring case: a range
-/// on the column's lowercase form, so the index on that form applies (an
-/// ILIKE can't use it). `column` is one of a fixed few, never input.
 /// Either code starts with `text`, ignoring case: a range on each code's
 /// lowercase form, so the indexes on those forms apply (an ILIKE can't use
 /// them). One OR'd condition rather than a UNION of two lookups, so Postgres
@@ -1164,6 +1162,8 @@ mod tests {
             ..Default::default()
         };
         let rows = [
+            patient("underscore", "AB_1", None),
+            patient("percent", "X%1", Some("y\\2")),
             patient("by_code", "ABC-001", Some("ZZZ-1")),
             patient("by_code_2", "QQQ-002", Some("abc-777")),
             patient("no_code_2", "abd-003", None),
@@ -1200,7 +1200,7 @@ mod tests {
         );
         assert_eq!(
             ids(PatientFilter::new().code_or_code_2(StringFilter::starts_with("AB"))),
-            ["by_code", "by_code_2", "no_code_2"]
+            ["by_code", "by_code_2", "no_code_2", "underscore"]
         );
         // Only the start
         assert!(
@@ -1213,7 +1213,10 @@ mod tests {
         assert!(code_starts("%").is_empty());
         assert!(code_starts("_").is_empty());
         assert!(code_starts("a%").is_empty());
-        assert!(code_starts("ab_").is_empty());
+        // and find a code holding them
+        assert_eq!(code_starts("ab_"), ["underscore"]);
+        assert_eq!(code_starts("x%"), ["percent"]);
+        assert_eq!(code_starts("Y\\"), ["percent"]);
         assert!(code_starts("\\").is_empty());
         // Other operators apply to both columns too
         assert_eq!(
@@ -1302,6 +1305,8 @@ mod tests {
         assert!(last("%").is_empty());
         assert!(last("_").is_empty());
         assert!(last(" %_ ").is_empty());
+        assert!(last("😀").is_empty());
+        assert!(first("\"\\").is_empty());
         // and split words as other punctuation does
         assert_eq!(last("st%john"), ["dotted"]);
         assert_eq!(last("st_john"), ["dotted"]);
