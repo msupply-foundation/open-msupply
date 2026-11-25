@@ -19,14 +19,23 @@ import { isTextEntry } from './isTextEntry';
  * gave the room, and lifting the page again on top of it is the double lift
  * #2352 removed. It only brings the focused field into the room the shell gave.
  *
- * The visual viewport, not the window: Safari resizes only the visual viewport
- * for its keyboard, and Chromium resizes both. `block: 'nearest'` moves the
- * fewest boxes the least distance, so a field already on screen does not move
- * at all — nothing changes for the tapped case or for a desktop window being
- * resized. It scrolls every scrollable ancestor (a dialog's scroll region, then
- * the page), which a popup positioned by Floating UI follows, as it re-places
- * on ancestor scroll. Growth is ignored: the keyboard going away gives room back
- * and moves nothing out of view.
+ * The visual viewport, not the window, because that is the box a keyboard
+ * shrinks in every engine; Chromium resizes the window too, Safari does not.
+ * (Checked on Android's WebView only: whether `scrollIntoView` reaches a field
+ * Safari's keyboard hides, where its layout viewport stays full height, is
+ * untested.) `block: 'nearest'` moves the fewest boxes the least distance, so a
+ * field already on screen does not move at all — nothing changes for the tapped
+ * case or for a desktop window being resized. It scrolls every scrollable
+ * ancestor (a dialog's scroll region, then the page), which a popup positioned
+ * by Floating UI follows, as it re-places on ancestor scroll. Growth is
+ * ignored: the keyboard going away gives room back and moves nothing out of
+ * view.
+ *
+ * A pinch zoom shrinks the visual viewport too, a step at a time. It changes
+ * the SCALE as it does, and a keyboard never does, so a resize that changed the
+ * scale is the user zooming, and is left alone — otherwise every step of a
+ * pinch would snap the view back to the focused field, and nothing else could
+ * be zoomed in on while a field held focus.
  *
  * Started once for the app (App.tsx); returns its stop.
  */
@@ -38,12 +47,14 @@ export const startKeepingFocusedFieldInView = (
   if (!viewport) return () => {};
 
   let lastHeight = viewport.height;
+  let lastScale = viewport.scale;
   let frame: number | undefined;
 
   const onResize = () => {
-    const height = viewport.height;
-    const shrank = height < lastHeight;
+    const { height, scale } = viewport;
+    const shrank = height < lastHeight && scale === lastScale;
     lastHeight = height;
+    lastScale = scale;
     if (!shrank) return;
     // After layout settles at the new size, so the field's box is final.
     if (frame !== undefined) win.cancelAnimationFrame(frame);

@@ -19,6 +19,7 @@ const fakeWindow = (active: ReturnType<typeof field> | null) => {
   const target = new EventTarget();
   const viewport = {
     height: 800,
+    scale: 1,
     addEventListener: target.addEventListener.bind(target),
     removeEventListener: target.removeEventListener.bind(target),
   };
@@ -26,16 +27,42 @@ const fakeWindow = (active: ReturnType<typeof field> | null) => {
     visualViewport: viewport,
     document: { activeElement: active },
     requestAnimationFrame: (run: () => void) => {
+      if (deferFrames) {
+        frames.set(++nextFrame, run);
+        return nextFrame;
+      }
       run();
       return 1;
     },
-    cancelAnimationFrame: () => {},
+    cancelAnimationFrame: (id: number) => {
+      frames.delete(id);
+    },
   };
-  const resizeTo = (height: number) => {
+  // Frames run at once unless a test defers them, to have several resizes
+  // land inside one frame.
+  let deferFrames = false;
+  let nextFrame = 0;
+  const frames = new Map<number, () => void>();
+  const deferFramesFromNowOn = () => {
+    deferFrames = true;
+  };
+  const runFrames = () => {
+    for (const [id, run] of frames) {
+      frames.delete(id);
+      run();
+    }
+  };
+  const resizeTo = (height: number, scale = viewport.scale) => {
     viewport.height = height;
+    viewport.scale = scale;
     target.dispatchEvent(new Event('resize'));
   };
-  return { win: win as unknown as Window, resizeTo };
+  return {
+    win: win as unknown as Window,
+    resizeTo,
+    deferFramesFromNowOn,
+    runFrames,
+  };
 };
 
 describe('startKeepingFocusedFieldInView', () => {
@@ -65,6 +92,33 @@ describe('startKeepingFocusedFieldInView', () => {
     startKeepingFocusedFieldInView(win);
     resizeTo(400);
     expect(box.scrollIntoView).not.toHaveBeenCalled();
+  });
+
+  it('leaves a pinch zoom alone: the scale changed, so it is not a keyboard', () => {
+    const input = field('INPUT', 'text');
+    const { win, resizeTo } = fakeWindow(input);
+    startKeepingFocusedFieldInView(win);
+    resizeTo(600, 1.5);
+    resizeTo(400, 2);
+    expect(input.scrollIntoView).not.toHaveBeenCalled();
+    // At the new zoom, a keyboard coming up still brings the field into view.
+    resizeTo(200, 2);
+    expect(input.scrollIntoView).toHaveBeenCalledTimes(1);
+  });
+
+  it('scrolls once, after the last of several shrinks within one frame', () => {
+    const input = field('INPUT', 'text');
+    const { win, resizeTo, deferFramesFromNowOn, runFrames } =
+      fakeWindow(input);
+    startKeepingFocusedFieldInView(win);
+    deferFramesFromNowOn();
+    // A keyboard animating up fires several resizes before the next frame.
+    resizeTo(700);
+    resizeTo(550);
+    resizeTo(400);
+    expect(input.scrollIntoView).not.toHaveBeenCalled();
+    runFrames();
+    expect(input.scrollIntoView).toHaveBeenCalledTimes(1);
   });
 
   it('stops listening once stopped', () => {
