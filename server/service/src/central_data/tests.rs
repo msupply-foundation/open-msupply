@@ -36,6 +36,10 @@ use repository::{
     MasterListLineRow, MasterListLineRowRepository, MasterListNameJoinFilter,
     MasterListNameJoinRepository, MasterListNameJoinRow, NameLinkRow, NameLinkRowRepository,
 };
+use repository::{
+    ItemStoreJoinFilter, ItemStoreJoinRow, ItemStoreJoinRowRepository,
+    ItemStoreJoinRowRepositoryTrait, LocationRow, LocationRowRepository,
+};
 use std::{
     path::{Path, PathBuf},
     sync::{Arc, RwLock},
@@ -3008,13 +3012,13 @@ async fn item_references_are_found_by_code_or_id() {
                 Some("unit_name"),
                 "unit_name and unit_id conflict: Vial resolves to vial but unit_id contains tab"
             ),
-            (3, Some("unit_name"), "referenced record not found"),
+            (3, Some("unit_name"), "unit_name \"Box\" not found"),
             (
                 3,
                 Some("restricted_location_type_code"),
-                "referenced record not found"
+                "restricted_location_type_code \"WARM\" not found"
             ),
-            (4, Some("unit_id"), "referenced record not found"),
+            (4, Some("unit_id"), "unit_id \"missing_unit\" not found"),
         ]
     );
 
@@ -5332,11 +5336,15 @@ async fn name_references_are_found_by_code_or_id() {
             (
                 2,
                 Some("supplying_store_code"),
-                "referenced record not found"
+                "supplying_store_code \"NOPE\" not found"
             ),
             // Row 3's id alone is saved as given, as sync saves it.
-            (4, Some("supplying_store_id"), "referenced record not found"),
-            (5, Some("currency_code"), "referenced record not found"),
+            (
+                4,
+                Some("supplying_store_id"),
+                "supplying_store_id \"other\" not found"
+            ),
+            (5, Some("currency_code"), "currency_code \"EUR\" not found"),
             (6, Some("custom_data"), "custom_data must be JSON, or blank"),
             (
                 7,
@@ -5928,7 +5936,7 @@ async fn a_store_finds_a_store_name_by_code_or_by_id() {
     assert_eq!(
         row_errors(&summary),
         vec![
-            (2, Some("name_code"), "referenced record not found"),
+            (2, Some("name_code"), "name_code \"NOPE\" not found"),
             (
                 3,
                 Some("name_id"),
@@ -6237,7 +6245,7 @@ async fn a_name_finds_a_supplying_store_the_store_sheet_adds() {
     let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
     let not_found: Vec<_> = row_errors(&summary)
         .into_iter()
-        .filter(|(_, _, message)| *message == "referenced record not found")
+        .filter(|(_, _, message)| message.ends_with("not found"))
         .collect();
     assert_eq!(
         not_found,
@@ -6245,14 +6253,18 @@ async fn a_name_finds_a_supplying_store_the_store_sheet_adds() {
             (
                 2,
                 Some("supplying_store_code"),
-                "referenced record not found"
+                "supplying_store_code \"GONE\" not found"
             ),
             (
                 3,
                 Some("supplying_store_code"),
-                "referenced record not found"
+                "supplying_store_code \"NEW2\" not found"
             ),
-            (4, Some("supplying_store_id"), "referenced record not found"),
+            (
+                4,
+                Some("supplying_store_id"),
+                "supplying_store_id \"not_synced_yet\" not found"
+            ),
         ]
     );
     // Counted against the name sheet, though found after the store sheet ran.
@@ -6299,7 +6311,7 @@ async fn without_a_store_sheet_a_missing_supplying_store_is_saved_by_its_id() {
         vec![(
             2,
             Some("supplying_store_code"),
-            "referenced record not found"
+            "supplying_store_code \"GONE\" not found"
         )]
     );
     assert_eq!(summary.tables[0].inserted, 2);
@@ -6814,7 +6826,7 @@ async fn a_name_store_join_finds_its_store_and_name_by_code_or_id() {
     assert_eq!(
         row_errors(&summary),
         vec![
-            (2, Some("store_code"), "referenced record not found"),
+            (2, Some("store_code"), "store_code \"NOPE\" not found"),
             (
                 3,
                 Some("name_code"),
@@ -6830,7 +6842,7 @@ async fn a_name_store_join_finds_its_store_and_name_by_code_or_id() {
                 Some("name_id"),
                 "Inventory adjustments (invad) is a system name, as the server needs it, so import can't change which stores see it"
             ),
-            (6, Some("name_code"), "referenced record not found"),
+            (6, Some("name_code"), "name_code \"invad\" not found"),
             (
                 7,
                 Some("name_type"),
@@ -7032,7 +7044,7 @@ async fn a_name_store_join_finds_a_store_the_store_sheet_adds_and_a_missing_refe
         .unwrap();
     assert_eq!(
         row_errors(&summary),
-        vec![(3, Some("store_code"), "referenced record not found")]
+        vec![(3, Some("store_code"), "store_code \"NOPE\" not found")]
     );
     assert_eq!(joins_of(&connection, "store_main"), before);
 }
@@ -7336,7 +7348,10 @@ async fn user_permissions_export_then_import_makes_no_changes() {
     let (connection, service_provider, dir) =
         permission_setup("central_data_permission_round_trip").await;
     let ctx = as_user(&service_provider, IMPORTER);
-    let before = permissions_of(&connection, "anna");
+    let before = (
+        permissions_of(&connection, "anna"),
+        permissions_of(&connection, "admin"),
+    );
     // Sorted in any letter case, so after anna.
     UserAccountRowRepository::new(&connection)
         .upsert_one(&UserAccountRow {
@@ -7357,7 +7372,7 @@ async fn user_permissions_export_then_import_makes_no_changes() {
         sheet.headers,
         [PERMISSION_HEADERS.as_slice(), &["store_name"]].concat()
     );
-    // Not the unknown permission, Carl's, the setup admin's or the importer's (no user row). By
+    // The setup admin's, but not the unknown permission, Carl's or the importer's (no user row). By
     // username, store code, permission, then context name.
     let rows: Vec<&[String]> = sheet.rows.iter().map(|row| row.cells.as_slice()).collect();
     let row = |id, username, permission, context_name, context_id| {
@@ -7378,6 +7393,7 @@ async fn user_permissions_export_then_import_makes_no_changes() {
     assert_eq!(
         rows,
         [
+            row("admin_report", "admin", "REPORT", "", ""),
             row(
                 "anna_documents",
                 "anna",
@@ -7414,9 +7430,15 @@ async fn user_permissions_export_then_import_makes_no_changes() {
         .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
-    assert_eq!(summary.tables[0].unchanged, 5);
+    assert_eq!(summary.tables[0].unchanged, 6);
     assert_eq!(summary.changes, vec![]);
-    assert_eq!(permissions_of(&connection, "anna"), before);
+    assert_eq!(
+        (
+            permissions_of(&connection, "anna"),
+            permissions_of(&connection, "admin"),
+        ),
+        before
+    );
 }
 
 // covers: OMS-REG-CDIO-01.46, .153
@@ -7432,16 +7454,18 @@ async fn a_user_permission_export_searches_username_and_store_code() {
             .count
     };
 
+    // The setup admin's too.
     assert_eq!(
         count(None),
         RecordCount {
-            matching: 5,
-            total: 5
+            matching: 6,
+            total: 6
         }
     );
     assert_eq!(count(Some(" ANNA ")).matching, 4);
     assert_eq!(count(Some("ben")).matching, 1);
-    assert_eq!(count(Some("ms")).matching, 5);
+    assert_eq!(count(Some("admin")).matching, 1);
+    assert_eq!(count(Some("ms")).matching, 6);
     // Not the store's name or the permission.
     assert_eq!(count(Some("Main")).matching, 0);
     assert_eq!(count(Some("REPORT")).matching, 0);
@@ -7711,7 +7735,7 @@ async fn a_user_permission_finds_its_references_and_cannot_change_them() {
                 Some("context_id"),
                 "context_id and id conflict: anna: DOCUMENT_QUERY for Immunisation in store MS has context_id immunisation and id anna_documents, but this row has a blank context_id and id anna_documents"
             ),
-            (6, Some("store_code"), "referenced record not found"),
+            (6, Some("store_code"), "store_code \"XX\" not found"),
             (
                 7,
                 Some("store_code"),
@@ -7727,10 +7751,83 @@ async fn a_user_permission_finds_its_references_and_cannot_change_them() {
     assert_eq!(permissions_of(&connection, "anna"), before);
 }
 
+// covers: OMS-REG-CDIO-01.157, .205
+
+#[actix_rt::test]
+async fn a_user_permission_row_can_give_the_setup_admin_a_permission_but_not_take_one_away() {
+    let (connection, service_provider, dir) =
+        permission_setup("central_data_permission_setup_admin").await;
+    // MS is on this server's site, store_a on another.
+    KeyValueStoreRepository::new(&connection)
+        .set_i32(KeyType::SettingsSyncSiteId, Some(0))
+        .unwrap();
+    let ctx = as_user(&service_provider, IMPORTER);
+
+    let path = write_file(
+        dir.path(),
+        permission_sheet(vec![permission_row(&[
+            ("username", "admin"),
+            ("store_code", "MS"),
+            ("permission", "STOCKTAKE_QUERY"),
+        ])]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].inserted, 1);
+    assert_eq!(permissions_of(&connection, "admin").len(), 2);
+
+    let path = write_file(
+        dir.path(),
+        permission_sheet(vec![
+            permission_row(&[("id", "admin_report"), ("delete", "DELETE")]),
+            permission_row(&[
+                ("username", "admin"),
+                ("store_code", "MS"),
+                ("permission", "STOCKTAKE_QUERY"),
+                ("delete", "DELETE"),
+            ]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    let message =
+        "admin is protected, as the server needs it, so import can't take away their permissions";
+    assert_eq!(
+        row_errors(&summary),
+        vec![(2, Some("id"), message), (3, Some("username"), message)]
+    );
+    assert_eq!(permissions_of(&connection, "admin").len(), 2);
+
+    // Their account isn't on store_a's site, so that site couldn't apply the record.
+    let path = write_file(
+        dir.path(),
+        permission_sheet(vec![permission_row(&[
+            ("username", "admin"),
+            ("store_id", "store_a"),
+            ("permission", "STOCKTAKE_QUERY"),
+        ])]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(
+            2,
+            Some("store_id"),
+            "admin is only on this server, so import can't give them permissions in another site's store: code is on site 100"
+        )]
+    );
+    assert_eq!(permissions_of(&connection, "admin").len(), 2);
+}
+
 // covers: OMS-REG-CDIO-01.157
 
 #[actix_rt::test]
-async fn a_user_permission_row_cannot_touch_a_protected_or_deleted_user_or_lock_you_out() {
+async fn a_user_permission_row_cannot_touch_a_server_user_or_deleted_user_or_lock_you_out() {
     let (connection, service_provider, dir) =
         permission_setup("central_data_permission_protected").await;
     grant_server_admin(&connection, "anna");
@@ -7751,11 +7848,10 @@ async fn a_user_permission_row_cannot_touch_a_protected_or_deleted_user_or_lock_
         dir.path(),
         permission_sheet(vec![
             permission_row(&[
-                ("username", "admin"),
+                ("user_id", SYSTEM_USER_ID),
                 ("store_code", "MS"),
                 ("permission", "STOCKTAKE_QUERY"),
             ]),
-            permission_row(&[("id", "admin_report"), ("delete", "DELETE")]),
             permission_row(&[
                 ("username", "carl"),
                 ("store_code", "MS"),
@@ -7769,42 +7865,42 @@ async fn a_user_permission_row_cannot_touch_a_protected_or_deleted_user_or_lock_
     let summary = CentralDataService
         .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
+    let errors = row_errors(&summary);
+    // The users the server records its own work as get no permissions.
+    assert_eq!((errors[0].0, errors[0].1), (2, Some("user_id")));
+    assert!(
+        errors[0].2.ends_with(
+            "is protected, as the server needs it, so import can't change their permissions"
+        ),
+        "{}",
+        errors[0].2
+    );
     assert_eq!(
-        row_errors(&summary),
-        vec![
-            (
-                2,
-                Some("username"),
-                "admin is protected, as the server needs it, so import can't change their permissions"
-            ),
+        errors[1..],
+        [
             (
                 3,
-                Some("id"),
-                "admin is protected, as the server needs it, so import can't change their permissions"
-            ),
-            (
-                4,
                 Some("username"),
                 "carl is deleted, so they can't be given a permission"
             ),
             (
-                5,
+                4,
                 Some("delete"),
                 "This is your last server-admin permission. You can't take it away, or you couldn't give it back"
             ),
             (
-                6,
+                5,
                 Some("delete"),
                 "This is your last central-data edit permission. You can't take it away, or you couldn't import again to give it back"
             ),
             (
-                7,
+                6,
                 Some("delete"),
                 "This is your access to your last store on this server. You can't take it away, or you couldn't log in again"
             ),
         ]
     );
-    assert_eq!(permissions_of(&connection, "admin").len(), 1);
+    assert!(permissions_of(&connection, SYSTEM_USER_ID).is_empty());
     assert!(
         permissions_of(&connection, "anna")
             .iter()
@@ -7962,9 +8058,13 @@ async fn a_delete_row_with_a_missing_reference_applies_nothing() {
     assert_eq!(
         row_errors(&summary),
         vec![
-            (3, Some("username"), "referenced record not found"),
-            (4, Some("store_code"), "referenced record not found"),
-            (5, Some("context_name"), "referenced record not found"),
+            (3, Some("username"), "username \"nobody\" not found"),
+            (4, Some("store_code"), "store_code \"NOPE\" not found"),
+            (
+                5,
+                Some("context_name"),
+                "context_name \"No such program\" not found"
+            ),
         ]
     );
     // Row 2's delete is rolled back with the rest.
@@ -8003,11 +8103,11 @@ async fn a_name_delete_row_with_a_missing_reference_applies_nothing() {
     assert_eq!(
         row_errors(&summary),
         vec![
-            (3, Some("currency_code"), "referenced record not found"),
+            (3, Some("currency_code"), "currency_code \"XXX\" not found"),
             (
                 4,
                 Some("supplying_store_code"),
-                "referenced record not found"
+                "supplying_store_code \"NOPE\" not found"
             ),
         ]
     );
@@ -8109,7 +8209,10 @@ async fn user_stores_export_then_import_makes_no_changes() {
     let (connection, service_provider, dir) =
         user_store_setup("central_data_user_store_round_trip").await;
     let ctx = as_user(&service_provider, IMPORTER);
-    let before = store_joins_of(&connection, "anna");
+    let before = (
+        store_joins_of(&connection, "anna"),
+        store_joins_of(&connection, "admin"),
+    );
 
     let bytes = CentralDataService
         .export(&ctx, &[user_stores_containing(None)])
@@ -8124,11 +8227,22 @@ async fn user_stores_export_then_import_makes_no_changes() {
         sheet.headers,
         [USER_STORE_HEADERS.as_slice(), &["store_name"]].concat()
     );
-    // Not deleted Carl's or the setup admin's. By username, then store code.
+    // The setup admin's, but not deleted Carl's. By username, then store code.
     let rows: Vec<&[String]> = sheet.rows.iter().map(|row| row.cells.as_slice()).collect();
     assert_eq!(
         rows,
         [
+            [
+                "admin_store_ms",
+                "admin",
+                "admin",
+                "MS",
+                "store_ms",
+                "true",
+                "",
+                "Main store"
+            ]
+            .map(String::from),
             [
                 "anna_store_ms",
                 "anna",
@@ -8158,9 +8272,15 @@ async fn user_stores_export_then_import_makes_no_changes() {
         .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
     assert_eq!(summary.errors, vec![]);
-    assert_eq!(summary.tables[0].unchanged, 2);
+    assert_eq!(summary.tables[0].unchanged, 3);
     assert_eq!(summary.changes, vec![]);
-    assert_eq!(store_joins_of(&connection, "anna"), before);
+    assert_eq!(
+        (
+            store_joins_of(&connection, "anna"),
+            store_joins_of(&connection, "admin"),
+        ),
+        before
+    );
 }
 
 // covers: OMS-REG-CDIO-01.46, .162
@@ -8185,15 +8305,17 @@ async fn a_user_store_export_searches_username_and_store_code() {
             .count
     };
 
+    // The setup admin's join too, but not deleted Carl's.
     assert_eq!(
         count(None),
         RecordCount {
-            matching: 3,
-            total: 3
+            matching: 4,
+            total: 4
         }
     );
     assert_eq!(count(Some(" ANNA ")).matching, 2);
-    assert_eq!(count(Some("ms")).matching, 2);
+    assert_eq!(count(Some("admin")).matching, 1);
+    assert_eq!(count(Some("ms")).matching, 3);
     // Not the store's name.
     assert_eq!(count(Some("Main")).matching, 0);
 }
@@ -8474,18 +8596,93 @@ async fn a_user_store_finds_its_references_and_cannot_change_them() {
                 Some("id"),
                 "id conflict: anna in store MS has id anna_store_ms, but this row has id copy"
             ),
-            (7, Some("store_code"), "referenced record not found"),
+            (7, Some("store_code"), "store_code \"XX\" not found"),
         ]
     );
     assert_eq!(summary.tables[0].unchanged, 1);
     assert_eq!(store_joins_of(&connection, "anna"), before);
 }
 
+// covers: OMS-REG-CDIO-01.167, .204
+
+#[actix_rt::test]
+async fn a_user_store_row_can_give_the_setup_admin_a_store_but_not_take_one_away() {
+    let (connection, service_provider, dir) =
+        user_store_setup("central_data_user_store_setup_admin").await;
+    // store_a is on this server's site, store_b on another.
+    KeyValueStoreRepository::new(&connection)
+        .set_i32(KeyType::SettingsSyncSiteId, Some(mock_store_a().site_id))
+        .unwrap();
+    let ctx = as_user(&service_provider, IMPORTER);
+
+    let path = write_file(
+        dir.path(),
+        user_store_sheet(vec![user_store_row(&[
+            ("username", "admin"),
+            ("store_id", "store_a"),
+            ("is_default", "FALSE"),
+        ])]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].inserted, 1);
+    // With store access there, so they can log in to it.
+    assert_eq!(
+        store_access_of(&connection, "admin"),
+        [mock_store_a().id, "store_ms".to_string()]
+    );
+
+    let path = write_file(
+        dir.path(),
+        user_store_sheet(vec![
+            user_store_row(&[("id", "admin_store_ms"), ("delete", "DELETE")]),
+            user_store_row(&[
+                ("username", "admin"),
+                ("store_id", "store_a"),
+                ("delete", "DELETE"),
+            ]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    let message =
+        "admin is protected, as the server needs it, so import can't take away their stores";
+    assert_eq!(
+        row_errors(&summary),
+        vec![(2, Some("id"), message), (3, Some("username"), message)]
+    );
+    assert_eq!(store_joins_of(&connection, "admin").len(), 2);
+
+    // Their account isn't on store_b's site, so that site couldn't apply the record.
+    let path = write_file(
+        dir.path(),
+        user_store_sheet(vec![user_store_row(&[
+            ("username", "admin"),
+            ("store_id", "store_b"),
+            ("is_default", "FALSE"),
+        ])]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(
+            2,
+            Some("store_id"),
+            "admin is only on this server, so import can't give them stores in another site's store: code is on site 2"
+        )]
+    );
+    assert_eq!(store_joins_of(&connection, "admin").len(), 2);
+}
+
 // covers: OMS-REG-CDIO-01.167
 
 #[actix_rt::test]
-async fn a_user_store_row_cannot_touch_a_protected_user_give_a_deleted_user_a_store_or_lock_you_out()
- {
+async fn a_user_store_row_cannot_touch_a_server_user_give_a_deleted_user_a_store_or_lock_you_out() {
     let (connection, service_provider, dir) =
         user_store_setup("central_data_user_store_protected").await;
     grant_server_admin(&connection, "anna");
@@ -8499,11 +8696,15 @@ async fn a_user_store_row_cannot_touch_a_protected_user_give_a_deleted_user_a_st
         dir.path(),
         user_store_sheet(vec![
             user_store_row(&[
-                ("username", "admin"),
+                ("user_id", SYSTEM_USER_ID),
                 ("store_id", "store_a"),
                 ("is_default", "FALSE"),
             ]),
-            user_store_row(&[("id", "admin_store_ms"), ("delete", "DELETE")]),
+            user_store_row(&[
+                ("user_id", PLUGIN_USER_ID),
+                ("store_id", "store_a"),
+                ("is_default", "FALSE"),
+            ]),
             user_store_row(&[
                 ("username", "carl"),
                 ("store_id", "store_a"),
@@ -8515,19 +8716,10 @@ async fn a_user_store_row_cannot_touch_a_protected_user_give_a_deleted_user_a_st
     let summary = CentralDataService
         .import(&ctx, &path, &no_sessions(), today())
         .unwrap();
+    let errors = row_errors(&summary);
     assert_eq!(
-        row_errors(&summary),
-        vec![
-            (
-                2,
-                Some("username"),
-                "admin is protected, as the server needs it, so import can't change their stores"
-            ),
-            (
-                3,
-                Some("id"),
-                "admin is protected, as the server needs it, so import can't change their stores"
-            ),
+        errors[2..],
+        [
             (
                 4,
                 Some("username"),
@@ -8540,7 +8732,18 @@ async fn a_user_store_row_cannot_touch_a_protected_user_give_a_deleted_user_a_st
             ),
         ]
     );
-    assert_eq!(store_joins_of(&connection, "admin").len(), 1);
+    // The users the server records its own work as get no stores.
+    for (error, row) in errors[..2].iter().zip([2, 3]) {
+        assert_eq!((error.0, error.1), (row, Some("user_id")));
+        assert!(
+            error.2.ends_with(
+                "is protected, as the server needs it, so import can't change their stores"
+            ),
+            "{}",
+            error.2
+        );
+    }
+    assert_eq!(store_joins_of(&connection, SYSTEM_USER_ID).len(), 0);
     assert_eq!(store_joins_of(&connection, "carl").len(), 1);
     assert_eq!(store_joins_of(&connection, "anna").len(), 2);
 }
@@ -8938,8 +9141,8 @@ async fn a_user_store_delete_row_with_a_missing_reference_applies_nothing() {
     assert_eq!(
         row_errors(&summary),
         vec![
-            (3, Some("username"), "referenced record not found"),
-            (4, Some("store_code"), "referenced record not found"),
+            (3, Some("username"), "username \"nobody\" not found"),
+            (4, Some("store_code"), "store_code \"NOPE\" not found"),
         ]
     );
     // Row 2's delete is rolled back with the rest.
@@ -9638,13 +9841,17 @@ async fn a_master_list_line_finds_its_references_and_cannot_change_them() {
     assert_eq!(
         row_errors(&summary),
         vec![
-            (2, Some("master_list_name"), "referenced record not found"),
+            (
+                2,
+                Some("master_list_name"),
+                "master_list_name \"Nope\" not found"
+            ),
             (
                 3,
                 Some("master_list_name"),
                 "ambiguous reference, please provide id instead"
             ),
-            (4, Some("item_code"), "referenced record not found"),
+            (4, Some("item_code"), "item_code \"NOPE\" not found"),
             (
                 5,
                 Some("master_list_name"),
@@ -9728,7 +9935,7 @@ async fn a_master_list_line_delete_row_with_a_missing_reference_applies_nothing(
         .unwrap();
     assert_eq!(
         row_errors(&summary),
-        vec![(3, Some("item_code"), "referenced record not found")]
+        vec![(3, Some("item_code"), "item_code \"NOPE\" not found")]
     );
     assert_eq!(lines_of(&connection, "eml"), before);
 }
@@ -10166,7 +10373,11 @@ async fn a_master_list_name_join_finds_its_references_and_cannot_change_them() {
     assert_eq!(
         row_errors(&summary),
         vec![
-            (2, Some("master_list_name"), "referenced record not found"),
+            (
+                2,
+                Some("master_list_name"),
+                "master_list_name \"Nope\" not found"
+            ),
             (
                 3,
                 Some("master_list_name"),
@@ -10187,7 +10398,7 @@ async fn a_master_list_name_join_finds_its_references_and_cannot_change_them() {
                 Some("name_id"),
                 "Inventory adjustments (invad) is a system name, as the server needs it, so import can't change which master lists are given to it"
             ),
-            (7, Some("name_code"), "referenced record not found"),
+            (7, Some("name_code"), "name_code \"invad\" not found"),
             (
                 8,
                 Some("name_type"),
@@ -10326,7 +10537,7 @@ async fn a_master_list_name_join_delete_row_with_a_missing_reference_applies_not
         .unwrap();
     assert_eq!(
         row_errors(&summary),
-        vec![(3, Some("name_code"), "referenced record not found")]
+        vec![(3, Some("name_code"), "name_code \"NOPE\" not found")]
     );
     assert_eq!(name_joins_of(&connection, "eml"), before);
 }
@@ -10497,4 +10708,1076 @@ async fn a_master_list_name_join_row_with_only_an_id_cannot_touch_a_patients_or_
         ]
     );
     assert_eq!(name_joins_of(&connection, "eml"), before);
+}
+
+// Items in stores
+
+const ITEM_STORE_HEADERS: [&str; 11] = [
+    "id",
+    "item_code",
+    "item_id",
+    "store_code",
+    "store_id",
+    "default_sell_price_per_pack",
+    "ignore_for_orders",
+    "margin",
+    "default_location_code",
+    "default_location_id",
+    "delete",
+];
+
+fn item_store_sheet_data(rows: Vec<Vec<Value>>) -> SheetData {
+    sheet_data("item_store_join", &ITEM_STORE_HEADERS, rows)
+}
+
+fn item_store_sheet(rows: Vec<Vec<Value>>) -> Vec<u8> {
+    sheet::write(vec![item_store_sheet_data(rows)]).unwrap()
+}
+
+/// A row of `ITEM_STORE_HEADERS` with the given cells; the others are blank.
+fn item_store_row(cells: &[(&str, &str)]) -> Vec<Value> {
+    ITEM_STORE_HEADERS
+        .iter()
+        .map(
+            |header| match cells.iter().find(|(column, _)| column == header) {
+                Some((_, cell)) if !cell.is_empty() => Value::Text(cell.to_string()),
+                _ => Value::Empty,
+            },
+        )
+        .collect()
+}
+
+/// A row with the given cells, and a price of 1, orders not ignoring it and a margin of 0 unless
+/// they say otherwise.
+fn new_item_store_row(cells: &[(&'static str, &'static str)]) -> Vec<Value> {
+    let defaults = [
+        ("default_sell_price_per_pack", "1"),
+        ("ignore_for_orders", "FALSE"),
+        ("margin", "0"),
+    ];
+    let defaults: Vec<_> = defaults
+        .into_iter()
+        .filter(|(column, _)| !cells.iter().any(|(given, _)| given == column))
+        .collect();
+    item_store_row(&[cells, &defaults].concat())
+}
+
+fn add_item_store_join(connection: &StorageConnection, row: ItemStoreJoinRow) {
+    ItemStoreJoinRowRepository::new(connection)
+        .upsert_one(&row)
+        .unwrap();
+}
+
+/// Each of the store's joins, in id order.
+fn item_store_joins_of(connection: &StorageConnection, store_id: &str) -> Vec<ItemStoreJoinRow> {
+    ItemStoreJoinRowRepository::new(connection)
+        .query_with_names(ItemStoreJoinFilter::default())
+        .unwrap()
+        .into_iter()
+        .map(|join| join.item_store_join)
+        .filter(|join| join.store_id == store_id)
+        .collect()
+}
+
+fn item_stores_containing(contains: Option<&str>) -> ExportTable {
+    ExportTable {
+        table: CentralDataTable::ItemStoreJoin,
+        filter: ExportFilter {
+            contains: contains.map(str::to_string),
+            ..Default::default()
+        },
+    }
+}
+
+/// `store_setup`, with the store Ward 1, coded W1; the items Paracetamol and Ibuprofen; the
+/// locations SHELF and FRIDGE in Main store and SHELF in Ward 1; Paracetamol in both stores, each
+/// on its store's shelf; and Ibuprofen in Main store, which orders ignore.
+async fn item_store_setup(name: &str) -> (StorageConnection, ServiceProvider, TempDir) {
+    let (connection, service_provider, dir) = store_setup(name).await;
+    NameRowRepository::new(&connection)
+        .upsert_one(&NameRow {
+            id: "ward_1_name".to_string(),
+            code: "WARD1".to_string(),
+            name: "Ward 1".to_string(),
+            r#type: NameRowType::Store,
+            ..Default::default()
+        })
+        .unwrap();
+    StoreRowRepository::new(&connection)
+        .upsert_one(&StoreRow {
+            id: "store_ward".to_string(),
+            name_id: "ward_1_name".to_string(),
+            code: "W1".to_string(),
+            ..Default::default()
+        })
+        .unwrap();
+    for (id, code, name) in [
+        ("paracetamol", "PARA", "Paracetamol"),
+        ("ibuprofen", "IBU", "Ibuprofen"),
+    ] {
+        ItemRowRepository::new(&connection)
+            .upsert_one(&ItemRow {
+                id: id.to_string(),
+                code: code.to_string(),
+                name: name.to_string(),
+                is_active: true,
+                ..Default::default()
+            })
+            .unwrap();
+    }
+    for (id, code, name, store_id) in [
+        ("shelf_main", "SHELF", "Main shelf", "store_main"),
+        ("fridge_main", "FRIDGE", "Main fridge", "store_main"),
+        ("shelf_ward", "SHELF", "Ward shelf", "store_ward"),
+    ] {
+        LocationRowRepository::new(&connection)
+            .upsert_one(&LocationRow {
+                id: id.to_string(),
+                code: code.to_string(),
+                name: name.to_string(),
+                store_id: store_id.to_string(),
+                ..Default::default()
+            })
+            .unwrap();
+    }
+    for row in [
+        ItemStoreJoinRow {
+            id: "isj_main_para".to_string(),
+            item_id: "paracetamol".to_string(),
+            store_id: "store_main".to_string(),
+            default_sell_price_per_pack: 2.5,
+            ignore_for_orders: false,
+            margin: 10.0,
+            default_location_id: Some("shelf_main".to_string()),
+        },
+        ItemStoreJoinRow {
+            id: "isj_main_ibu".to_string(),
+            item_id: "ibuprofen".to_string(),
+            store_id: "store_main".to_string(),
+            default_sell_price_per_pack: 0.0,
+            ignore_for_orders: true,
+            margin: 0.0,
+            default_location_id: None,
+        },
+        ItemStoreJoinRow {
+            id: "isj_ward_para".to_string(),
+            item_id: "paracetamol".to_string(),
+            store_id: "store_ward".to_string(),
+            default_sell_price_per_pack: 3.0,
+            ignore_for_orders: false,
+            margin: 0.0,
+            default_location_id: Some("shelf_ward".to_string()),
+        },
+    ] {
+        add_item_store_join(&connection, row);
+    }
+    (connection, service_provider, dir)
+}
+
+// covers: OMS-REG-CDIO-01.10, .11, .194
+
+#[actix_rt::test]
+async fn item_store_joins_export_then_import_makes_no_changes() {
+    let (connection, service_provider, dir) =
+        item_store_setup("central_data_item_store_round_trip").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let before = (
+        item_store_joins_of(&connection, "store_main"),
+        item_store_joins_of(&connection, "store_ward"),
+    );
+
+    let bytes = CentralDataService
+        .export(&ctx, &[item_stores_containing(None)])
+        .unwrap();
+    let path = write_file(dir.path(), bytes);
+    let Ok(sheets) = sheet::read(&path, MAX_IMPORT_ROWS) else {
+        panic!("the export reads back")
+    };
+    let sheet = &sheets[0];
+    assert_eq!(
+        sheet.headers,
+        [
+            ITEM_STORE_HEADERS.as_slice(),
+            &["item_name", "store_name", "default_location_name"]
+        ]
+        .concat()
+    );
+    // By store code, then item code.
+    let rows: Vec<&[String]> = sheet.rows.iter().map(|row| row.cells.as_slice()).collect();
+    assert_eq!(
+        rows,
+        [
+            [
+                "isj_main_ibu",
+                "IBU",
+                "ibuprofen",
+                "MS",
+                "store_main",
+                "0",
+                "true",
+                "0",
+                "",
+                "",
+                "",
+                "Ibuprofen",
+                "Main store",
+                ""
+            ],
+            [
+                "isj_main_para",
+                "PARA",
+                "paracetamol",
+                "MS",
+                "store_main",
+                "2.5",
+                "false",
+                "10",
+                "SHELF",
+                "shelf_main",
+                "",
+                "Paracetamol",
+                "Main store",
+                "Main shelf"
+            ],
+            [
+                "isj_ward_para",
+                "PARA",
+                "paracetamol",
+                "W1",
+                "store_ward",
+                "3",
+                "false",
+                "0",
+                "SHELF",
+                "shelf_ward",
+                "",
+                "Paracetamol",
+                "Ward 1",
+                "Ward shelf"
+            ],
+        ]
+    );
+
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].unchanged, 3);
+    assert_eq!(summary.changes, vec![]);
+    assert_eq!(
+        (
+            item_store_joins_of(&connection, "store_main"),
+            item_store_joins_of(&connection, "store_ward"),
+        ),
+        before
+    );
+}
+
+// covers: OMS-REG-CDIO-01.46, .195
+
+#[actix_rt::test]
+async fn an_item_store_join_export_searches_item_code_and_store_code() {
+    let (_, service_provider, _) = item_store_setup("central_data_item_store_filter").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let count = |contains: Option<&str>| {
+        CentralDataService
+            .export_counts(&ctx, &[item_stores_containing(contains)])
+            .unwrap()[0]
+            .count
+    };
+
+    assert_eq!(
+        count(None),
+        RecordCount {
+            matching: 3,
+            total: 3
+        }
+    );
+    assert_eq!(count(Some(" para ")).matching, 2);
+    assert_eq!(count(Some("ms")).matching, 2);
+    assert_eq!(count(Some("w1")).matching, 1);
+    // Not the item's name, nor the store's name.
+    assert_eq!(count(Some("ibuprofen")).matching, 0);
+    assert_eq!(count(Some("ward")).matching, 0);
+}
+
+// covers: OMS-REG-CDIO-01.12, .25, .26, .36, .55, .63, .196
+
+#[actix_rt::test]
+async fn item_store_join_rows_add_update_and_delete_by_item_and_store() {
+    let (connection, service_provider, dir) =
+        item_store_setup("central_data_item_store_upsert").await;
+    let ctx = service_provider.basic_context().unwrap();
+
+    let path = write_file(
+        dir.path(),
+        item_store_sheet(vec![
+            new_item_store_row(&[("store_code", "W1")]),
+            item_store_row(&[("item_code", "IBU"), ("store_code", "W1")]),
+            item_store_row(&[
+                ("item_code", "PARA"),
+                ("store_code", "MS"),
+                ("delete", "Delete"),
+            ]),
+            item_store_row(&[
+                ("item_code", "IBU"),
+                ("store_code", "MS"),
+                ("margin", "lots"),
+                ("ignore_for_orders", "maybe"),
+            ]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                2,
+                Some("item_code"),
+                "item_code is required for a new item in a store"
+            ),
+            (
+                3,
+                Some("default_sell_price_per_pack"),
+                "default_sell_price_per_pack is required for a new item in a store"
+            ),
+            (
+                3,
+                Some("ignore_for_orders"),
+                "ignore_for_orders is required for a new item in a store"
+            ),
+            (
+                3,
+                Some("margin"),
+                "margin is required for a new item in a store"
+            ),
+            (
+                4,
+                Some("delete"),
+                "\"Delete\" is not valid. Type DELETE to delete this row, or leave it blank"
+            ),
+            (
+                5,
+                Some("ignore_for_orders"),
+                "\"maybe\" must be TRUE, FALSE, 1 or 0"
+            ),
+            (5, Some("margin"), "\"lots\" must be a number"),
+        ]
+    );
+
+    let path = write_file(
+        dir.path(),
+        item_store_sheet(vec![
+            // A new join, on the store's fridge.
+            new_item_store_row(&[
+                ("item_code", "IBU"),
+                ("store_code", "W1"),
+                ("default_sell_price_per_pack", "4.5"),
+                ("ignore_for_orders", "TRUE"),
+                ("margin", "20"),
+            ]),
+            // No id: found by its item and store. Blank required cells keep the saved values.
+            item_store_row(&[
+                ("item_code", "PARA"),
+                ("store_code", "MS"),
+                ("default_sell_price_per_pack", "2.75"),
+                ("default_location_code", "FRIDGE"),
+            ]),
+            item_store_row(&[
+                ("id", "isj_main_ibu"),
+                ("item_code", "IBU"),
+                ("store_code", "MS"),
+                ("ignore_for_orders", "TRUE"),
+                ("delete", "DELETE"),
+            ]),
+            // Already gone: unchanged.
+            item_store_row(&[("id", "gone"), ("delete", "DELETE")]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(
+        summary.tables,
+        vec![TableChanges {
+            table: CentralDataTable::ItemStoreJoin,
+            inserted: 1,
+            updated: 1,
+            deleted: 1,
+            unchanged: 1,
+            error_count: 0,
+        }]
+    );
+    assert_eq!(
+        summary
+            .changes
+            .iter()
+            .map(|change| (change.record.as_str(), change.change))
+            .collect::<Vec<_>>(),
+        [
+            ("Ibuprofen (IBU) in store W1", Change::Inserted),
+            ("Paracetamol (PARA) in store MS", Change::Updated),
+            ("Ibuprofen (IBU) in store MS", Change::Deleted),
+        ]
+    );
+    assert_eq!(
+        summary.changes[1].fields,
+        vec![
+            FieldChange {
+                column: "default_sell_price_per_pack",
+                from: "2.5".to_string(),
+                to: "2.75".to_string(),
+            },
+            FieldChange {
+                column: "default_location_code",
+                from: "SHELF".to_string(),
+                to: "FRIDGE".to_string(),
+            },
+            FieldChange {
+                column: "default_location_id",
+                from: "shelf_main".to_string(),
+                to: "fridge_main".to_string(),
+            },
+        ]
+    );
+    let ward = item_store_joins_of(&connection, "store_ward");
+    let added = ward
+        .iter()
+        .find(|join| join.item_id == "ibuprofen")
+        .unwrap();
+    assert_eq!(
+        (
+            added.default_sell_price_per_pack,
+            added.ignore_for_orders,
+            added.margin,
+            added.default_location_id.as_deref()
+        ),
+        (4.5, true, 20.0, None)
+    );
+    assert_eq!(
+        item_store_joins_of(&connection, "store_main"),
+        [ItemStoreJoinRow {
+            id: "isj_main_para".to_string(),
+            item_id: "paracetamol".to_string(),
+            store_id: "store_main".to_string(),
+            default_sell_price_per_pack: 2.75,
+            ignore_for_orders: false,
+            margin: 10.0,
+            default_location_id: Some("fridge_main".to_string()),
+        }]
+    );
+
+    // Both location cells blank clear it; a DELETE row may keep the saved values, but not change
+    // them.
+    let path = write_file(
+        dir.path(),
+        item_store_sheet(vec![
+            item_store_row(&[("id", "isj_main_para")]),
+            item_store_row(&[
+                ("id", "isj_ward_para"),
+                ("margin", "5"),
+                ("delete", "DELETE"),
+            ]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(
+            3,
+            Some("delete"),
+            "A row marked DELETE can't also change margin. Clear it or put back the saved value"
+        )]
+    );
+    assert_eq!(
+        summary.changes[0].fields,
+        vec![
+            FieldChange {
+                column: "default_location_code",
+                from: "FRIDGE".to_string(),
+                to: "".to_string(),
+            },
+            FieldChange {
+                column: "default_location_id",
+                from: "fridge_main".to_string(),
+                to: "".to_string(),
+            },
+        ]
+    );
+
+    // A sheet without the location columns keeps the saved location.
+    let path = write_file(
+        dir.path(),
+        sheet::write(vec![sheet_data(
+            "item_store_join",
+            &["id", "margin"],
+            vec![vec![
+                Value::Text("isj_ward_para".to_string()),
+                Value::Text("7".to_string()),
+            ]],
+        )])
+        .unwrap(),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    let ward_para = ItemStoreJoinRowRepository::new(&connection)
+        .find_one_by_id("isj_ward_para")
+        .unwrap()
+        .unwrap();
+    assert_eq!(
+        (ward_para.margin, ward_para.default_location_id.as_deref()),
+        (7.0, Some("shelf_ward"))
+    );
+}
+
+// covers: OMS-REG-CDIO-01.23, .24, .39, .197
+
+#[actix_rt::test]
+async fn an_item_store_join_finds_its_references_and_cannot_change_them() {
+    let (_, service_provider, dir) = item_store_setup("central_data_item_store_references").await;
+    let ctx = service_provider.basic_context().unwrap();
+
+    let path = write_file(
+        dir.path(),
+        item_store_sheet(vec![
+            new_item_store_row(&[("item_code", "NOPE"), ("store_code", "W1")]),
+            new_item_store_row(&[("item_code", "IBU"), ("store_code", "NOPE")]),
+            new_item_store_row(&[("item_id", "nope"), ("store_code", "W1")]),
+            item_store_row(&[("id", "isj_main_para"), ("store_code", "W1")]),
+            item_store_row(&[("id", "isj_main_para"), ("item_id", "ibuprofen")]),
+            item_store_row(&[
+                ("id", "copied"),
+                ("item_code", "PARA"),
+                ("store_code", "MS"),
+            ]),
+            new_item_store_row(&[
+                ("item_code", "PARA"),
+                ("item_id", "ibuprofen"),
+                ("store_code", "W1"),
+            ]),
+            // By id alone.
+            new_item_store_row(&[("item_id", "ibuprofen"), ("store_id", "store_ward")]),
+            // The same item in the same store again changes the record the row above added.
+            item_store_row(&[("item_code", "IBU"), ("store_code", "W1"), ("margin", "1")]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (2, Some("item_code"), "item_code \"NOPE\" not found"),
+            (3, Some("store_code"), "store_code \"NOPE\" not found"),
+            (4, Some("item_id"), "item_id \"nope\" not found"),
+            (
+                5,
+                Some("store_code"),
+                "store_code and id conflict: Paracetamol (PARA) in store MS has store_code MS and id isj_main_para, but this row has store_code W1 and id isj_main_para"
+            ),
+            (
+                6,
+                Some("item_id"),
+                "item_id and id conflict: Paracetamol (PARA) in store MS has item_id paracetamol and id isj_main_para, but this row has item_id ibuprofen and id isj_main_para"
+            ),
+            (
+                7,
+                Some("id"),
+                "id conflict: Paracetamol (PARA) in store MS has id isj_main_para, but this row has id copied"
+            ),
+            (
+                8,
+                Some("item_code"),
+                "item_code and item_id conflict: PARA resolves to paracetamol but item_id contains ibuprofen"
+            ),
+            (10, None, "Row 9 already changes this record"),
+        ]
+    );
+    assert_eq!(summary.tables[0].inserted, 1);
+}
+
+// covers: OMS-REG-CDIO-01.198
+
+#[actix_rt::test]
+async fn an_item_store_join_finds_its_default_location_among_its_stores() {
+    let (connection, service_provider, dir) =
+        item_store_setup("central_data_item_store_location").await;
+    let ctx = service_provider.basic_context().unwrap();
+    NameRowRepository::new(&connection)
+        .upsert_one(&NameRow {
+            id: "ward_2_name".to_string(),
+            code: "WARD2".to_string(),
+            name: "Ward 2".to_string(),
+            r#type: NameRowType::Store,
+            ..Default::default()
+        })
+        .unwrap();
+    StoreRowRepository::new(&connection)
+        .upsert_one(&StoreRow {
+            id: "store_ward_2".to_string(),
+            name_id: "ward_2_name".to_string(),
+            code: "W2".to_string(),
+            ..Default::default()
+        })
+        .unwrap();
+    for (id, store_id) in [("cold_main", "store_main"), ("cold_ward_2", "store_ward_2")] {
+        LocationRowRepository::new(&connection)
+            .upsert_one(&LocationRow {
+                id: id.to_string(),
+                code: "COLD".to_string(),
+                store_id: store_id.to_string(),
+                ..Default::default()
+            })
+            .unwrap();
+    }
+
+    let path = write_file(
+        dir.path(),
+        item_store_sheet(vec![
+            // SHELF is coded in both stores: each row finds its own store's.
+            new_item_store_row(&[
+                ("item_code", "IBU"),
+                ("store_code", "W1"),
+                ("default_location_code", "SHELF"),
+            ]),
+            item_store_row(&[("id", "isj_main_ibu"), ("default_location_code", "SHELF")]),
+            // FRIDGE is only Main store's.
+            item_store_row(&[("id", "isj_ward_para"), ("default_location_code", "FRIDGE")]),
+            // Another store's location, by id.
+            item_store_row(&[
+                ("id", "isj_ward_para"),
+                ("default_location_id", "fridge_main"),
+            ]),
+            item_store_row(&[
+                ("id", "isj_main_para"),
+                ("default_location_code", "SHELF"),
+                ("default_location_id", "fridge_main"),
+            ]),
+            item_store_row(&[("id", "isj_main_para"), ("default_location_id", "nowhere")]),
+            item_store_row(&[("id", "isj_ward_para"), ("default_location_code", "COLD")]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                4,
+                Some("default_location_code"),
+                "FRIDGE is a location of store MS, not of store W1"
+            ),
+            (
+                5,
+                Some("default_location_id"),
+                "FRIDGE is a location of store MS, not of store W1"
+            ),
+            (
+                6,
+                Some("default_location_code"),
+                "default_location_code and default_location_id conflict: SHELF resolves to shelf_main but default_location_id contains fridge_main"
+            ),
+            (
+                7,
+                Some("default_location_id"),
+                "default_location_id \"nowhere\" not found"
+            ),
+            (
+                8,
+                Some("default_location_code"),
+                "COLD is a location of stores MS, W2, not of store W1"
+            ),
+        ]
+    );
+
+    // A DELETE row whose location isn't found stops the whole import.
+    let before = item_store_joins_of(&connection, "store_main");
+    let path = write_file(
+        dir.path(),
+        item_store_sheet(vec![
+            item_store_row(&[("id", "isj_main_ibu"), ("delete", "DELETE")]),
+            item_store_row(&[
+                ("id", "isj_main_para"),
+                ("default_location_code", "ATTIC"),
+                ("delete", "DELETE"),
+            ]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(
+            3,
+            Some("default_location_code"),
+            "default_location_code \"ATTIC\" not found"
+        )]
+    );
+    assert_eq!(item_store_joins_of(&connection, "store_main"), before);
+}
+
+// covers: OMS-REG-CDIO-01.203
+
+#[actix_rt::test]
+async fn a_saved_default_location_of_another_store_imports_unchanged_and_can_be_deleted() {
+    let (connection, service_provider, dir) =
+        item_store_setup("central_data_item_store_other_store_location").await;
+    let ctx = service_provider.basic_context().unwrap();
+    // As legacy mSupply can send it: Ward 1's join, on Main store's fridge.
+    let ward_ibu = ItemStoreJoinRow {
+        id: "isj_ward_ibu".to_string(),
+        item_id: "ibuprofen".to_string(),
+        store_id: "store_ward".to_string(),
+        default_sell_price_per_pack: 1.0,
+        ignore_for_orders: false,
+        margin: 0.0,
+        default_location_id: Some("fridge_main".to_string()),
+    };
+    add_item_store_join(&connection, ward_ibu.clone());
+    let find = || {
+        ItemStoreJoinRowRepository::new(&connection)
+            .find_one_by_id("isj_ward_ibu")
+            .unwrap()
+    };
+
+    // An unedited export imports unchanged.
+    let bytes = CentralDataService
+        .export(&ctx, &[item_stores_containing(None)])
+        .unwrap();
+    let path = write_file(dir.path(), bytes);
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].unchanged, 4);
+
+    // A row that keeps the location can change the rest.
+    let exported = [
+        ("id", "isj_ward_ibu"),
+        ("item_code", "IBU"),
+        ("store_code", "W1"),
+        ("default_location_code", "FRIDGE"),
+        ("default_location_id", "fridge_main"),
+    ];
+    let path = write_file(
+        dir.path(),
+        item_store_sheet(vec![item_store_row(
+            &[exported.as_slice(), &[("margin", "5")]].concat(),
+        )]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].updated, 1);
+    assert_eq!(
+        find(),
+        Some(ItemStoreJoinRow {
+            margin: 5.0,
+            ..ward_ibu
+        })
+    );
+
+    // A DELETE row as exported deletes it.
+    let path = write_file(
+        dir.path(),
+        item_store_sheet(vec![item_store_row(
+            &[exported.as_slice(), &[("delete", "DELETE")]].concat(),
+        )]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].deleted, 1);
+    assert_eq!(find(), None);
+}
+
+// covers: OMS-REG-CDIO-01.199
+
+#[actix_rt::test]
+async fn an_item_store_join_price_cannot_be_negative() {
+    let (connection, service_provider, dir) =
+        item_store_setup("central_data_item_store_negative_price").await;
+    let ctx = service_provider.basic_context().unwrap();
+    // A saved negative price, as legacy mSupply could send it.
+    add_item_store_join(
+        &connection,
+        ItemStoreJoinRow {
+            id: "isj_ward_ibu".to_string(),
+            item_id: "ibuprofen".to_string(),
+            store_id: "store_ward".to_string(),
+            default_sell_price_per_pack: -1.0,
+            ..Default::default()
+        },
+    );
+
+    let path = write_file(
+        dir.path(),
+        item_store_sheet(vec![
+            item_store_row(&[
+                ("id", "isj_main_para"),
+                ("default_sell_price_per_pack", "-0.5"),
+            ]),
+            // 0 is a price.
+            item_store_row(&[
+                ("id", "isj_ward_para"),
+                ("default_sell_price_per_pack", "0"),
+            ]),
+            // A saved negative price stays editable while the row leaves it as it is.
+            item_store_row(&[("id", "isj_ward_ibu"), ("margin", "3")]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(
+            2,
+            Some("default_sell_price_per_pack"),
+            "default_sell_price_per_pack can't be negative"
+        )]
+    );
+    assert_eq!(summary.tables[0].updated, 2);
+}
+
+// covers: OMS-REG-CDIO-01.207
+
+#[actix_rt::test]
+async fn an_item_store_join_row_lists_all_its_errors_at_once() {
+    let (_, service_provider, dir) = item_store_setup("central_data_item_store_all_errors").await;
+    let ctx = service_provider.basic_context().unwrap();
+
+    let path = write_file(
+        dir.path(),
+        item_store_sheet(vec![
+            item_store_row(&[
+                ("id", "isj_ward_para"),
+                ("ignore_for_orders", "maybe"),
+                ("default_location_code", "FRIDGE"),
+                ("default_sell_price_per_pack", "-1"),
+            ]),
+            item_store_row(&[
+                ("item_code", "IBU"),
+                ("store_code", "W1"),
+                ("margin", "x"),
+                ("default_location_id", "fridge_main"),
+                ("default_sell_price_per_pack", "-2"),
+            ]),
+            // A missing item still leaves the location and price to check.
+            new_item_store_row(&[
+                ("item_code", "NOPE"),
+                ("store_code", "W1"),
+                ("default_location_code", "FRIDGE"),
+                ("default_sell_price_per_pack", "-3"),
+            ]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    let fridge = "FRIDGE is a location of store MS, not of store W1";
+    let negative = "default_sell_price_per_pack can't be negative";
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                2,
+                Some("ignore_for_orders"),
+                "\"maybe\" must be TRUE, FALSE, 1 or 0"
+            ),
+            (2, Some("default_location_code"), fridge),
+            (2, Some("default_sell_price_per_pack"), negative),
+            (3, Some("margin"), "\"x\" must be a number"),
+            (3, Some("default_location_id"), fridge),
+            (3, Some("default_sell_price_per_pack"), negative),
+            (4, Some("item_code"), "item_code \"NOPE\" not found"),
+            (4, Some("default_location_code"), fridge),
+            (4, Some("default_sell_price_per_pack"), negative),
+        ]
+    );
+}
+
+// covers: OMS-REG-CDIO-01.200
+
+#[actix_rt::test]
+async fn an_item_store_join_delete_row_with_a_missing_reference_applies_nothing() {
+    let (connection, service_provider, dir) =
+        item_store_setup("central_data_item_store_delete_missing").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let before = item_store_joins_of(&connection, "store_main");
+
+    let path = write_file(
+        dir.path(),
+        item_store_sheet(vec![
+            item_store_row(&[
+                ("item_code", "PARA"),
+                ("store_code", "MS"),
+                ("delete", "DELETE"),
+            ]),
+            item_store_row(&[
+                ("item_code", "IBU"),
+                ("store_code", "NOPE"),
+                ("delete", "DELETE"),
+            ]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(3, Some("store_code"), "store_code \"NOPE\" not found")]
+    );
+    assert_eq!(item_store_joins_of(&connection, "store_main"), before);
+}
+
+// covers: OMS-REG-CDIO-01.201
+
+#[actix_rt::test]
+async fn an_item_store_join_finds_an_item_and_store_earlier_sheets_add() {
+    let (connection, service_provider, dir) =
+        item_store_setup("central_data_item_store_earlier_sheets").await;
+    let ctx = service_provider.basic_context().unwrap();
+
+    // Sheets run in table order, not file order.
+    let path = write_file(
+        dir.path(),
+        sheet::write(vec![
+            item_store_sheet_data(vec![new_item_store_row(&[
+                ("item_code", "AMOX"),
+                ("store_code", "W2"),
+                ("default_sell_price_per_pack", "0.5"),
+            ])]),
+            sheet_data(
+                "store",
+                &STORE_HEADERS,
+                vec![new_store_row(&[
+                    ("code", "W2"),
+                    ("name_code", "WARD"),
+                    ("name_type", "STORE"),
+                ])],
+            ),
+            sheet_data("item", &ITEM_HEADERS, vec![new_item("AMOX", "", "", "")]),
+        ])
+        .unwrap(),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    let amoxicillin = find_item(&connection, "AMOX");
+    let joins = item_store_joins_of(&connection, &store_by_code(&connection, "W2").id);
+    assert_eq!(joins.len(), 1);
+    assert_eq!(
+        (&joins[0].item_id, joins[0].default_sell_price_per_pack),
+        (&amoxicillin.id, 0.5)
+    );
+}
+
+// covers: OMS-REG-CDIO-01.202
+
+#[actix_rt::test]
+async fn two_saved_item_store_joins_for_one_item_and_store_are_found_by_id() {
+    let (connection, service_provider, dir) =
+        item_store_setup("central_data_item_store_shared_pair").await;
+    let ctx = service_provider.basic_context().unwrap();
+    // A join for another item, merged into Paracetamol since: both joins now hold Paracetamol.
+    ItemRowRepository::new(&connection)
+        .upsert_one(&ItemRow {
+            id: "old_para".to_string(),
+            code: "PARA-OLD".to_string(),
+            name: "Paracetamol (old)".to_string(),
+            is_active: true,
+            ..Default::default()
+        })
+        .unwrap();
+    add_item_store_join(
+        &connection,
+        ItemStoreJoinRow {
+            id: "isj_main_old_para".to_string(),
+            item_id: "old_para".to_string(),
+            store_id: "store_main".to_string(),
+            default_sell_price_per_pack: 3.0,
+            ..Default::default()
+        },
+    );
+    ItemLinkRowRepository::new(&connection)
+        .upsert_one(&ItemLinkRow {
+            id: "old_para".to_string(),
+            item_id: "paracetamol".to_string(),
+        })
+        .unwrap();
+    let ids = |connection: &StorageConnection| -> Vec<(String, String)> {
+        item_store_joins_of(connection, "store_main")
+            .into_iter()
+            .map(|join| (join.id, join.item_id))
+            .collect()
+    };
+    let shared = |id: &str| (id.to_string(), "paracetamol".to_string());
+    assert_eq!(
+        ids(&connection),
+        [
+            ("isj_main_ibu".to_string(), "ibuprofen".to_string()),
+            shared("isj_main_old_para"),
+            shared("isj_main_para"),
+        ]
+    );
+
+    // An export writes both, and imports unchanged.
+    let bytes = CentralDataService
+        .export(&ctx, &[item_stores_containing(None)])
+        .unwrap();
+    let path = write_file(dir.path(), bytes);
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].unchanged, 4);
+
+    let path = write_file(
+        dir.path(),
+        item_store_sheet(vec![
+            // Without an id, the pair finds both.
+            item_store_row(&[("item_code", "PARA"), ("store_code", "MS"), ("margin", "9")]),
+            item_store_row(&[
+                ("item_code", "PARA"),
+                ("store_code", "MS"),
+                ("delete", "DELETE"),
+            ]),
+            // With one, it settles which.
+            item_store_row(&[
+                ("id", "isj_main_old_para"),
+                ("item_code", "PARA"),
+                ("store_code", "MS"),
+                ("margin", "4"),
+            ]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    let ambiguous = "ambiguous reference, please provide id instead";
+    assert_eq!(
+        row_errors(&summary),
+        vec![(2, Some("id"), ambiguous), (3, Some("id"), ambiguous)]
+    );
+    assert_eq!(summary.tables[0].updated, 1);
+
+    // A DELETE row with an id removes that join alone.
+    let path = write_file(
+        dir.path(),
+        item_store_sheet(vec![item_store_row(&[
+            ("id", "isj_main_old_para"),
+            ("delete", "DELETE"),
+        ])]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(summary.tables[0].deleted, 1);
+    assert_eq!(
+        ids(&connection),
+        [
+            ("isj_main_ibu".to_string(), "ibuprofen".to_string()),
+            shared("isj_main_para"),
+        ]
+    );
 }

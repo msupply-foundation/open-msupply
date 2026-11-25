@@ -3,7 +3,7 @@ use super::{
     SheetImport, SheetStart,
     cells::{Row, choice_cell, collect, keep_or_saved},
     field_changes,
-    lookup::{InMemory, NOT_FOUND, active_first, find_record, find_reference},
+    lookup::{InMemory, active_first, find_record, find_reference},
     name_with_code,
     sheet::Value,
 };
@@ -372,8 +372,12 @@ fn upsert_failure(row: &Row, error: UpsertItemError) -> RowFailure {
             .error(VOLUME_PER_PACK, "volume_per_pack can't be negative")
             .into(),
         // Not checked here: `find_reference` finds them among the saved records.
-        UpsertItemError::UnitNotFound => row.error(UNIT_ID, NOT_FOUND).into(),
-        UpsertItemError::LocationTypeNotFound => row.error(LOCATION_TYPE_ID, NOT_FOUND).into(),
+        UpsertItemError::UnitNotFound => row
+            .not_found(row.reference_column(UNIT_NAME, UNIT_ID))
+            .into(),
+        UpsertItemError::LocationTypeNotFound => row
+            .not_found(row.reference_column(LOCATION_TYPE_CODE, LOCATION_TYPE_ID))
+            .into(),
         UpsertItemError::DatabaseError(error) => RowFailure::Database(error),
     }
 }

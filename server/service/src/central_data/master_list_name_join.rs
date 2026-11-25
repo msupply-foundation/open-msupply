@@ -2,8 +2,8 @@ use super::{
     CentralDataTable, Change, ExportFilter, ImportTable, RecordCount, RowFailure, RowOutcome,
     SheetImport, SheetStart,
     cells::{Row, RowError, choice_cell, collect},
-    delete::{DELETE_COLUMN, already_deleted_as, check_delete, is_delete},
-    lookup::{InMemory, NOT_FOUND, find_by_id_or_composite_key, key_conflict},
+    delete::{DELETE_COLUMN, already_deleted_by, check_delete, is_delete},
+    lookup::{InMemory, find_by_id_or_composite_key, key_conflict},
     master_list_refs::{
         MASTER_LIST_ID, MASTER_LIST_NAME, check_not_placeholder, find_master_list,
         master_list_part, not_found_error, not_placeholder, protected_error, read_master_lists,
@@ -188,14 +188,15 @@ impl SheetImport for MasterListNameJoinSheet {
             return Err(error.into());
         }
         if delete {
-            // Named by the row's master list and name, as found.
-            let missing = match (&master_list_id, &name_id) {
-                (Some(master_list_id), Some(name_id)) if existing.is_none() => {
-                    self.record(master_list_id, name.as_ref(), name_id)
-                }
-                _ => id.clone().unwrap_or_default(),
+            let Some(saved) = existing else {
+                // Named by the row's master list and name, as found.
+                return already_deleted_by(
+                    row,
+                    master_list_id.as_ref().zip(name_id.as_ref()),
+                    |(master_list_id, name_id)| self.record(master_list_id, name.as_ref(), name_id),
+                );
             };
-            return self.delete(connection, row, existing, name.as_ref(), missing);
+            return self.delete(connection, row, saved, name.as_ref());
         }
         // `find_join` makes another master list or name a conflict, so a saved join is kept as
         // it is.
@@ -287,13 +288,9 @@ impl MasterListNameJoinSheet {
         &self,
         connection: &StorageConnection,
         row: &Row,
-        existing: Option<MasterListNameJoinRow>,
+        saved: MasterListNameJoinRow,
         name: Option<&NameRow>,
-        missing: String,
     ) -> Result<RowOutcome, RowFailure> {
-        let Some(saved) = existing else {
-            return already_deleted_as(row, missing, Vec::new());
-        };
         check_delete(
             row,
             COLUMNS,
@@ -326,7 +323,7 @@ impl MasterListNameJoinSheet {
             // Not reached here: `find_reference` and `find_name` find them among the saved
             // records.
             UpsertMasterListNameJoinError::MasterListNotFound => not_found_error(row).into(),
-            UpsertMasterListNameJoinError::NameNotFound => row.error(name_column, NOT_FOUND).into(),
+            UpsertMasterListNameJoinError::NameNotFound => row.not_found(name_column).into(),
             UpsertMasterListNameJoinError::NameDeleted => row
                 .error(
                     name_column,

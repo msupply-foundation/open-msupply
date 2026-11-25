@@ -1,10 +1,10 @@
 use super::cells::{Row, RowError};
 use repository::{
     ContextRow, ContextRowRepository, CurrencyRow, CurrencyRowRepository, ItemRow,
-    ItemRowRepository, LocationTypeRow, LocationTypeRowRepository, MasterListRow,
-    MasterListRowRepository, NameRow, NameRowRepository, NameRowType, RepositoryError,
-    StorageConnection, StoreRow, StoreRowRepository, UnitRow, UnitRowRepository, UserAccountRow,
-    UserAccountRowRepository, trim_spaces,
+    ItemRowRepository, LocationRow, LocationRowRepository, LocationTypeRow,
+    LocationTypeRowRepository, MasterListRow, MasterListRowRepository, NameRow, NameRowRepository,
+    NameRowType, RepositoryError, StorageConnection, StoreRow, StoreRowRepository, UnitRow,
+    UnitRowRepository, UserAccountRow, UserAccountRowRepository, trim_spaces,
 };
 use std::collections::HashMap;
 
@@ -86,6 +86,16 @@ impl Keyed for StoreRow {
 
 /// By code, with its type ([`NamesOfType`]).
 impl Keyed for NameRow {
+    fn id(&self) -> &str {
+        &self.id
+    }
+    fn key(&self) -> &str {
+        &self.code
+    }
+}
+
+/// By code, among one store's ([`LocationsOfStore`]).
+impl Keyed for LocationRow {
     fn id(&self) -> &str {
         &self.id
     }
@@ -211,6 +221,24 @@ impl KeyedTable for NamesOfType<'_> {
     }
 }
 
+/// Looked up by code among `store_id`'s locations, as each store codes its own. By id, any store's,
+/// so a row naming another store's location is told so rather than not found.
+pub struct LocationsOfStore<'a> {
+    pub repo: LocationRowRepository<'a>,
+    pub store_id: &'a str,
+}
+
+impl KeyedTable for LocationsOfStore<'_> {
+    type Record = LocationRow;
+    fn find_by_id(&self, id: &str) -> Result<Option<LocationRow>, RepositoryError> {
+        self.repo.find_one_by_id(id)
+    }
+    fn find_by_key(&self, code: &str) -> Result<Vec<LocationRow>, RepositoryError> {
+        self.repo
+            .find_by_store_and_trimmed_code(self.store_id, code)
+    }
+}
+
 /// A small table read once, for a sheet that refers to it but can't change it, so its rows don't
 /// each query it. Found as its repository finds them: spaces around a key don't count, letter
 /// case does unless `ANY_CASE`, and a key's records come in id order. Case is folded as Postgres
@@ -292,13 +320,16 @@ pub enum LookupError {
     Conflict { resolved: String, provided: String },
 }
 
-pub const NOT_FOUND: &str = "referenced record not found";
+/// _not found_: `item_code "PARA" not found`.
+pub fn not_found(column: &str, value: &str) -> String {
+    format!("{column} \"{value}\" not found")
+}
 
 impl LookupError {
     /// `code` is the code cell; the columns name a conflict.
     pub fn message(&self, code: &str, code_column: &str, id_column: &str) -> String {
         match self {
-            LookupError::NotFound => NOT_FOUND.to_string(),
+            LookupError::NotFound => not_found(code_column, code),
             LookupError::Ambiguous => "ambiguous reference, please provide id instead".to_string(),
             LookupError::Conflict { resolved, provided } => format!(
                 "{code_column} and {id_column} conflict: {code} resolves to {resolved} but {id_column} contains {provided}"
@@ -580,6 +611,10 @@ pub fn duplicate_name_error(row: &Row, noun: &str, other_id: &str, name: &str) -
     )
 }
 
+/// What a reference finds: `None` when the sheet has neither of its columns, `Some(None)` when both
+/// cells are blank.
+pub type FoundReference<R> = Result<Result<Option<Option<R>>, RowError>, RepositoryError>;
+
 /// A reference to another table's record, given by a code column, an id column or both. `None`
 /// when the sheet has neither column, so the saved reference is kept; `Some(None)` clears it.
 /// `narrow` picks among the records a code alone matches, as an id settles which one is meant.
@@ -589,14 +624,29 @@ pub fn find_reference<T: KeyedTable>(
     code_column: &str,
     id_column: &str,
     narrow: impl Fn(Vec<T::Record>) -> Vec<T::Record>,
-) -> Result<Result<Option<Option<String>>, RowError>, RepositoryError> {
+) -> FoundReference<String> {
+    Ok(
+        find_reference_record(table, row, code_column, id_column, narrow)?
+            .map(|found| found.map(|record| record.map(|record| record.id().to_string()))),
+    )
+}
+
+/// As `find_reference`, with the record it found, for a sheet that needs more of it than its id,
+/// so it isn't read again.
+pub fn find_reference_record<T: KeyedTable>(
+    table: &T,
+    row: &Row,
+    code_column: &str,
+    id_column: &str,
+    narrow: impl Fn(Vec<T::Record>) -> Vec<T::Record>,
+) -> FoundReference<T::Record> {
     if !row.has(code_column) && !row.has(id_column) {
         return Ok(Ok(None));
     }
     let id = row.text(id_column);
     let code = row.text(code_column);
     Ok(
-        lookup_reference(table, id.as_deref(), code.as_deref(), narrow)?
+        lookup_reference_record(table, id.as_deref(), code.as_deref(), narrow)?
             .map(Some)
             .map_err(|error| {
                 error.to_row_error(
@@ -605,6 +655,7 @@ pub fn find_reference<T: KeyedTable>(
                     code_column,
                     id_column,
                     code.as_deref(),
+                    id.as_deref(),
                 )
             }),
     )
@@ -618,8 +669,8 @@ pub struct ReferenceError {
 }
 
 impl ReferenceError {
-    /// The error on the sheet's row, in the id column when the id is to blame. `code` is the
-    /// row's code cell, which the message quotes.
+    /// The error on the sheet's row, in the id column when the id is to blame. The message quotes
+    /// the row's `code` and `id` cells.
     pub fn to_row_error(
         &self,
         sheet: &str,
@@ -627,59 +678,67 @@ impl ReferenceError {
         code_column: &str,
         id_column: &str,
         code: Option<&str>,
+        id: Option<&str>,
     ) -> RowError {
+        let (column, message) = if self.unknown_id {
+            (id_column, not_found(id_column, id.unwrap_or_default()))
+        } else {
+            (
+                code_column,
+                self.error
+                    .message(code.unwrap_or_default(), code_column, id_column),
+            )
+        };
         RowError {
             sheet: sheet.to_string(),
             row: Some(row),
-            column: Some(
-                if self.unknown_id {
-                    id_column
-                } else {
-                    code_column
-                }
-                .to_string(),
-            ),
-            message: self
-                .error
-                .message(code.unwrap_or_default(), code_column, id_column),
+            column: Some(column.to_string()),
+            message,
         }
     }
 }
 
-/// As `find_reference`, given the cells, for a reference a later sheet may add.
-pub fn lookup_reference<T: KeyedTable>(
+/// As `find_reference_record`, given the cells, for a reference a later sheet may add.
+pub fn lookup_reference_record<T: KeyedTable>(
     table: &T,
     id: Option<&str>,
     code: Option<&str>,
     narrow: impl Fn(Vec<T::Record>) -> Vec<T::Record>,
-) -> Result<Result<Option<String>, ReferenceError>, RepositoryError> {
-    let id_exists = match id {
-        Some(id) => table.find_by_id(id)?.is_some(),
-        None => false,
+) -> Result<Result<Option<T::Record>, ReferenceError>, RepositoryError> {
+    let by_id = match id {
+        Some(id) => table.find_by_id(id)?,
+        None => None,
     };
-    let code_matches: Option<Vec<String>> = match code {
+    let code_matches: Option<Vec<T::Record>> = match code {
         Some(code) => {
             let matches = table.find_by_key(code)?;
-            let matches = if id.is_some() {
+            Some(if id.is_some() {
                 matches
             } else {
                 narrow(matches)
-            };
-            Some(
-                matches
-                    .iter()
-                    .map(|record| record.id().to_string())
-                    .collect(),
-            )
+            })
         }
         None => None,
     };
-    Ok(
-        resolve(id, id_exists, code_matches.as_deref()).map_err(|error| ReferenceError {
+    let matched_ids: Option<Vec<String>> = code_matches.as_ref().map(|matches| {
+        matches
+            .iter()
+            .map(|record| record.id().to_string())
+            .collect()
+    });
+    let id_exists = by_id.is_some();
+    Ok(match resolve(id, id_exists, matched_ids.as_deref()) {
+        Ok(resolved) => Ok(resolved.and_then(|resolved| {
+            by_id
+                .into_iter()
+                .chain(code_matches.into_iter().flatten())
+                .find(|record| record.id() == resolved)
+        })),
+        Err(error) => Err(ReferenceError {
             error,
             unknown_id: id.is_some() && !id_exists,
         }),
-    )
+    })
 }
 
 /// `code_matches` holds the ids the code matched, `None` when no code was given. Given both, id
@@ -750,6 +809,29 @@ mod tests {
         }]);
         assert_eq!(location_types.find_by_key(" COLD").unwrap().len(), 1);
         assert!(location_types.find_by_key("cold").unwrap().is_empty());
+    }
+
+    #[test]
+    fn a_reference_returns_the_record_it_resolves_to() {
+        let units = InMemory::new(vec![unit("a", "Tab"), unit("b", "Tab"), unit("c", "Vial")]);
+        let found = |id: Option<&str>, name: Option<&str>| {
+            lookup_reference_record(&units, id, name, |records| records)
+                .unwrap()
+                .map(|record| record.map(|unit| unit.id))
+        };
+        // By code alone, by id alone, and by an id that settles a shared code.
+        assert_eq!(found(None, Some("Vial")), Ok(Some("c".to_string())));
+        assert_eq!(found(Some("a"), None), Ok(Some("a".to_string())));
+        assert_eq!(found(Some("b"), Some("Tab")), Ok(Some("b".to_string())));
+        assert_eq!(found(None, None), Ok(None));
+        // Errors as `resolve` gives them.
+        let error = |id: Option<&str>, name: Option<&str>| found(id, name).unwrap_err().error;
+        assert_eq!(error(None, Some("Tab")), LookupError::Ambiguous);
+        assert_eq!(error(Some("x"), None), LookupError::NotFound);
+        assert!(matches!(
+            error(Some("c"), Some("Tab")),
+            LookupError::Conflict { .. }
+        ));
     }
 
     #[test]
@@ -833,6 +915,41 @@ mod tests {
         assert_eq!(
             resolve(Some("b"), true, Some(&[])),
             Err(LookupError::NotFound)
+        );
+    }
+
+    // covers: OMS-REG-CDIO-01.206
+
+    #[test]
+    fn not_found_names_the_column_and_value() {
+        let error = |unknown_id| ReferenceError {
+            error: LookupError::NotFound,
+            unknown_id,
+        };
+        let row_error = |unknown_id| {
+            let e = error(unknown_id).to_row_error(
+                "item",
+                2,
+                "unit_name",
+                "unit_id",
+                Some("Box"),
+                Some("u1"),
+            );
+            (e.column, e.message)
+        };
+        assert_eq!(
+            row_error(false),
+            (
+                Some("unit_name".to_string()),
+                "unit_name \"Box\" not found".to_string()
+            )
+        );
+        assert_eq!(
+            row_error(true),
+            (
+                Some("unit_id".to_string()),
+                "unit_id \"u1\" not found".to_string()
+            )
         );
     }
 }

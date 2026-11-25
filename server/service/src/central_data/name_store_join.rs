@@ -5,7 +5,7 @@ use super::{
     delete::{DELETE_COLUMN, already_deleted, check_delete, is_delete},
     field_changes,
     lookup::{
-        Found, InMemory, KeyPart, NOT_FOUND, differs, find_by_id_or_composite_key, find_reference,
+        Found, InMemory, KeyPart, differs, find_by_id_or_composite_key, find_reference,
         key_conflict, key_or,
     },
     name::{TYPES as NAME_TYPES, type_label},
@@ -371,9 +371,9 @@ fn upsert_failure(
     match error {
         // Not checked here: `find_reference` finds them among the saved records.
         UpsertNameStoreJoinError::StoreNotFound => row
-            .error(row.reference_column(STORE_CODE, STORE_ID), NOT_FOUND)
+            .not_found(row.reference_column(STORE_CODE, STORE_ID))
             .into(),
-        UpsertNameStoreJoinError::NameNotFound => row.error(name_column, NOT_FOUND).into(),
+        UpsertNameStoreJoinError::NameNotFound => row.not_found(name_column).into(),
         UpsertNameStoreJoinError::NameDeleted => row
             .error(
                 name_column,
