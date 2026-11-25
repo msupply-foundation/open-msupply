@@ -8,6 +8,7 @@ import {
   repricedLines,
   shortLines,
   stockAtCheck,
+  stockFor,
   type CardItem,
   type DispenseOutcome,
   type ListLine,
@@ -130,8 +131,36 @@ export const withOwnStock = (
 };
 
 /**
+ * The cards as they stand while the visit is edited: each medicine the visit
+ * gave knows how much it gave and what it was charged for it, so a line
+ * still holding that amount stays as the visit saved it (rules › editing a
+ * dispensed visit), even on a batch dispensing wouldn't take now.
+ */
+export const withKeptAmounts = (
+  cards: readonly MedicineCard[],
+  lines: readonly RecordLine[]
+): MedicineCard[] => {
+  const given = itemsGiven(lines);
+  if (given.length === 0) return [...cards];
+  return cards.map(card => {
+    const gave = given.find(g => g.itemId === card.item.id);
+    if (!gave) return card;
+    const price = round9(
+      gave.lines.reduce(
+        (sum, line) => sum + line.numberOfPacks * line.sellPricePerPack,
+        0
+      )
+    );
+    return { ...card, kept: { units: gave.amount, price } };
+  });
+};
+
+/**
  * The line changes Save changes sends (contract › editing a dispensed visit):
- * per batch, from the new allocation and the record's lines. A batch the
+ * per batch, from the new allocation and the record's lines. A medicine
+ * still at the amount the visit gave keeps its lines as they are, whatever
+ * batches dispensing would take now. Any other medicine is allocated afresh,
+ * as at Dispense: a batch the
  * visit already took keeps its line, given the new amount; a second line on
  * the same batch gets what is left. A new batch gets a new line; a batch no
  * longer taken has its lines deleted. Lines that take no stock are left
@@ -145,14 +174,30 @@ export const editInput = (
   cards: readonly MedicineCard[],
   lineIdFor: (batchId: string) => string
 ) => {
+  const given = visitListLines(lines);
+  const kept = new Set(
+    listed
+      .filter(line =>
+        given.some(
+          g =>
+            g.itemId === line.itemId && round9(g.units) === round9(line.units)
+        )
+      )
+      .map(line => line.itemId)
+  );
   const target = new Map<string, number>();
   for (const line of listed) {
+    if (kept.has(line.itemId)) continue;
     const card = cards.find(c => c.item.id === line.itemId);
     if (!card) continue;
     for (const [batchId, packs] of allocate(card.batches, line.units))
       if (packs > 0) target.set(batchId, round9(packs));
   }
-  const own = ownByBatch(lines);
+  const own = new Map(
+    [...ownByBatch(lines)].filter(
+      ([, batchLines]) => !kept.has(batchLines[0]?.itemId ?? '')
+    )
+  );
   const insertPrescriptionLines: {
     id: string;
     invoiceId: string;
@@ -343,8 +388,11 @@ export const saveChanges = async (
   const fresh = await calls.check(listed, lines);
   if (!fresh) return { kind: 'failed', lines };
   const checked = stockAtCheck(listed, fresh, calls.before);
-  const stockNow = (itemId: string) =>
-    checked.find(card => card.item.id === itemId)?.stock ?? 0;
+  const stockNow = (itemId: string, units: number) =>
+    stockFor(
+      checked.find(card => card.item.id === itemId),
+      units
+    );
   const repriced = repricedLines(
     listed,
     shown,

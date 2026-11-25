@@ -29,6 +29,7 @@ import { createMediaQuery } from '@/ui/utils/createMediaQuery';
 import { createFocusTargets } from '@/ui/utils/createFocusTarget';
 import {
   linePrice,
+  stockFor,
   type ListLine,
   type MedicineCard,
 } from './simpleDispensingLogic';
@@ -500,7 +501,7 @@ export const DispensingList = (props: {
                       const card = () => props.cardOf(line.itemId);
                       const name = () => card()?.item.name ?? '';
                       const unit = () => card()?.item.unitName ?? '';
-                      const stock = () => card()?.stock ?? 0;
+                      const stock = () => stockFor(card(), line.units);
                       // The unit as set up, never pluralised (#666); an item
                       // with no unit leaves no gap.
                       const amountText = (key: LocaleKey, quantity: number) =>
