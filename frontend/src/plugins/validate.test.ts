@@ -778,6 +778,8 @@ describe('validateLoadedModule — pages & nav sections', () => {
     for (const path of [
       'inventory',
       'inventory/stock/extra',
+      // Under a section but no destination in it (OMS-REG-NAV-01.27).
+      'inventory/ck-page',
       'dashboard',
       'dispensary/prescription',
     ]) {
