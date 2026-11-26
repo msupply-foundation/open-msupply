@@ -20,8 +20,10 @@ import { IconButton } from '@/ui/elements/buttons/IconButton';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { Popover } from '@/ui/elements/feedback/Popover';
 import {
+  ArrowLeftIcon,
   CheckCircleIcon,
   ChevronDownIcon,
+  ClockIcon,
   MoreHorizontalIcon,
   TrashIcon,
 } from '@/ui/icons';
@@ -136,6 +138,12 @@ export const DispensingList = (props: {
     text: string;
     /** Where View goes: the visit the message says was dispensed. */
     viewHref?: string;
+    /**
+     * Just dispensed: where Dispensing records goes. The list says it is
+     * ready for the next patient and offers Dispensing records in its foot,
+     * as long as the message shows (ui-surface S9 › dispensed).
+     */
+    recordsHref?: string;
   };
   /** A phone: the list is the bottom bar and its sheet. */
   isPhone: boolean;
@@ -159,6 +167,10 @@ export const DispensingList = (props: {
   // Nothing to check yet: the head's band is muted.
   const nothingListed = () =>
     props.visit ? !props.visit.lines?.length : !hasLines();
+  // Just dispensed, with the list docked or wrapped: Dispensing records in
+  // the foot. Not on a phone, where the page action is in view.
+  const recordsHref = () =>
+    props.isPhone ? undefined : props.notice?.recordsHref;
   // The total the panel shows: the dispensed visit's once it is read, else
   // the list's once something is on it.
   const shownTotal = (): number | undefined =>
@@ -483,9 +495,37 @@ export const DispensingList = (props: {
               <Show
                 when={hasLines()}
                 fallback={
-                  <p class={styles.empty} data-testid="dispensing-list-empty">
-                    {t('messages.nothing-yet-press-an-amount')}
-                  </p>
+                  <Show
+                    when={props.notice?.recordsHref}
+                    fallback={
+                      <p
+                        class={styles.empty}
+                        data-testid="dispensing-list-empty"
+                      >
+                        {t('messages.nothing-yet-press-an-amount')}
+                      </p>
+                    }
+                  >
+                    {/* Just dispensed: the next visit starts on the cards,
+                        which the arrow points to. */}
+                    <div
+                      class={styles.ready}
+                      data-testid="ready-for-next-patient"
+                    >
+                      <ArrowLeftIcon
+                        class={styles.readyArrow}
+                        aria-hidden="true"
+                      />
+                      <div>
+                        <p class={styles.readyHeading}>
+                          {t('heading.ready-for-next-patient')}
+                        </p>
+                        <p class={styles.readyHint}>
+                          {t('messages.press-an-amount-to-start')}
+                        </p>
+                      </div>
+                    </div>
+                  </Show>
                 }
               >
                 <table class={styles.lines}>
@@ -712,6 +752,21 @@ export const DispensingList = (props: {
             </Show>
             <Show when={!props.visit}>
               <div class={styles.actions}>
+                {/* Just dispensed: the way to past visits, at the inline
+                    start, away from Dispense. */}
+                <Show when={recordsHref()}>
+                  {href => (
+                    <LinkButton
+                      href={href()}
+                      variant="ghost"
+                      icon={<ClockIcon />}
+                      class={styles.recordsLink}
+                      data-testid="list-dispensing-records-button"
+                    >
+                      {t('button.dispensing-records')}
+                    </LinkButton>
+                  )}
+                </Show>
                 {/* Hidden, not disabled, with nothing to clear (ui-surface S9).
                     While editing it discards the changes, so it is always
                     there. */}

@@ -123,7 +123,12 @@ import {
 } from './DispensingList';
 import { StepHeading } from './StepHeading';
 import { WhoIsItFor } from './WhoIsItFor';
-import { leaveVisit, visitFor, type Notice } from './keptVisit';
+import {
+  leaveVisit,
+  visitFor,
+  withNoticeLinks,
+  type Notice,
+} from './keptVisit';
 import styles from './SimpleDispensing.module.css';
 
 /*
@@ -142,6 +147,7 @@ const SimpleDispensingPage: Component = () => {
   const storeOpened = untrack(() => params.storeId);
   const recordsHref = `/${storeOpened}/dispensary/dispensing/records`;
   const simpleHref = `/${storeOpened}/dispensary/dispensing/simple`;
+  const visitHref = (id: string) => `${simpleHref}/${id}`;
   const navigate = useNavigate();
 
   // The visit in progress, kept while staff go elsewhere (rules › Dispensing
@@ -506,6 +512,7 @@ const SimpleDispensingPage: Component = () => {
         ? t('messages.dispensed-at', { time: localisedTime(new Date()) })
         : t('messages.dispensed-to', { name: who.name }),
       dispensedId,
+      dispensed: true,
     });
     // The cards read their stock again, on whichever screen shows the visit
     // now: this one, or one opened while the save was out.
@@ -1204,10 +1211,7 @@ const SimpleDispensingPage: Component = () => {
       const cancelled = visitNotice();
       return cancelled?.id === viewing ? cancelled.notice : undefined;
     }
-    const notice = shownNotice();
-    if (!notice || !('dispensedId' in notice) || !notice.dispensedId)
-      return notice;
-    return { ...notice, viewHref: `${simpleHref}/${notice.dispensedId}` };
+    return withNoticeLinks(shownNotice(), { visitHref, recordsHref });
   };
 
   // The one dispensed visit Export/Print is for (rules › printing a dispensed

@@ -443,6 +443,42 @@ button.deleteAction[data-variant] {
   font-variant-numeric: tabular-nums;
 }
 
+/* Just dispensed: Ready for the next patient, under the message, with an
+   arrow pointing to the cards (mirrored right to left, data-flip-rtl). */
+.ready {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-2);
+}
+
+.readyArrow {
+  flex: none;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  margin-block-start: 0.125rem;
+  color: var(--primary-main);
+}
+
+.ready p {
+  margin: 0;
+}
+
+.readyHeading {
+  font-weight: var(--weight-semibold);
+}
+
+.readyHint {
+  margin-block-start: var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+/* Dispensing records, at the actions row's inline start. */
+.recordsLink {
+  margin-inline-end: auto;
+}
+
 /* Clear, and Dispense after it once it comes, at the inline end. */
 .actions {
   display: flex;
