@@ -19,6 +19,19 @@
   border: 1px solid var(--color-border-value);
 }
 
+/* The panel surface: a field group on a shaded page body (Page `shaded`). The
+   raised fill (white in light, a step above the shade in dark), outlined by
+   the hairline, with the small radius the table frame uses. No shadow: the
+   shade already separates it.
+   TO-DO: only the tender page's cards use it. Once stakeholders approve the
+   look, it becomes how every group of fields on a page body looks (#2172). */
+.card[data-surface='panel'] {
+  background: var(--surface-raised);
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-md);
+  box-shadow: none;
+}
+
 .header {
   display: flex;
   align-items: center;
