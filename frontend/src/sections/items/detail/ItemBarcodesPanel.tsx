@@ -89,8 +89,6 @@ const promoteVariant = async (
 
 // Room for a 14-digit code.
 const BARCODE_WIDTH_REM = 10;
-const { maxSize: _codeCap, ...codeCell } =
-  getCellDefinition<BarcodeRow>('code');
 
 export const ItemBarcodesPanel: Component<{
   storeId: string;
@@ -157,11 +155,9 @@ export const ItemBarcodesPanel: Component<{
         c: { accessor: row => row.barcode.barcode, id: 'barcode' },
         header: () => t('label.barcode'),
         enableSorting: false,
-        // A code, but up to 14 digits (an ITF-14) or longer: the code preset's
-        // ~9-character cap would truncate it, so it is widened and its hard
-        // cap dropped — by removing the key, since an explicit
-        // `maxSize: undefined` would override TanStack's own default.
-        ...codeCell,
+        // A code, but up to 14 digits (an ITF-14) or longer: wider than the
+        // code preset's ~9-character default.
+        ...getCellDefinition<BarcodeRow>('code'),
         size: remToPx(BARCODE_WIDTH_REM),
       },
       {

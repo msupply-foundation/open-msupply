@@ -16,10 +16,12 @@ export type ReportsVariables = {
     name?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     code?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     context?: {
     equalTo?: "ASSET" | "INBOUND_SHIPMENT" | "OUTBOUND_SHIPMENT" | "REQUISITION" | "STOCKTAKE" | "RESOURCE" | "PATIENT" | "DISPENSARY" | "REPACK" | "OUTBOUND_RETURN" | "INBOUND_RETURN" | "REPORT" | "PRESCRIPTION" | "INTERNAL_ORDER" | "PURCHASE_ORDER" | "SUPPLIER_RETURN" | "CUSTOMER_RETURN" | "STOCK_MOVEMENT" | "PRESCRIPTION_REQUEST" | null;
@@ -52,6 +54,7 @@ export type ReportsResult = {
   name: string;
   context: "ASSET" | "INBOUND_SHIPMENT" | "OUTBOUND_SHIPMENT" | "REQUISITION" | "STOCKTAKE" | "RESOURCE" | "PATIENT" | "DISPENSARY" | "REPACK" | "OUTBOUND_RETURN" | "INBOUND_RETURN" | "REPORT" | "PRESCRIPTION" | "INTERNAL_ORDER" | "PURCHASE_ORDER" | "SUPPLIER_RETURN" | "CUSTOMER_RETURN" | "STOCK_MOVEMENT" | "PRESCRIPTION_REQUEST";
   subContext: string | null;
+  isDisplayed: boolean;
   argumentSchema: {
   id: string;
   type: string;
@@ -70,7 +73,7 @@ export type ReportsResult = {
 };
 
 export const Reports = {
-  query: "query reports($storeId: String!, $userLanguage: String!, $filter: ReportFilterInput, $sort: [ReportSortInput!]) {\n  reports(\n    storeId: $storeId\n    userLanguage: $userLanguage\n    filter: $filter\n    sort: $sort\n  ) {\n    ... on ReportConnector {\n      __typename\n      nodes {\n        id\n        code\n        name\n        context\n        subContext\n        argumentSchema {\n          id\n          type\n          jsonSchema\n          uiSchema\n        }\n      }\n    }\n    ... on QueryReportsError {\n      __typename\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}",
+  query: "query reports($storeId: String!, $userLanguage: String!, $filter: ReportFilterInput, $sort: [ReportSortInput!]) {\n  reports(\n    storeId: $storeId\n    userLanguage: $userLanguage\n    filter: $filter\n    sort: $sort\n  ) {\n    ... on ReportConnector {\n      __typename\n      nodes {\n        id\n        code\n        name\n        context\n        subContext\n        isDisplayed\n        argumentSchema {\n          id\n          type\n          jsonSchema\n          uiSchema\n        }\n      }\n    }\n    ... on QueryReportsError {\n      __typename\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}",
 } as TypedDocument<ReportsResult, ReportsVariables>;
 
 export type GenerateReportVariables = {

@@ -171,10 +171,16 @@ td {
   text-align: end;
 }
 
-.lines .comment {
+/* The line's comment, on its own row under the line */
+.lines tr.comment td {
+  padding-top: 0;
   font-size: 8pt;
   color: #333;
-  margin-top: 2pt;
+  white-space: pre-line;
+}
+
+.lines .comment-label {
+  font-weight: bold;
 }
 
 .charges {

@@ -21,8 +21,9 @@
         <td>{{stockLine.item.code}}</td>
         <td>{{stockLine.item.name}}</td>
         <td class="expiry-date">
-          {% if stockLine.daysUntilExpired %}
-            {% if stockLine.daysUntilExpired <= 0 %}
+          {% if stockLine.daysUntilExpired is number %}
+            {# Usable to the end of its expiry day (#1786), as stock screens and allocation treat it #}
+            {% if stockLine.daysUntilExpired < 0 %}
               <span class="expired">{{t(k="report.expired", f="Expired")}}</span>
               {% elif stockLine.daysUntilExpired <= arguments.monthsItemsExpire *
                 (365.25 / 12.0) %}
@@ -46,14 +47,14 @@
           }}</td>
         <td style="text-align: right">{{stockLine.averageMonthlyConsumption }}</td>
         <td style="text-align: right">
-          {% if stockLine.expectedUsage %}
+          {% if stockLine.expectedUsage is number %}
               {{ stockLine.expectedUsage | round( precision=1) }}
           {% else %}
             N/A
           {% endif %}
         </td>
         <td style="text-align: right">
-          {% if stockLine.stockAtRisk %}
+          {% if stockLine.stockAtRisk is number %}
             {{ stockLine.stockAtRisk | round( precision=1) }}
           {% else %}
             N/A

@@ -7,9 +7,10 @@ export interface DetailCardProps {
    * `dir="auto"`, so a title in another script than the screen's keeps its own
    * reading order (a plugin's configuration label, say, still untranslated in
    * the operator's locale). The heading is shrink-to-fit in the header's flex
-   * row, so its own direction does not re-align the card.
+   * row, so its own direction does not re-align the card. Optional: without
+   * a title, meta or actions there is no header.
    */
-  title: string;
+  title?: string;
   /** Header-end actions (e.g. Edit/Delete IconButtons). */
   actions?: JSX.Element;
   /** The card body — arbitrary content (DetailSection/DetailRow, tables,
@@ -20,9 +21,14 @@ export interface DetailCardProps {
    * cards standing apart on the page. `bordered` trades the shadow for a
    * hairline — for a long, uniform run of them (a record's history down a
    * timeline), where a shadow per card stacks into visual noise and the
-   * separation only needs stating once per edge.
+   * separation only needs stating once per edge. `panel` is a group of fields
+   * on a shaded page body (Page `shaded`): the raised fill, a hairline, a
+   * small radius and no shadow (spec/procurement/ui-surface.md § S1).
+   * TO-DO: only the tender page uses `panel`. Once stakeholders approve the
+   * look, it becomes the surface for every group of fields on a page body
+   * (#2172).
    */
-  surface?: 'raised' | 'bordered';
+  surface?: 'raised' | 'bordered' | 'panel';
   /**
    * Spacing. `default` is a miniature detail view's room; `compact` tightens
    * the padding, the gaps and the title for a dense grid of many small cards
@@ -49,8 +55,9 @@ export interface DetailCardProps {
 }
 
 /*
- * DetailCard — a titled card with header actions, for when several records of
- * the same kind are stacked as cards rather than one page being the whole
+ * DetailCard — a card with header actions, titled unless a page-level tab
+ * already names it, for when several records of the same kind are stacked as
+ * cards rather than one page being the whole
  * detail view (spec/ui-standards/components.md § Detail views). Extends the
  * DetailContainer/DetailSection/DetailRow/RecordNameHeader family with the one
  * shape it doesn't cover: a miniature detail view per record, each with its
@@ -74,19 +81,25 @@ export const DetailCard = (props: DetailCardProps): JSX.Element => {
       data-layout={props.layout ?? 'stacked'}
       data-testid={props.testId}
     >
-      <div class={styles.header}>
-        <div class={styles.heading}>
-          <h2 class={styles.title} dir="auto">
-            {props.title}
-          </h2>
-          <Show when={meta()}>
-            <div class={styles.meta}>{meta()}</div>
+      <Show when={props.title || meta() || actions()}>
+        <div class={styles.header}>
+          <Show when={props.title || meta()}>
+            <div class={styles.heading}>
+              <Show when={props.title}>
+                <h2 class={styles.title} dir="auto">
+                  {props.title}
+                </h2>
+              </Show>
+              <Show when={meta()}>
+                <div class={styles.meta}>{meta()}</div>
+              </Show>
+            </div>
+          </Show>
+          <Show when={actions()}>
+            <div class={styles.actions}>{actions()}</div>
           </Show>
         </div>
-        <Show when={actions()}>
-          <div class={styles.actions}>{actions()}</div>
-        </Show>
-      </div>
+      </Show>
       <div class={styles.body}>{props.children}</div>
     </section>
   );

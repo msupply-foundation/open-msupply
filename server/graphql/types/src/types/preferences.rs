@@ -2,7 +2,8 @@ use std::collections::BTreeMap;
 
 use crate::types::{
     backdating::BackdatingNode, common_medicine::CommonMedicineNode,
-    invoice_query::InvoiceNodeStatus, patient::GenderTypeNode,
+    dispensing_screen::DispensingScreenNode, invoice_query::InvoiceNodeStatus,
+    patient::GenderTypeNode,
     warn_when_missing_recent_stocktake::WarnWhenMissingRecentStocktakeDataNode,
 };
 use async_graphql::*;
@@ -275,6 +276,31 @@ impl PreferencesNode {
             .map(CommonMedicineNode::from_domain)
             .collect())
     }
+
+    /// Which screen dispensing opens on: the store's own value where it has
+    /// one, else the global value.
+    pub async fn dispensing_screen(&self) -> Result<DispensingScreenNode> {
+        Ok(self
+            .load_preference(&self.preferences.dispensing_screen)?
+            .into())
+    }
+
+    /// Whether the store can dispense to its unnamed patient.
+    pub async fn use_unnamed_patient(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.use_unnamed_patient)
+    }
+
+    /// Whether each new visit on the Simple screen starts with the unnamed
+    /// patient chosen.
+    pub async fn start_with_unnamed_patient(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.start_with_unnamed_patient)
+    }
+
+    /// Whether the Simple screen asks if the patient is an outpatient or an
+    /// inpatient.
+    pub async fn ask_for_patient_type(&self) -> Result<bool> {
+        self.load_preference(&self.preferences.ask_for_patient_type)
+    }
 }
 
 impl PreferencesNode {
@@ -399,6 +425,7 @@ pub enum PreferenceKey {
     ReceivePaymentsFromPrescriptions,
     GlobalLogo,
     DecimalPlacesForNumbers,
+    ReportStoreTags,
     // Store preferences
     BlindStocktake,
     ManageVaccinesInDoses,
@@ -427,6 +454,11 @@ pub enum PreferenceKey {
     DoNotPrintPlaceholderLineLabels,
     PromptForBatchAndExpiryOnInboundShipments,
     CommonMedicines,
+    // Dispensing (#2188)
+    DispensingScreen,
+    UseUnnamedPatient,
+    StartWithUnnamedPatient,
+    AskForPatientType,
 }
 
 #[derive(Enum, Copy, Clone, Debug, Eq, PartialEq)]
@@ -451,4 +483,5 @@ pub enum PreferenceValueNodeType {
     Colour,
     Image,
     CommonMedicines,
+    DispensingScreen,
 }

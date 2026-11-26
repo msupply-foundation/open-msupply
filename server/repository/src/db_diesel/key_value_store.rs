@@ -88,6 +88,8 @@ pub enum KeyType {
     LastLedgerFixRun,
 
     IsStandaloneCentral,
+    /// The admin a standalone central server made at setup.
+    StandaloneCentralAdminUserId,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]

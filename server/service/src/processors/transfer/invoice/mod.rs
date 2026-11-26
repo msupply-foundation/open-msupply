@@ -20,8 +20,9 @@ use crate::{
 };
 use repository::{
     ChangelogCondition, ChangelogRepository, ChangelogRow, ChangelogTableName, CursorAndLimit,
-    EqualFilter, FilterBuilder, Invoice, InvoiceFilter, InvoiceRepository, InvoiceStatus,
-    InvoiceType, KeyType, RepositoryError, Requisition, RowActionType, StorageConnection,
+    EqualFilter, FilterBuilder, Invoice, InvoiceFilter, InvoiceRepository, InvoiceRow,
+    InvoiceRowRepository, InvoiceStatus, InvoiceType, KeyType, RepositoryError, Requisition,
+    RowActionType, StorageConnection,
 };
 use thiserror::Error;
 
@@ -36,6 +37,8 @@ pub(crate) mod update_inbound_invoice;
 pub(crate) mod update_outbound_invoice_status;
 pub(crate) mod update_outbound_received_quantity;
 
+#[cfg(test)]
+mod stale_record_test;
 #[cfg(test)]
 pub(crate) mod test;
 
@@ -354,9 +357,28 @@ trait InvoiceTransferProcessor {
     }
 
     /// Caller MUST guarantee that source invoice.name_id is a store active on this site
+    ///
+    /// The record's invoices were read before this step's transaction, and before the steps that
+    /// ran ahead of it on the same record, so the API or an earlier step may have changed them
+    /// since. A step that writes an invoice re-reads and locks it here with `lock_invoice_row`,
+    /// checks its conditions against that row and changes only the fields it owns. Writing back
+    /// the record's copy would undo the newer change, e.g. put a shipped outbound back to Picked.
+    /// API mutations don't take the lock, so on Postgres an API save that read the invoice before
+    /// the step committed can still write its copy over the step's change.
     fn try_process_record(
         &self,
         ctx: &ServiceContext,
         record: &InvoiceTransferProcessorRecord,
     ) -> Result<InvoiceTransferOutput, RepositoryError>;
+}
+
+/// The invoice as it is now, for a step about to write it. The record's copy can be out of date,
+/// see `try_process_record`. On Postgres the row stays locked until the step's transaction ends,
+/// so nothing can change it between this read and the step's write. None if the invoice has been
+/// deleted since the record was read.
+fn lock_invoice_row(
+    connection: &StorageConnection,
+    invoice: &Invoice,
+) -> Result<Option<InvoiceRow>, RepositoryError> {
+    InvoiceRowRepository::new(connection).find_one_by_id_for_update(&invoice.invoice_row.id)
 }

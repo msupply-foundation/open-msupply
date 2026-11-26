@@ -459,6 +459,31 @@ describe('cleanArguments', () => {
     ).toEqual({ month: '2026-09-30T12:00:00.000Z' });
   });
 
+  it('sends a master list picker whose schema declares default: null as null when left empty (OMS-REG-RPT-10.16)', () => {
+    // The transaction reports' SQL binds $masterListId, null = every item.
+    const masterListFields = parseArgumentSchema({
+      jsonSchema: {
+        type: 'object',
+        properties: {
+          masterListId: { type: ['string', 'null'], default: null },
+        },
+      },
+      uiSchema: {
+        type: 'VerticalLayout',
+        elements: [
+          { type: 'MasterListSearch', scope: '#/properties/masterListId' },
+        ],
+      },
+    });
+    expect(seedDefaults(masterListFields, {}).masterListId).toBeNull();
+    expect(cleanArguments(masterListFields, {})).toEqual({
+      masterListId: null,
+    });
+    expect(
+      cleanArguments(masterListFields, { masterListId: 'essential' })
+    ).toEqual({ masterListId: 'essential' });
+  });
+
   it('edits a monthOnly date-time element as a month, submitted as its 1st (OMS-REG-RPT-10.44)', () => {
     // Afghanistan's Vaccine Utilisation month (its arguments_ui.json).
     const [month] = parseArgumentSchema({

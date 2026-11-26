@@ -39,10 +39,12 @@ export type SitesVariables = {
     code?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     name?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
   } | null;
   sort?: Array<{
@@ -71,7 +73,6 @@ export const Sites = {
 export type SiteDeploymentVariables = Record<string, never>;
 
 export type SiteDeploymentResult = {
-  isCentralStandalone: boolean;
   featureFlags: unknown;
   syncSettings: {
   centralServerSiteId: number;
@@ -80,7 +81,7 @@ export type SiteDeploymentResult = {
 };
 
 export const SiteDeployment = {
-  query: "query siteDeployment {\n  isCentralStandalone\n  featureFlags\n  syncSettings {\n    centralServerSiteId\n    syncSiteId\n  }\n}",
+  query: "query siteDeployment {\n  featureFlags\n  syncSettings {\n    centralServerSiteId\n    syncSiteId\n  }\n}",
 } as TypedDocument<SiteDeploymentResult, SiteDeploymentVariables>;
 
 export type StoresBySiteVariables = {

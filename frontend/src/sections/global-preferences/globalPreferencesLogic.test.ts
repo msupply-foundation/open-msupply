@@ -47,6 +47,10 @@ const CATALOGUE: GlobalPreference[] = [
     maxDays: 0,
   }),
   pref('decimalPlacesForNumbers', 'INTEGER', 2),
+  pref('dispensingScreen', 'DISPENSING_SCREEN', 'STANDARD'),
+  pref('useUnnamedPatient', 'BOOLEAN'),
+  pref('startWithUnnamedPatient', 'BOOLEAN'),
+  pref('askForPatientType', 'BOOLEAN'),
 ];
 
 // Label lookup for filter tests — English labels, as displayed.
@@ -66,12 +70,13 @@ const GROUP_LABELS = {
   'title.average-monthly-consumption': 'Average monthly consumption',
   'label.expired-stock': 'Expired stock',
   'label.backdating': 'Backdating',
+  dispensing: 'Dispensing',
 } as const;
 const groupLabelOf = (group: { labelKey: keyof typeof GROUP_LABELS }) =>
   GROUP_LABELS[group.labelKey];
 
 describe('grouping (OMS-REG-GPREF-01.2)', () => {
-  it('splits the catalogue into ungrouped rows and the four groups, in served order', () => {
+  it('splits the catalogue into ungrouped rows and the five groups, in served order', () => {
     const { ungrouped, groups } = groupPreferences(CATALOGUE);
     expect(ungrouped.map(p => p.key)).toEqual([
       'allowTrackingOfStockByDonor',
@@ -94,6 +99,16 @@ describe('grouping (OMS-REG-GPREF-01.2)', () => {
       'title.average-monthly-consumption',
       'label.expired-stock',
       'label.backdating',
+      'dispensing',
+    ]);
+    // OMS-REG-GPREF-01.36: the four dispensing preferences, in served order.
+    expect(
+      groups.find(g => g.labelKey === 'dispensing')?.members.map(m => m.key)
+    ).toEqual([
+      'dispensingScreen',
+      'useUnnamedPatient',
+      'startWithUnnamedPatient',
+      'askForPatientType',
     ]);
     // Members keep catalogue order, not config order.
     expect(
@@ -128,7 +143,7 @@ describe('filter (OMS-REG-GPREF-01.4/.5/.6)', () => {
 
     const all = filterCatalogue(grouped, labelOf, groupLabelOf, '');
     expect(all.ungrouped).toHaveLength(11);
-    expect(all.groups).toHaveLength(4);
+    expect(all.groups).toHaveLength(5);
   });
 });
 
@@ -175,6 +190,21 @@ describe('auto-save input (OMS-REG-GPREF-01.8/.9)', () => {
     expect(buildAutoSaveInput('isGaps', 'yes')).toEqual({ isGaps: false });
     expect(buildAutoSaveInput('syncRecordsDisplayThreshold', 'x')).toEqual({
       syncRecordsDisplayThreshold: 0,
+    });
+  });
+
+  it('OMS-REG-GPREF-01.37: saves the dispensing screen as the word the wire takes, Standard unless Simple', () => {
+    expect(buildAutoSaveInput('dispensingScreen', 'SIMPLE')).toEqual({
+      dispensingScreen: 'SIMPLE',
+    });
+    expect(buildAutoSaveInput('dispensingScreen', 'STANDARD')).toEqual({
+      dispensingScreen: 'STANDARD',
+    });
+    expect(buildAutoSaveInput('dispensingScreen', null)).toEqual({
+      dispensingScreen: 'STANDARD',
+    });
+    expect(buildAutoSaveInput('useUnnamedPatient', true)).toEqual({
+      useUnnamedPatient: true,
     });
   });
 

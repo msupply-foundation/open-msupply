@@ -4,10 +4,11 @@ import {
   hasVaccineModule,
   isDispensary,
 } from '../store/storeContext';
-import { isCentralServer } from '../api/serverInfo';
+import { isCentralServer, isCentralStandalone } from '../api/serverInfo';
 import { pluginRouteAccess } from '../plugins/pluginPages';
 import {
   navDestinations,
+  navSections,
   navTrail,
   type NavCapability,
   type NavItem as NavConfigItem,
@@ -47,6 +48,10 @@ const CAPABILITY_PREDICATES: Record<NavCapability, () => boolean> = {
   // A server admin on a central server — admin plumbing, a capability gate
   // that happens to read the user (spec/navigation § central administration).
   centralAdmin: () => isCentralServer() && hasPermission('SERVER_ADMIN'),
+  // The same, on a central server that shares no central data with legacy
+  // mSupply (spec/navigation § the gate vocabulary).
+  standaloneCentralAdmin: () =>
+    isCentralServer() && isCentralStandalone() && hasPermission('SERVER_ADMIN'),
 };
 
 /** Whether a single capability gate passes (absent gate = always). */
@@ -158,12 +163,17 @@ export type RouteAccess =
   { kind: 'ok' } | { kind: 'blocked' } | { kind: 'denied' };
 
 // Longest path first, so 'inventory/stocktakes' wins over 'inventory'. The
-// registry is static; sort once.
-const destinationsByDepth = [...navDestinations].sort(
+// registry is static; sort once. Sections are included so an unknown path
+// under a gated section is still judged by it (D70).
+const destinationsByDepth = [...navDestinations, ...navSections].sort(
   (a, b) => b.path.length - a.path.length
 );
 
 export const routeAccess = (relativePath: string): RouteAccess => {
+  // A section is a heading with no screen: its own URL goes Home, like a
+  // blocked one (spec/navigation § sections are headings).
+  if (navSections.some(section => section.path === relativePath))
+    return { kind: 'blocked' };
   const dest = destinationsByDepth.find(
     d => relativePath === d.path || relativePath.startsWith(`${d.path}/`)
   );

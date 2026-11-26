@@ -158,6 +158,9 @@ pub struct InvoiceFilterInput {
     pub requisition_id: Option<EqualFilterStringInput>,
     pub linked_invoice_id: Option<EqualFilterStringInput>,
     pub is_program_invoice: Option<bool>,
+    /// Whether the other party is a store's unnamed patient: false leaves
+    /// its dispensing records out, as the patient search's recent patients do
+    pub is_for_unnamed_patient: Option<bool>,
     pub purchase_order_id: Option<EqualFilterStringInput>,
     pub prescription_request_id: Option<EqualFilterStringInput>,
     pub purchase_order_number: Option<EqualFilterBigNumberInput>,
@@ -373,6 +376,7 @@ impl InvoiceFilterInput {
             program_id: self.program_id.map(EqualFilter::from),
             stock_line_id: None,
             is_cancellation: None,
+            is_for_unnamed_patient: self.is_for_unnamed_patient,
             purchase_order_id: self.purchase_order_id.map(EqualFilter::from),
             prescription_request_id: self.prescription_request_id.map(EqualFilter::from),
             purchase_order_number: self.purchase_order_number.map(EqualFilter::from),

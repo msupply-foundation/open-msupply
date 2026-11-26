@@ -42,6 +42,7 @@ use mutations::insert_document_registry::*;
 use mutations::patient::insert::InsertPatientInput;
 use mutations::patient::insert::InsertPatientResponse;
 use mutations::patient::insert::insert_patient;
+use mutations::patient::unnamed_patient::get_or_create_unnamed_patient;
 use mutations::patient::update::UpdatePatientInput;
 use mutations::patient::update::UpdatePatientResponse;
 use mutations::patient::update::update_patient;
@@ -143,8 +144,12 @@ impl ProgramsQueries {
         page: Option<PaginationInput>,
         filter: Option<PatientFilterInput>,
         sort: Option<Vec<PatientSortInput>>,
+        #[graphql(
+            desc = "Stop counting at this many: totalCount is then at most this. For a search: the page is also sorted from only the first 1000 matches found, so past that paging may repeat or miss a patient"
+        )]
+        count_limit: Option<u32>,
     ) -> Result<PatientResponse> {
-        patients(ctx, store_id, page, filter, sort)
+        patients(ctx, store_id, page, filter, sort, count_limit)
     }
     pub async fn patient(
         &self,
@@ -348,6 +353,17 @@ impl ProgramsMutations {
         input: InsertPatientInput,
     ) -> Result<InsertPatientResponse> {
         insert_patient(ctx, store_id, input)
+    }
+
+    /// The store's unnamed patient, the one record its walk-in visits are
+    /// dispensed to: created on the first call, the same record after.
+    /// Refused where the store's "Use the unnamed patient" is off.
+    pub async fn get_or_create_unnamed_patient(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<PatientNode> {
+        get_or_create_unnamed_patient(ctx, store_id)
     }
 
     /// Updates a new patient (without document data)

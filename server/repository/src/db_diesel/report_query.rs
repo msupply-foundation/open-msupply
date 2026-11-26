@@ -398,6 +398,10 @@ impl From<rusqlite::Error> for RepositoryError {
 /// means a query that collides with a sync write fails immediately with "database is
 /// locked" instead of waiting, so set it explicitly to match the pooled connections.
 ///
+/// `instant_to_calendar_date(instant, timezone)` is registered on it: the calendar date an instant
+/// falls on in an IANA timezone, so a report can group by day in the report's timezone. Postgres
+/// gets the same function from a migration (`v3_05_00/add_instant_to_calendar_date_function`).
+///
 /// SQLite only - on a Postgres build `database_url` is a Postgres URL and this is never called.
 fn report_connection(database_url: &str) -> Result<rusqlite::Connection, RepositoryError> {
     use rusqlite::OpenFlags;
@@ -407,7 +411,44 @@ fn report_connection(database_url: &str) -> Result<rusqlite::Connection, Reposit
         | OpenFlags::SQLITE_OPEN_URI;
     let conn = rusqlite::Connection::open_with_flags(database_url, flags)?;
     conn.busy_timeout(std::time::Duration::from_millis(SQLITE_LOCKWAIT_MS.into()))?;
+    register_instant_to_calendar_date(&conn)?;
     Ok(conn)
+}
+
+/// `instant_to_calendar_date(instant, timezone)`, see [`report_connection`]. NULL in (either
+/// argument), NULL out, as on postgres.
+/// Anything but an instant is an error - a calendar date included, since it is already a day and
+/// is never converted - as is an unknown timezone.
+fn register_instant_to_calendar_date(conn: &rusqlite::Connection) -> Result<(), RepositoryError> {
+    use rusqlite::functions::FunctionFlags;
+    use util::timezone::{Tz, instant_to_calendar_date};
+
+    conn.create_scalar_function(
+        "instant_to_calendar_date",
+        2,
+        FunctionFlags::SQLITE_UTF8 | FunctionFlags::SQLITE_DETERMINISTIC,
+        |context| {
+            let Some(value) = context.get::<Option<String>>(0)? else {
+                return Ok(None);
+            };
+            let Some(timezone) = context.get::<Option<String>>(1)? else {
+                return Ok(None);
+            };
+            let timezone = timezone.parse::<Tz>().map_err(|_| {
+                rusqlite::Error::UserFunctionError(
+                    format!("instant_to_calendar_date: unknown timezone `{timezone}`").into(),
+                )
+            })?;
+            instant_to_calendar_date(&value, timezone)
+                .map(Some)
+                .ok_or_else(|| {
+                    rusqlite::Error::UserFunctionError(
+                        format!("instant_to_calendar_date: `{value}` is not an instant").into(),
+                    )
+                })
+        },
+    )?;
+    Ok(())
 }
 
 thread_local! {
@@ -956,6 +997,49 @@ mod tests {
         assert_eq!(rows, vec![json!({ "id": "store_a" })], "{rows:?}");
     }
 
+    /// `instant_to_calendar_date()` gives an instant's day in the report's timezone, the same in
+    /// both dialects.
+    #[actix_rt::test]
+    async fn instant_to_calendar_date_is_the_day_in_the_report_timezone() {
+        let (_, _, connection_manager, _) = test_db::setup_all(
+            "report_query_instant_to_calendar_date",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+        let executor = ReportQueryExecutor::new(&connection_manager);
+        let timezone = |timezone: &str| params(json!({ "timezone": timezone }));
+
+        // 23:30 UTC is the next morning in Auckland and the same afternoon in Los Angeles. A
+        // quoted instant needs no cast on postgres: there is only one function to pick.
+        let sql = "SELECT instant_to_calendar_date('2026-01-05 23:30:00', $timezone) AS day, \
+                   instant_to_calendar_date(NULL, $timezone) AS missing, \
+                   instant_to_calendar_date('2026-01-05 23:30:00', NULL) AS no_timezone";
+        assert_eq!(
+            query(&executor, sql, &timezone("Pacific/Auckland")).unwrap(),
+            vec![json!({ "day": "2026-01-06", "missing": null, "no_timezone": null })]
+        );
+        assert_eq!(
+            query(&executor, sql, &timezone("America/Los_Angeles")).unwrap(),
+            vec![json!({ "day": "2026-01-05", "missing": null, "no_timezone": null })]
+        );
+
+        // An unknown timezone fails the query rather than quietly using UTC
+        assert!(query(&executor, sql, &timezone("Not/AZone")).is_err());
+
+        if !cfg!(feature = "postgres") {
+            // A calendar date is already a day: converting one is a mistake, not a no-op. (Postgres
+            // would cast it to UTC midnight; only sqlite can tell.)
+            assert!(
+                query(
+                    &executor,
+                    "SELECT instant_to_calendar_date('2026-01-05', $timezone) AS day",
+                    &timezone("Pacific/Auckland"),
+                )
+                .is_err()
+            );
+        }
+    }
+
     /// One parameter's name may be a prefix of another's. Rewriting them one at a time
     /// turned `$storeId` into `$1Id` once `$store` had been replaced.
     #[actix_rt::test]
@@ -1290,5 +1374,151 @@ mod tests {
         )
         .unwrap();
         assert_eq!(rows, vec![json!({ "id": "store_a" })]);
+    }
+}
+
+/// The Item Usage standard report's SQL, run as written in `standard_reports/`, on both dialects.
+#[cfg(test)]
+mod item_usage_report_test {
+    use chrono::{Datelike, Duration, NaiveDate, Utc};
+    use serde_json::json;
+    use util::timezone::Tz;
+
+    use super::{ReportQueryExecutor, ReportSqlQuery};
+    use crate::{
+        ConsumptionEstimateRow, ConsumptionEstimateRowRepository, ConsumptionEstimateType,
+        InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType,
+        mock::{MockData, MockDataInserts, mock_name_a, mock_stock_line_a},
+        test_db::setup_all_with_data,
+    };
+
+    const SQL_DIR: &str = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../standard_reports/item-usage/latest/src"
+    );
+
+    fn report_query(name: &str) -> ReportSqlQuery {
+        let read = |file: String| std::fs::read_to_string(format!("{SQL_DIR}/{file}")).unwrap();
+        let (sqlite, postgres) = if name == "stockOnOrder" {
+            (read(format!("{name}.sql")), read(format!("{name}.sql")))
+        } else {
+            (
+                read(format!("{name}.sqlite.sql")),
+                read(format!("{name}.postgres.sql")),
+            )
+        };
+        ReportSqlQuery {
+            name: name.to_string(),
+            sqlite,
+            postgres,
+        }
+    }
+
+    /// An outbound shipment of `packs` from store_a, picked at `local` in `timezone`.
+    fn issue(id: &str, local: chrono::NaiveDateTime, timezone: Tz, packs: f64) -> MockData {
+        let picked = local.and_local_timezone(timezone).unwrap().naive_utc();
+        let stock_line = mock_stock_line_a();
+        MockData {
+            invoices: vec![InvoiceRow {
+                id: id.to_string(),
+                store_id: stock_line.store_id.clone(),
+                name_id: mock_name_a().id,
+                r#type: InvoiceType::OutboundShipment,
+                status: InvoiceStatus::Shipped,
+                created_datetime: picked,
+                picked_datetime: Some(picked),
+                shipped_datetime: Some(picked),
+                ..Default::default()
+            }],
+            invoice_lines: vec![InvoiceLineRow {
+                id: format!("{id}_line"),
+                invoice_id: id.to_string(),
+                item_id: stock_line.item_id.clone(),
+                stock_line_id: Some(stock_line.id.clone()),
+                pack_size: 1.0,
+                number_of_packs: packs,
+                r#type: InvoiceLineType::StockOut,
+                ..Default::default()
+            }],
+            ..Default::default()
+        }
+    }
+
+    /// An estimate of `quantity` for item_a in store_a, dated `date`.
+    fn estimate(id: &str, date: NaiveDate, quantity: f64) -> ConsumptionEstimateRow {
+        ConsumptionEstimateRow {
+            id: id.to_string(),
+            store_id: mock_stock_line_a().store_id,
+            r#type: ConsumptionEstimateType::Monthly,
+            date,
+            quantity,
+            item_id: mock_stock_line_a().item_id,
+        }
+    }
+
+    /// Consumption counts in the month of its day in the user's timezone. Early on the 1st in
+    /// Kiritimati (UTC+14) is still the previous month in UTC, which is the day `consumption.date`
+    /// holds, so counting by that put it in last month. An estimate has no instant, only its day,
+    /// which counts as it is. OMS-REG-RPT-01.14
+    #[actix_rt::test]
+    async fn item_usage_counts_consumption_in_the_users_month() {
+        let timezone = Tz::Pacific__Kiritimati;
+        let today = Utc::now().with_timezone(&timezone).date_naive();
+        let this_month = today.with_day(1).unwrap();
+        let mid_last_month = (this_month - Duration::days(1)).with_day(15).unwrap();
+        let at = |date: NaiveDate, hour: u32| date.and_hms_opt(hour, 0, 0).unwrap();
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "item_usage_counts_consumption_in_the_users_month",
+            MockDataInserts::all(),
+            issue("early_on_the_1st", at(this_month, 5), timezone, 3.0).join(issue(
+                "mid_last_month",
+                at(mid_last_month, 12),
+                timezone,
+                7.0,
+            )),
+        )
+        .await;
+        let estimates = ConsumptionEstimateRowRepository::new(&connection);
+        estimates
+            .upsert_one(&estimate("estimate_on_the_1st", this_month, 11.0))
+            .unwrap();
+        estimates
+            .upsert_one(&estimate(
+                "estimate_end_of_last_month",
+                this_month - Duration::days(1),
+                13.0,
+            ))
+            .unwrap();
+        let executor = ReportQueryExecutor::new(&connection_manager);
+        let parameters = json!({ "storeId": "store_a", "timezone": timezone.name() })
+            .as_object()
+            .unwrap()
+            .clone();
+
+        let names = [
+            "thisMonthConsumption",
+            "lastMonthConsumption",
+            "twoMonthsAgoConsumption",
+            "expiringInSixMonths",
+            "expiringInTwelveMonths",
+            "stockOnOrder",
+        ];
+        let results = executor
+            .run(
+                names.iter().map(|name| report_query(name)).collect(),
+                &parameters,
+            )
+            .unwrap();
+        let item_a = |name: &str| {
+            let rows = &results.iter().find(|(query, _)| query == name).unwrap().1;
+            rows.iter()
+                .find(|row| row["item_id"] == "item_a")
+                .and_then(|row| row["quantity"].as_f64())
+        };
+
+        assert_eq!(item_a("thisMonthConsumption"), Some(3.0 + 11.0));
+        assert_eq!(item_a("lastMonthConsumption"), Some(7.0 + 13.0));
+        assert_eq!(item_a("twoMonthsAgoConsumption"), None);
     }
 }

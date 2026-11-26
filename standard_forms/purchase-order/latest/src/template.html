@@ -108,10 +108,7 @@
       {% if po.hasSupplierItemCodes %}
       <td>{{ line.supplierItemCode | default(value="") }}</td>
       {% endif %}
-      <td>
-        {{ line.item.name | default(value="") }}
-        {% if line.comment %}<div class="comment">{{ line.comment }}</div>{% endif %}
-      </td>
+      <td>{{ line.item.name | default(value="") }}</td>
       <td class="number">{{ line.packSizeText }}</td>
       <td class="number">{{ line.numberOfPacksText }}</td>
       <td class="number">{{ line.totalQuantityText }}</td>
@@ -119,6 +116,13 @@
       <td class="number">{{ line.lineCost }}</td>
       <td class="number">{{ self::date(value=line.requestedDeliveryDate) }}</td>
     </tr>
+    {% if line.comment %}
+    <tr class="comment" excel-type="ignore">
+      <td></td>
+      {# Spans every column after # - keep in step with the header row #}
+      <td colspan="{% if po.hasSupplierItemCodes %}9{% else %}8{% endif %}"><span class="comment-label">{{ t(k="label.comment", f="Comment") }}:</span> {{ line.comment }}</td>
+    </tr>
+    {% endif %}
   </tbody>
   {%- endfor %}
 </table>

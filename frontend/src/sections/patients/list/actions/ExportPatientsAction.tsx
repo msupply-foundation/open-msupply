@@ -24,7 +24,7 @@ export const ExportPatientsAction: Component<
   const buildCsv = async (): Promise<string | null> => {
     const variables: PatientsVariables = {
       storeId: props.storeId,
-      filter: stripEmpty(props.filter()),
+      filter: { ...stripEmpty(props.filter()), isVisible: true },
       sort: [{ key: 'createdDatetime', desc: true }],
     };
     const result = await graphqlFetch(Patients, variables);

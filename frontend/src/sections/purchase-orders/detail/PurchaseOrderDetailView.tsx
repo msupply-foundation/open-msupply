@@ -36,7 +36,6 @@ import {
   getCurrencyCell,
   getDateCell,
   getNumberCell,
-  sumBy,
   type CellFragment,
 } from '@/ui/elements/table/tableHelpers';
 import {
@@ -107,8 +106,7 @@ import {
   canSetExpectedDate,
   isOpenToChange,
 } from './purchaseOrderLadder';
-import { formatCurrency } from '@/intl/currency';
-import { linePacks } from './purchaseOrderPricing';
+import { lineDiscount, linePacks } from './purchaseOrderPricing';
 import { CloseLinesAction, DeleteLinesAction } from './actions';
 import { PurchaseOrderLineEditModal } from './edit-modal/PurchaseOrderLineEditModal';
 import { PurchaseOrderLineImportModal } from './import/PurchaseOrderLineImportModal';
@@ -539,7 +537,7 @@ const PurchaseOrderDetailView: Component = () => {
   // binding below, not in scope here.
   const inlineTotals = (node: Accessor<PurchaseOrderInfoFragment>) => (
     <Show when={foldTotalsIntoBar()}>
-      <PurchaseOrderTotalsStrip inline node={node()} lineCount={lineCount()} />
+      <PurchaseOrderTotalsStrip inline node={node()} lines={lineSet()} />
     </Show>
   );
 
@@ -607,8 +605,6 @@ const PurchaseOrderDetailView: Component = () => {
       sortKey: 'itemCode',
       header: () => t('label.code'),
       ...getCellDefinition('itemCode'),
-      // The footer's first cell reads "Total" (spec S7 column 3).
-      footer: () => t('label.total'),
     },
     {
       c: { accessor: line => line.item.name, id: 'itemName' },
@@ -686,15 +682,24 @@ const PurchaseOrderDetailView: Component = () => {
       size: remToPx(7),
     },
     {
+      // Everything taken off the line — its own discount and any share of a
+      // supplier discount — so packs × price − Discount = Line cost
+      // (purchaseOrderPricing.ts). No sort key exists for a derived column.
+      c: { accessor: lineDiscount, id: 'discount' },
+      header: () => t('label.discount'),
+      ...getCurrencyCell(undefined, () => info()?.currency?.code),
+    },
+    {
       // The line's STORED total with the order's supplier discount apportioned
       // to it, as the server computes it — never re-multiplied here (rules §
-      // pricing and totals). Its footer sums the rows ON SCREEN — the page,
-      // which is what a paginated table can total; the order's whole figures
-      // are the side panel's Subtotal and Final cost rows.
+      // pricing and totals). No footer sum: a page's sum is not the order's,
+      // and the order's figures are the totals band's.
       c: { accessor: lineCost, id: 'lineCost' },
       header: () => t('label.line-cost'),
-      ...getCurrencyCell(undefined, () => info()?.currency?.code),
-      footer: () => money(sumBy(rows(), lineCost)),
+      ...getCurrencyCell(
+        { description: t('description.line-cost') },
+        () => info()?.currency?.code
+      ),
     },
     {
       c: { key: 'requestedDeliveryDate' },
@@ -711,9 +716,6 @@ const PurchaseOrderDetailView: Component = () => {
       size: remToPx(11),
     },
   ];
-
-  const money = (value: number) =>
-    formatCurrency(value, info()?.currency?.code);
 
   return (
     // info()/rows() are read non-suspending, so the initial-load spinner is
@@ -844,10 +846,7 @@ const PurchaseOrderDetailView: Component = () => {
                   {/* Above BOTH footer faces — an order-level fact, so a
                       row selection doesn't take it away. */}
                   <Show when={!foldTotalsIntoBar()}>
-                    <PurchaseOrderTotalsStrip
-                      node={node()}
-                      lineCount={lineCount()}
-                    />
+                    <PurchaseOrderTotalsStrip node={node()} lines={lineSet()} />
                   </Show>
                   <Show
                     when={selectedIds().length > 0}

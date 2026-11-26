@@ -29,10 +29,12 @@ export type CustomerReturnsVariables = {
     invoiceNumberOrStatus?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     otherPartyName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     otherPartyId?: {
     equalTo?: string | null;
@@ -71,10 +73,12 @@ export type CustomerReturnsVariables = {
     comment?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     theirReference?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     transportReference?: {
     equalTo?: string | null;
@@ -145,6 +149,7 @@ export type CustomerReturnsVariables = {
     notEqualAll?: Array<string> | null;
   } | null;
     isProgramInvoice?: boolean | null;
+    isForUnnamedPatient?: boolean | null;
     purchaseOrderId?: {
     equalTo?: string | null;
     equalAny?: Array<string> | null;

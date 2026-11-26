@@ -72,6 +72,9 @@ export interface OutboundSidePanelProps {
     shippingMethodId?: { value: string | null };
     backdatedDatetime?: string | null;
   }) => Promise<void>;
+  /** Refetch the lines and totals — the picked-date control's line delete
+   * failed or its outcome is unknown. */
+  onLinesChanged: () => Promise<void>;
 }
 
 const money = (value: number | null | undefined): string =>
@@ -175,6 +178,7 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
             onBackdate={backdatedDatetime =>
               props.onSaveField({ backdatedDatetime })
             }
+            onLinesChanged={props.onLinesChanged}
           />
         </FieldRow>
         <FieldRow label={t('label.color')}>

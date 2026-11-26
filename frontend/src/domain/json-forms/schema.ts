@@ -150,8 +150,17 @@ export type ParsedField =
       /** uiSchema `options.disableFuture` — no days after today. */
       disableFuture: boolean;
     }
-  | { kind: 'masterList'; key: string; label: string; nullable: boolean }
-  | { kind: 'location'; key: string; label: string; nullable: boolean }
+  /**
+   * The master-list and location pickers. `default` is the schema's, so a
+   * `default: null` picker left empty is sent as null (OMS-REG-RPT-10.16).
+   */
+  | {
+      kind: 'masterList' | 'location';
+      key: string;
+      label: string;
+      nullable: boolean;
+      default?: unknown;
+    }
   /**
    * The patient-program picker: options are the store's program-enrolment
    * registries; the submitted value is the program's CONTEXT id
@@ -512,10 +521,22 @@ export const parseArgumentSchema = (raw: {
         });
         break;
       case 'MasterListSearch':
-        fields.push({ kind: 'masterList', key, label, nullable });
+        fields.push({
+          kind: 'masterList',
+          key,
+          label,
+          nullable,
+          default: prop?.default,
+        });
         break;
       case 'LocationSearch':
-        fields.push({ kind: 'location', key, label, nullable });
+        fields.push({
+          kind: 'location',
+          key,
+          label,
+          nullable,
+          default: prop?.default,
+        });
         break;
       case 'PatientProgramSearch':
         fields.push({

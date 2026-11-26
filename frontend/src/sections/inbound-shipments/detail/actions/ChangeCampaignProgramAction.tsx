@@ -12,7 +12,8 @@ import {
   hasBulkFieldChange,
   type BulkFieldChange,
 } from './bulkFieldChange';
-import { runInboundBatch } from '../inboundShipmentUpdate';
+import { batchRefusal, runInboundBatch } from '../inboundShipmentUpdate';
+import { reportPermissionDenied } from '@/api/graphql';
 import type { LineActionProps } from './DeleteLinesAction';
 
 // Bulk change program / activity on the selected lines (spec S3 →
@@ -70,16 +71,23 @@ const Body = (
   const run = async () => {
     if (phase() !== 'confirm') return;
     setPhase('working');
+    const ids = props.selectedIds();
     const outcome = await runInboundBatch(props.storeId, props.isExternal, {
-      updateInboundShipmentLines: props.selectedIds().map(id => ({
+      updateInboundShipmentLines: ids.map(id => ({
         id,
         ...bulkFieldUpdates(fields()),
       })),
     });
     if (!outcome) return setPhase('confirm'); // handled globally
-    if (outcome.errors.size > 0) {
-      props.onError(outcome.errors);
-      setErrorMessage([...outcome.errors.values()][0]);
+    const refusal = batchRefusal(outcome, ids);
+    if (refusal?.kind === 'forbidden') {
+      reportPermissionDenied(refusal.permissions);
+      props.onClose();
+      return;
+    }
+    if (refusal) {
+      props.onError(refusal.errors);
+      setErrorMessage(refusal.message);
       setPhase('error');
       return;
     }

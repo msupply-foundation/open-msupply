@@ -3,6 +3,7 @@ export type Input = {
     otherPartyId?: string;
     before?: string;
     after?: string;
+    timezone?: string;
   };
   data?: {
     invoices?: InvoiceConnector;
@@ -42,6 +43,7 @@ export type Output = {
   data?: {
     lines: Lines;
   };
+  arguments?: Input["arguments"];
 };
 
 export type Lines = {

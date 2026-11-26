@@ -153,6 +153,7 @@ const FILTERS: Filter<OutboundFilter>[] = constructFilters<OutboundFilter>({
   linkedOrderNumber: null,
   programId: null,
   isProgramInvoice: null,
+  isForUnnamedPatient: null,
   // Header fields without a specced list filter.
   onHold: null,
   comment: null,

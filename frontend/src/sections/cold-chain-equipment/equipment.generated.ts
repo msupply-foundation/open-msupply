@@ -158,10 +158,12 @@ export type AssetsListVariables = {
     notes?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     assetNumber?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     id?: {
     equalTo?: string | null;
@@ -173,6 +175,7 @@ export type AssetsListVariables = {
     serialNumber?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     classId?: {
     equalTo?: string | null;
@@ -216,10 +219,12 @@ export type AssetsListVariables = {
     storeCodeOrName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     storeId?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     functionalStatus?: {
     equalTo?: "NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | "NOT_INSTALLED" | null;
@@ -300,6 +305,7 @@ export type AssetLogsListVariables = {
     user?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     reasonId?: {
     equalTo?: string | null;
@@ -353,6 +359,7 @@ export type AssetLogReasonsListVariables = {
     reason?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
   } | null;
 };
@@ -506,10 +513,12 @@ export type AssetsExportVariables = {
     notes?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     assetNumber?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     id?: {
     equalTo?: string | null;
@@ -521,6 +530,7 @@ export type AssetsExportVariables = {
     serialNumber?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     classId?: {
     equalTo?: string | null;
@@ -564,10 +574,12 @@ export type AssetsExportVariables = {
     storeCodeOrName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     storeId?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     functionalStatus?: {
     equalTo?: "NOT_IN_USE" | "FUNCTIONING" | "FUNCTIONING_BUT_NEEDS_ATTENTION" | "NOT_FUNCTIONING" | "DECOMMISSIONED" | "UNSERVICEABLE" | "NOT_INSTALLED" | null;

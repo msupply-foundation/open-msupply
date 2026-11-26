@@ -1,4 +1,4 @@
-import { t } from '../../../intl';
+import { t, type LocaleKey } from '../../../intl';
 import type { InboundInfoFragment } from './inboundShipmentDetail.generated';
 
 // The inbound-shipment status lifecycle (spec/inbound-shipments › status
@@ -66,6 +66,41 @@ export const hasSourceLink = (
   isExternalScope: boolean,
   linkedShipment: { id: string } | null | undefined
 ): boolean => isExternalScope || !!linkedShipment;
+
+// The detail's kind banner (spec/inbound-shipments › ui-surface), as the
+// message keys its sentences join from — empty for no banner. Built from the
+// short `info.*` keys, as the old UI and the customer-returns banner are,
+// because those are the ones translated in (nearly) every catalog. One per
+// source link:
+//   none — says the status will not update automatically: nobody else moves it.
+//   purchaseOrder — nothing to say about its origin (issue #1588): it was built
+//     here and the header already links its PO. Only while the status locks it
+//     (Shipped) does it say details can't be edited until Delivered.
+//   transfer — says the sending store created it, plus the same no-edit
+//     sentence while the status locks it (Picked, Shipped).
+export const kindBannerKeys = (info: {
+  inboundType: InboundInfoFragment['inboundType'];
+  linkedShipment?: { id: string } | null;
+  status: string;
+}): LocaleKey[] => {
+  const noEdit: LocaleKey[] = lockedUntilDelivered(info.status)
+    ? ['info.automatic-shipment-no-edit']
+    : [];
+  switch (sourceLinkOf(info)) {
+    case 'none':
+      return ['info.manual-shipment'];
+    case 'purchaseOrder':
+      return noEdit;
+    case 'transfer':
+      return ['info.automatic-shipment', ...noEdit];
+  }
+};
+
+// Read off the edit gate rather than listed, so the no-edit sentence can't
+// drift from what the screen actually locks. Verified is locked for good, not
+// until Delivered.
+const lockedUntilDelivered = (status: string): boolean =>
+  !isEditable(status) && status !== 'VERIFIED';
 
 const FLOWS: Record<SourceLink, InboundStatus[]> = {
   none: ['NEW', 'DELIVERED', 'RECEIVED', 'VERIFIED'],

@@ -4,8 +4,8 @@
  * that reference those tokens. No styling engine — plain CSS.
  */
 
-/* Inter Variable — the current app's font (theme.ts: fontFamily 'Inter Variable') */
-@import url('@fontsource-variable/inter');
+/* Inter Variable (the app's font) and Phetsarath OT, vendored */
+@import url('./ui/styles/fonts.css');
 @import url('./ui/styles/tokens.css');
 
 *,

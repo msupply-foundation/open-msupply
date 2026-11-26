@@ -67,10 +67,12 @@ export type PatientProgramEnrolmentsVariables = {
     programEnrolmentId?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     status?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     type?: {
     equalTo?: string | null;
@@ -96,6 +98,7 @@ export type PatientProgramEnrolmentsVariables = {
     programName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     isImmunisationProgram?: boolean | null;
   } | null;
@@ -188,6 +191,7 @@ export type PatientEncountersVariables = {
     documentData?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     patient?: {
     id?: {
@@ -200,22 +204,27 @@ export type PatientEncountersVariables = {
     name?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     code?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     code2?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     firstName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     lastName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     gender?: {
     equalTo?: "FEMALE" | "MALE" | "TRANSGENDER" | "TRANSGENDER_MALE" | "TRANSGENDER_MALE_HORMONE" | "TRANSGENDER_MALE_SURGICAL" | "TRANSGENDER_FEMALE" | "TRANSGENDER_FEMALE_HORMONE" | "TRANSGENDER_FEMALE_SURGICAL" | "UNKNOWN" | "NON_BINARY" | null;
@@ -231,26 +240,37 @@ export type PatientEncountersVariables = {
     phone?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     address1?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     address2?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     country?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     email?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     identifier?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
+  } | null;
+    codeOrCode2?: {
+    equalTo?: string | null;
+    like?: string | null;
+    startsWith?: string | null;
   } | null;
     dateOfDeath?: {
     equalTo?: string | null;
@@ -260,12 +280,15 @@ export type PatientEncountersVariables = {
     programEnrolmentName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     nextOfKinName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     dynamicFilter?: unknown | null;
+    isVisible?: boolean | null;
   } | null;
     programEnrolment?: {
     patientId?: {
@@ -283,10 +306,12 @@ export type PatientEncountersVariables = {
     programEnrolmentId?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     status?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     type?: {
     equalTo?: string | null;
@@ -312,6 +337,7 @@ export type PatientEncountersVariables = {
     programName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     isImmunisationProgram?: boolean | null;
   } | null;

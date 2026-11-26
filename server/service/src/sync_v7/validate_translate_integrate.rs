@@ -108,7 +108,9 @@ fn translate_delete(
         ChangelogTableName::Invoice => Box::new(InvoiceRowDelete(id)),
         ChangelogTableName::InvoiceLine => Box::new(InvoiceLineRowDelete(id)),
         ChangelogTableName::ItemDirection => Box::new(ItemDirectionRowDelete(id)),
+        ChangelogTableName::ItemStoreJoin => Box::new(ItemStoreJoinRowDelete(id)),
         ChangelogTableName::Location => Box::new(LocationRowDelete(id)),
+        ChangelogTableName::LocationType => Box::new(LocationTypeRowDelete(id)),
         ChangelogTableName::MasterListLine => Box::new(MasterListLineRowDelete(id)),
         ChangelogTableName::MasterListNameJoin => Box::new(MasterListNameJoinRowDelete(id)),
         ChangelogTableName::NameStoreJoin => Box::new(NameStoreJoinRowDelete(id)),
@@ -177,11 +179,9 @@ fn translate_delete(
         | ChangelogTableName::IndicatorLine
         | ChangelogTableName::InsuranceProvider
         | ChangelogTableName::ItemCategoryJoin
-        | ChangelogTableName::ItemStoreJoin
         | ChangelogTableName::ItemVariant
         | ChangelogTableName::ItemWarningJoin
         | ChangelogTableName::LocationMovement
-        | ChangelogTableName::LocationType
         | ChangelogTableName::MasterList
         | ChangelogTableName::NameInsuranceJoin
         | ChangelogTableName::NameOmsFields
@@ -605,7 +605,8 @@ mod test {
     use crate::sync::ActiveStoresOnSite;
     use repository::{
         mock::{
-            MockDataInserts, mock_store_a, mock_user_account_a, mock_user_store_join_a_store_a,
+            MockDataInserts, mock_item_a_join_store_a, mock_store_a, mock_user_account_a,
+            mock_user_store_join_a_store_a,
         },
         test_db::setup_all,
     };
@@ -1188,6 +1189,65 @@ mod test {
                 .unwrap(),
             None
         );
+        let (result, error) = buffer_result(&connection, 1);
+        assert_eq!(result, Some(IntegrationResult::Success), "{error:?}");
+    }
+
+    #[actix_rt::test]
+    async fn integrate_location_type_delete() {
+        // A central data import can delete an unused location type.
+        let connection = setup("integrate_location_type_delete", MockDataInserts::none()).await;
+        LocationTypeRowRepository::new(&connection)
+            .upsert_one(&LocationTypeRow {
+                id: "location_type".to_string(),
+                code: "COLD".to_string(),
+                ..Default::default()
+            })
+            .unwrap();
+
+        SyncBufferRepository::new(&connection)
+            .insert_many(&[SyncBufferRowInsert {
+                table_name: "location_type".to_string(),
+                ..buffer_row("location_type", SyncAction::Delete, serde_json::json!({}))
+            }])
+            .unwrap();
+
+        integrate(&connection, None);
+
+        assert_eq!(
+            LocationTypeRowRepository::new(&connection)
+                .find_one_by_id("location_type")
+                .unwrap(),
+            None
+        );
+        let (result, error) = buffer_result(&connection, 1);
+        assert_eq!(result, Some(IntegrationResult::Success), "{error:?}");
+    }
+
+    #[actix_rt::test]
+    async fn integrate_item_store_join_delete() {
+        // A central data import can delete an item's properties in a store, which must
+        // reach the store's v7 site, or the site keeps the old price and default location.
+        let connection = setup(
+            "integrate_item_store_join_delete",
+            MockDataInserts::none().item_store_joins(),
+        )
+        .await;
+        let join = mock_item_a_join_store_a();
+        let repo = ItemStoreJoinRowRepository::new(&connection);
+        assert!(repo.find_one_by_id(&join.id).unwrap().is_some());
+
+        SyncBufferRepository::new(&connection)
+            .insert_many(&[SyncBufferRowInsert {
+                table_name: "item_store_join".to_string(),
+                store_id: Some(join.store_id.clone()),
+                ..buffer_row(&join.id, SyncAction::Delete, serde_json::json!({}))
+            }])
+            .unwrap();
+
+        integrate(&connection, None);
+
+        assert_eq!(repo.find_one_by_id(&join.id).unwrap(), None);
         let (result, error) = buffer_result(&connection, 1);
         assert_eq!(result, Some(IntegrationResult::Success), "{error:?}");
     }

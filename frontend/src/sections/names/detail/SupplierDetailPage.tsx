@@ -1,6 +1,7 @@
 import { createResource, Show } from 'solid-js';
 import type { Component } from 'solid-js';
-import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
+import { useNavigate, useParams } from '@solidjs/router';
+import { useUrlTab } from '../../../list/urlTab';
 import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
@@ -33,9 +34,12 @@ const SupplierDetailPage: Component = () => {
   // detail views ([conventions ›
   // urls](../../../../spec/ui-standards/conventions.md)). The default (Details)
   // carries no param, keeping the base URL clean.
-  const [searchParams, setSearchParams] = useSearchParams<{ tab?: string }>();
-  const setTab = (value: string) =>
-    setSearchParams({ tab: value === 'details' ? undefined : value });
+  const urlTab = useUrlTab([
+    'details',
+    'custom-fields',
+    'purchase-orders',
+    'contacts',
+  ]);
 
   const [data] = createResource(
     () => params.nameId,
@@ -60,7 +64,7 @@ const SupplierDetailPage: Component = () => {
   };
   // A link to an internal supplier's Purchase orders tab lands on Details.
   const tab = () => {
-    const value = searchParams.tab ?? 'details';
+    const value = urlTab.tab();
     return value === 'purchase-orders' && isInternal() ? 'details' : value;
   };
 
@@ -95,7 +99,7 @@ const SupplierDetailPage: Component = () => {
   ];
 
   return (
-    <Tabs value={tab()} onValueChange={setTab}>
+    <Tabs value={tab()} onValueChange={urlTab.setTab}>
       <Page
         // Fill the body (no padding, non-scrolling) so the table tabs (Purchase
         // orders, Contacts) go full-bleed like the list views — the table

@@ -62,8 +62,11 @@ export interface LocationEditModalProps {
    */
   rows: () => LocationRow[];
   onClose: () => void;
-  /** A save landed — the list re-queries so the rows reflect it. */
-  onSaved: () => void;
+  /**
+   * A save landed — the list re-queries so the rows reflect it, and confirms
+   * a create in its footer (OMS-REG-INV-01.64).
+   */
+  onSaved: (outcome: 'created' | 'updated') => void;
 }
 
 export const LocationEditModal: Component<LocationEditModalProps> = props => {
@@ -186,9 +189,11 @@ export const LocationEditModal: Component<LocationEditModalProps> = props => {
       return;
     }
 
-    props.onSaved();
+    props.onSaved(location ? 'updated' : 'created');
     if (!advance) {
-      // Success closes the dialog — closure IS the confirmation (D21).
+      // Success closes the dialog. For an edit, closure IS the confirmation
+      // (D21); a create is also confirmed in the list's footer
+      // (OMS-REG-INV-01.64).
       props.onClose();
       return;
     }

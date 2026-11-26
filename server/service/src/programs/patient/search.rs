@@ -42,7 +42,9 @@ pub fn patient_search_to_filter(input: PatientSearch) -> PatientFilter {
         identifier,
     } = input;
 
-    let mut filter = PatientFilter::new();
+    // A search never finds a store's unnamed patient (spec/prescriptions
+    // rules › the unnamed patient).
+    let mut filter = PatientFilter::new().exclude_unnamed();
     if let Some(code) = code {
         filter = filter.code(StringFilter::equal_to(&code));
     }
@@ -77,19 +79,26 @@ pub fn patient_search(
     allowed_ctx: Option<&[String]>,
 ) -> Result<ListResult<PatientSearchResult>, RepositoryError> {
     let filter = patient_search_to_filter(input);
-    let results = service_provider.patient_service.get_patients(
-        ctx,
-        Some(PaginationOption {
-            limit: Some(PAGINATION_LIMIT),
-            offset: Some(0),
-        }),
-        Some(filter),
-        Some(PatientSort {
-            key: PatientSortField::Code,
-            desc: Some(false),
-        }),
-        allowed_ctx,
-    )?;
+    // As a search, not a list: on a central with millions of patients a short
+    // identifier matches most of them, so the page is sorted from the first
+    // matches found and the count stops at a page's worth (the callers show
+    // the rows, not the total) — see get_patients_with_count_limit
+    let results = service_provider
+        .patient_service
+        .get_patients_with_count_limit(
+            ctx,
+            Some(PaginationOption {
+                limit: Some(PAGINATION_LIMIT),
+                offset: Some(0),
+            }),
+            Some(filter),
+            Some(PatientSort {
+                key: PatientSortField::Code,
+                desc: Some(false),
+            }),
+            allowed_ctx,
+            Some(PAGINATION_LIMIT),
+        )?;
 
     let results = ListResult {
         rows: results

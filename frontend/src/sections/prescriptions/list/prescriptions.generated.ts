@@ -29,10 +29,12 @@ export type PrescriptionsVariables = {
     invoiceNumberOrStatus?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     otherPartyName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     otherPartyId?: {
     equalTo?: string | null;
@@ -71,10 +73,12 @@ export type PrescriptionsVariables = {
     comment?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     theirReference?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     transportReference?: {
     equalTo?: string | null;
@@ -145,6 +149,7 @@ export type PrescriptionsVariables = {
     notEqualAll?: Array<string> | null;
   } | null;
     isProgramInvoice?: boolean | null;
+    isForUnnamedPatient?: boolean | null;
     purchaseOrderId?: {
     equalTo?: string | null;
     equalAny?: Array<string> | null;
@@ -190,6 +195,7 @@ export type PrescriptionsVariables = {
     first?: number | null;
     offset?: number | null;
   } | null;
+  withMedicines?: boolean | null;
 };
 
 export type PrescriptionsResult = {
@@ -200,18 +206,28 @@ export type PrescriptionsResult = {
   invoiceNumber: number;
   status: "NEW" | "ALLOCATED" | "PICKED" | "SHIPPED" | "DELIVERED" | "RECEIVED" | "VERIFIED" | "CANCELLED";
   otherPartyName: string;
+  isForUnnamedPatient: boolean;
   colour: string | null;
   comment: string | null;
   theirReference: string | null;
   createdDatetime: string;
   backdatedDatetime: string | null;
   customFields: unknown | null;
+  lines?: {
+  nodes: Array<{
+  type: "STOCK_IN" | "STOCK_OUT" | "UNALLOCATED_STOCK" | "SERVICE";
+  itemId: string;
+  itemName: string;
+  packSize: number;
+  numberOfPacks: number;
+}>;
+};
 }>;
 });
 };
 
 export const Prescriptions = {
-  query: "query prescriptions($storeId: String!, $filter: InvoiceFilterInput, $sort: [InvoiceSortInput!], $page: PaginationInput) {\n  invoices(\n    storeId: $storeId\n    filter: $filter\n    sort: $sort\n    page: $page\n    type: [PRESCRIPTION]\n  ) {\n    ... on InvoiceConnector {\n      totalCount\n      nodes {\n        id\n        invoiceNumber\n        status\n        otherPartyName\n        colour\n        comment\n        theirReference\n        createdDatetime\n        backdatedDatetime\n        customFields\n      }\n    }\n  }\n}",
+  query: "query prescriptions($storeId: String!, $filter: InvoiceFilterInput, $sort: [InvoiceSortInput!], $page: PaginationInput, $withMedicines: Boolean = false) {\n  invoices(\n    storeId: $storeId\n    filter: $filter\n    sort: $sort\n    page: $page\n    type: [PRESCRIPTION]\n  ) {\n    ... on InvoiceConnector {\n      totalCount\n      nodes {\n        id\n        invoiceNumber\n        status\n        otherPartyName\n        isForUnnamedPatient\n        colour\n        comment\n        theirReference\n        createdDatetime\n        backdatedDatetime\n        customFields\n        lines @include(if: $withMedicines) {\n          nodes {\n            type\n            itemId\n            itemName\n            packSize\n            numberOfPacks\n          }\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<PrescriptionsResult, PrescriptionsVariables>;
 
 export type DeletePrescriptionsVariables = {
@@ -238,3 +254,70 @@ export type DeletePrescriptionsResult = {
 export const DeletePrescriptions = {
   query: "mutation deletePrescriptions($storeId: String!, $ids: [String!]!) {\n  batchPrescription(storeId: $storeId, input: {deletePrescriptions: $ids}) {\n    deletePrescriptions {\n      id\n      response {\n        ... on DeleteResponse {\n          id\n        }\n        ... on DeletePrescriptionError {\n          error {\n            __typename\n            description\n          }\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<DeletePrescriptionsResult, DeletePrescriptionsVariables>;
+
+export type PrescriptionsToVerifyVariables = {
+  storeId: string;
+  pickedUpTo: string;
+};
+
+export type PrescriptionsToVerifyResult = {
+  invoices: ({
+  nodes: Array<{
+  id: string;
+  lines: {
+  nodes: Array<{
+  type: "STOCK_IN" | "STOCK_OUT" | "UNALLOCATED_STOCK" | "SERVICE";
+}>;
+};
+}>;
+});
+};
+
+export const PrescriptionsToVerify = {
+  query: "query prescriptionsToVerify($storeId: String!, $pickedUpTo: DateTime!) {\n  invoices(\n    storeId: $storeId\n    filter: {status: {equalTo: PICKED}, pickedDatetime: {beforeOrEqualTo: $pickedUpTo}}\n    type: [PRESCRIPTION]\n  ) {\n    ... on InvoiceConnector {\n      nodes {\n        id\n        lines {\n          nodes {\n            type\n          }\n        }\n      }\n    }\n  }\n}",
+} as TypedDocument<PrescriptionsToVerifyResult, PrescriptionsToVerifyVariables>;
+
+export type VerifyPrescriptionsVariables = {
+  storeId: string;
+  updates: Array<{
+    id: string;
+    status?: "PICKED" | "VERIFIED" | "CANCELLED" | null;
+    patientId?: string | null;
+    clinicianId?: {
+    value?: string | null;
+  } | null;
+    prescriptionDate?: string | null;
+    comment?: string | null;
+    colour?: string | null;
+    diagnosisId?: {
+    value?: string | null;
+  } | null;
+    programId?: {
+    value?: string | null;
+  } | null;
+    theirReference?: {
+    value?: string | null;
+  } | null;
+    nameInsuranceJoinId?: {
+    value?: string | null;
+  } | null;
+    insuranceDiscountAmount?: number | null;
+    insuranceDiscountPercentage?: number | null;
+    customFields?: unknown | null;
+  }>;
+};
+
+export type VerifyPrescriptionsResult = {
+  batchPrescription: {
+  updatePrescriptions: Array<{
+  id: string;
+  response: {
+  __typename: "UpdatePrescriptionError" | "NodeError" | "InvoiceNode";
+};
+}> | null;
+};
+};
+
+export const VerifyPrescriptions = {
+  query: "mutation verifyPrescriptions($storeId: String!, $updates: [UpdatePrescriptionInput!]!) {\n  batchPrescription(storeId: $storeId, input: {updatePrescriptions: $updates}) {\n    updatePrescriptions {\n      id\n      response {\n        __typename\n      }\n    }\n  }\n}",
+} as TypedDocument<VerifyPrescriptionsResult, VerifyPrescriptionsVariables>;

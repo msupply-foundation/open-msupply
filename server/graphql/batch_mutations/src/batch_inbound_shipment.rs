@@ -4,7 +4,9 @@ use graphql_core::generic_inputs::InboundShipmentType;
 use graphql_core::standard_graphql_error::validate_auth;
 use graphql_invoice::mutations::inbound_shipment::{self, validate_shipment_verify_authorisation};
 use graphql_invoice_line::mutations::inbound_shipment_line;
-use graphql_invoice_line::mutations::inbound_shipment_line::line::validate_line_edit_authorisation;
+use graphql_invoice_line::mutations::inbound_shipment_line::line::{
+    LineAuthorisation, validate_line_edit_authorisation,
+};
 use service::auth::ResourceAccessRequest;
 use service::invoice::inbound_shipment::*;
 
@@ -147,20 +149,28 @@ pub fn batch(
         }
     }
 
-    // Approving/rejecting lines or editing already-approved lines requires authorise permission
-    if let Some(update_lines) = &input.update_inbound_shipment_lines {
-        let line_updates: Vec<_> = update_lines
-            .iter()
-            .map(|line| (line.id.clone(), line.status.clone()))
-            .collect();
-        validate_line_edit_authorisation(
-            ctx,
-            store_id,
-            &r#type,
-            &service_context.connection,
-            &line_updates,
-        )?;
-    }
+    // Signing a line off (on insert or update), or touching one already signed
+    // off, requires the authorise permission
+    let new_lines = input
+        .insert_inbound_shipment_lines
+        .iter()
+        .flatten()
+        .map(|line| LineAuthorisation::Insert(line.status));
+    let changed_lines = input
+        .update_inbound_shipment_lines
+        .iter()
+        .flatten()
+        .map(|line| LineAuthorisation::Update {
+            id: line.id.clone(),
+            status: line.status,
+        });
+    validate_line_edit_authorisation(
+        ctx,
+        store_id,
+        &r#type,
+        &service_context.connection,
+        &new_lines.chain(changed_lines).collect::<Vec<_>>(),
+    )?;
 
     let response = service_provider
         .invoice_service

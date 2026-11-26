@@ -233,7 +233,7 @@ A detail page's **header fields** — a document's editable + read-only meta (su
       value room. Floors: 11 + 10 + 9 + 10 + 9.5 + 9.5 = 59rem, under the
       6 × 10rem the unweighted row already took, so the wrap point holds. */}
   <FormRowItem weight={1.9} minWidth="11rem">
-    <PatientSearch label="Patient" size="small" … />
+    <PatientField label="Patient" size="small" … />
   </FormRowItem>
   {/* No minWidth: Clinician and Program keep the row's own 10rem floor. */}
   <FormRowItem weight={1.55}>

@@ -167,6 +167,13 @@
   flex: 1;
 }
 
+/* Without its illustration (emptyGraphic={false}) the empty state is one line
+   of text, so it needs only a little room, not the full empty state's height. */
+.emptyBody[data-plain] > * {
+  min-block-size: 0;
+  padding-block: var(--space-6);
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -174,10 +181,10 @@
   /* Default growth cap for a single-line body cell (issue #432): a column
      auto-sizes to its content up to this, then the cell ellipsises instead of
      growing unbounded and pushing its neighbours off-screen. It's only a
-     ceiling on CONTENT-driven growth — an explicit width (a resize drag, which
-     sets the min-width floor) or a per-column `maxSize` both override it, so
-     columns stay freely draggable wider and a column that opts into a tighter
-     cap (Code, Comment) still wins. */
+     ceiling on CONTENT-driven growth. A width the user set (a resize drag or a
+     double-click, drawn as the header cell's exact width) and a per-column
+     `maxSize` both override it, so a column can be dragged past it and a
+     column with a tighter cap (the Comment icon) keeps that cap. */
   --table-cell-max-grow: 36rem;
 }
 
@@ -248,15 +255,21 @@
 /* Column resize handle (ui-standards § tables .col-resize-handle, unit 11): a
    0.75rem hit target STRADDLING the trailing header edge — it overhangs the
    edge by 0.1875rem so the grab zone spans the column boundary, and z-index
-   lifts it clear of the neighbouring sticky header. Invisible at rest; a
-   centred 0.125rem bar (inset to 60% height, rounded) fades to the action blue
-   on hover AND throughout a resize drag (.resizeHandleActive keeps it lit once
-   the pointer leaves the handle mid-drag — hover alone would drop it). Sticky
-   positioning on .th is the containing block for this absolute child.
+   lifts it clear of the neighbouring sticky header. At rest a faint 1px
+   divider (inset to 60% height) marks where one column ends, so the boundary
+   is findable without hovering — touch has no hover, and an unsortable header
+   has no hover wash either (#1890). It turns into a 0.125rem bar in the action
+   blue on hover AND throughout a resize drag (.resizeHandleActive keeps it lit
+   once the pointer leaves the handle mid-drag — hover alone would drop it).
+   Sticky positioning on .th is the containing block for this absolute child.
    TODO (WCAG 2.5.7, flagged Carl 2026-07-24): drag-resize still has NO
    non-drag alternative — add keyboard arrow-key resize on a focusable handle
    (or a width control) in a later a11y pass. */
 .resizeHandle {
+  /* The resting divider's colour — cleared where a boundary already has a
+     line, or none (the rules below). */
+  --resize-divider: var(--color-divider);
+
   position: absolute;
   inset-block: 0;
   inset-inline-end: -0.1875rem;
@@ -268,6 +281,15 @@
   background: transparent;
 }
 
+/* A finger needs a wider target than a cursor: 1rem, keeping the same
+   quarter-width overhang across the boundary. */
+@media (pointer: coarse) {
+  .resizeHandle {
+    inset-inline-end: -0.25rem;
+    inline-size: var(--space-4);
+  }
+}
+
 .resizeHandle::after {
   content: '';
   position: absolute;
@@ -277,9 +299,9 @@
      inline-size (not a physical left + translateX). */
   inset-inline: 0;
   margin-inline: auto;
-  inline-size: 0.125rem;
+  inline-size: 1px;
   border-radius: 0.125rem;
-  background: transparent;
+  background: var(--resize-divider);
   /* The app-wide fade token (0.15s), auto-zeroed under reduced motion by the
      rule on .root — so no separate reduced-motion block is needed here. */
   transition: background var(--motion-base);
@@ -290,7 +312,29 @@
    focus ring / sort arrow / selection / pins all unified to blue earlier). */
 .resizeHandle:hover::after,
 .resizeHandleActive::after {
+  inline-size: 0.125rem;
   background: var(--secondary-main);
+}
+
+/* A column rule (meta.dividerEnd) already draws this boundary full height; a
+   second, shorter line beside it would read as a double rule. */
+.th[data-divider-end] .resizeHandle {
+  --resize-divider: transparent;
+}
+
+/* During a column drag: the page cover that keeps the pointer off the rows,
+   above everything else on the page (the shell's menus sit at 1100), and the
+   body rows parked out of view so they aren't repainted on every tick
+   (DataTable — #1890). A parked row still takes its place in layout. */
+.resizeOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  cursor: col-resize;
+}
+
+.table > tbody > tr[data-paint-off] {
+  visibility: hidden;
 }
 
 /* The TRAILING column's handle must not overhang the table's right edge. The
@@ -299,8 +343,11 @@
    it inside the scroll box — enough to show a phantom horizontal scrollbar on a
    table that otherwise fits exactly (measured: scrollWidth = clientWidth + 3px,
    independent of column count). The last column has no boundary to straddle, so
-   flush its handle to the edge. */
+   flush its handle to the edge. Nor does it need the resting divider: there is
+   no next column to separate it from. */
 .th:last-child .resizeHandle {
+  --resize-divider: transparent;
+
   inset-inline-end: 0;
 }
 
@@ -316,8 +363,10 @@
   white-space: nowrap;
   /* Single-line cells clip with an ellipsis rather than spilling into their
      neighbours — the counterpart to nowrap. max-width caps content-driven
-     growth (issue #432); the inline min-width (getSize, incl. a resize drag)
-     and any per-column max-width (maxSize) override it. Wrapping columns
+     growth (issue #432). The column's width is set on the header cell (its
+     size as a min-width, and as an exact width once the user has set one) and
+     the body cell fills it regardless; a per-column max-width (maxSize)
+     overrides the cap. Wrapping columns
      (.td[data-wrap]) opt back out below. */
   max-width: var(--table-cell-max-grow);
   overflow: hidden;
@@ -603,6 +652,14 @@ tr[data-row-state='disabled']:not(.rowClickable) {
   min-width: 0;
   overflow: hidden;
   overflow-wrap: break-word;
+}
+
+/* A column's description mark (meta.description) — a fixed-size sibling of the
+   text, so a wrapping label never squeezes it out. */
+.thInfo {
+  display: inline-flex;
+  flex-shrink: 0;
+  margin-inline-start: var(--space-1);
 }
 
 /* Header label is a flex row, so align it with justify-content (data-align lives on the

@@ -79,6 +79,19 @@ impl<'a> UserStoreJoinRowRepository<'a> {
         Ok(result)
     }
 
+    /// Writes a delete changelog, so the removal syncs.
+    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+        let changelog = UserStoreJoinRow::generate_changelog(
+            RowOrId::Id(id),
+            self.connection,
+            RowActionType::Delete,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        self.delete_by_id(id)?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
+    }
+
+    /// Writes no changelog.
     pub fn delete_by_id(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(user_store_join::table.filter(user_store_join::id.eq(id)))
             .execute(self.connection.lock().connection())?;

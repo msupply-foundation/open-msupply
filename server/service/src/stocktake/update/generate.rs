@@ -189,6 +189,7 @@ fn generate_stock_in_out_or_update(
 
     let stock_in_or_out_line = if delta > 0.0 {
         StockChange::StockIn(InsertStockInLine {
+            status: None,
             r#type: StockInType::InventoryAddition,
             id: invoice_line_id,
             invoice_id: inventory_addition_id.to_string(),
@@ -438,6 +439,7 @@ fn generate_new_stock_line(
     );
 
     let stock_in_line = StockChange::StockIn(InsertStockInLine {
+        status: None,
         r#type: StockInType::InventoryAddition,
         id: invoice_line_id,
         invoice_id: inventory_addition_id.to_string(),

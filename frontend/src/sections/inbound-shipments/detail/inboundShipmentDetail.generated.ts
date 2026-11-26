@@ -418,6 +418,7 @@ export type InboundShipmentLinesVariables = {
     itemCodeOrName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     type?: {
     equalTo?: "STOCK_IN" | "STOCK_OUT" | "UNALLOCATED_STOCK" | "SERVICE" | null;
@@ -488,6 +489,7 @@ export type InboundShipmentLinesVariables = {
     batch?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     expiryDate?: {
     equalTo?: string | null;
@@ -497,6 +499,7 @@ export type InboundShipmentLinesVariables = {
     locationCode?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     manufactureDate?: {
     equalTo?: string | null;
@@ -568,6 +571,7 @@ export type InboundServiceLinesVariables = {
     itemCodeOrName?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     type?: {
     equalTo?: "STOCK_IN" | "STOCK_OUT" | "UNALLOCATED_STOCK" | "SERVICE" | null;
@@ -638,6 +642,7 @@ export type InboundServiceLinesVariables = {
     batch?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     expiryDate?: {
     equalTo?: string | null;
@@ -647,6 +652,7 @@ export type InboundServiceLinesVariables = {
     locationCode?: {
     equalTo?: string | null;
     like?: string | null;
+    startsWith?: string | null;
   } | null;
     manufactureDate?: {
     equalTo?: string | null;
@@ -812,6 +818,7 @@ export type BatchInboundShipmentVariables = {
     purchaseOrderLineId?: string | null;
     reasonOptionId?: string | null;
     barcode?: string | null;
+    status?: "PENDING" | "PASSED" | "REJECTED" | null;
   }> | null;
     insertFromInternalOrderLines?: Array<{
     invoiceId: string;
@@ -976,6 +983,7 @@ export type BatchInboundShipmentExternalVariables = {
     purchaseOrderLineId?: string | null;
     reasonOptionId?: string | null;
     barcode?: string | null;
+    status?: "PENDING" | "PASSED" | "REJECTED" | null;
   }> | null;
     insertFromInternalOrderLines?: Array<{
     invoiceId: string;

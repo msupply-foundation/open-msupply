@@ -322,58 +322,65 @@ export const CreateRequisitionModal: Component<
   );
 
   return (
-    <Dialog
-      open={props.open}
-      onClose={props.onClose}
-      closeButton
-      dismissable={!submitting()}
-      title={t('label.new-requisition')}
-      testId="create-requisition-modal"
-      widthRem={44}
-      minBodyHeightRem={30}
-      // Cancel is the house way out on both paths (ui-standards › dialogs §
-      // chrome); Create sits beside it only on the Program path — the General
-      // path creates on customer-select and has no confirm (spec S3a).
-      actions={
-        <>
-          <CancelButton
-            data-testid="dialog-button-cancel"
-            disabled={submitting()}
-            onClick={props.onClose}
-          />
-          <Show when={activeTab() === 'program'}>
-            {/* Icon-less dialog-footer confirm (controls › dialogs, D55);
-                confirms="plain" wires Enter-to-confirm + the Alt+S badge. */}
-            <Button
-              confirms="plain"
-              data-testid="create-program-requisition-button"
-              disabled={!createReady()}
-              loading={submitting()}
-              onClick={() => void submitProgram()}
-            >
-              {t('label.create')}
-            </Button>
+    // Tabs wraps the Dialog so the strip rides its `tabs` slot, pinned under
+    // the title rather than scrolled away when an on-screen keyboard shortens
+    // the dialog (#2592).
+    <Tabs value={activeTab()} onValueChange={setTab}>
+      <Dialog
+        open={props.open}
+        onClose={props.onClose}
+        closeButton
+        dismissable={!submitting()}
+        title={t('label.new-requisition')}
+        testId="create-requisition-modal"
+        widthRem={44}
+        minBodyHeightRem={30}
+        tabs={
+          <Show when={props.programCapable}>
+            <TabList
+              tabs={[
+                { value: 'program', label: t('label.requisition-program') },
+                { value: 'general', label: t('label.requisition-general') },
+              ]}
+            />
           </Show>
-        </>
-      }
-    >
-      <Show when={props.programCapable} fallback={<GeneralPath />}>
-        <Tabs value={activeTab()} onValueChange={setTab}>
-          <TabList
-            tabs={[
-              { value: 'program', label: t('label.requisition-program') },
-              { value: 'general', label: t('label.requisition-general') },
-            ]}
-          />
+        }
+        // Cancel is the house way out on both paths (ui-standards › dialogs §
+        // chrome); Create sits beside it only on the Program path — the General
+        // path creates on customer-select and has no confirm (spec S3a).
+        actions={
+          <>
+            <CancelButton
+              data-testid="dialog-button-cancel"
+              disabled={submitting()}
+              onClick={props.onClose}
+            />
+            <Show when={activeTab() === 'program'}>
+              {/* Icon-less dialog-footer confirm (controls › dialogs, D55);
+                confirms="plain" wires Enter-to-confirm + the Alt+S badge. */}
+              <Button
+                confirms="plain"
+                data-testid="create-program-requisition-button"
+                disabled={!createReady()}
+                loading={submitting()}
+                onClick={() => void submitProgram()}
+              >
+                {t('label.create')}
+              </Button>
+            </Show>
+          </>
+        }
+      >
+        <Show when={props.programCapable} fallback={<GeneralPath />}>
           <TabPanel value="program">
             <ProgramPath />
           </TabPanel>
           <TabPanel value="general">
             <GeneralPath />
           </TabPanel>
-        </Tabs>
-      </Show>
-    </Dialog>
+        </Show>
+      </Dialog>
+    </Tabs>
   );
 };
 

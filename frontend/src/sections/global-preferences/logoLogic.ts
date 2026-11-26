@@ -7,6 +7,8 @@
 // anything else; checking first lets the editor say why instead of failing
 // the save.
 
+import { formatFileSize } from '@/intl/formatFileSize';
+
 /** Max length of the stored data URL. Must match the server's
  *  MAX_GLOBAL_LOGO_DATA_URL_LENGTH. */
 export const MAX_LOGO_DATA_URL_LENGTH = 342 * 1024;
@@ -15,7 +17,8 @@ export const MAX_LOGO_DATA_URL_LENGTH = 342 * 1024;
  *  prefix, ~341.4KB) still fits within MAX_LOGO_DATA_URL_LENGTH. */
 export const MAX_LOGO_FILE_BYTES = 250 * 1024;
 
-export const LOGO_MAX_SIZE_LABEL = `${Math.floor(MAX_LOGO_FILE_BYTES / 1024)}KB`;
+/** As the refusal of a larger file shows it (`tooLargeMessage`). */
+export const LOGO_MAX_SIZE_LABEL = formatFileSize(MAX_LOGO_FILE_BYTES);
 
 /** The image types the server accepts, each with its file extensions. */
 const LOGO_TYPES: Record<string, readonly string[]> = {

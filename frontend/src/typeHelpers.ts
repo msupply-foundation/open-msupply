@@ -15,20 +15,23 @@ export const exhaustiveCheck = (value: never): never => {
   throw new Error(`Unhandled variant: ${JSON.stringify(value)}`);
 };
 
-// Element-by-element (===) comparison of two arrays, treating null as a value
-// (both null → equal). Meant as the `equals` for a createMemo whose output is a
-// tuple of reactive inputs: createResource dedupes its source by reference and
-// has no `equals` option, so a memo with this comparator gives it a source that
-// only changes when a field actually changes (kdd/solid-reactivity-pitfalls).
-// Same-reference and same-length are the fast paths; different length or any
-// element mismatch → not equal.
+// Element-by-element (===) comparison of two arrays: same items in the same
+// order. A missing array (null or undefined) equals only itself, so null,
+// undefined and [] are three different values. Meant as the `equals` for a
+// createMemo: one whose output is a tuple of reactive inputs (createResource
+// dedupes its source by reference and has no `equals` option, so a memo with
+// this comparator gives it a source that only changes when a field actually
+// changes — kdd/solid-reactivity-pitfalls), or one that rebuilds a list on
+// every run (DataTable's column order and grouping). Same-reference and
+// same-length are the fast paths; different length or any element mismatch →
+// not equal.
 export const shallowEqual = <T extends readonly unknown[]>(
-  a: T | null,
-  b: T | null
+  a: T | null | undefined,
+  b: T | null | undefined
 ): boolean =>
   a === b ||
-  (a !== null &&
-    b !== null &&
+  (a != null &&
+    b != null &&
     a.length === b.length &&
     a.every((v, i) => v === b[i]));
 

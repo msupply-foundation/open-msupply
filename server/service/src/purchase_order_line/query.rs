@@ -49,17 +49,20 @@ pub fn get_units_ordered_in_other_purchase_orders(
 ) -> Result<f64, RepositoryError> {
     calculate_units_in_other_purchase_orders(
         &ctx.connection,
+        store_id,
         item_id,
         exclude_purchase_order_id,
-        Some(store_id),
     )
 }
 
+/// Units of the item on the store's other Sent purchase orders. Always scoped
+/// to one store: a server can host several stores, and another store's orders
+/// put nothing on order for this one (spec/purchase-orders/rules.md § Stock on order).
 pub fn calculate_units_in_other_purchase_orders(
     connection: &StorageConnection,
+    store_id: &str,
     item_id: &str,
     exclude_purchase_order_id: &str,
-    store_id: Option<&str>,
 ) -> Result<f64, RepositoryError> {
     let repository = PurchaseOrderLineRepository::new(connection);
 
@@ -75,7 +78,7 @@ pub fn calculate_units_in_other_purchase_orders(
         )
         .status(EqualFilter::not_equal_to(PurchaseOrderLineStatus::Closed));
 
-    filter.store_id = store_id.map(|id| EqualFilter::equal_to(id.to_string()));
+    filter.store_id = Some(EqualFilter::equal_to(store_id.to_string()));
 
     let lines = repository.query_by_filter(filter)?;
 
@@ -648,9 +651,9 @@ mod test {
 
         let on_order = calculate_units_in_other_purchase_orders(
             &connection,
+            &mock_store_a().id,
             &mock_item_a().id,
             "some_other_order",
-            Some(&mock_store_a().id),
         )
         .unwrap();
         assert_eq!(on_order, 80.0);
@@ -658,9 +661,9 @@ mod test {
         // The order being edited never counts itself.
         let on_order = calculate_units_in_other_purchase_orders(
             &connection,
+            &mock_store_a().id,
             &mock_item_a().id,
             "po_sent",
-            Some(&mock_store_a().id),
         )
         .unwrap();
         assert_eq!(on_order, 0.0);

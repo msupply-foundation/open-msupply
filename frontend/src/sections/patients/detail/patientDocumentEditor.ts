@@ -240,7 +240,7 @@ export interface NewPatientDocumentParams {
   patientId: Accessor<string>;
   /** The store's Patient registry entry; undefined off the document path. */
   registry: Accessor<FormRegistryFragment | undefined>;
-  /** The new patient's first data; undefined until the wizard reaches it. */
+  /** The new patient's first data; undefined until the create form opens. */
   seed: Accessor<Patient | undefined>;
 }
 
@@ -256,11 +256,10 @@ export interface NewPatientDocumentEditor {
 }
 
 /*
- * The create wizard's last step on the document path (spec/patients › effects
+ * The create form on the document path (spec/patients › effects
  * of creation): a new patient's first document, in the same document form host
- * and with the same code check as the Details tab, seeded from the wizard's
- * first step. It saves without the Details tab's confirm, as the plain path's
- * wizard does.
+ * and with the same code check as the Details tab, seeded from the patient search. It saves without the Details tab's
+ * confirm, as the plain path's create form does.
  */
 export const createNewPatientDocumentEditor = (
   params: NewPatientDocumentParams
