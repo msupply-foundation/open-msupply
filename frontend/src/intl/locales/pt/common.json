@@ -2180,6 +2180,7 @@
   "messages.central-data-import-rechecked": "Não foi possível saber se a importação terminou, por isso o ficheiro foi verificado novamente. A pré-visualização mostra agora o que a importação ainda mudaria.",
   "messages.central-data-import-start-from-export": "Não tem certeza de como é o ficheiro? Descarregue as suas tabelas na aba Exportar e edite esse ficheiro.",
   "messages.central-data-imported": "Importação concluída. Novos: {{new}}, atualizados: {{updated}}, excluídos: {{deleted}}.",
+  "messages.central-data-nothing-left-to-import": "O ficheiro corresponde ao que está guardado, por isso não resta nada para importar.",
   "messages.central-data-nothing-to-import": "Carregamento concluído! O ficheiro corresponde ao que está guardado, por isso não há nada para importar.",
   "messages.central-data-problem-imports-nothing": "Se houver um problema numa linha da importação, nenhum dado é importado!",
   "messages.central-data-upload-successful": "Carregamento concluído! Clique em \"Importar\" abaixo para continuar.",

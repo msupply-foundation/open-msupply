@@ -1430,6 +1430,7 @@
   "messages.central-data-import-rechecked": "تعذر التأكد مما إذا كان الاستيراد قد اكتمل، لذا أُعيد فحص الملف. تعرض المعاينة الآن التغييرات المتبقية التي سيُجريها استيراده.",
   "messages.central-data-import-start-from-export": "لست متأكدًا من شكل الملف؟ نزّل جداولك من علامة التبويب ”تصدير“ وعدّل ذلك الملف.",
   "messages.central-data-imported": "تم الاستيراد. جديد: {{new}}، تم التحديث: {{updated}}، تم الحذف: {{deleted}}.",
+  "messages.central-data-nothing-left-to-import": "الملف مطابق لما هو محفوظ، لذا لم يتبقَّ شيء لاستيراده.",
   "messages.central-data-nothing-to-import": "تم التحميل بنجاح! الملف مطابق لما هو محفوظ، لذا لا يوجد شيء لاستيراده.",
   "messages.central-data-problem-imports-nothing": "إذا كانت هناك مشكلة في أي صف من صفوف الاستيراد، فلن يتم استيراد أي بيانات!",
   "messages.central-data-upload-successful": "تم التحميل بنجاح! انقر على ”استيراد“ أدناه للمتابعة.",

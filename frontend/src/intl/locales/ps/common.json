@@ -2885,6 +2885,7 @@
   "messages.central-data-import-rechecked": "معلومه نه شوه چې واردول پای ته ورسېدل که نه، نو فایل بیا وکتل شو. مخکتنه اوس ښیي چې د دې فایل واردول به لا هم څه بدل کړي.",
   "messages.central-data-import-start-from-export": "ډاډه نه یاست چې فایل باید څنګه وي؟ خپل جدولونه د صادرولو له ټب څخه ډاونلوډ کړئ او همغه فایل ترمیم کړئ.",
   "messages.central-data-imported": "وارد شو. {{new}} نوي، {{updated}} تازه شوي، {{deleted}} ړنګ شوي.",
+  "messages.central-data-nothing-left-to-import": "فایل له خوندي شویو معلوماتو سره سمون لري، نو د واردولو لپاره هیڅ شی نه دی پاتې.",
   "messages.central-data-nothing-to-import": "په بریالیتوب سره پورته شو! فایل له خوندي شویو معلوماتو سره سمون لري، نو د واردولو لپاره هیڅ شی نشته.",
   "messages.central-data-problem-imports-nothing": "که د واردولو په کوم قطار کې ستونزه وي، هیڅ معلومات نه واردیږي!",
   "messages.central-data-upload-successful": "په بریالیتوب سره پورته شو! د دوام لپاره لاندې \"واردول\" کلیک کړئ.",
