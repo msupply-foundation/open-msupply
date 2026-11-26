@@ -511,6 +511,7 @@
   "heading.configuration": "Configuración",
   "heading.confirm-finalise": "¿Estás seguro de que deseas finalizar?",
   "heading.consumption-history": "Historial de consumo (mensualmente)",
+  "heading.consumption-history-in-unit": "Historial de consumo (mensual, en {{unit}})",
   "heading.contact-us": "Contáctanos",
   "heading.create-new-asset": "Crear nuevo activo",
   "heading.create-outbound-shipment": "Crear Salida",

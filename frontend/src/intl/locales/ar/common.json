@@ -516,6 +516,7 @@
   "heading.configuration": "التكوين",
   "heading.confirm-finalise": "هل أنت متأكد من رغبتك في التصديق النهائي؟",
   "heading.consumption-history": "سجل الاستهلاك (شهرياً)",
+  "heading.consumption-history-in-unit": "سجل الاستهلاك (شهرياً بوحدة {{unit}})",
   "heading.contact-us": "اتصل بنا",
   "heading.create-new-asset": "إنشاء جهاز جديد",
   "heading.create-outbound-shipment": "إنشاء تسليم خارجي",

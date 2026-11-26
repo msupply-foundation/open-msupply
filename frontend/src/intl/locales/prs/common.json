@@ -991,6 +991,7 @@
   "heading.configure-rates-per-store": "پیکربندی نرخ‌ها برای هر فروشگاه",
   "heading.confirm-finalise": "آیا مطمئن هستید که می‌خواهید نهایی کنید؟",
   "heading.consumption-history": "تاریخچه مصرف (ماهانه)",
+  "heading.consumption-history-in-unit": "تاریخچه مصرف (ماهانه، به {{unit}})",
   "heading.contact-us": "تماس با ما",
   "heading.correct-the-stock": "اصلاح موجودی",
   "heading.course": "دوره",

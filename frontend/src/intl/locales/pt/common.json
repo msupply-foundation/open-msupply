@@ -730,6 +730,7 @@
   "heading.configure-rates-per-store": "Configurar tarifas por loja",
   "heading.confirm-finalise": "Tem certeza de que deseja finalizar?",
   "heading.consumption-history": "Histórico de Consumo (mensal)",
+  "heading.consumption-history-in-unit": "Histórico de Consumo (mensal em {{unit}})",
   "heading.contact-us": "Nos contacte",
   "heading.create-new-asset": "Criar novo ativo",
   "heading.create-outbound-shipment": "Criar saída",

@@ -601,6 +601,7 @@
   "heading.configuration": "Конфигурация",
   "heading.confirm-finalise": "Вы уверены, что хотите завершить?",
   "heading.consumption-history": "История Потребления (ежемесячная)",
+  "heading.consumption-history-in-unit": "История Потребления (ежемесячная, ед. изм.: {{unit}})",
   "heading.contact-us": "Связаться с нами",
   "heading.create-new-asset": "Создать новый актив",
   "heading.create-outbound-shipment": "Создать Исходящую Поставку",

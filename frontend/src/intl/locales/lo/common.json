@@ -961,6 +961,7 @@
   "heading.configure-rates-per-store": "ຕັ້ງຄ່າອັດຕາຕາມແຕ່ລະສາງ",
   "heading.confirm-finalise": "ທ່ານແນ່ໃຈບໍວ່າຕ້ອງການເຮັດໃຫ້ສຳເລັດ?",
   "heading.consumption-history": "ປະຫວັດການໃຊ້ຈ່າຍ (ລາຍເດືອນ)",
+  "heading.consumption-history-in-unit": "ປະຫວັດການໃຊ້ຈ່າຍ (ລາຍເດືອນ ເປັນ {{unit}})",
   "heading.contact-us": "ຕິດຕໍ່ພວກເຮົາ",
   "heading.correct-the-stock": "ແກ້ໄຂສະຕ໋ອກ",
   "heading.course": "ຫຼັກສູດ",
