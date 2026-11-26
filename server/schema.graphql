@@ -1469,9 +1469,16 @@ enum CentralDataTableNode {
 	LOCATION_TYPE
 	CURRENCY
 	NAME
+	STORE
 	USER
 	ITEM
 	MASTER_LIST
+	MASTER_LIST_LINE
+	MASTER_LIST_NAME_JOIN
+	NAME_STORE_JOIN
+	ITEM_STORE_JOIN
+	USER_STORE_JOIN
+	USER_PERMISSION
 }
 
 type CentralDataTooManyCells implements CentralDataImportErrorInterface {
@@ -4321,6 +4328,13 @@ input InsertInboundShipmentLineInput {
 	and its stock. Doesn't propose a barcode (see `proposeBarcode`).
 	"""
 	barcode: String
+	"""
+	The new line's authorisation state, on a purchase-order-linked shipment
+	whose store requires line authorisation (omitted: Pending); ignored on
+	any other line. Passed or Rejected needs the authorise permission on any
+	external line, including one that ignores it.
+	"""
+	status: InvoiceLineStatusType
 }
 
 union InsertInboundShipmentLineResponse = InsertInboundShipmentLineError | InvoiceLineNode
@@ -5234,6 +5248,11 @@ input InvoiceFilterInput {
 	requisitionId: EqualFilterStringInput
 	linkedInvoiceId: EqualFilterStringInput
 	isProgramInvoice: Boolean
+	"""
+	Whether the other party is a store's unnamed patient: false leaves
+	its dispensing records out, as the patient search's recent patients do
+	"""
+	isForUnnamedPatient: Boolean
 	purchaseOrderId: EqualFilterStringInput
 	prescriptionRequestId: EqualFilterStringInput
 	purchaseOrderNumber: EqualFilterBigNumberInput
@@ -5416,6 +5435,12 @@ type InvoiceNode {
 	id: String!
 	otherPartyName: String!
 	otherPartyId: String!
+	"""
+	Whether the invoice is for a store's unnamed patient, so a list can show
+	its translated label without loading each row's patient
+	(spec/prescriptions rules › the unnamed patient)
+	"""
+	isForUnnamedPatient: Boolean!
 	"""
 	User that last edited invoice, if user is not found in system default unknown user is returned
 	Null is returned for transfers, where inbound has not been edited yet
@@ -6501,6 +6526,12 @@ type Mutations {
 	"""
 	insertPatient(storeId: String!, input: InsertPatientInput!): InsertPatientResponse!
 	"""
+	The store's unnamed patient, the one record its walk-in visits are
+	dispensed to: created on the first call, the same record after.
+	Refused where the store's "Use the unnamed patient" is off.
+	"""
+	getOrCreateUnnamedPatient(storeId: String!): PatientNode!
+	"""
 	Updates a new patient (without document data)
 	"""
 	updatePatient(storeId: String!, input: UpdatePatientInput!): UpdatePatientResponse!
@@ -6764,6 +6795,16 @@ type NameStoreJoinNode {
 	id: String!
 	storeId: String!
 	nameId: String!
+}
+
+type NameTagConnector {
+	totalCount: Int!
+	nodes: [NameTagNode!]!
+}
+
+type NameTagNode {
+	id: String!
+	name: String!
 }
 
 union NamesResponse = NameConnector
@@ -7034,6 +7075,11 @@ type PatientNode {
 	id: String!
 	name: String!
 	code: String!
+	"""
+	Whether this is a store's unnamed patient, the one record its walk-in
+	visits are dispensed to. Search never returns it.
+	"""
+	isUnnamed: Boolean!
 	code2: String
 	firstName: String
 	lastName: String
@@ -7346,6 +7392,7 @@ enum PreferenceKey {
 	receivePaymentsFromPrescriptions
 	globalLogo
 	decimalPlacesForNumbers
+	reportStoreTags
 	blindStocktake
 	manageVaccinesInDoses
 	manageVvmStatusForStock
@@ -8338,6 +8385,10 @@ type Queries {
 		"""
 		sort: [NameSortInput!]
 	): NamesResponse!
+	"""
+	Every name tag (maintained in legacy mSupply), sorted by name
+	"""
+	nameTags(storeId: String!): NameTagConnector!
 	store(id: String!): StoreResponse!
 	stores(
 		"""
@@ -9219,6 +9270,18 @@ type ReportNode {
 	isActive: Boolean!
 	argumentSchema: FormSchemaNode
 	version: String!
+	"""
+	The store tags this report is displayed for on the Reports page. Set
+	per report code, so every version of a report has the same tags. Empty
+	means every store.
+	"""
+	storeTagIds: [String!]!
+	"""
+	Whether the queried store sees this report on the Reports page without
+	pressing its category's "Show more": it has no store tags, or the store has one
+	of them. A report that isn't displayed can still be run.
+	"""
+	isDisplayed: Boolean!
 }
 
 union ReportResponse = ReportNode | QueryReportError
@@ -11914,11 +11977,18 @@ union UpdatePurchaseOrderResponse = IdResponse | UpdatePurchaseOrderError
 input UpdateReportInput {
 	id: String!
 	isActive: Boolean!
+	"""
+	The store tags the report is displayed for on the Reports page. Applies
+	to the report's code, so to every version of it. An empty list displays
+	it for every store. Leave out to keep the current tags.
+	"""
+	storeTagIds: [String!]
 }
 
 type UpdateReportNode {
 	id: String!
 	isActive: Boolean!
+	storeTagIds: [String!]!
 }
 
 type UpdateRequestRequisitionError {

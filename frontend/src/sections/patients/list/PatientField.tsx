@@ -23,6 +23,8 @@ export interface PatientFieldProps {
   label?: string;
   /** Leaves the label out, for a row that labels the field itself. */
   hideLabel?: boolean;
+  /** The empty field's prompt, where the screen needs its own. */
+  placeholder?: string;
   size?: 'small';
   patient: { id: string; name: string } | undefined;
   /** Disables choosing another patient. */
@@ -67,7 +69,7 @@ export const PatientField = (props: PatientFieldProps): JSX.Element => {
         hideLabel={props.hideLabel}
         size={props.size}
         value={props.patient?.name}
-        placeholder={t('placeholder.search-patient')}
+        placeholder={props.placeholder ?? t('placeholder.search-patient')}
         disabled={props.disabled}
         testId={props.testId}
         focusTarget={props.focusTarget}

@@ -214,7 +214,9 @@ export const MultiSelect = <T,>(props: MultiSelectProps<T>) => {
                       <button
                         type="button"
                         class={styles.tagRemove}
-                        aria-label={`Remove ${props.itemToString(item)}`}
+                        aria-label={t('label.remove-item', {
+                          item: props.itemToString(item),
+                        })}
                         onClick={() => state.remove(item)}
                       >
                         <CloseIcon />
@@ -233,7 +235,7 @@ export const MultiSelect = <T,>(props: MultiSelectProps<T>) => {
             </div>
             <KCombobox.Trigger
               class={styles.toggle}
-              aria-label="Toggle options"
+              aria-label={t('label.toggle-options')}
             >
               <KCombobox.Icon class={styles.toggleIcon}>
                 <ChevronDownIcon />

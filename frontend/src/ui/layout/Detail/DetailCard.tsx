@@ -21,9 +21,14 @@ export interface DetailCardProps {
    * cards standing apart on the page. `bordered` trades the shadow for a
    * hairline — for a long, uniform run of them (a record's history down a
    * timeline), where a shadow per card stacks into visual noise and the
-   * separation only needs stating once per edge.
+   * separation only needs stating once per edge. `panel` is a group of fields
+   * on a shaded page body (Page `shaded`): the raised fill, a hairline, a
+   * small radius and no shadow (spec/procurement/ui-surface.md § S1).
+   * TO-DO: only the tender page and the Simple dispensing screen use
+   * `panel`. Once stakeholders approve the look, it becomes the surface for
+   * every group of fields on a page body (#2172).
    */
-  surface?: 'raised' | 'bordered';
+  surface?: 'raised' | 'bordered' | 'panel';
   /**
    * Spacing. `default` is a miniature detail view's room; `compact` tightens
    * the padding, the gaps and the title for a dense grid of many small cards
@@ -45,6 +50,14 @@ export interface DetailCardProps {
    * two. The caller decides when, e.g. by viewport (createMediaQuery).
    */
   layout?: 'stacked' | 'inline';
+  /**
+   * Keep the title to one line, cut short with an ellipsis, the whole of it
+   * on hover (`title`). For a grid of cards that should share one shape
+   * whatever their names (the Simple dispensing screen's medicines). The
+   * heading's text stays the whole title, so assistive technology reads it
+   * all. Off by default: a title wraps.
+   */
+  truncateTitle?: boolean;
   /** `data-testid` on the card's root (e2e/TESTIDS.md). */
   testId?: string;
 }
@@ -81,7 +94,12 @@ export const DetailCard = (props: DetailCardProps): JSX.Element => {
           <Show when={props.title || meta()}>
             <div class={styles.heading}>
               <Show when={props.title}>
-                <h2 class={styles.title} dir="auto">
+                <h2
+                  class={styles.title}
+                  dir="auto"
+                  data-truncate={props.truncateTitle ? '' : undefined}
+                  title={props.truncateTitle ? props.title : undefined}
+                >
                   {props.title}
                 </h2>
               </Show>

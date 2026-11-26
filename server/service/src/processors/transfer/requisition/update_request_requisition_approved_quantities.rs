@@ -9,7 +9,9 @@ use crate::{
     processors::transfer::requisition::RequisitionTransferOutput,
 };
 
-use super::{RequisitionTransferProcessor, RequisitionTransferProcessorRecord};
+use super::{
+    RequisitionTransferProcessor, RequisitionTransferProcessorRecord, lock_requisition_row,
+};
 
 const DESCRIPTION: &str = "Update request requisition lines with approved quantities";
 
@@ -50,8 +52,13 @@ impl RequisitionTransferProcessor for UpdateRequestRequisitionApprovedQuantities
             Some(linked_requisition) => linked_requisition,
             None => return Ok(RequisitionTransferOutput::NoLinkedRequisition),
         };
+        // The record's copy of the request can be out of date, see `try_process_record`
+        let Some(request_requisition_row) = lock_requisition_row(connection, request_requisition)?
+        else {
+            return Ok(RequisitionTransferOutput::NoLinkedRequisition);
+        };
         // 4.
-        if let Some(approval_status) = request_requisition.requisition_row.approval_status.clone()
+        if let Some(approval_status) = &request_requisition_row.approval_status
             && approval_status.is_approved()
         {
             return Ok(RequisitionTransferOutput::RequestAlreadyApproved);
@@ -88,7 +95,7 @@ impl RequisitionTransferProcessor for UpdateRequestRequisitionApprovedQuantities
         let updated_request_requisition = RequisitionRow {
             // 6.
             approval_status: response_requisition.requisition_row.approval_status.clone(),
-            ..request_requisition.requisition_row.clone()
+            ..request_requisition_row
         };
 
         RequisitionRowRepository::new(connection).upsert_one(&updated_request_requisition)?;

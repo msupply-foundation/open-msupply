@@ -22,6 +22,36 @@ use serde::{Deserialize, Serialize};
 
 pub type Patient = NameRow;
 
+/// The start of every store's unnamed patient id: walk-ins are dispensed to
+/// one patient record per store, `unnamed_patient_<storeId>`
+/// (spec/prescriptions rules › the unnamed patient, kdd/unnamed-patient).
+/// The id is the contract: changing it orphans every one already created.
+pub const UNNAMED_PATIENT_ID_PREFIX: &str = "unnamed_patient_";
+
+/// The id of a store's unnamed patient.
+pub fn unnamed_patient_id(store_id: &str) -> String {
+    format!("{UNNAMED_PATIENT_ID_PREFIX}{store_id}")
+}
+
+/// Whether a patient id is a store's unnamed patient.
+pub fn is_unnamed_patient_id(id: &str) -> bool {
+    id.starts_with(UNNAMED_PATIENT_ID_PREFIX)
+}
+
+/// The escape character for this module's `LIKE` patterns: the unnamed
+/// patient id ([`unnamed_patient_id_like`]) and a typed patient ID's start.
+pub(crate) const LIKE_ESCAPE: char = '\\';
+
+/// A `LIKE` pattern matching every store's unnamed patient id, to use with
+/// `.escape(LIKE_ESCAPE)`. The prefix's underscores are
+/// escaped, as a bare `_` would match any character.
+pub(crate) fn unnamed_patient_id_like() -> String {
+    format!(
+        "{}%",
+        UNNAMED_PATIENT_ID_PREFIX.replace('_', &format!("{LIKE_ESCAPE}_"))
+    )
+}
+
 #[derive(Clone, Default, PartialEq, Debug, Serialize, Deserialize)]
 pub struct PatientFilter {
     pub id: Option<EqualFilter<String>>,
@@ -57,6 +87,12 @@ pub struct PatientFilter {
     /// ANDs with the other filters. Keys must be validated against the "patient"
     /// table scope's allowed property keys in the service layer.
     pub dynamic_filter: Option<NameCondition::Inner>,
+
+    /// Leave out every store's unnamed patient. Set by the search paths only
+    /// (patient search, the patient list, central search), never by a lookup
+    /// by id, so a dispensing record's patient is still found.
+    #[serde(default)]
+    pub exclude_unnamed: bool,
 
     /// The patient is (or isn't) visible in a store: the store has a visible
     /// name_store_join for them. Unset, patients are returned whichever store
@@ -274,6 +310,7 @@ impl<'a> PatientRepository<'a> {
                 program_enrolment_name,
                 next_of_kin_name,
                 dynamic_filter,
+                exclude_unnamed,
                 visible_in_store,
             } = f;
 
@@ -330,10 +367,11 @@ impl<'a> PatientRepository<'a> {
                 // On Postgres, the start of a code is a range on its lowercase
                 // form, which the code indexes (migration
                 // add_patient_search_indexes) serve; ILIKE can't use an index.
+                // On SQLite it's LIKE with `%`, `_` and `\` escaped, so they
+                // match themselves as on Postgres rather than any text.
                 // `starts_with` combined with another operator then means
                 // (either code starts with it) AND (either code matches the
-                // other), not per code as on SQLite; nothing combines them.
-                #[cfg(feature = "postgres")]
+                // other), not per code; nothing combines them.
                 let filter = {
                     let mut filter = filter;
                     if let Some(text) = filter.starts_with.take() {
@@ -405,6 +443,15 @@ impl<'a> PatientRepository<'a> {
                 query = query.filter(condition.to_boxed());
             }
 
+            // ANDed with everything above, the OR filters included
+            if exclude_unnamed {
+                query = query.filter(
+                    name::id
+                        .not_like(unnamed_patient_id_like())
+                        .escape(LIKE_ESCAPE),
+                );
+            }
+
             // A subquery rather than a join, so the search conditions above
             // (and their indexes) still apply to the bare name table
             if let Some(VisibleInStore {
@@ -470,9 +517,30 @@ fn not_visible_in_store(query: BoxedNameQuery, store_id: String) -> BoxedNameQue
     )
 }
 
-/// The ids of names whose `column` starts with `text`, ignoring case: a range
-/// on the column's lowercase form, so the index on that form applies (an
-/// ILIKE can't use it). `column` is one of a fixed few, never input.
+/// Either code starts with `text`, ignoring ASCII case: LIKE with its
+/// wildcards and escape character escaped, so `text` matches only itself.
+#[cfg(not(feature = "postgres"))]
+fn code_or_code_2_prefix(
+    text: &str,
+) -> Box<dyn diesel::BoxableExpression<name::table, DBType, SqlType = diesel::sql_types::Bool>> {
+    let escape = LIKE_ESCAPE;
+    let pattern = format!(
+        "{}%",
+        text.replace(escape, &format!("{escape}{escape}"))
+            .replace('%', &format!("{escape}%"))
+            .replace('_', &format!("{escape}_"))
+    );
+    Box::new(
+        name::code
+            .like(pattern.clone())
+            .escape(escape)
+            .or(name::national_health_number
+                .like(pattern)
+                .escape(escape)
+                .assume_not_null()),
+    )
+}
+
 /// Either code starts with `text`, ignoring case: a range on each code's
 /// lowercase form, so the indexes on those forms apply (an ILIKE can't use
 /// them). One OR'd condition rather than a UNION of two lookups, so Postgres
@@ -509,6 +577,11 @@ impl PatientFilter {
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {
         self.id = Some(filter);
+        self
+    }
+
+    pub fn exclude_unnamed(mut self) -> Self {
+        self.exclude_unnamed = true;
         self
     }
 
@@ -616,8 +689,9 @@ mod tests {
     use crate::{
         DateFilter, EqualFilter, NameRow, NameRowRepository, NameRowType, PatientFilter,
         PatientRepository, ProgramEnrolmentRow, ProgramEnrolmentRowRepository, StringFilter,
+        is_unnamed_patient_id,
         mock::{MockDataInserts, mock_program_a},
-        test_db,
+        test_db, unnamed_patient_id,
     };
 
     #[actix_rt::test]
@@ -655,6 +729,80 @@ mod tests {
             )
             .unwrap();
         result.first().unwrap();
+    }
+
+    // spec/prescriptions rules › the unnamed patient: hidden from search,
+    // found by id (OMS-REG-DIS-12.208)
+    #[actix_rt::test]
+    async fn exclude_unnamed_hides_only_unnamed_patients_and_holds_with_or_filters() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "patient_exclude_unnamed",
+            MockDataInserts::none().names().stores().name_store_joins(),
+        )
+        .await;
+
+        let patient = |id: &str, name: &str| NameRow {
+            id: id.to_string(),
+            name: name.to_string(),
+            code: format!("code_{id}"),
+            r#type: NameRowType::Patient,
+            ..Default::default()
+        };
+        let repo = NameRowRepository::new(&connection);
+        repo.upsert_one(&patient(&unnamed_patient_id("store_a"), "Unnamed patient"))
+            .unwrap();
+        repo.upsert_one(&patient("registered", "Unnamed Smith"))
+            .unwrap();
+        // `_` is a LIKE wildcard: an id that only matches the prefix through
+        // wildcards is a registered patient and stays
+        repo.upsert_one(&patient("unnamedXpatientXlookalike", "Lookalike"))
+            .unwrap();
+
+        let ids = |filter: PatientFilter| {
+            let mut ids: Vec<String> = PatientRepository::new(&connection)
+                .query_by_filter(filter, None)
+                .unwrap()
+                .into_iter()
+                .map(|p| p.id)
+                // The mock data has patients of its own
+                .filter(|id| {
+                    [
+                        unnamed_patient_id("store_a").as_str(),
+                        "registered",
+                        "unnamedXpatientXlookalike",
+                    ]
+                    .contains(&id.as_str())
+                })
+                .collect();
+            ids.sort();
+            ids
+        };
+
+        assert_eq!(
+            ids(PatientFilter::new().exclude_unnamed()),
+            vec!["registered", "unnamedXpatientXlookalike"]
+        );
+        // The identifier search ORs code, name and health number: the
+        // exclusion must hold across the whole OR, not just its last leg
+        assert_eq!(
+            ids(PatientFilter::new()
+                .identifier(StringFilter::like("Unnamed Smith"))
+                .exclude_unnamed()),
+            vec!["registered"]
+        );
+        assert_eq!(
+            ids(PatientFilter::new()
+                .identifier(StringFilter::like("Unnamed patient"))
+                .exclude_unnamed()),
+            Vec::<String>::new()
+        );
+        // Without the flag (a lookup), it is found
+        assert_eq!(
+            ids(PatientFilter::new().id(EqualFilter::equal_to(unnamed_patient_id("store_a")))),
+            vec![unnamed_patient_id("store_a")]
+        );
+        assert!(is_unnamed_patient_id(&unnamed_patient_id("store_a")));
+        assert!(!is_unnamed_patient_id("registered"));
     }
 
     #[actix_rt::test]
@@ -1014,6 +1162,8 @@ mod tests {
             ..Default::default()
         };
         let rows = [
+            patient("underscore", "AB_1", None),
+            patient("percent", "X%1", Some("y\\2")),
             patient("by_code", "ABC-001", Some("ZZZ-1")),
             patient("by_code_2", "QQQ-002", Some("abc-777")),
             patient("no_code_2", "abd-003", None),
@@ -1050,12 +1200,24 @@ mod tests {
         );
         assert_eq!(
             ids(PatientFilter::new().code_or_code_2(StringFilter::starts_with("AB"))),
-            ["by_code", "by_code_2", "no_code_2"]
+            ["by_code", "by_code_2", "no_code_2", "underscore"]
         );
         // Only the start
         assert!(
             ids(PatientFilter::new().code_or_code_2(StringFilter::starts_with("777"))).is_empty()
         );
+        // `%` and `_` match only themselves, the same on both databases
+        // (OMS-REG-DIS-01.88)
+        let code_starts =
+            |text: &str| ids(PatientFilter::new().code_or_code_2(StringFilter::starts_with(text)));
+        assert!(code_starts("%").is_empty());
+        assert!(code_starts("_").is_empty());
+        assert!(code_starts("a%").is_empty());
+        // and find a code holding them
+        assert_eq!(code_starts("ab_"), ["underscore"]);
+        assert_eq!(code_starts("x%"), ["percent"]);
+        assert_eq!(code_starts("Y\\"), ["percent"]);
+        assert!(code_starts("\\").is_empty());
         // Other operators apply to both columns too
         assert_eq!(
             ids(PatientFilter::new().code_or_code_2(StringFilter::equal_to("ZZZ-1"))),
@@ -1137,8 +1299,20 @@ mod tests {
         // Not the middle of a word
         assert!(last("san").is_empty());
         assert!(last("an").is_empty());
-        // Text with no words doesn't filter
-        assert_eq!(first("-"), ids(PatientFilter::new()));
+        // Text with no words finds no one, `%` and `_` included: they're
+        // punctuation like any other (OMS-REG-DIS-01.88)
+        assert!(first("-").is_empty());
+        assert!(last("%").is_empty());
+        assert!(last("_").is_empty());
+        assert!(last(" %_ ").is_empty());
+        assert!(last("😀").is_empty());
+        assert!(first("\"\\").is_empty());
+        // and split words as other punctuation does
+        assert_eq!(last("st%john"), ["dotted"]);
+        assert_eq!(last("st_john"), ["dotted"]);
+        // Blank text doesn't filter
+        assert_eq!(first(""), ids(PatientFilter::new()));
+        assert_eq!(last("  "), ids(PatientFilter::new()));
         // ANDs with the other name and the filter's other operators
         assert_eq!(
             ids(PatientFilter::new()

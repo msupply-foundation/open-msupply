@@ -2,6 +2,7 @@ use super::{Migration, MigrationFragment, version::Version};
 use crate::StorageConnection;
 
 mod add_consumption_estimate_table;
+mod add_instant_to_calendar_date_function;
 mod add_item_trim_code_index;
 mod add_location_type_fk_indexes;
 mod add_location_type_trim_code_index;
@@ -14,7 +15,9 @@ mod add_unit_lower_trim_name_index;
 mod add_user_deleted_datetime;
 mod add_user_lower_trim_username_index;
 mod drop_unused_name_indexes;
+mod move_standalone_central_sites_to_v7;
 mod record_standalone_central_admin;
+mod requeue_failed_v7_central_data_deletes;
 
 pub(crate) struct V3_05_00;
 
@@ -43,6 +46,9 @@ impl Migration for V3_05_00 {
             Box::new(add_master_list_trim_indexes::Migrate),
             Box::new(add_name_trim_code_index::Migrate),
             Box::new(add_name_reference_indexes::Migrate),
+            Box::new(add_instant_to_calendar_date_function::Migrate),
+            Box::new(move_standalone_central_sites_to_v7::Migrate),
+            Box::new(requeue_failed_v7_central_data_deletes::Migrate),
         ]
     }
 }

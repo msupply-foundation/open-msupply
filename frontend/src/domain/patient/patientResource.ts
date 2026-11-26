@@ -33,8 +33,11 @@ export type CentralSearchOutcome =
   | { kind: 'slow' }
   | { kind: 'failed' };
 
+// `notHereYet`: linked, but the patient's record isn't on this site, as on a
+// site syncing over v5/v6, where it arrives with the next sync.
 export type LinkOutcome =
   | { kind: 'ok'; nameId: string }
+  | { kind: 'notHereYet' }
   | { kind: 'unreachable'; message: string }
   | { kind: 'failed' };
 
@@ -53,19 +56,29 @@ export const searchLocalPatients = async (
   return result.data.patientSearch.nodes.map(node => node.patient);
 };
 
+/** A patient read by id: found, not in this store on this site, or unread. */
+export type PatientOptionRead =
+  | { kind: 'found'; patient: PatientOption }
+  | { kind: 'missing' }
+  | { kind: 'failed' };
+
 /**
  * One patient as a picker option, by its id — e.g. a patient just created,
- * which the create flow hands back with its id and name only. Undefined when
- * it doesn't resolve. Reads `patients` by id: `patientSearch`'s identifier
- * matches code, national health number, name and enrolment id, never the id.
+ * which the create flow hands back with its id and name only. `missing` when
+ * the store has no such patient on this site, as for one just added from
+ * another facility on a site still syncing over v5/v6, whose record arrives
+ * with the next sync (spec/patients S6). Reads `patients` by id:
+ * `patientSearch`'s identifier matches code, national health number, name and
+ * enrolment id, never the id.
  */
 export const fetchPatientOptionById = async (
   storeId: string,
   id: string
-): Promise<PatientOption | undefined> => {
+): Promise<PatientOptionRead> => {
   const result = await graphqlFetch(PatientOptionById, { storeId, id });
-  if (result.kind !== 'success') return undefined;
-  return result.data.patients.nodes.find(patient => patient.id === id);
+  if (result.kind !== 'success') return { kind: 'failed' };
+  const patient = result.data.patients.nodes.find(p => p.id === id);
+  return patient ? { kind: 'found', patient } : { kind: 'missing' };
 };
 
 /**
@@ -114,7 +127,11 @@ export const searchCentralPatients = async (
  * OMS-REG-DIS-01.11/.40). Registered as a mutation; creates/returns the
  * name_store_join. Central-unreachable is the typed ConnectionError (note the
  * doubled-word type name) — decoded to `unreachable`; the fetch then stops (no
- * retry, per OMS-REG-DIS-01.41).
+ * retry, per OMS-REG-DIS-01.41). Once linked, the patient is read here by id:
+ * on a site syncing over v5/v6 the link only reaches central, and the
+ * patient's record arrives with the next sync, so nothing can be done with
+ * them until then (`notHereYet`; spec/patients S6). A failed read goes ahead
+ * as linked.
  */
 export const linkPatientToStore = async (
   storeId: string,
@@ -125,5 +142,7 @@ export const linkPatientToStore = async (
   const res = result.data.linkPatientToStore;
   if (res.__typename === 'LinkPatientPatientToStoreError')
     return { kind: 'unreachable', message: res.error.description };
+  const read = await fetchPatientOptionById(storeId, nameId);
+  if (read.kind === 'missing') return { kind: 'notHereYet' };
   return { kind: 'ok', nameId: res.nameId };
 };

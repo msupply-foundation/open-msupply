@@ -4,7 +4,11 @@ import type {
   ColumnDefBase,
   ColumnMeta,
 } from '@tanstack/solid-table';
-import { localisedDate, localisedTime } from '../../../intl/formatDateTime';
+import {
+  localisedDate,
+  localisedDateTime,
+  localisedTime,
+} from '../../../intl/formatDateTime';
 import { calendarDateOrInstantToDate } from '../../../intl/calendarDate';
 import { formatNumber } from '../../../intl/formatNumber';
 import {
@@ -164,6 +168,18 @@ export const getTimeCell = <T,>(meta?: Meta): CellFragment<T> => ({
   cell: info => {
     const value = info.getValue<string | Date | null | undefined>();
     return value ? localisedTime(value) : '';
+  },
+});
+
+// Date and time in ONE cell — the instant as the short date then the time
+// (localisedDateTime), blank when there's no value. For a list whose single
+// date column must also show, and sort, the time of day (a health centre's
+// Dispensing records); a log keeps the Date + Time pair above.
+export const getDateTimeCell = <T,>(meta?: Meta): CellFragment<T> => ({
+  meta: { ...meta },
+  cell: info => {
+    const value = info.getValue<string | Date | null | undefined>();
+    return value ? localisedDateTime(value) : '';
   },
 });
 

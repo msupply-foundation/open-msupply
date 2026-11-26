@@ -71,38 +71,41 @@ Counts are catalog strings whose English uses the term, by Tetum rendering. "No 
 the catalog has no string with the term yet; the choice is the drafts' and listed in open
 questions.
 
-| English              | Tetum                     | Evidence                                                                            |
-| -------------------- | ------------------------- | ----------------------------------------------------------------------------------- |
-| import (verb / noun) | importa / importasaun     | no evidence; formed like _exporta_                                                  |
-| export (verb / noun) | exporta / exportasaun     | _Exporta_ (`button.export`, 1 of 1); keeps the catalog's _x_ (INL spells _esporta_) |
-| upload               | upload (English)          | no evidence; follows the catalog's English IT terms (_Login_, _Log_, _Settings_)    |
-| download             | download (English)        | no evidence; as upload                                                              |
-| file                 | arkivu                    | no evidence for "file"; _arkivu_ appears once, in `label.order-history`             |
-| row                  | lina, pl. linas           | 5 of 5; "line" is also _lina_ (36 of 38)                                            |
-| column               | koluna                    | 1 of 1 (`table.show-columns`)                                                       |
-| sheet (Excel)        | folla                     | no evidence                                                                         |
-| table (data)         | tabela                    | no evidence; not _meza_ (furniture)                                                 |
-| record               | registu                   | 3 of 4; the fourth (`error.integration-timeout-reached`) leaves it out              |
-| unit                 | unidade, pl. unidades     | 7 of 11; the rest say _kuantidade_ for "number of units"                            |
-| item                 | Item, pl. Items (English) | 23 of 26                                                                            |
-| location type        | Tipo lokalizasaun         | 1 of 1 (`label.location-types`)                                                     |
-| user                 | ujuáriu                   | 5 of 5                                                                              |
-| preview              | (no settled term)         | no evidence; avoid _previzaun_, which the catalog uses for "forecast"               |
-| change (noun / verb) | mudansa / muda            | _mudansa_ 9, _muda_ 5, _troka_ 2 of 21                                              |
-| new                  | foun                      | 12 of 14, plus `label.new`, `status.new`                                            |
-| updated              | atualiza ona              | _atualiza_ 2 of 2 (one spelt _actualiza_)                                           |
-| deleted              | hamos ona                 | _hamos_ 25 of 25                                                                    |
-| unchanged            | la muda                   | no evidence                                                                         |
-| clear (filter)       | halakon                   | 1 of 1 (`label.clear-filter`)                                                       |
-| error                | erru                      | 5 of 7; _sala_ 1, _problema_ 1                                                      |
-| problem              | problema                  | 3 of 3                                                                              |
-| filter               | Filter (English)          | 3 of 3                                                                              |
-| search               | buka                      | 4 of 4                                                                              |
-| status               | estatus                   | 9 of 18; English _status_ 5; the rest leave it out                                  |
-| total                | total                     | 10 of 10                                                                            |
-| count (verb)         | sura                      | _sura_ 2, _konta_ 2                                                                 |
-| try again            | koko fila fali            | 2 of 4                                                                              |
-| server               | servedor                  | 18 of 18                                                                            |
+| English                | Tetum                     | Evidence                                                                            |
+| ---------------------- | ------------------------- | ----------------------------------------------------------------------------------- |
+| import (verb / noun)   | importa / importasaun     | no evidence; formed like _exporta_                                                  |
+| export (verb / noun)   | exporta / exportasaun     | _Exporta_ (`button.export`, 1 of 1); keeps the catalog's _x_ (INL spells _esporta_) |
+| upload                 | upload (English)          | no evidence; follows the catalog's English IT terms (_Login_, _Log_, _Settings_)    |
+| download               | download (English)        | no evidence; as upload                                                              |
+| file                   | arkivu                    | no evidence for "file"; _arkivu_ appears once, in `label.order-history`             |
+| row                    | lina, pl. linas           | 5 of 5; "line" is also _lina_ (36 of 38)                                            |
+| column                 | koluna                    | 1 of 1 (`table.show-columns`)                                                       |
+| sheet (Excel)          | folla                     | no evidence                                                                         |
+| table (data)           | tabela                    | no evidence; not _meza_ (furniture)                                                 |
+| record                 | registu                   | 3 of 4; the fourth (`error.integration-timeout-reached`) leaves it out              |
+| dispensing record      | registu dispensasaun      | first used in `messages.verify-all-*` (#2188); reuse it for later dispensing keys   |
+| dispense(d)            | dispensa                  | `messages.verify-all-*`; keeps dispensing apart from _distribui_ (supply)           |
+| a status in a sentence | ho estatus '…'            | `messages.cant-delete-requisitions` (_ho estatus 'Draf'_), `messages.verify-all-*`  |
+| unit                   | unidade, pl. unidades     | 7 of 11; the rest say _kuantidade_ for "number of units"                            |
+| item                   | Item, pl. Items (English) | 23 of 26                                                                            |
+| location type          | Tipo lokalizasaun         | 1 of 1 (`label.location-types`)                                                     |
+| user                   | ujuáriu                   | 5 of 5                                                                              |
+| preview                | (no settled term)         | no evidence; avoid _previzaun_, which the catalog uses for "forecast"               |
+| change (noun / verb)   | mudansa / muda            | _mudansa_ 9, _muda_ 5, _troka_ 2 of 21                                              |
+| new                    | foun                      | 12 of 14, plus `label.new`, `status.new`                                            |
+| updated                | atualiza ona              | _atualiza_ 2 of 2 (one spelt _actualiza_)                                           |
+| deleted                | hamos ona                 | _hamos_ 25 of 25                                                                    |
+| unchanged              | la muda                   | no evidence                                                                         |
+| clear (filter)         | halakon                   | 1 of 1 (`label.clear-filter`)                                                       |
+| error                  | erru                      | 5 of 7; _sala_ 1, _problema_ 1                                                      |
+| problem                | problema                  | 3 of 3                                                                              |
+| filter                 | Filter (English)          | 3 of 3                                                                              |
+| search                 | buka                      | 4 of 4                                                                              |
+| status                 | estatus                   | 9 of 18; English _status_ 5; the rest leave it out                                  |
+| total                  | total                     | 10 of 10                                                                            |
+| count (verb)           | sura                      | _sura_ 2, _konta_ 2                                                                 |
+| try again              | koko fila fali            | 2 of 4                                                                              |
+| server                 | servedor                  | 18 of 18                                                                            |
 
 ## Open questions
 

@@ -5,7 +5,7 @@ use graphql_core::{
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    report::report_service::UpdateReportError,
+    report::report_service::{UpdateReport, UpdateReportError},
 };
 use util::format_error;
 
@@ -13,16 +13,25 @@ use util::format_error;
 pub struct UpdateReportInput {
     pub id: String,
     pub is_active: bool,
+    /// The store tags the report is displayed for on the Reports page. Applies
+    /// to the report's code, so to every version of it. An empty list displays
+    /// it for every store. Leave out to keep the current tags.
+    pub store_tag_ids: Option<Vec<String>>,
 }
 
 #[derive(SimpleObject)]
 pub struct UpdateReportNode {
     pub id: String,
     pub is_active: bool,
+    pub store_tag_ids: Vec<String>,
 }
 
 pub fn update_report(ctx: &Context<'_>, input: UpdateReportInput) -> Result<UpdateReportNode> {
-    let UpdateReportInput { id, is_active } = input;
+    let UpdateReportInput {
+        id,
+        is_active,
+        store_tag_ids,
+    } = input;
 
     validate_auth(
         ctx,
@@ -38,12 +47,22 @@ pub fn update_report(ctx: &Context<'_>, input: UpdateReportInput) -> Result<Upda
         .basic_context()
         .map_err(|e| StandardGraphqlError::InternalError(format_error(&e)).extend())?;
 
-    let row = service_provider
+    let updated = service_provider
         .report_service
-        .update_report(&service_ctx, &id, is_active)
+        .update_report(
+            &service_ctx,
+            UpdateReport {
+                id,
+                is_active,
+                store_tag_ids,
+            },
+        )
         .map_err(|e| match e {
-            UpdateReportError::ReportNotFound => {
+            UpdateReportError::ReportNotFound | UpdateReportError::StoreTagNotFound(_) => {
                 StandardGraphqlError::BadUserInput(format_error(&e)).extend()
+            }
+            UpdateReportError::NotACentralServer => {
+                StandardGraphqlError::Forbidden(format_error(&e)).extend()
             }
             UpdateReportError::RepositoryError(_) => {
                 StandardGraphqlError::InternalError(format_error(&e)).extend()
@@ -51,7 +70,8 @@ pub fn update_report(ctx: &Context<'_>, input: UpdateReportInput) -> Result<Upda
         })?;
 
     Ok(UpdateReportNode {
-        id: row.id,
-        is_active: row.is_active,
+        id: updated.row.id,
+        is_active: updated.row.is_active,
+        store_tag_ids: updated.store_tag_ids,
     })
 }

@@ -23,7 +23,7 @@ export const HeaderButtons = (props: HeaderButtonsProps) => (
   <div
     class={styles.buttons}
     data-header-buttons=""
-    data-testid="header-buttons"
+    data-testid="page-header-buttons"
   >
     {props.children}
   </div>

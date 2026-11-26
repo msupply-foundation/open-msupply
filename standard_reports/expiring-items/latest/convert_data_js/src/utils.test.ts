@@ -11,7 +11,8 @@ import outputData from '../output.json' assert { type: 'json' };
 describe('test process stock lines', () => {
   beforeAll(() => {
     jest.useFakeTimers();
-    jest.setSystemTime(new Date('2024-04-01'));
+    // Noon on 1 April, local time
+    jest.setSystemTime(new Date(2024, 3, 1, 12));
   });
   // mock out the 4 internal functions
   // calculateExpectedUsage.mockImplementation(() => 20);
@@ -33,7 +34,8 @@ describe('test process stock lines', () => {
 describe('days until expired is added correctly', () => {
   beforeAll(() => {
     jest.useFakeTimers();
-    jest.setSystemTime(new Date('2024-04-01'));
+    // Noon on 1 April, local time
+    jest.setSystemTime(new Date(2024, 3, 1, 12));
   });
   it('returns undefined if undefined', () => {
     expect(calculateDaysUntilExpired(undefined)).toBe(undefined);
@@ -41,6 +43,152 @@ describe('days until expired is added correctly', () => {
   it('returns difference between expiry and now', () => {
     expect(calculateDaysUntilExpired('2024-04-03')).toBe(2);
     expect(calculateDaysUntilExpired('2024-05-03')).toBe(32);
+  });
+  // OMS-REG-RPT-05.24
+  it('counts whole days across a daylight saving change', () => {
+    // Auckland's clocks went back an hour on 7 April 2024, so these two days are 49 hours long
+    jest.setSystemTime(new Date(2024, 3, 6, 12));
+    try {
+      expect(calculateDaysUntilExpired('2024-04-08')).toBe(2);
+    } finally {
+      jest.setSystemTime(new Date(2024, 3, 1, 12));
+    }
+  });
+  // OMS-REG-RPT-05.25
+  it('is 0 for stock expiring today, which is at risk in full', () => {
+    expect(calculateDaysUntilExpired('2024-04-01')).toBe(0);
+    const [line] = processStockLines(
+      [
+        {
+          expiryDate: '2024-04-01',
+          packSize: 1,
+          totalNumberOfPacks: 50,
+          item: { stats: { averageMonthlyConsumption: 30 } },
+        },
+      ],
+      undefined,
+      undefined
+    );
+    expect(line.daysUntilExpired).toBe(0);
+    expect(line.stockAtRisk).toBe(50);
+  });
+  // OMS-REG-RPT-05.26
+  it('keeps an expected usage of 0 for stock expiring today', () => {
+    const [line] = processStockLines(
+      [
+        {
+          expiryDate: '2024-04-01',
+          packSize: 1,
+          totalNumberOfPacks: 50,
+          item: { stats: { averageMonthlyConsumption: 30 } },
+        },
+      ],
+      undefined,
+      undefined
+    );
+    expect(line.expectedUsage).toBe(0);
+  });
+  // OMS-REG-RPT-05.26
+  it('keeps a stock at risk of 0 when consumption uses all the stock before expiry', () => {
+    const [line] = processStockLines(
+      [
+        {
+          expiryDate: '2024-05-01',
+          packSize: 1,
+          totalNumberOfPacks: 10,
+          item: { stats: { averageMonthlyConsumption: 30 } },
+        },
+      ],
+      undefined,
+      undefined
+    );
+    expect(line.expectedUsage).toBe(10);
+    expect(line.stockAtRisk).toBe(0);
+  });
+  // OMS-REG-RPT-05.26
+  it('gives null for expected usage on an expired batch, and for both with an AVC of 0 before expiry', () => {
+    const [expired, noConsumption] = processStockLines(
+      [
+        {
+          id: 'expired',
+          expiryDate: '2024-03-01',
+          packSize: 1,
+          totalNumberOfPacks: 10,
+          item: { stats: { averageMonthlyConsumption: 30 } },
+        },
+        {
+          id: 'no-consumption',
+          expiryDate: '2024-05-01',
+          packSize: 1,
+          totalNumberOfPacks: 10,
+          item: { stats: { averageMonthlyConsumption: 0 } },
+        },
+      ],
+      'id',
+      'asc'
+    );
+    expect(expired.expectedUsage).toBeNull();
+    expect(expired.stockAtRisk).toBe(10);
+    expect(noConsumption.expectedUsage).toBeNull();
+    expect(noConsumption.stockAtRisk).toBeNull();
+  });
+  // OMS-REG-RPT-05.18, OMS-REG-RPT-05.19, OMS-REG-RPT-05.26
+  it('sorts a 0 as a number, with lines that have no figure after the numbers ascending', () => {
+    const lines = () => [
+      {
+        // used up before expiry: stock at risk 0, expected usage 10
+        id: 'used-up',
+        expiryDate: '2024-05-01',
+        packSize: 1,
+        totalNumberOfPacks: 10,
+        item: { stats: { averageMonthlyConsumption: 30 } },
+      },
+      {
+        // expires today: expected usage 0, stock at risk 12
+        id: 'today',
+        expiryDate: '2024-04-01',
+        packSize: 1,
+        totalNumberOfPacks: 12,
+        item: { stats: { averageMonthlyConsumption: 30 } },
+      },
+      {
+        // no expiry date: neither figure
+        id: 'no-expiry',
+        packSize: 1,
+        totalNumberOfPacks: 5,
+        item: { stats: { averageMonthlyConsumption: 30 } },
+      },
+    ];
+    const ids = (sort: string, dir: string) =>
+      processStockLines(lines(), sort, dir).map(line => line.id);
+
+    expect(ids('stockAtRisk', 'asc')).toEqual([
+      'used-up',
+      'today',
+      'no-expiry',
+    ]);
+    expect(ids('expectedUsage', 'asc')).toEqual([
+      'today',
+      'used-up',
+      'no-expiry',
+    ]);
+    // descending keeps the numbers in reverse order
+    expect(ids('stockAtRisk', 'desc').filter(id => id !== 'no-expiry')).toEqual(
+      ['today', 'used-up']
+    );
+    expect(
+      ids('expectedUsage', 'desc').filter(id => id !== 'no-expiry')
+    ).toEqual(['used-up', 'today']);
+  });
+  // OMS-REG-RPT-05.26
+  it('gives null, not 0, when there is no figure', () => {
+    const [line] = processStockLines(
+      [{ packSize: 1, totalNumberOfPacks: 10, item: { stats: {} } }],
+      undefined,
+      undefined
+    );
+    expect(line.expectedUsage).toBeNull();
+    expect(line.stockAtRisk).toBeNull();
   });
   afterAll(() => {
     jest.useRealTimers();

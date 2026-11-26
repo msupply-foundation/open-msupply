@@ -8,6 +8,7 @@ import {
   DASHBOARD_LEGACY_PATH,
   DISPENSING_LEGACY_PATH,
   navDestinations,
+  navSections,
 } from '../nav/navConfig';
 
 /*
@@ -196,6 +197,9 @@ export const pathsCollide = (a: string, b: string): boolean =>
 // they cannot drift from App.tsx's routes).
 const HOST_RESERVED_PATHS: readonly string[] = [
   ...navDestinations.map(dest => dest.path).filter(path => path !== ''),
+  // Sections aren't destinations, but a page under one (`inventory/x`) would
+  // be judged by the section's gates instead of its own (navGates).
+  ...navSections.map(section => section.path),
   DASHBOARD_LEGACY_PATH,
   DISPENSING_LEGACY_PATH,
 ];

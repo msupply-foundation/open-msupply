@@ -193,6 +193,10 @@ export const TOKEN_RECIPES: Record<string, ModeRecipes> = {
     light: mix('page', 'muted', 0.84),
     dark: mix('page', 'muted', 0.86),
   },
+  '--page-body-shade': {
+    light: mix('page', 'body', 0.955),
+    dark: mix('page', 'body', 0.97),
+  },
   '--bg-input': {
     light: mix('page', 'body', 0.95),
     dark: mix('page', 'body', 0.95),
@@ -483,6 +487,7 @@ export const NEUTRAL_FAMILY: string[] = [
   '--bg-group-light',
   '--bg-group-main',
   '--bg-group-dark',
+  '--page-body-shade',
   '--bg-input',
   '--bg-disabled',
   '--header-bg',

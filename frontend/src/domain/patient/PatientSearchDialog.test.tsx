@@ -998,6 +998,22 @@ describe('Cancel while a patient is being chosen', () => {
     expect(onChoose).toHaveBeenCalledWith(row('c1'));
   });
 
+  it('OMS-REG-DIS-01.89 — says the record hasn’t reached this site, chooses no one, and Retry after the sync chooses them', async () => {
+    const { onChoose } = await findAtOtherFacilities();
+    linkPatientToStore.mockResolvedValueOnce({ kind: 'notHereYet' });
+    chooseFromCentral();
+    await settle();
+    expect(
+      [...rendered.alerts].some(a => a.testId === 'patient-search-link-failed')
+    ).toBe(true);
+    expect(texts()).toContain('messages.patient-arrives-next-sync');
+    expect(onChoose).not.toHaveBeenCalled();
+    linkPatientToStore.mockResolvedValueOnce({ kind: 'ok' });
+    button('patient-search-link-retry')?.onClick();
+    await settle();
+    expect(onChoose).toHaveBeenCalledWith(row('c1'));
+  });
+
   it('lets Escape and × abandon a link, as Cancel does, but not the caller’s action', async () => {
     const { onChoose } = await findAtOtherFacilities();
     linkPatientToStore.mockReturnValue(new Promise(() => {}));

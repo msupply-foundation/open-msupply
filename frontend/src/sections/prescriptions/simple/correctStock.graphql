@@ -1,0 +1,51 @@
+# Correct the stock on the Simple screen (spec/prescriptions › correcting the
+# stock). Every batch of the medicine in the store, empty ones too (no
+# hasPacksInStore, unlike availableBatches): the figure shown is worked out
+# from the fillable ones, as on the cards, and the count goes to the batch
+# dispensing may take with the nearest expiry, even one that is empty now.
+query simpleCorrectionBatches($storeId: String!, $itemId: String!) {
+  stockLines(
+    storeId: $storeId
+    filter: { itemId: { equalTo: $itemId } }
+    page: { first: 5000 }
+  ) {
+    ... on StockLineConnector {
+      __typename
+      nodes {
+        id
+        availableNumberOfPacks
+        packSize
+        expiryDate
+        onHold
+        location {
+          onHold
+        }
+        vvmStatus {
+          unusable
+          priority
+        }
+      }
+    }
+  }
+}
+
+# The correction itself: an inventory addition on that batch, now. Success is
+# the finalised addition; a typed error or a GraphQL error means nothing
+# changed.
+mutation simpleCorrectStock(
+  $storeId: String!
+  $input: CreateInventoryAdjustmentInput!
+) {
+  createInventoryAdjustment(storeId: $storeId, input: $input) {
+    __typename
+    ... on InvoiceNode {
+      id
+    }
+    ... on CreateInventoryAdjustmentError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}

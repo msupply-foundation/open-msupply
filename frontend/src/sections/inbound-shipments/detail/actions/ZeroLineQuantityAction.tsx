@@ -5,7 +5,8 @@ import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
 import { MinusCircleIcon } from '../../../../ui/icons';
-import { runInboundBatch } from '../inboundShipmentUpdate';
+import { batchRefusal, runInboundBatch } from '../inboundShipmentUpdate';
+import { reportPermissionDenied } from '@/api/graphql';
 import type { LineActionProps } from './DeleteLinesAction';
 
 // Bulk "zero line quantity" (spec S3 → line-selection actions): set the
@@ -40,15 +41,20 @@ const Body = (props: LineActionProps & { onClose: () => void }) => {
   const run = async () => {
     if (phase() !== 'confirm') return;
     setPhase('working');
+    const ids = props.selectedIds();
     const outcome = await runInboundBatch(props.storeId, props.isExternal, {
-      updateInboundShipmentLines: props
-        .selectedIds()
-        .map(id => ({ id, numberOfPacks: 0 })),
+      updateInboundShipmentLines: ids.map(id => ({ id, numberOfPacks: 0 })),
     });
     if (!outcome) return setPhase('confirm'); // handled globally
-    if (outcome.errors.size > 0) {
-      props.onError(outcome.errors);
-      setErrorMessage([...outcome.errors.values()][0]);
+    const refusal = batchRefusal(outcome, ids);
+    if (refusal?.kind === 'forbidden') {
+      reportPermissionDenied(refusal.permissions);
+      props.onClose();
+      return;
+    }
+    if (refusal) {
+      props.onError(refusal.errors);
+      setErrorMessage(refusal.message);
       setPhase('error');
       return;
     }

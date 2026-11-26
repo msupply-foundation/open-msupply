@@ -11,6 +11,8 @@ use repository::{
 pub mod query;
 pub mod query_lines;
 pub mod upsert;
+pub mod upsert_line;
+pub mod upsert_name_join;
 pub mod validate;
 
 pub trait MasterListServiceTrait: Sync + Send {

@@ -1,6 +1,7 @@
 use super::{
     Change, RowFailure, RowOutcome,
     cells::{Row, RowError, parse_bool},
+    fail_if_any,
     sheet::Value,
 };
 use repository::trim_spaces;
@@ -32,21 +33,69 @@ pub(crate) fn already_deleted(
     key_column: &str,
     errors: Vec<RowError>,
 ) -> Result<RowOutcome, RowFailure> {
-    if !errors.is_empty() {
-        return Err(RowFailure::Invalid(errors));
-    }
     let key = row.text(key_column).or(row.text(ID)).unwrap_or_default();
+    already_deleted_as(row, key, errors)
+}
+
+/// As `already_deleted`, for a table whose lookup key is several references: named by `name` given
+/// the row's whole key, as found, else by the row's id.
+pub(crate) fn already_deleted_by<K>(
+    row: &Row,
+    key: Option<K>,
+    name: impl FnOnce(K) -> String,
+) -> Result<RowOutcome, RowFailure> {
+    let record = key.map_or_else(|| row.text(ID).unwrap_or_default(), name);
+    already_deleted_as(row, record, Vec::new())
+}
+
+/// As `already_deleted`, named `record`.
+fn already_deleted_as(
+    row: &Row,
+    record: String,
+    mut errors: Vec<RowError>,
+) -> Result<RowOutcome, RowFailure> {
+    fail_if_any(&mut errors)?;
     Ok(RowOutcome {
-        record_id: row.text(ID).unwrap_or_else(|| key.clone()),
-        record: key,
+        record_id: row.text(ID).unwrap_or_else(|| record.clone()),
+        record,
         change: Change::Unchanged,
         fields: Vec::new(),
     })
 }
 
+/// Before a `DELETE` row deletes its record: the row may repeat `saved`, the record's cells in
+/// `columns` order, but not change them. `any_case` are the columns read in any letter case, such
+/// as choices and usernames. `errors` are the row's others; with any, the row fails.
+pub(crate) fn check_delete(
+    row: &Row,
+    columns: &[&str],
+    any_case: &[&str],
+    saved: Vec<Value>,
+    mut errors: Vec<RowError>,
+) -> Result<(), RowFailure> {
+    let saved: Vec<_> = columns
+        .iter()
+        .copied()
+        .zip(saved)
+        .filter(|(column, _)| *column != DELETE_COLUMN)
+        .collect();
+    if let Err(e) = check_unchanged(row, &saved, any_case) {
+        errors.push(e);
+    }
+    if errors.is_empty() {
+        Ok(())
+    } else {
+        Err(RowFailure::Invalid(errors))
+    }
+}
+
 /// A `DELETE` row may repeat `saved` (as exported) but not change it. Columns not in `saved` and
-/// blank cells aren't checked.
-pub fn check_unchanged(row: &Row, saved: &[(&str, Value)]) -> Result<(), RowError> {
+/// blank cells aren't checked; `any_case` columns match in any letter case.
+pub fn check_unchanged(
+    row: &Row,
+    saved: &[(&str, Value)],
+    any_case: &[&str],
+) -> Result<(), RowError> {
     let changed: Vec<&str> = saved
         .iter()
         .filter(|(column, value)| {
@@ -55,6 +104,9 @@ pub fn check_unchanged(row: &Row, saved: &[(&str, Value)]) -> Result<(), RowErro
             };
             match value {
                 // Cells are read trimmed, so a padded saved value reads back without its spaces.
+                Value::Text(text) if any_case.contains(column) => {
+                    cell.to_lowercase() != trim_spaces(text).to_lowercase()
+                }
                 Value::Text(text) => cell != trim_spaces(text),
                 // Excel numbers are floats: 3 can read as "3.0".
                 Value::Number(number) => cell.parse::<f64>().ok() != Some(*number),
@@ -91,6 +143,38 @@ mod tests {
             headers: &headers,
             cells: &cells,
         });
+    }
+
+    #[test]
+    fn a_missing_record_is_named_by_its_whole_key_else_its_id() {
+        let headers: Vec<String> = ["id", "delete"].map(String::from).to_vec();
+        let outcome = |id: &str, key: Option<(&str, &str)>| {
+            let cells: Vec<String> = [id, "DELETE"].map(String::from).to_vec();
+            let row = Row {
+                sheet: "item_store_join",
+                number: 4,
+                headers: &headers,
+                cells: &cells,
+            };
+            let Ok(outcome) = already_deleted_by(&row, key, |(item, store)| {
+                format!("{item} in store {store}")
+            }) else {
+                panic!("a DELETE row that finds no record isn't an error")
+            };
+            (outcome.record, outcome.record_id, outcome.change)
+        };
+        assert_eq!(
+            outcome("", Some(("PARA", "MS"))),
+            (
+                "PARA in store MS".to_string(),
+                "PARA in store MS".to_string(),
+                Change::Unchanged
+            )
+        );
+        assert_eq!(
+            outcome("isj_1", None),
+            ("isj_1".to_string(), "isj_1".to_string(), Change::Unchanged)
+        );
     }
 
     #[test]
@@ -146,11 +230,11 @@ mod tests {
             ["A", "Clinic", "2026-01-01", "DELETE"],
         ] {
             with_row(&cells, |row| {
-                assert_eq!(check_unchanged(&row, &saved()), Ok(()))
+                assert_eq!(check_unchanged(&row, &saved(), &[]), Ok(()))
             });
         }
         with_row(&["A", "Hospital", "", "DELETE"], |row| {
-            let error = check_unchanged(&row, &saved()).unwrap_err();
+            let error = check_unchanged(&row, &saved(), &[]).unwrap_err();
             assert_eq!(error.column.as_deref(), Some("delete"));
             assert_eq!(
                 error.message,
@@ -160,10 +244,28 @@ mod tests {
     }
 
     #[test]
+    fn an_any_case_column_matches_in_any_letter_case() {
+        let saved = || {
+            [
+                ("code", Value::Text("A".into())),
+                ("name", Value::Text("Clinic".into())),
+            ]
+        };
+        with_row(&["A", "CLINIC", "", "DELETE"], |row| {
+            assert_eq!(check_unchanged(&row, &saved(), &["name"]), Ok(()));
+            assert!(check_unchanged(&row, &saved(), &[]).is_err());
+        });
+        // Other columns still match exactly.
+        with_row(&["a", "Clinic", "", "DELETE"], |row| {
+            assert!(check_unchanged(&row, &saved(), &["name"]).is_err())
+        });
+    }
+
+    #[test]
     fn a_padded_saved_value_matches_its_exported_cell() {
         let saved = [("name", Value::Text(" Clinic ".into()))];
         with_row(&["A", "Clinic", "", "DELETE"], |row| {
-            assert_eq!(check_unchanged(&row, &saved), Ok(()))
+            assert_eq!(check_unchanged(&row, &saved, &[]), Ok(()))
         });
     }
 
@@ -185,7 +287,7 @@ mod tests {
                 headers: &headers,
                 cells: &cells,
             };
-            check_unchanged(&row, &saved).map_err(|error| error.message)
+            check_unchanged(&row, &saved, &[]).map_err(|error| error.message)
         };
         assert_eq!(check(["3.0", "true", ""]), Ok(()));
         // A flag typed as 1 or 0 is the same value.

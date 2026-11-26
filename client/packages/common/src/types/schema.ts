@@ -1798,11 +1798,18 @@ export type CentralDataTableChangesNode = {
 export enum CentralDataTableNode {
   Currency = 'CURRENCY',
   Item = 'ITEM',
+  ItemStoreJoin = 'ITEM_STORE_JOIN',
   LocationType = 'LOCATION_TYPE',
   MasterList = 'MASTER_LIST',
+  MasterListLine = 'MASTER_LIST_LINE',
+  MasterListNameJoin = 'MASTER_LIST_NAME_JOIN',
   Name = 'NAME',
+  NameStoreJoin = 'NAME_STORE_JOIN',
+  Store = 'STORE',
   Unit = 'UNIT',
   User = 'USER',
+  UserPermission = 'USER_PERMISSION',
+  UserStoreJoin = 'USER_STORE_JOIN',
 }
 
 export type CentralDataTooManyCells = CentralDataImportErrorInterface & {
@@ -4896,6 +4903,13 @@ export type InsertInboundShipmentLineInput = {
   sellPricePerPack: Scalars['Float']['input'];
   shippedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   shippedPackSize?: InputMaybe<Scalars['Float']['input']>;
+  /**
+   * The new line's authorisation state, on a purchase-order-linked shipment
+   * whose store requires line authorisation (omitted: Pending); ignored on
+   * any other line. Passed or Rejected needs the authorise permission on any
+   * external line, including one that ignores it.
+   */
+  status?: InputMaybe<InvoiceLineStatusType>;
   taxPercentage?: InputMaybe<Scalars['Float']['input']>;
   totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
   volumePerPack?: InputMaybe<Scalars['Float']['input']>;
@@ -5882,6 +5896,11 @@ export type InvoiceFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   invoiceNumber?: InputMaybe<EqualFilterBigNumberInput>;
   invoiceNumberOrStatus?: InputMaybe<StringFilterInput>;
+  /**
+   * Whether the other party is a store's unnamed patient: false leaves
+   * its dispensing records out, as the patient search's recent patients do
+   */
+  isForUnnamedPatient?: InputMaybe<Scalars['Boolean']['input']>;
   isProgramInvoice?: InputMaybe<Scalars['Boolean']['input']>;
   linkedInvoiceId?: InputMaybe<EqualFilterStringInput>;
   linkedOrderNumber?: InputMaybe<EqualFilterBigNumberInput>;
@@ -6113,6 +6132,12 @@ export type InvoiceNode = {
   insurancePolicy?: Maybe<InsurancePolicyNode>;
   invoiceNumber: Scalars['Int']['output'];
   isCancellation: Scalars['Boolean']['output'];
+  /**
+   * Whether the invoice is for a store's unnamed patient, so a list can show
+   * its translated label without loading each row's patient
+   * (spec/prescriptions rules › the unnamed patient)
+   */
+  isForUnnamedPatient: Scalars['Boolean']['output'];
   lines: InvoiceLineConnector;
   /** Inbound Shipment <-> Outbound Shipment, where Inbound Shipment originated from Outbound Shipment */
   linkedShipment?: Maybe<InvoiceNode>;
@@ -7135,6 +7160,12 @@ export type Mutations = {
   duplicateInboundShipment: DuplicateInboundShipmentResponse;
   duplicateOutboundShipment: DuplicateOutboundShipmentResponse;
   finaliseRnrForm: FinaliseRnRFormResponse;
+  /**
+   * The store's unnamed patient, the one record its walk-in visits are
+   * dispensed to: created on the first call, the same record after.
+   * Refused where the store's "Use the unnamed patient" is off.
+   */
+  getOrCreateUnnamedPatient: PatientNode;
   initialiseAsCentralServer: InitialiseAsCentralServerResponse;
   initialiseSite: InitialiseSiteResponse;
   insertAsset: InsertAssetResponse;
@@ -7538,6 +7569,10 @@ export type MutationsDuplicateOutboundShipmentArgs = {
 
 export type MutationsFinaliseRnrFormArgs = {
   input: FinaliseRnRFormInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsGetOrCreateUnnamedPatientArgs = {
   storeId: Scalars['String']['input'];
 };
 
@@ -8247,6 +8282,18 @@ export type NameStoreJoinNode = {
   storeId: Scalars['String']['output'];
 };
 
+export type NameTagConnector = {
+  __typename: 'NameTagConnector';
+  nodes: Array<NameTagNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type NameTagNode = {
+  __typename: 'NameTagNode';
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+};
+
 export type NamesResponse = NameConnector;
 
 export type NoPermissionForThisStore = InsertAssetErrorInterface &
@@ -8595,6 +8642,11 @@ export type PatientNode = {
   gender?: Maybe<GenderTypeNode>;
   id: Scalars['String']['output'];
   isDeceased: Scalars['Boolean']['output'];
+  /**
+   * Whether this is a store's unnamed patient, the one record its walk-in
+   * visits are dispensed to. Search never returns it.
+   */
+  isUnnamed: Scalars['Boolean']['output'];
   lastName?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
   nextOfKin?: Maybe<PatientNode>;
@@ -8896,6 +8948,7 @@ export enum PreferenceKey {
   PreventTransfersMonthsBeforeInitialisation = 'preventTransfersMonthsBeforeInitialisation',
   PromptForBatchAndExpiryOnInboundShipments = 'promptForBatchAndExpiryOnInboundShipments',
   ReceivePaymentsFromPrescriptions = 'receivePaymentsFromPrescriptions',
+  ReportStoreTags = 'reportStoreTags',
   RequisitionAutoFinalise = 'requisitionAutoFinalise',
   SecondThresholdForExpiringItems = 'secondThresholdForExpiringItems',
   SelectDestinationStoreForAnInternalOrder = 'selectDestinationStoreForAnInternalOrder',
@@ -9905,6 +9958,8 @@ export type Queries = {
   /** Available without authorisation in all states (Operational, Initialisation and MigratingDatabase) */
   migrationStatus: MigrationStatusNode;
   nameProperties: NamePropertyResponse;
+  /** Every name tag (maintained in legacy mSupply), sorted by name */
+  nameTags: NameTagConnector;
   /** Query omSupply "name" entries */
   names: NamesResponse;
   numberOfRecordsInPushQueue: Scalars['Int']['output'];
@@ -10448,6 +10503,10 @@ export type QueriesMasterListsArgs = {
   filter?: InputMaybe<MasterListFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<MasterListSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesNameTagsArgs = {
   storeId: Scalars['String']['input'];
 };
 
@@ -11151,8 +11210,20 @@ export type ReportNode = {
   id: Scalars['String']['output'];
   isActive: Scalars['Boolean']['output'];
   isCustom: Scalars['Boolean']['output'];
+  /**
+   * Whether the queried store sees this report on the Reports page without
+   * pressing its category's "Show more": it has no store tags, or the store has one
+   * of them. A report that isn't displayed can still be run.
+   */
+  isDisplayed: Scalars['Boolean']['output'];
   /** Human readable name of the report */
   name: Scalars['String']['output'];
+  /**
+   * The store tags this report is displayed for on the Reports page. Set
+   * per report code, so every version of a report has the same tags. Empty
+   * means every store.
+   */
+  storeTagIds: Array<Scalars['String']['output']>;
   subContext?: Maybe<Scalars['String']['output']>;
   version: Scalars['String']['output'];
 };
@@ -13966,12 +14037,19 @@ export type UpdatePurchaseOrderResponse = IdResponse | UpdatePurchaseOrderError;
 export type UpdateReportInput = {
   id: Scalars['String']['input'];
   isActive: Scalars['Boolean']['input'];
+  /**
+   * The store tags the report is displayed for on the Reports page. Applies
+   * to the report's code, so to every version of it. An empty list displays
+   * it for every store. Leave out to keep the current tags.
+   */
+  storeTagIds?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 export type UpdateReportNode = {
   __typename: 'UpdateReportNode';
   id: Scalars['String']['output'];
   isActive: Scalars['Boolean']['output'];
+  storeTagIds: Array<Scalars['String']['output']>;
 };
 
 export type UpdateRequestRequisitionError = {

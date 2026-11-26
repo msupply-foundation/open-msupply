@@ -53,9 +53,15 @@ export const MedicineCardView = (props: {
   return (
     <DetailCard
       title={name()}
-      surface="bordered"
+      // A panel on the page's shade (#2172).
+      surface="panel"
       density="compact"
       layout={props.oneRow ? 'inline' : 'stacked'}
+      // One line, so the cards in a row are the same shape: name, stock,
+      // keys. The whole name shows on hover and stays the heading's text. A
+      // phone's one-row card has the room to wrap it (ui-surface S9 ›
+      // layout).
+      truncateTitle={!props.oneRow}
       testId={`common-medicine-card-${props.card.item.id}`}
       meta={
         <>
@@ -160,7 +166,7 @@ export const MedicineCardView = (props: {
           class={
             props.card.medicine.amounts.length > 0
               ? `${styles.key} ${styles.another}`
-              : styles.key
+              : `${styles.key} ${styles.lone}`
           }
           label={t('label.give-another-amount-of', { item: name() })}
           data-testid="another-amount-button"

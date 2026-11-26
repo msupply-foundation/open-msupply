@@ -11,7 +11,7 @@ use crate::{
 
 use crate::{EqualFilter, Pagination, Sort, StringFilter};
 
-use diesel::prelude::*;
+use diesel::{dsl::not, prelude::*};
 
 pub type MasterList = MasterListRow;
 
@@ -109,7 +109,8 @@ impl<'a> MasterListRepository<'a> {
                 if is_program {
                     query = query.filter(master_list::id.nullable().eq_any(program_join_query));
                 } else {
-                    query = query.filter(master_list::id.nullable().ne_all(program_join_query));
+                    query =
+                        query.filter(not(master_list::id.nullable().eq_any(program_join_query)));
                 }
             }
 

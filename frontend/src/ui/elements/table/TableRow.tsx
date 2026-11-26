@@ -411,8 +411,11 @@ export function TableRow<T>(props: {
                 // data-wrap + --wrap-lines: when a column sets meta.wrapLines
                 // > 1, the cell clamps to that many lines then ellipsises (CSS
                 // line-clamp); otherwise the default single-line nowrap
-                // applies. min-width keeps the column-width floor (getSize());
-                // maxSize is the growth cap, applied as max-width
+                // applies. No min-width here: the column's width floor
+                // (getSize()) sits on its header cell alone, since a table
+                // column is as wide as its widest cell — on every body cell
+                // too, a resize drag restyled the whole column on each tick
+                // (#1890). maxSize is the growth cap, applied as max-width
                 // (docs/CELL_TYPES.md). TanStack merges its default maxSize
                 // (MAX_SAFE_INTEGER) into every columnDef, so only a value
                 // below that sentinel is a real cap. A pinned column
@@ -421,7 +424,6 @@ export function TableRow<T>(props: {
                 // The row's link fills this cell behind its content (RowLink).
                 data-row-link={href() ? '' : undefined}
                 style={{
-                  'min-width': `${cell.column.getSize()}px`,
                   ...(cellMaxWidthPx(cell) !== undefined
                     ? { 'max-width': `${cellMaxWidthPx(cell)}px` }
                     : {}),

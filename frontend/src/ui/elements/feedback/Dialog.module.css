@@ -14,6 +14,9 @@
   --dialog-min-body-height: 0;
   /* holdHeight's measured floor — set inline, read only under [data-hold-height]. */
   --dialog-held-height: 0px;
+  /* A dialog declared inside a form row or card doesn't inherit the row's
+     input-line flag (FormRow.module.css): its values line up with its own rows. */
+  --on-input-line: 0;
 
   /* Fixed width (steady box), clamped down to the viewport on narrow screens. */
   width: min(var(--dialog-width), calc(100vw - 2rem));
@@ -212,6 +215,10 @@
    exceeds the body's cap. The padding + equal negative margin cancel visually (content and
    gap spacing sit exactly where they would without them) but keep a focused field's ring
    (--focus-ring's 0.1875rem spread) inside the scrollport instead of clipped at its edge.
+   Block-wise they span the whole body gap, so the scrollport runs from the heading's rule
+   (or tab strip) down to the actions' rule: scrolled content is cut off AT those lines,
+   not short of them with a band of bare panel between (#2592) — the full-screen sheet
+   below does the same.
    `auto` doesn't clip Select/Combobox popups — those mount on the <dialog>, which stays
    overflow:visible. */
 .scroll {
@@ -221,8 +228,8 @@
   flex: 1 1 auto;
   min-block-size: 0;
   overflow: auto;
-  padding: var(--space-2);
-  margin: calc(-1 * var(--space-2));
+  padding: var(--dialog-gap) var(--space-2);
+  margin: calc(-1 * var(--dialog-gap)) calc(-1 * var(--space-2));
 }
 
 /* In large mode the body fills the dialog's fixed height, so the .scroll region (and a
@@ -281,6 +288,31 @@
   margin-inline: calc(-1 * var(--dialog-pad-inline));
   padding-inline: var(--dialog-pad-inline);
   padding-block-end: var(--space-3);
+}
+
+/* The `tabs` slot: a TabList (it emits data-tab-bar) as the header's LAST child
+   takes a full-width row of its own and becomes the header's bottom edge, as in
+   the page Header (Header.module.css › tab bar slot): the strip's own bottom line
+   replaces the heading rule — one rule, not two — and it bleeds edge to edge the
+   way the rule does. Outside the scroll region, so switching tab is one tap away
+   however far the panels scroll, keyboard up or not (#2592). */
+.header:has(> [data-tab-bar]) {
+  flex-wrap: wrap;
+  padding-block-end: 0;
+  border-block-end: none;
+}
+
+.header > [data-tab-bar] {
+  /* Full width of the header's border-box: the header pads by the inset, so add
+     both back to the basis and pull the margins out by it (see the page
+     Header's note on why the basis, not just the margins). */
+  flex-basis: calc(100% + 2 * var(--dialog-pad-inline));
+  margin-inline: calc(-1 * var(--dialog-pad-inline));
+  /* The header's gap puts --space-3 above; the strip sits --space-2 under the
+     title, as in a page header. */
+  margin-block-start: calc(var(--space-2) - var(--space-3));
+  /* The dialog's hairline colour, so this edge matches the actions rule. */
+  box-shadow: inset 0 -1px 0 var(--color-divider);
 }
 
 /* headerAlign="start": top-align the title + actions — for a title taller than

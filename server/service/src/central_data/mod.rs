@@ -4,11 +4,13 @@ use crate::{
 };
 use cells::{Row, RowError};
 use chrono::NaiveDate;
-use repository::{RepositoryError, StorageConnection};
+use repository::{Pagination, RepositoryError, StorageConnection, StoreRepository, StoreRow};
 use std::{
     any::Any,
-    collections::HashMap,
+    cell::RefCell,
+    collections::{HashMap, HashSet},
     path::Path,
+    rc::Rc,
     sync::{Arc, PoisonError, RwLock},
 };
 use umya_spreadsheet::helper::coordinate::string_from_column_index;
@@ -18,13 +20,23 @@ pub mod cells;
 mod currency;
 pub mod delete;
 mod item;
+mod item_store_join;
 mod location_type;
 pub mod lookup;
 mod master_list;
+mod master_list_line;
+mod master_list_name_join;
+mod master_list_refs;
 mod name;
+mod name_refs;
+mod name_store_join;
 pub mod sheet;
+mod store;
 mod unit;
 mod user;
+mod user_permission;
+mod user_refs;
+mod user_store_join;
 
 #[cfg(test)]
 mod tests;
@@ -45,9 +57,16 @@ pub enum CentralDataTable {
     LocationType,
     Currency,
     Name,
+    Store,
     User,
     Item,
     MasterList,
+    MasterListLine,
+    MasterListNameJoin,
+    NameStoreJoin,
+    ItemStoreJoin,
+    UserStoreJoin,
+    UserPermission,
 }
 
 /// Empty exports every record.
@@ -110,7 +129,12 @@ pub struct ExportCount {
 
 impl CentralDataTable {
     pub fn server_admin_only(self) -> bool {
-        matches!(self, CentralDataTable::User)
+        matches!(
+            self,
+            CentralDataTable::User
+                | CentralDataTable::UserStoreJoin
+                | CentralDataTable::UserPermission
+        )
     }
 
     pub fn sheet_name(&self) -> &'static str {
@@ -119,9 +143,16 @@ impl CentralDataTable {
             CentralDataTable::LocationType => "location_type",
             CentralDataTable::Currency => "currency",
             CentralDataTable::Name => "name",
+            CentralDataTable::Store => "store",
             CentralDataTable::User => "user",
             CentralDataTable::Item => "item",
             CentralDataTable::MasterList => "master_list",
+            CentralDataTable::MasterListLine => "master_list_line",
+            CentralDataTable::MasterListNameJoin => "master_list_name_join",
+            CentralDataTable::NameStoreJoin => "name_store_join",
+            CentralDataTable::ItemStoreJoin => "item_store_join",
+            CentralDataTable::UserStoreJoin => "user_store_join",
+            CentralDataTable::UserPermission => "user_permission",
         }
     }
 }
@@ -132,9 +163,16 @@ static TABLES: &[&(dyn ImportTable + Sync)] = &[
     &location_type::LocationTypeTable,
     &currency::CurrencyTable,
     &name::NameTable,
+    &store::StoreTable,
     &user::UserTable,
     &item::ItemTable,
     &master_list::MasterListTable,
+    &master_list_line::MasterListLineTable,
+    &master_list_name_join::MasterListNameJoinTable,
+    &name_store_join::NameStoreJoinTable,
+    &item_store_join::ItemStoreJoinTable,
+    &user_store_join::UserStoreJoinTable,
+    &user_permission::UserPermissionTable,
 ];
 
 pub(crate) trait ImportTable {
@@ -188,6 +226,18 @@ pub(crate) struct SheetStart<'a> {
     pub prepared: Option<Box<dyn Any>>,
     /// The importing user's date, for a date the server sets, such as when a currency changed.
     pub today: NaiveDate,
+    /// The tables whose sheets run after this one in the file, for a reference one may add.
+    pub sheets_after: Vec<CentralDataTable>,
+    /// Shared by every sheet of the import.
+    pub added: Rc<RefCell<Added>>,
+}
+
+/// Records an earlier sheet adds, for a later sheet that must tell them from records saved
+/// before the import.
+#[derive(Default)]
+pub(crate) struct Added {
+    /// Each sees its own name through a join `upsert_store_unchecked` makes, with an id of its own.
+    pub stores: HashSet<String>,
 }
 
 /// Each row sees the writes of the rows before it.
@@ -205,6 +255,15 @@ pub(crate) trait SheetImport {
         &mut self,
         _connection: &StorageConnection,
         _sheet: &str,
+    ) -> Result<Vec<RowError>, RepositoryError> {
+        Ok(Vec::new())
+    }
+
+    /// Run once every sheet has run, for a reference to a record a later sheet adds, such as a
+    /// name's supplying store.
+    fn finish_file(
+        &mut self,
+        _connection: &StorageConnection,
     ) -> Result<Vec<RowError>, RepositoryError> {
         Ok(Vec::new())
     }
@@ -256,6 +315,22 @@ impl Change {
     }
 }
 
+/// Every store by id, with its name's name. Stores are few, so they're read whole.
+pub(crate) fn stores_with_names(
+    connection: &StorageConnection,
+) -> Result<HashMap<String, (StoreRow, String)>, RepositoryError> {
+    Ok(StoreRepository::new(connection)
+        .query(Pagination::all(), None, None)?
+        .into_iter()
+        .map(|store| {
+            (
+                store.store_row.id.clone(),
+                (store.store_row, store.name_row.name),
+            )
+        })
+        .collect())
+}
+
 /// How the preview and messages name a record whose name can repeat.
 pub(crate) fn name_with_code(name: &str, code: &str) -> String {
     format!("{name} ({code})")
@@ -269,6 +344,50 @@ pub(crate) enum RowFailure {
 impl From<RepositoryError> for RowFailure {
     fn from(error: RepositoryError) -> Self {
         RowFailure::Database(error)
+    }
+}
+
+/// Fails the row with `errors`, if it has any.
+fn fail_if_any(errors: &mut Vec<RowError>) -> Result<(), RowFailure> {
+    if errors.is_empty() {
+        return Ok(());
+    }
+    Err(RowFailure::Invalid(std::mem::take(errors)))
+}
+
+/// Adds `error` to `errors`, unless its column already has one: a row shows at most one error per
+/// column, as a later check may have run against the value an earlier error left.
+fn add_error(errors: &mut Vec<RowError>, error: RowError) {
+    let taken = error.column.is_some() && errors.iter().any(|other| other.column == error.column);
+    if !taken {
+        errors.push(error);
+    }
+}
+
+impl RowFailure {
+    /// Adds its errors to `errors` with `add_error`.
+    fn add_to(self, errors: &mut Vec<RowError>) -> Result<(), RepositoryError> {
+        match self {
+            RowFailure::Database(error) => Err(error),
+            RowFailure::Invalid(found) => {
+                for error in found {
+                    add_error(errors, error);
+                }
+                Ok(())
+            }
+        }
+    }
+
+    /// As `add_to`, for a rule that also `reads` other columns: nothing when one already has an
+    /// error, as the rule then ran against the value that cell left.
+    fn add_rule(self, reads: &[&str], errors: &mut Vec<RowError>) -> Result<(), RepositoryError> {
+        let read_failed = errors
+            .iter()
+            .any(|error| reads.contains(&error.column.as_deref().unwrap_or_default()));
+        match self {
+            RowFailure::Invalid(_) if read_failed => Ok(()),
+            failure => failure.add_to(errors),
+        }
     }
 }
 
@@ -312,6 +431,12 @@ pub fn field_changes(
         .collect()
 }
 
+/// An export's rows in key order, each built with its sort key beside it.
+pub(crate) fn sorted_by<K: Ord>(mut rows: Vec<(K, Vec<sheet::Value>)>) -> Vec<Vec<sheet::Value>> {
+    rows.sort_by(|(a, _), (b, _)| a.cmp(b));
+    rows.into_iter().map(|(_, cells)| cells).collect()
+}
+
 #[derive(Debug, PartialEq)]
 pub struct RowChange {
     pub sheet: String,
@@ -340,7 +465,7 @@ pub struct ImportSummary {
     pub tables: Vec<TableChanges>,
     /// The first `MAX_ROWS_LISTED`, in sheet order.
     pub changes: Vec<RowChange>,
-    /// The first `errors_listed`, heading errors first.
+    /// The first `errors_listed`: heading errors, then row errors in table order, then row order.
     pub errors: Vec<RowError>,
     /// Every row error. With any, nothing was applied.
     pub error_count: u32,
@@ -361,12 +486,42 @@ impl ImportSummary {
         }
     }
 
+    /// Kept until `import_sheets` sorts them and keeps the first `errors_listed`, as a sheet can
+    /// find a row's error after later rows' errors.
     fn add_errors(&mut self, errors: impl IntoIterator<Item = RowError>) {
         for error in errors {
             self.error_count += 1;
-            if self.errors.len() < self.errors_listed {
-                self.errors.push(error);
-            }
+            self.errors.push(error);
+        }
+    }
+
+    /// A row with errors writes nothing, so a row that `finish_sheet` or `finish_file` finds an
+    /// error on no longer counts as the change it was counted as.
+    fn uncount(
+        &mut self,
+        counted: &mut HashMap<(String, u32), Change>,
+        sheet_order: &HashMap<String, usize>,
+        errors: &[RowError],
+    ) {
+        for error in errors {
+            let Some(row) = error.row else {
+                continue;
+            };
+            let (Some(change), Some(&position)) = (
+                counted.remove(&(error.sheet.clone(), row)),
+                sheet_order.get(&error.sheet),
+            ) else {
+                continue;
+            };
+            let table = &mut self.tables[position];
+            *match change {
+                Change::Inserted => &mut table.inserted,
+                Change::Updated | Change::Restored => &mut table.updated,
+                Change::Deleted => &mut table.deleted,
+                Change::Unchanged => &mut table.unchanged,
+            } -= 1;
+            self.changes
+                .retain(|listed| !(listed.sheet == error.sheet && listed.row == row));
         }
     }
 }
@@ -596,11 +751,14 @@ fn run_sheets(
         .connection
         .transaction_sync_etc(
             |connection| {
+                let added = Rc::new(RefCell::new(Added::default()));
                 let start = |table: CentralDataTable| SheetStart {
                     user_id: &ctx.user_id,
                     commit,
                     prepared: prepared.remove(&table),
                     today,
+                    sheets_after: Vec::new(),
+                    added: added.clone(),
                 };
                 let summary = import_sheets(connection, start, sheets, &refused, errors_listed)?;
                 if commit && summary.error_count == 0 {
@@ -703,6 +861,22 @@ fn import_sheets<'a>(
         ));
     }
 
+    let before_rows = summary.errors.len();
+    // A sheet's place here is its table's place in `summary.tables`.
+    let sheet_order: HashMap<String, usize> = table_sheets
+        .iter()
+        .enumerate()
+        .map(|(position, (_, sheet, _, _))| (sheet.name.clone(), position))
+        .collect();
+    let running: Vec<CentralDataTable> = table_sheets
+        .iter()
+        .filter(|(_, _, _, is_refused)| !is_refused)
+        .map(|(table, ..)| table.table())
+        .collect();
+    // (sheet, row) → what the row was counted as, for `uncount`.
+    let mut counted: HashMap<(String, u32), Change> = HashMap::new();
+    // Each sheet that ran, with its place in `summary.tables`, for `finish_file`.
+    let mut finishing = Vec::new();
     for (table, sheet, heading_errors, is_refused) in table_sheets {
         let row_errors_before = summary.error_count;
 
@@ -721,7 +895,14 @@ fn import_sheets<'a>(
             summary.tables.push(changes);
             continue;
         }
-        let mut rows = table.start_sheet(connection, start(table.table()))?;
+        let mut sheet_start = start(table.table());
+        sheet_start.sheets_after = running
+            .iter()
+            .skip_while(|running| **running != table.table())
+            .skip(1)
+            .copied()
+            .collect();
+        let mut rows = table.start_sheet(connection, sheet_start)?;
         // Record id → first row that changes it.
         let mut seen: HashMap<String, u32> = HashMap::new();
         for sheet_row in &sheet.rows {
@@ -741,6 +922,7 @@ fn import_sheets<'a>(
                 Change::Deleted => &mut changes.deleted,
                 Change::Unchanged => {
                     changes.unchanged += 1;
+                    counted.insert((sheet.name.clone(), row.number), Change::Unchanged);
                     continue;
                 }
             };
@@ -755,6 +937,7 @@ fn import_sheets<'a>(
                 continue;
             }
             *count += 1;
+            counted.insert((sheet.name.clone(), row.number), outcome.change);
             if summary.changes.len() < MAX_ROWS_LISTED {
                 summary.changes.push(RowChange {
                     sheet: sheet.name.clone(),
@@ -765,11 +948,31 @@ fn import_sheets<'a>(
                 });
             }
         }
-        summary.add_errors(rows.finish_sheet(connection, &sheet.name)?);
+        let errors = rows.finish_sheet(connection, &sheet.name)?;
         summary.sessions_to_end.extend(rows.sessions_to_end());
         changes.error_count = heading_errors + (summary.error_count - row_errors_before);
+        changes.error_count += errors.len() as u32;
+        finishing.push((summary.tables.len(), rows));
         summary.tables.push(changes);
+        summary.uncount(&mut counted, &sheet_order, &errors);
+        summary.add_errors(errors);
     }
+    for (position, mut rows) in finishing {
+        let errors = rows.finish_file(connection)?;
+        summary.tables[position].error_count += errors.len() as u32;
+        summary.uncount(&mut counted, &sheet_order, &errors);
+        summary.add_errors(errors);
+    }
+    // `finish_sheet` and `finish_file` find errors after later rows', so the row errors are put
+    // back in table then row order before the list is cut. A sheet's error with no row stays
+    // after its rows.
+    summary.errors[before_rows..].sort_by_key(|error| {
+        (
+            sheet_order.get(&error.sheet).copied(),
+            error.row.unwrap_or(u32::MAX),
+        )
+    });
+    summary.errors.truncate(summary.errors_listed);
     Ok(summary)
 }
 

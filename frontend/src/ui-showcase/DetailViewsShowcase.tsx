@@ -15,7 +15,8 @@ import { Button } from '../ui/elements/buttons/Button';
 import { StatusBadge } from '../ui/elements/feedback/StatusBadge';
 import { NumberField } from '../ui/elements/inputs/NumberField';
 import { EditIcon, TrashIcon } from '../ui/icons';
-import { FormPreview, Lead, SectionTOC } from './common';
+import { Page } from '../ui/layout/Page/Page';
+import { FormPreview, Lead, PageFrame, SectionTOC } from './common';
 import type { PageMetadata } from './metadata';
 
 /*
@@ -58,6 +59,11 @@ export const detailViewsMetadata: PageMetadata = {
         'data-control',
         'controls',
       ],
+    },
+    {
+      id: 'detail-views-panel',
+      title: 'Panels on a shaded page body',
+      searchTerms: ['panel', 'shaded', 'canvas', 'background', 'tender'],
     },
   ],
 };
@@ -288,6 +294,41 @@ export const DetailViewsShowcase = () => (
             )}
           </For>
         </CardGrid>
+      </DashboardCard>
+      <DashboardCard
+        id="detail-views-panel"
+        title="Panels on a shaded page body"
+      >
+        <Lead>
+          A <code>Page</code> with <code>shaded</code> shades its body (
+          <code>--page-body-shade</code>), and each group of fields on it is a{' '}
+          <code>DetailCard</code> with <code>surface="panel"</code>: the raised
+          fill, a hairline, a small radius and no shadow. A table that fills the
+          body keeps its own white. Only the tender page and the Simple
+          dispensing screen use it so far; it becomes the default for every page
+          once approved (#2172).
+        </Lead>
+        <PageFrame>
+          <Page shaded>
+            <Stack gap="lg">
+              <DetailCard surface="panel" title="Tender details">
+                <DetailSection>
+                  <DetailRow label="Tender ID" value="19" />
+                  <DetailRow
+                    label="Description"
+                    value="Laboratory consumables 2027"
+                  />
+                  <DetailRow label="Sourcing" value="Competitive" />
+                </DetailSection>
+              </DetailCard>
+              <DetailCard surface="panel" title="Internal documents">
+                <DetailSection>
+                  <DetailRow label="Documents" value="None yet" />
+                </DetailSection>
+              </DetailCard>
+            </Stack>
+          </Page>
+        </PageFrame>
       </DashboardCard>
     </Stack>
   </ContentContainer>

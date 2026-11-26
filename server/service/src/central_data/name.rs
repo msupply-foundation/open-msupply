@@ -1,19 +1,21 @@
 use super::{
     CentralDataTable, Change, ExportFilter, ImportTable, RecordCount, RowFailure, RowOutcome,
     SheetImport, SheetStart,
-    cells::{Row, RowError, choice_cell, collect, keep_or_saved},
-    delete::{DELETE, DELETE_COLUMN, already_deleted, check_unchanged, is_delete},
-    field_changes,
+    cells::{Row, RowError, choice_cell, collect, keep_or_saved, one_of},
+    delete::{DELETE, DELETE_COLUMN, already_deleted, check_delete, is_delete},
+    fail_if_any, field_changes,
     lookup::{
-        InMemory, NOT_FOUND, NamesOfType, active_first, find_record, find_reference,
-        record_conflict,
+        InMemory, LookupError, NamesOfType, active_first, find_record, find_reference,
+        lookup_reference_record, record_conflict,
     },
     name_with_code,
     sheet::Value,
 };
 use crate::{
     i64_to_u32,
-    name::upsert::{DeleteNameError, UpsertNameError, delete_name, upsert_name},
+    name::upsert::{
+        DeleteNameError, UpsertNameError, delete_name, name_errors, upsert_name_unchecked,
+    },
 };
 use chrono::NaiveDateTime;
 use repository::{
@@ -83,7 +85,7 @@ const COLUMNS: &[&str] = &[
 ];
 
 /// No `PATIENT`: patients are imported on their own.
-const TYPES: &[(&str, NameRowType)] = &[
+pub(super) const TYPES: &[(&str, NameRowType)] = &[
     ("FACILITY", NameRowType::Facility),
     ("BUILD", NameRowType::Build),
     ("INVAD", NameRowType::Invad),
@@ -143,7 +145,7 @@ impl ImportTable for NameTable {
         filter: &ExportFilter,
     ) -> Result<Vec<Vec<Value>>, RepositoryError> {
         let references = References::load(connection)?;
-        // One query: the export has already checked the row count against the import cap.
+        // Read whole, not paged: the export has already checked the row cap.
         Ok(NameRowRepository::new(connection)
             .query_by_filter(name_filter(filter))?
             .into_iter()
@@ -171,21 +173,34 @@ impl ImportTable for NameTable {
     fn start_sheet(
         &self,
         connection: &StorageConnection,
-        _start: SheetStart,
+        start: SheetStart,
     ) -> Result<Box<dyn SheetImport>, RepositoryError> {
         Ok(Box::new(NameSheet {
             references: References::load(connection)?,
+            store_sheet_follows: start.sheets_after.contains(&CentralDataTable::Store),
+            later: Vec::new(),
         }))
     }
 }
 
 struct NameSheet {
     references: References,
+    /// Whether the file's store sheet runs after this one, and may add a supplying store.
+    store_sheet_follows: bool,
+    later: Vec<LaterStore>,
+}
+
+/// A supplying store that isn't saved yet, found once every sheet has run, as the store sheet
+/// comes after the name sheet and may add it. The name keeps its saved one until then.
+struct LaterStore {
+    name_id: String,
+    sheet: String,
+    row: u32,
+    code: Option<String>,
+    id: Option<String>,
 }
 
 /// Read once: both are small, and neither changes while the name sheet runs.
-// shortcut: a supplying store must already be saved. Once a store sheet imports, find it after
-// that sheet, as the spec says, so a file can add both.
 struct References {
     stores: InMemory<StoreRow>,
     currencies: InMemory<CurrencyRow>,
@@ -277,20 +292,44 @@ impl SheetImport for NameSheet {
             return Err(RowFailure::Invalid(errors));
         }
 
-        // Looked up for a `DELETE` row too, so a missing reference stops the import.
-        let supplying_store_id = if keeps_saved_store(row, saved) {
+        // Looked up for a `DELETE` row too, so a missing reference stops the import. One that
+        // isn't saved may be on a store sheet that follows, except a `DELETE` row's.
+        let mut later_store = None;
+        let supplying_store_id = if keeps_saved_store(row, saved)
+            || !(row.has(SUPPLYING_STORE_CODE) || row.has(SUPPLYING_STORE_ID))
+        {
             None
         } else {
-            collect(
-                &mut errors,
-                find_reference(
-                    &self.references.stores,
-                    row,
-                    SUPPLYING_STORE_CODE,
-                    SUPPLYING_STORE_ID,
-                    std::convert::identity,
-                )?,
-            )
+            let code = row.text(SUPPLYING_STORE_CODE);
+            let id = row.text(SUPPLYING_STORE_ID);
+            match find_supplying_store(
+                &self.references.stores,
+                row.sheet,
+                row.number,
+                code.as_deref(),
+                id.as_deref(),
+            )? {
+                Ok(store_id) => Some(store_id),
+                // Without a store sheet, a store no code or id finds is saved by its id, as sync
+                // saves it: the store may arrive later.
+                Err((true, _))
+                    if !self.store_sheet_follows
+                        && id.is_some()
+                        && code.as_deref().is_none_or(|code| {
+                            self.references.stores.with_key(code).is_empty()
+                        }) =>
+                {
+                    Some(id.clone())
+                }
+                Err((true, _)) if !delete && self.store_sheet_follows => {
+                    later_store = Some((code, id));
+                    None
+                }
+                Err((_, error)) => {
+                    errors.push(error);
+                    None
+                }
+            }
         };
         let currency_id = collect(
             &mut errors,
@@ -314,7 +353,7 @@ impl SheetImport for NameSheet {
         let is_manufacturer = is_manufacturer.or(saved.map(|name| name.is_manufacturer));
         let is_donor = is_donor.or(saved.map(|name| name.is_donor));
         let on_hold = on_hold.or(saved.map(|name| name.on_hold));
-        row.require_for_new(
+        row.require_for_new_with_choices(
             &mut errors,
             "name",
             &[
@@ -327,10 +366,8 @@ impl SheetImport for NameSheet {
                 (IS_DONOR, is_donor.is_none()),
                 (ON_HOLD, on_hold.is_none()),
             ],
+            &[(TYPE, || one_of(TYPES))],
         );
-        if !errors.is_empty() {
-            return Err(RowFailure::Invalid(errors));
-        }
 
         let text = |column: &str, value: fn(&NameRow) -> &Option<String>| {
             row.optional_text(column, saved.and_then(|name| value(name).as_deref()))
@@ -377,56 +414,124 @@ impl SheetImport for NameSheet {
             ..saved.cloned().unwrap_or_default()
         };
 
-        let change = match Change::between_upserts(saved, &new) {
+        let written = Change::between_upserts(saved, &new);
+        if written != Change::Unchanged {
+            for error in name_errors(connection, saved, &new)? {
+                let reads = reads(&error);
+                upsert_failure(row, &new, error).add_rule(reads, &mut errors)?;
+            }
+        }
+        fail_if_any(&mut errors)?;
+        if written != Change::Unchanged {
+            upsert_name_unchecked(connection, saved, &new)?;
+        }
+        // Counted now, though written once the store is found. Given only a code, it's taken to
+        // differ from the saved one, as the store's id isn't known yet.
+        let store_changes_later = later_store
+            .as_ref()
+            .is_some_and(|(_, id)| id.as_deref() != new.supplying_store_id.as_deref());
+        let change = match written {
             Change::Updated if saved.is_some_and(|saved| saved.deleted_datetime.is_some()) => {
                 Change::Restored
             }
+            Change::Unchanged if store_changes_later => Change::Updated,
             change => change,
         };
-        if change != Change::Unchanged {
-            upsert_name(connection, &new).map_err(|error| upsert_failure(row, &new, error))?;
+
+        let mut new_cells = cells(&new, &self.references);
+        if let Some((code, id)) = later_store {
+            // As the row gives it; an id it doesn't give isn't known yet.
+            let column = |name: &str| COLUMNS.iter().position(|c| *c == name).expect("a column");
+            new_cells[column(SUPPLYING_STORE_CODE)] = code.clone().into();
+            if id.is_some() {
+                new_cells[column(SUPPLYING_STORE_ID)] = id.clone().into();
+            }
+            self.later.push(LaterStore {
+                name_id: new.id.clone(),
+                sheet: row.sheet.to_string(),
+                row: row.number,
+                code,
+                id,
+            });
         }
         Ok(RowOutcome {
             fields: existing
-                .map(|saved| {
-                    field_changes(
-                        COLUMNS,
-                        cells(&saved, &self.references),
-                        cells(&new, &self.references),
-                    )
-                })
+                .map(|saved| field_changes(COLUMNS, cells(&saved, &self.references), new_cells))
                 .unwrap_or_default(),
             record: name_with_code(&new.name, &new.code),
             record_id: new.id,
             change,
         })
     }
+
+    fn finish_file(
+        &mut self,
+        connection: &StorageConnection,
+    ) -> Result<Vec<RowError>, RepositoryError> {
+        self.find_later_stores(connection)
+    }
 }
 
 impl NameSheet {
+    /// After the store sheet, which may have added the stores `later` refers to.
+    fn find_later_stores(
+        &mut self,
+        connection: &StorageConnection,
+    ) -> Result<Vec<RowError>, RepositoryError> {
+        if self.later.is_empty() {
+            return Ok(Vec::new());
+        }
+        let stores = InMemory::new(StoreRowRepository::new(connection).all()?);
+        let names = NameRowRepository::new(connection);
+        let mut errors = Vec::new();
+        for later in self.later.drain(..) {
+            let store_id = match find_supplying_store(
+                &stores,
+                &later.sheet,
+                later.row,
+                later.code.as_deref(),
+                later.id.as_deref(),
+            )? {
+                Ok(store_id) => store_id,
+                Err((_, error)) => {
+                    errors.push(error);
+                    continue;
+                }
+            };
+            let Some(saved) = names.find_one_by_id(&later.name_id)? else {
+                continue;
+            };
+            if saved.supplying_store_id == store_id {
+                continue;
+            }
+            // Its row passed `name_errors`, which doesn't check the store, just found.
+            let name = NameRow {
+                supplying_store_id: store_id,
+                ..saved.clone()
+            };
+            upsert_name_unchecked(connection, Some(&saved), &name)?;
+        }
+        Ok(errors)
+    }
+
     fn delete(
         &self,
         connection: &StorageConnection,
         row: &Row,
         existing: Option<NameRow>,
-        mut errors: Vec<RowError>,
+        errors: Vec<RowError>,
     ) -> Result<RowOutcome, RowFailure> {
         // Already deleted, as an exported deleted name is: unchanged.
         let Some(saved) = existing.filter(|saved| saved.deleted_datetime.is_none()) else {
             return already_deleted(row, CODE, errors);
         };
-        let saved_cells: Vec<_> = COLUMNS
-            .iter()
-            .copied()
-            .zip(cells(&saved, &self.references))
-            .filter(|(column, _)| *column != DELETE_COLUMN)
-            .collect();
-        if let Err(e) = check_unchanged(row, &saved_cells) {
-            errors.push(e);
-        }
-        if !errors.is_empty() {
-            return Err(RowFailure::Invalid(errors));
-        }
+        check_delete(
+            row,
+            COLUMNS,
+            &[TYPE],
+            cells(&saved, &self.references),
+            errors,
+        )?;
 
         let record = name_with_code(&saved.name, &saved.code);
         delete_name(connection, &saved.id).map_err(|error| match error {
@@ -472,6 +577,34 @@ impl NameSheet {
     }
 }
 
+/// The supplying store a row's `code` and `id` find among `stores`. Failing, the error on that row,
+/// after whether the store just isn't found, as a later sheet may add it.
+fn find_supplying_store(
+    stores: &InMemory<StoreRow>,
+    sheet: &str,
+    row: u32,
+    code: Option<&str>,
+    id: Option<&str>,
+) -> Result<Result<Option<String>, (bool, RowError)>, RepositoryError> {
+    Ok(
+        lookup_reference_record(stores, id, code, std::convert::identity)?
+            .map(|store| store.map(|store| store.id))
+            .map_err(|error| {
+                (
+                    error.error == LookupError::NotFound,
+                    error.to_row_error(
+                        sheet,
+                        row,
+                        SUPPLYING_STORE_CODE,
+                        SUPPLYING_STORE_ID,
+                        code,
+                        id,
+                    ),
+                )
+            }),
+    )
+}
+
 /// Whether the row gives only the saved supplying store's id, as exported for a store sync hasn't
 /// brought yet.
 fn keeps_saved_store(row: &Row, saved: Option<&NameRow>) -> bool {
@@ -498,6 +631,15 @@ fn patient_error(row: &Row, patient: &NameRow) -> RowError {
     )
 }
 
+/// The columns `error`'s rule reads beside the one it's reported on.
+fn reads(error: &UpsertNameError) -> &'static [&'static str] {
+    match error {
+        // Codes are unique within a type.
+        UpsertNameError::DuplicateCode { .. } => &[TYPE],
+        _ => &[],
+    }
+}
+
 fn upsert_failure(row: &Row, name: &NameRow, error: UpsertNameError) -> RowFailure {
     match error {
         UpsertNameError::CodeRequired => row.error(CODE, "code is required").into(),
@@ -522,14 +664,10 @@ fn upsert_failure(row: &Row, name: &NameRow, error: UpsertNameError) -> RowFailu
         UpsertNameError::InvalidCustomData => row
             .error(CUSTOM_DATA, "custom_data must be JSON, or blank")
             .into(),
-        // Not checked here: `find_reference` finds them among the saved records.
-        UpsertNameError::SupplyingStoreNotFound => row.error(SUPPLYING_STORE_ID, NOT_FOUND).into(),
-        UpsertNameError::CurrencyNotFound => row.error(CURRENCY_ID, NOT_FOUND).into(),
-        UpsertNameError::DatabaseError(error) => RowFailure::Database(error),
     }
 }
 
-fn type_label(r#type: &NameRowType) -> String {
+pub(super) fn type_label(r#type: &NameRowType) -> String {
     match choice_cell(TYPES, r#type) {
         Value::Text(label) => label,
         _ => format!("{:?}", r#type).to_uppercase(),

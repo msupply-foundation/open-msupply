@@ -331,6 +331,121 @@ describe('ExportCard', () => {
     });
   });
 
+  it('gives stores a code or name search and a Status filter (OMS-REG-CDIO-01.46, .142)', async () => {
+    open();
+    expect(shown.fields['central-data-export-store-search']!.placeholder).toBe(
+      'label.code-or-name-contains'
+    );
+    expect(shown.selects['central-data-export-store-status']).toBeDefined();
+
+    shown.checkboxes['central-data-export-store']!.onChange(true);
+    await settle();
+    expect(countRequests().at(-1)).toEqual({
+      tables: [{ table: 'STORE', contains: null, isActive: null }],
+    });
+  });
+
+  it('gives names in stores a code search and no Status filter (OMS-REG-CDIO-01.46, .145)', async () => {
+    open();
+    expect(
+      shown.fields['central-data-export-name_store_join-search']!.placeholder
+    ).toBe('label.code-contains');
+    expect(
+      shown.selects['central-data-export-name_store_join-status']
+    ).toBeUndefined();
+
+    shown.checkboxes['central-data-export-name_store_join']!.onChange(true);
+    await settle();
+    expect(countRequests().at(-1)).toEqual({
+      tables: [{ table: 'NAME_STORE_JOIN', contains: null, isActive: null }],
+    });
+  });
+
+  it('gives master list lines a master list name or item code search and no Status filter (OMS-REG-CDIO-01.46, .176)', async () => {
+    open();
+    expect(
+      shown.fields['central-data-export-master_list_line-search']!.placeholder
+    ).toBe('label.master-list-name-or-item-code-contains');
+    expect(
+      shown.selects['central-data-export-master_list_line-status']
+    ).toBeUndefined();
+
+    shown.checkboxes['central-data-export-master_list_line']!.onChange(true);
+    await settle();
+    expect(countRequests().at(-1)).toEqual({
+      tables: [{ table: 'MASTER_LIST_LINE', contains: null, isActive: null }],
+    });
+  });
+
+  it('gives names on master lists a master list name or name code search and no Status filter (OMS-REG-CDIO-01.46, .186)', async () => {
+    open();
+    expect(
+      shown.fields['central-data-export-master_list_name_join-search']!
+        .placeholder
+    ).toBe('label.master-list-name-or-name-code-contains');
+    expect(
+      shown.selects['central-data-export-master_list_name_join-status']
+    ).toBeUndefined();
+
+    shown.checkboxes['central-data-export-master_list_name_join']!.onChange(
+      true
+    );
+    await settle();
+    expect(countRequests().at(-1)).toEqual({
+      tables: [
+        { table: 'MASTER_LIST_NAME_JOIN', contains: null, isActive: null },
+      ],
+    });
+  });
+
+  it('gives items in stores an item code or store code search and no Status filter (OMS-REG-CDIO-01.46, .195)', async () => {
+    open();
+    expect(
+      shown.fields['central-data-export-item_store_join-search']!.placeholder
+    ).toBe('label.item-code-or-store-code-contains');
+    expect(
+      shown.selects['central-data-export-item_store_join-status']
+    ).toBeUndefined();
+
+    shown.checkboxes['central-data-export-item_store_join']!.onChange(true);
+    await settle();
+    expect(countRequests().at(-1)).toEqual({
+      tables: [{ table: 'ITEM_STORE_JOIN', contains: null, isActive: null }],
+    });
+  });
+
+  it('gives users in stores a username or store code search and no Status filter (OMS-REG-CDIO-01.46, .162)', async () => {
+    open();
+    expect(
+      shown.fields['central-data-export-user_store_join-search']!.placeholder
+    ).toBe('label.username-or-store-code-contains');
+    expect(
+      shown.selects['central-data-export-user_store_join-status']
+    ).toBeUndefined();
+
+    shown.checkboxes['central-data-export-user_store_join']!.onChange(true);
+    await settle();
+    expect(countRequests().at(-1)).toEqual({
+      tables: [{ table: 'USER_STORE_JOIN', contains: null, isActive: null }],
+    });
+  });
+
+  it('gives user permissions a username or store code search and no Status filter (OMS-REG-CDIO-01.46, .153)', async () => {
+    open();
+    expect(
+      shown.fields['central-data-export-user_permission-search']!.placeholder
+    ).toBe('label.username-or-store-code-contains');
+    expect(
+      shown.selects['central-data-export-user_permission-status']
+    ).toBeUndefined();
+
+    shown.checkboxes['central-data-export-user_permission']!.onChange(true);
+    await settle();
+    expect(countRequests().at(-1)).toEqual({
+      tables: [{ table: 'USER_PERMISSION', contains: null, isActive: null }],
+    });
+  });
+
   it('counts again after typing in Search pauses, and at once for Status (OMS-REG-CDIO-01.47)', async () => {
     open();
     await tickUnits();

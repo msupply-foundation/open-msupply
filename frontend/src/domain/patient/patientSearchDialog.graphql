@@ -48,6 +48,10 @@ query recentPrescriptionPatients($storeId: String!, $first: Int!) {
     sort: [{ key: createdDatetime, desc: true }]
     page: { first: $first }
     type: [PRESCRIPTION]
+    # Not the store's unnamed patient: no search offers it, and in a store of
+    # walk-ins it would crowd out everyone else (spec/prescriptions rules ›
+    # the unnamed patient)
+    filter: { isForUnnamedPatient: false }
   ) {
     __typename
     ... on InvoiceConnector {

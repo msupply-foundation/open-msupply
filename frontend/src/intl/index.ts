@@ -55,6 +55,7 @@ export {
 export type { DisplayedNumber } from './numberDisplay';
 export {
   localisedDate,
+  localisedMonthYear,
   localisedTime,
   localisedDateTime,
   utcDateTime,

@@ -16,6 +16,11 @@ export interface ContentFooterProps {
   /** Extra class(es) composed onto the bar — a host adjusts the BAND (e.g.
    *  the DataTable's tighter in-frame padding), never the slotting. */
   class?: string;
+  /** Keep the bar in the page for assistive tech but take it out of view and
+   *  out of the layout: a bar mounted ahead of its content so its message
+   *  slot (a live region) is already followed when the message lands, which
+   *  would otherwise show as an empty strip until then. */
+  visuallyHidden?: boolean;
 }
 
 /*
@@ -35,6 +40,7 @@ export const ContentFooter = (props: ContentFooterProps) => (
   <div
     class={`${styles.footer} ${props.class ?? ''}`}
     data-testid={props.testId}
+    data-visually-hidden={props.visuallyHidden || undefined}
   >
     {props.children}
   </div>

@@ -53,6 +53,12 @@ pub fn fold_for_search(text: &str) -> String {
     folded
 }
 
+/// Whether search text has any word to match: text of only punctuation or
+/// symbols, such as "%" or "-", finds no name.
+pub fn has_search_words(text: &str) -> bool {
+    !fold_for_search(text).is_empty()
+}
+
 /// The words of typed search text, folded as the names are.
 fn search_words(text: &str) -> Vec<String> {
     fold_for_search(text)
@@ -97,33 +103,34 @@ pub(crate) fn register_sqlite_functions(
 }
 
 /// Each typed word starts a word of the name, in any order. None when the text
-/// has no words, e.g. only punctuation.
-#[cfg(not(feature = "postgres"))]
+/// is blank, so it doesn't filter. Text with no words, e.g. only punctuation
+/// or `%`, matches no name: it isn't a wildcard.
 pub(crate) fn words_start_with(column: NameColumn, text: &str) -> Option<WordsCondition> {
-    let words = search_words(text);
-    if words.is_empty() {
+    if text.trim().is_empty() {
         return None;
     }
-    let words = words.join(" ");
-    Some(match column {
-        NameColumn::FirstName => Box::new(search_words_match(name::first_name, words)),
-        NameColumn::LastName => Box::new(search_words_match(name::last_name, words)),
-    })
+    let words = search_words(text);
+    if words.is_empty() {
+        return Some(Box::new(diesel::dsl::sql::<Nullable<Bool>>("1 = 0")));
+    }
+    Some(words_condition(column, words))
 }
 
-/// Each typed word starts a word of the name, in any order. None when the text
-/// has no words, e.g. only punctuation.
-///
+#[cfg(not(feature = "postgres"))]
+fn words_condition(column: NameColumn, words: Vec<String>) -> WordsCondition {
+    let words = words.join(" ");
+    match column {
+        NameColumn::FirstName => Box::new(search_words_match(name::first_name, words)),
+        NameColumn::LastName => Box::new(search_words_match(name::last_name, words)),
+    }
+}
+
 /// The expression is the one the index is on, word for word, or the index
 /// isn't used.
 #[cfg(feature = "postgres")]
-pub(crate) fn words_start_with(column: NameColumn, text: &str) -> Option<WordsCondition> {
+fn words_condition(column: NameColumn, words: Vec<String>) -> WordsCondition {
     use diesel::{dsl::sql, sql_types::Text};
 
-    let words = search_words(text);
-    if words.is_empty() {
-        return None;
-    }
     // Words are letters, digits and marks only, so nothing in them means
     // anything to to_tsquery
     let query = words
@@ -135,13 +142,13 @@ pub(crate) fn words_start_with(column: NameColumn, text: &str) -> Option<WordsCo
         NameColumn::FirstName => "first_name",
         NameColumn::LastName => "last_name",
     };
-    Some(Box::new(
+    Box::new(
         sql::<Nullable<Bool>>(&format!(
             "to_tsvector('simple', search_fold(name.{column})) @@ to_tsquery('simple', "
         ))
         .bind::<Text, _>(query)
         .sql(")"),
-    ))
+    )
 }
 
 #[cfg(test)]

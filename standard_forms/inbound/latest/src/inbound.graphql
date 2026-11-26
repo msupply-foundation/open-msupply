@@ -59,6 +59,7 @@ query InvoiceQuery(
     ... on InvoiceLineConnector {
       nodes {
         id
+        type
         itemId
         itemCode
         itemName

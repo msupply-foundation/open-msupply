@@ -79,6 +79,30 @@ impl<'a> PreferenceRowRepository<'a> {
         Ok(result)
     }
 
+    /// Serialise read-modify-write updates of one preference for the rest of
+    /// the current transaction, so two concurrent edits of a map-valued
+    /// preference can't each read the old value and overwrite the other's
+    /// change. Works whether or not the row exists yet, which a row lock
+    /// (`SELECT ... FOR UPDATE`) wouldn't: the first save has no row to lock.
+    // feature postgres
+    #[cfg(feature = "postgres")]
+    pub fn lock_for_update(&self, preference_id: &str) -> Result<(), RepositoryError> {
+        // Released when the transaction ends; a second caller blocks until
+        // then and reads the committed value.
+        diesel::sql_query("SELECT pg_advisory_xact_lock(hashtext($1))")
+            .bind::<diesel::sql_types::Text, _>(preference_id)
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
+    // feature sqlite
+    // SQLite allows only a single write transaction at a time (transactions are
+    // opened with `BEGIN IMMEDIATE`), so writers are already serialised.
+    #[cfg(not(feature = "postgres"))]
+    pub fn lock_for_update(&self, _preference_id: &str) -> Result<(), RepositoryError> {
+        Ok(())
+    }
+
     pub fn delete(&self, preference_id: &str) -> Result<(), RepositoryError> {
         let changelog = PreferenceRow::generate_changelog(
             RowOrId::Id(preference_id),

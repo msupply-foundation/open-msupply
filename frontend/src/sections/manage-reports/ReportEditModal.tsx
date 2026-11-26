@@ -1,4 +1,4 @@
-import { createSignal, Show } from 'solid-js';
+import { createResource, createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { graphqlFetch } from '@/api/graphql';
 import { t } from '@/intl';
@@ -12,7 +12,9 @@ import {
   CancelButton,
   DialogSaveButton,
 } from '@/ui/elements/buttons/StandardButtons';
-import { UpdateReport } from './manageReports.generated';
+import { MultiSelect } from '@/ui/elements/selectors/MultiSelect';
+import { NameTags, UpdateReport } from './manageReports.generated';
+import type { NameTagsResult } from './manageReports.generated';
 import type { ReportVersion } from './reportRegister';
 import {
   canSaveReport,
@@ -24,20 +26,24 @@ import {
 
 // The report-version editor — spec/manage-reports S3.
 //
-// Everything but the active state is READ-ONLY, and that is the contract, not
-// a layout choice: `UpdateReportInput` is `{ id, isActive }`, so no other
-// property of an installed report is writable anywhere in the schema
-// (OMS-REG-MNG-06.21). A version is corrected by installing over it, never by
-// editing here.
+// Everything but the active state and the store tags is READ-ONLY, and that is
+// the contract, not a layout choice: `UpdateReportInput` is
+// `{ id, isActive, storeTagIds }`, so no other property of an installed report
+// is writable anywhere in the schema (OMS-REG-MNG-06.35). A version is
+// corrected by installing over it, never by editing here.
 //
 // Lifecycle is the shared dialog contract (ui-standards controls.md § dialogs):
 // open while the save is in flight with Save busy, closed on success — closure
 // plus the register refreshing IS the confirmation — and open on rejection with
 // the message inline beside the actions.
 
+type NameTag = NameTagsResult['nameTags']['nodes'][number];
+
 export interface ReportEditModalProps {
   /** The version being edited. */
   version: ReportVersion;
+  /** The active store — authorises the store tag list only. */
+  storeId: string;
   /** Cancel / dismiss — nothing is saved and the register is untouched. */
   onClose: () => void;
   /** The save succeeded: the owner closes the dialog and refreshes. */
@@ -53,13 +59,46 @@ export const ReportEditModal: Component<ReportEditModalProps> = props => {
   const [saving, setSaving] = createSignal(false);
   const [error, setError] = createSignal<string | undefined>(undefined);
 
+  // The store tag picker's options. Fetched when the dialog opens — an
+  // interaction under the already-open register — so read without suspending
+  // (gate on state, never `.latest` alone): a suspend would detach the open
+  // dialog (kdd/solid-reactivity-pitfalls).
+  const [tagsRes] = createResource(
+    () => props.storeId,
+    async storeId => {
+      const result = await graphqlFetch(NameTags, { storeId });
+      return result.kind === 'success' ? result.data.nameTags.nodes : [];
+    }
+  );
+  const tagsLoaded = () =>
+    tagsRes.state === 'ready' || tagsRes.state === 'refreshing';
+  const tags = (): readonly NameTag[] =>
+    (tagsLoaded() ? tagsRes.latest : undefined) ?? [];
+  // The draft holds ids; the picker wants the tags. Until the tags have
+  // loaded the picker shows nothing (and is locked), so stored tags never
+  // flash up as raw ids. Once loaded, a stored id with no tag behind it
+  // (deleted in legacy mSupply) still shows, by id, so it can be removed
+  // rather than silently kept.
+  const selectedTags = (): NameTag[] =>
+    tagsLoaded()
+      ? draft().storeTagIds.map(
+          id =>
+            tags().find(tag => tag.id === id) ?? {
+              __typename: 'NameTagNode',
+              id,
+              name: id,
+            }
+        )
+      : [];
+
   const save = async () => {
     if (saving() || !canSaveReport(draft(), props.version)) return; // re-entry guard
     setSaving(true);
     setError(undefined);
-    // returnGraphqlErrors, because the one domain rejection — an id that is no
-    // longer an installed version — is UNTYPED. Without it that rejection
-    // would trip the global unexpected-error modal instead of surfacing here.
+    // returnGraphqlErrors, because both domain rejections — an id that is no
+    // longer an installed version, a store tag that no longer exists — are
+    // UNTYPED. Without it they would trip the global unexpected-error modal
+    // instead of surfacing here.
     const result = await graphqlFetch(
       UpdateReport,
       { input: reportUpdateInput(draft()) },
@@ -108,9 +147,9 @@ export const ReportEditModal: Component<ReportEditModalProps> = props => {
               onClick={props.onClose}
             />
           </Show>
-          {/* Inert until the active state actually DIFFERS from the stored one
-              (OMS-REG-MNG-06.17) — so reopening and closing a version cannot
-              rewrite the row. */}
+          {/* Inert until the active state or the store tags actually DIFFER
+              from the stored ones (OMS-REG-MNG-06.17, .37) — so reopening and
+              closing a version cannot rewrite anything. */}
           <DialogSaveButton
             data-testid="dialog-button-save"
             disabled={!canSaveReport(draft(), props.version)}
@@ -134,7 +173,8 @@ export const ReportEditModal: Component<ReportEditModalProps> = props => {
             {props.version.isCustom ? t('messages.yes') : t('messages.no')}
           </span>
         </FieldRow>
-        {/* The one editable property. Labelled "Enabled" here while the
+        {/* The version's active state, one of the two editable properties
+            (the store tags below are the other). Labelled "Enabled" here while the
             register's column calls it "Status" — the reference app's own
             split, captured as-is (ui-surface § cross-cutting).
 
@@ -147,6 +187,24 @@ export const ReportEditModal: Component<ReportEditModalProps> = props => {
           disabled={saving()}
           checked={draft().isActive}
           onChange={checked => setDraft({ ...draft(), isActive: checked })}
+        />
+        {/* Which stores see this report on the Reports page before Show all
+            reports. Belongs to the report's code, so it is the same on every
+            version (OMS-REG-MNG-06.36, rules.md § store tags). */}
+        <MultiSelect<NameTag>
+          label={t('label.show-for-store-tags')}
+          helperText={t('messages.report-store-tags-help')}
+          inputTestId="report-store-tags-input"
+          // Locked until the tags load, so an edit can't start from the
+          // empty list shown meanwhile and drop the stored tags.
+          disabled={saving() || !tagsLoaded()}
+          items={[...tags()]}
+          itemToString={tag => tag.name}
+          itemToValue={tag => tag.id}
+          selectedItems={selectedTags()}
+          onChange={picked =>
+            setDraft({ ...draft(), storeTagIds: picked.map(tag => tag.id) })
+          }
         />
       </Stack>
     </Dialog>

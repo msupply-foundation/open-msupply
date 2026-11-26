@@ -5,7 +5,7 @@ import {
   on,
   type JSX,
 } from 'solid-js';
-import { locale } from '../../../intl';
+import { locale, t } from '../../../intl';
 import { CalendarIcon } from '../../icons';
 import { Popover } from '../feedback/Popover';
 import { FieldShell } from './FieldShell';
@@ -196,7 +196,7 @@ export const DateField = (props: DateFieldProps) => {
           <Popover
             placement="bottom-end"
             triggerClass={styles.iconBtn}
-            triggerLabel="Open calendar"
+            triggerLabel={t('label.open-calendar')}
             triggerProps={{ disabled: props.disabled }}
             onOpen={() => setOpenCount(count => count + 1)}
             trigger={<CalendarIcon class={styles.calendarIcon} />}

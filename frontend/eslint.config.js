@@ -115,6 +115,41 @@ const isoStringSliceRestriction = {
     'Takes the UTC day, the day before east of Greenwich (#1898). Use ' +
     'dateToCalendarDate from src/intl/calendarDate.ts.',
 };
+// Every front-end file's no-restricted-syntax list. A block that adds to it
+// spreads this, since flat config replaces a rule's options, not merges them.
+const appSyntaxRestrictions = [
+  anchorDownloadRestriction,
+  jsxDownloadRestriction,
+  isoStringSliceRestriction,
+];
+
+/*
+ * The shared UI components render on every screen, in every language, so the
+ * text they put in front of a user or a screen reader goes through t()
+ * (open-msupply-internal#354). English in one of these attributes, or in a
+ * component's label prop (`label`, `triggerLabel`), ships to everyone: as a
+ * literal, as the text of a template literal (`${name}, date`), or as a
+ * fallback for a prop that fills one (`props.label ?? 'Details'`). A value
+ * with no letters, or a hex colour (`#004fc4`), is not language and passes.
+ *
+ * Not complete: JSX text children, a literal nested inside a call, and other
+ * props a component turns into text are not checked.
+ */
+const uiTextAttribute =
+  'JSXAttribute[name.name=/^(aria-label|aria-description|aria-roledescription|aria-valuetext|placeholder|title|alt|label|[a-z]+Label)$/]';
+const uiTextLiteral = 'Literal[value=/[A-Za-z]/]:not([value=/^#/])';
+const uiTextTemplate =
+  'TemplateLiteral > TemplateElement[value.raw=/[A-Za-z]/]';
+const uiTextMessage =
+  'Shared UI text is translated: use t() with a key from ' +
+  'src/intl/locales/en/ rather than English text.';
+const uiTextRestrictions = [
+  `${uiTextAttribute} > ${uiTextLiteral}`,
+  `${uiTextAttribute} > JSXExpressionContainer > ${uiTextLiteral}`,
+  `${uiTextAttribute} > JSXExpressionContainer > ${uiTextTemplate}`,
+  `${uiTextAttribute} > JSXExpressionContainer > LogicalExpression > ${uiTextLiteral}`,
+  `${uiTextAttribute} > JSXExpressionContainer > ConditionalExpression > ${uiTextLiteral}`,
+].map(selector => ({ selector, message: uiTextMessage }));
 
 const sharedRules = {
   '@typescript-eslint/no-unused-vars': [
@@ -197,11 +232,20 @@ const config = tseslint.config(
         createObjectUrlRestriction,
         ...localeFormatRestrictions,
       ],
+      'no-restricted-syntax': ['error', ...appSyntaxRestrictions],
+    },
+  },
+
+  // The shared UI components' text attributes are translated (see
+  // uiTextRestrictions). Tests are exempt: they assert on English output.
+  {
+    files: ['frontend/src/ui/**/*.tsx'],
+    ignores: ['frontend/src/ui/**/*.test.tsx'],
+    rules: {
       'no-restricted-syntax': [
         'error',
-        anchorDownloadRestriction,
-        jsxDownloadRestriction,
-        isoStringSliceRestriction,
+        ...appSyntaxRestrictions,
+        ...uiTextRestrictions,
       ],
     },
   },

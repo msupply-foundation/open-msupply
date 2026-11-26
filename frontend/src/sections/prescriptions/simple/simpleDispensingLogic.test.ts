@@ -1,10 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import type { AllocationPreferences } from '@/domain/allocation';
+import { round9, type AllocationPreferences } from '@/domain/allocation';
 import {
   addAmount,
   amountLimit,
   buildCards,
   canAddTyped,
+  canSaveCount,
+  correctedNext,
+  correctionBatch,
+  correctionPacks,
+  correctionReason,
+  countSame,
+  countTooLow,
   dispenseInput,
   dispenseOutcome,
   dispenseVisit,
@@ -18,11 +25,16 @@ import {
   setAmount,
   stockLine,
   shortLines,
+  startsWithUnnamed,
   stockAtCheck,
   stockState,
+  systemFigure,
   unitsIn,
+  unnamedAfterDispense,
+  unnamedStillChosen,
   unreadIds,
   visitWasSaved,
+  withItem,
   type CardItem,
   type DispenseCalls,
   type DispenseInput,
@@ -1337,5 +1349,257 @@ describe('the price check', () => {
       expect(end).toEqual({ kind: 'saved', patient: WHO });
       expect(saves).toEqual([]);
     });
+  });
+});
+
+// rules › the unnamed patient
+describe('who a visit starts with', () => {
+  const prefs = (
+    useUnnamedPatient: boolean,
+    startWithUnnamedPatient: boolean
+  ) => ({
+    useUnnamedPatient,
+    startWithUnnamedPatient,
+  });
+
+  it('starts with the unnamed patient only where both preferences are on (OMS-REG-DIS-12.200, .206)', () => {
+    expect(startsWithUnnamed(prefs(true, true))).toBe(true);
+    expect(startsWithUnnamed(prefs(true, false))).toBe(false);
+    // "Start with" does nothing while "Use" is off
+    expect(startsWithUnnamed(prefs(false, true))).toBe(false);
+    expect(startsWithUnnamed(prefs(false, false))).toBe(false);
+  });
+
+  const unnamed = {
+    id: 'unnamed_patient_s1',
+    name: 'Unnamed patient',
+    isUnnamed: true,
+  };
+  const registered = { id: 'p1', name: 'Smith, Jo' };
+
+  it('keeps the unnamed patient chosen after a visit to it, even without "Start with" (OMS-REG-DIS-12.204)', () => {
+    expect(unnamedAfterDispense(unnamed, prefs(true, false))).toBe(true);
+    expect(unnamedAfterDispense(unnamed, prefs(true, true))).toBe(true);
+  });
+
+  it('after a registered patient, starts as a new visit does (OMS-REG-DIS-12.207)', () => {
+    expect(unnamedAfterDispense(registered, prefs(true, true))).toBe(true);
+    expect(unnamedAfterDispense(registered, prefs(true, false))).toBe(false);
+  });
+
+  it('stops counting the unnamed patient as chosen once the store stops using it (OMS-REG-DIS-12.214)', () => {
+    expect(unnamedStillChosen(true, prefs(true, false))).toBe(true);
+    // Sync turned "Use the unnamed patient" off while it was chosen
+    expect(unnamedStillChosen(true, prefs(false, false))).toBe(false);
+    expect(unnamedStillChosen(true, prefs(false, true))).toBe(false);
+    expect(unnamedStillChosen(false, prefs(true, true))).toBe(false);
+  });
+
+  it('never chooses the unnamed patient once the store stops using it', () => {
+    expect(unnamedAfterDispense(unnamed, prefs(false, true))).toBe(false);
+    expect(unnamedAfterDispense(registered, prefs(false, true))).toBe(false);
+  });
+});
+
+describe('correcting the stock', () => {
+  // Batches as Correct the stock reads them: every batch, empty ones too.
+  it('OMS-REG-DIS-12.251: the figure is the stock in batches dispensing may take, before the list', () => {
+    const figure = systemFigure(
+      [
+        batch('clean', { availableNumberOfPacks: 2, packSize: 10 }),
+        batch('held', { onHold: true }),
+        batch('in-held-place', { location: { onHold: true } }),
+        batch('expired', { expiryDate: '2026-11-01' }),
+        batch('empty', { availableNumberOfPacks: 0 }),
+      ],
+      PREFS,
+      TODAY
+    );
+    expect(figure).toBe(20);
+  });
+
+  it('OMS-REG-DIS-12.252: the count goes to the batch dispensing may take with the nearest expiry', () => {
+    const target = correctionBatch(
+      [
+        batch('later', { expiryDate: '2028-01-01' }),
+        batch('none', { expiryDate: null }),
+        batch('sooner', { expiryDate: '2027-01-01' }),
+      ],
+      PREFS,
+      TODAY
+    );
+    expect(target?.id).toBe('sooner');
+  });
+
+  it('OMS-REG-DIS-12.252: by expiry even where the store fills by VVM status first', () => {
+    const target = correctionBatch(
+      [
+        batch('better-vvm', {
+          expiryDate: '2028-01-01',
+          vvmStatus: { unusable: false, priority: 1 },
+        }),
+        batch('sooner', {
+          expiryDate: '2027-01-01',
+          vvmStatus: { unusable: false, priority: 2 },
+        }),
+      ],
+      { ...PREFS, sortByVvmStatusThenExpiry: true },
+      TODAY
+    );
+    expect(target?.id).toBe('sooner');
+  });
+
+  it('a batch with no expiry takes the count only when none has one', () => {
+    const target = correctionBatch(
+      [batch('none', { expiryDate: null })],
+      PREFS,
+      TODAY
+    );
+    expect(target?.id).toBe('none');
+  });
+
+  it('OMS-REG-DIS-12.253: an empty batch dispensing may take still takes the count', () => {
+    const target = correctionBatch(
+      [batch('empty', { availableNumberOfPacks: 0 })],
+      PREFS,
+      TODAY
+    );
+    expect(target?.id).toBe('empty');
+  });
+
+  it('OMS-REG-DIS-12.254: a batch on hold, in a place on hold, expired or of unusable VVM never takes the count', () => {
+    const target = correctionBatch(
+      [
+        batch('held', { expiryDate: '2026-12-01', onHold: true }),
+        batch('in-held-place', {
+          expiryDate: '2026-12-02',
+          location: { onHold: true },
+        }),
+        batch('expired', { expiryDate: '2026-11-01' }),
+        batch('unusable', {
+          expiryDate: '2026-12-03',
+          vvmStatus: { unusable: true, priority: 9 },
+        }),
+      ],
+      PREFS,
+      TODAY
+    );
+    expect(target).toBeUndefined();
+  });
+
+  it('OMS-REG-DIS-12.255: only a count above the figure can be saved', () => {
+    expect(canSaveCount(undefined, 20)).toBe(false);
+    expect(canSaveCount(19, 20)).toBe(false);
+    expect(canSaveCount(20, 20)).toBe(false);
+    expect(canSaveCount(21, 20)).toBe(true);
+    // 0.1 + 0.2 counted against a figure of 0.3 is the same figure.
+    expect(canSaveCount(0.1 + 0.2, 0.3)).toBe(false);
+  });
+
+  it('OMS-REG-DIS-12.255: a count below the figure is refused; the same figure is not an error', () => {
+    expect(countTooLow(undefined, 20)).toBe(false);
+    expect(countTooLow(19, 20)).toBe(true);
+    expect(countTooLow(20, 20)).toBe(false);
+    expect(countTooLow(25, 20)).toBe(false);
+  });
+
+  it('OMS-REG-DIS-12.255: a count the same as the figure says there is nothing to correct', () => {
+    expect(countSame(undefined, 20)).toBe(false);
+    expect(countSame(20, 20)).toBe(true);
+    expect(countSame(19, 20)).toBe(false);
+    expect(countSame(21, 20)).toBe(false);
+    expect(countSame(0, 0)).toBe(true);
+    expect(countSame(0.1 + 0.2, 0.3)).toBe(true);
+  });
+
+  it("OMS-REG-DIS-12.252: the difference is added in the batch's packs, splitting a pack where it must", () => {
+    expect(correctionPacks(50, 20, 10)).toBe(3);
+    expect(correctionPacks(25, 20, 10)).toBe(0.5);
+    expect(correctionPacks(0.3, 0.1, 0.1)).toBe(2);
+  });
+
+  it('OMS-REG-DIS-12.252: the stock afterwards is the count exactly, even where the pack size does not divide the difference', () => {
+    // [count, figure, pack size]: packs of 30 or 28 tablets are common, and
+    // a fractional pack size leaves the batch holding fractional packs.
+    const cases: [number, number, number][] = [
+      [10, 0, 30],
+      [50, 40, 30],
+      [1, 0, 3],
+      [5, 0, 6],
+      [7, 2.5, 28],
+      [13, 0, 7],
+      [100, 0, 0.5],
+      [1.05, 1, 1.5],
+      [316.52, 145, 1.5],
+      [12.3, 4.1, 2.5],
+      [9.9, 2.2, 1.1],
+    ];
+    for (const [count, figure, packSize] of cases) {
+      const packs = correctionPacks(count, figure, packSize);
+      // What the screen then works out: the batch's packs (what it held, plus
+      // what was added) back in units, as the server stores them.
+      const held = figure / packSize;
+      expect(round9((held + packs) * packSize)).toBe(count);
+    }
+  });
+
+  it('OMS-REG-DIS-12.256: with several positive reasons, staff choose', () => {
+    expect(correctionReason([{ id: 'a' }, { id: 'b' }])).toEqual({
+      ask: true,
+    });
+  });
+
+  it('OMS-REG-DIS-12.257: with one positive reason, it is used without asking', () => {
+    expect(correctionReason([{ id: 'a' }])).toEqual({
+      ask: false,
+      reasonId: 'a',
+    });
+  });
+
+  it('with no positive reason, the correction carries none', () => {
+    expect(correctionReason([])).toEqual({ ask: false, reasonId: null });
+  });
+
+  it("OMS-REG-DIS-12.261: lower the amount while this patient's is still more than the count", () => {
+    expect(
+      correctedNext({ count: 15, listed: 20, typed: 0, stopped: false })
+    ).toBe('lower');
+    // An amount typed in the box counts as this patient's too.
+    expect(
+      correctedNext({ count: 30, listed: 12, typed: 20, stopped: false })
+    ).toBe('lower');
+  });
+
+  it('OMS-REG-DIS-12.258: from the amount box with the typed amount now covered, nothing more to say', () => {
+    expect(
+      correctedNext({ count: 40, listed: 12, typed: 20, stopped: false })
+    ).toBe('none');
+  });
+
+  it('OMS-REG-DIS-12.260: raise the amount on a line that had stopped at the stock', () => {
+    expect(
+      correctedNext({ count: 50, listed: 28, typed: 0, stopped: true })
+    ).toBe('raise');
+  });
+
+  it('OMS-REG-DIS-12.259: press Dispense once the list holds the medicine within the count', () => {
+    expect(
+      correctedNext({ count: 20, listed: 20, typed: 0, stopped: false })
+    ).toBe('dispense');
+    expect(
+      correctedNext({ count: 20, listed: 0, typed: 0, stopped: false })
+    ).toBe('none');
+  });
+
+  it('withItem replaces the item read again and keeps the others', () => {
+    const a = item('a');
+    const b = item('b');
+    const fresh = item('b', [batch('new')]);
+    const next = withItem([a, b], fresh);
+    expect(next?.[0]).toBe(a);
+    expect(next?.[1]).toBe(fresh);
+    const items = [a];
+    expect(withItem(items, fresh)).toBe(items);
+    expect(withItem(undefined, fresh)).toBeUndefined();
   });
 });

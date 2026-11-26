@@ -618,6 +618,15 @@ export const EditIcon = (props: IconProps) => (
   </Stroke>
 );
 
+/* Hugeicons: MoreHorizontalIcon — a "More actions" trigger. */
+export const MoreHorizontalIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" stroke-width="2.5" {...props}>
+    <path d="M11.9959 12H12.0049" />
+    <path d="M17.9998 12H18.0088" />
+    <path d="M5.99981 12H6.00879" />
+  </Stroke>
+);
+
 /* Hugeicons: UserSquareIcon */
 export const UserIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>
@@ -674,6 +683,15 @@ export const ArrowRightIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" data-flip-rtl="" {...props}>
     <path d="M18.5 12L4.99997 12" />
     <path d="M13 18C13 18 19 13.5811 19 12C19 10.4188 13 6 13 6" />
+  </Stroke>
+);
+
+/* Points back, to the inline start: mirrors in RTL like ArrowRight. */
+/* Hugeicons: ArrowLeft02Icon */
+export const ArrowLeftIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" data-flip-rtl="" {...props}>
+    <path d="M5.5 12L19 12" />
+    <path d="M11 18C11 18 5 13.5811 5 12C5 10.4188 11 6 11 6" />
   </Stroke>
 );
 

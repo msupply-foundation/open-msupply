@@ -26,7 +26,7 @@ query InvoiceQuery(
   }
   invoiceLines(
     storeId: $storeId
-    filter: { invoiceId: { equalTo: $dataId } }
+    filter: { invoiceId: { equalTo: $dataId }, type: { notEqualTo: SERVICE } }
     reportSort: $sort
   ) {
     ... on InvoiceLineConnector {

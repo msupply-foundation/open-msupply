@@ -2,6 +2,7 @@ use chrono::NaiveDate;
 use log::{error, info};
 use repository::{
     DateFilter, KeyType, KeyValueStoreRepository, PatientFilter, RepositoryError, StringFilter,
+    has_search_words, is_unnamed_patient_id,
 };
 use thiserror::Error;
 use url::Url;
@@ -82,8 +83,24 @@ fn central_search_filter(params: &CentralPatientSearch) -> PatientFilter {
 }
 
 /// Whether legacy mSupply has anything to filter on: it ignores a date of
-/// birth range.
+/// birth range. `@` is legacy mSupply's wildcard, so a name of only symbols
+/// (which finds no one locally) or a patient ID holding `@` (which matches
+/// itself locally) isn't sent: "@" alone would return every patient
+/// (OMS-REG-DIS-01.88).
 fn legacy_can_filter(params: &CentralPatientSearch) -> bool {
+    let finds_no_one = |name: &Option<String>| {
+        name.as_deref()
+            .is_some_and(|name| !name.trim().is_empty() && !has_search_words(name))
+    };
+    if finds_no_one(&params.first_name)
+        || finds_no_one(&params.last_name)
+        || params
+            .code
+            .as_deref()
+            .is_some_and(|code| code.contains('@'))
+    {
+        return false;
+    }
     params.code.is_some()
         || params.first_name.is_some()
         || params.last_name.is_some()
@@ -215,7 +232,16 @@ async fn patient_search_central_v4(
         })
         .await
         .map_err(|err| CentralPatientRequestError::ConnectionError(format!("{err:?}")))?;
-    Ok(patients)
+    // The legacy central server can't be asked to leave out a store's unnamed
+    // patient, so drop it here (spec/prescriptions rules › the unnamed patient)
+    Ok(without_unnamed_patients(patients))
+}
+
+fn without_unnamed_patients(patients: Vec<PatientV4>) -> Vec<PatientV4> {
+    patients
+        .into_iter()
+        .filter(|patient| !is_unnamed_patient_id(&patient.id))
+        .collect()
 }
 
 async fn patient_search_central_v7(
@@ -248,6 +274,15 @@ pub async fn link_patient_to_store(
     store_id: &str,
     name_id: &str,
 ) -> Result<NameStoreJoin, CentralPatientRequestError> {
+    // A store's unnamed patient is never linked to another store
+    // (spec/prescriptions rules › the unnamed patient). Search never offers
+    // it, so this only guards a call made by hand.
+    if is_unnamed_patient_id(name_id) {
+        return Err(CentralPatientRequestError::InternalError(
+            "The unnamed patient can't be linked to a store".to_string(),
+        ));
+    }
+
     // A patient of another store already on this server (any patient on the
     // central server, or one of this site's own on a remote) has their records
     // here: add them to the store directly, as central does when a remote asks
@@ -441,8 +476,65 @@ mod test {
 
     use super::{
         CentralPatientRequestError, CentralPatientSearch, central_search_filter, legacy_can_filter,
-        map_v7_sync_error,
+        link_patient_to_store, map_v7_sync_error, without_unnamed_patients,
     };
+    use crate::{apis::patient_v4::PatientV4, test_helpers::setup_all_and_service_provider};
+    use repository::{mock::MockDataInserts, unnamed_patient_id};
+
+    fn legacy_patient(id: &str, code: &str) -> PatientV4 {
+        PatientV4 {
+            id: id.to_string(),
+            name: code.to_string(),
+            phone: String::new(),
+            email: String::new(),
+            code: code.to_string(),
+            last: String::new(),
+            first: String::new(),
+            date_of_birth: None,
+            gender: None,
+            code_2: None,
+            is_deceased: false,
+            address1: None,
+            next_of_kin_name: None,
+        }
+    }
+
+    // OMS-REG-DIS-12.208: legacy mSupply can't be asked to leave it out, so
+    // the site drops every store's unnamed patient from its results
+    #[test]
+    fn legacy_results_leave_out_every_stores_unnamed_patient() {
+        let ids: Vec<String> = without_unnamed_patients(vec![
+            legacy_patient(&unnamed_patient_id("store_a"), "UNNAMED"),
+            legacy_patient("unnamed_patients_list", "LOOKALIKE"),
+            legacy_patient(&unnamed_patient_id("store_b"), "UNNAMED"),
+            legacy_patient("registered", "REG-1"),
+        ])
+        .into_iter()
+        .map(|patient| patient.id)
+        .collect();
+        // Only the fixed id counts, not a name that starts the same way
+        assert_eq!(ids, ["unnamed_patients_list", "registered"]);
+    }
+
+    // OMS-REG-DIS-12.211: the site refuses before it asks central, so a
+    // site without sync settings still refuses
+    #[actix_rt::test]
+    async fn linking_the_unnamed_patient_is_refused_on_the_site() {
+        let context =
+            setup_all_and_service_provider("link_unnamed_patient_refused", MockDataInserts::none())
+                .await;
+        let result = link_patient_to_store(
+            &context.service_provider,
+            &context.service_context,
+            "store_b",
+            &unnamed_patient_id("store_a"),
+        )
+        .await;
+        assert!(
+            matches!(result, Err(CentralPatientRequestError::InternalError(ref message)) if message.contains("unnamed patient")),
+            "{result:?}"
+        );
+    }
 
     fn date(y: i32, m: u32, d: u32) -> NaiveDate {
         NaiveDate::from_ymd_opt(y, m, d).unwrap()
@@ -514,6 +606,38 @@ mod test {
         }));
         assert!(legacy_can_filter(&CentralPatientSearch {
             date_of_birth: Some(date(1984, 3, 14)),
+            ..Default::default()
+        }));
+    }
+
+    // OMS-REG-DIS-01.88: a name of only symbols, or a patient ID holding `@`,
+    // isn't sent to legacy mSupply, where `@` alone would match every patient
+    #[test]
+    fn legacy_is_not_asked_with_its_wildcard() {
+        for name in ["@", "%", " - ", "_"] {
+            assert!(!legacy_can_filter(&CentralPatientSearch {
+                last_name: Some(name.to_string()),
+                ..Default::default()
+            }));
+            assert!(!legacy_can_filter(&CentralPatientSearch {
+                first_name: Some(name.to_string()),
+                code: Some("ABC".to_string()),
+                ..Default::default()
+            }));
+        }
+        for code in ["@", "AB@"] {
+            assert!(!legacy_can_filter(&CentralPatientSearch {
+                code: Some(code.to_string()),
+                last_name: Some("Diallo".to_string()),
+                ..Default::default()
+            }));
+        }
+        assert!(legacy_can_filter(&CentralPatientSearch {
+            last_name: Some("N'Guessan".to_string()),
+            ..Default::default()
+        }));
+        assert!(legacy_can_filter(&CentralPatientSearch {
+            code: Some("AB-1".to_string()),
             ..Default::default()
         }));
     }

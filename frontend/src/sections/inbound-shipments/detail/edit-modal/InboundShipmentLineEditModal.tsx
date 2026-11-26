@@ -89,6 +89,13 @@ import {
 import { runInboundBatch } from '../inboundShipmentUpdate';
 import { requestedQuantityForItem } from '../internalOrderContext';
 import styles from './InboundShipmentLineEditModal.module.css';
+import {
+  type AuthStatus,
+  authStatusOptions,
+  changedUpdates,
+  lockedBySignOff,
+  restoresLoadedBatch,
+} from './lineAuthorisation';
 import { Num } from '@/ui/elements/typography/Num';
 
 // One line of the linked purchase order — the PO-line picker's options (derived
@@ -182,6 +189,13 @@ export interface InboundShipmentLineEditModalProps {
   shippedLocked: boolean;
   /** The shipment isn't editable: show the item's batches, take no input. */
   readOnly?: boolean;
+  /**
+   * The user holds the authorise permission (spec rules → line authorisation):
+   * they may pass or reject a batch, a new one included, and change one already
+   * signed off. Without it a signed-off batch is read-only and Auth status
+   * offers Pending.
+   */
+  canAuthorise: boolean;
   locations: LocationWithVolume[];
   prefs: LineEditPrefs;
   onSaved: () => void;
@@ -231,6 +245,12 @@ type DraftBatch = {
   vvmStatusId: string | null;
   /** Line authorisation status (spec col 18); null on shipments without it. */
   status: InboundLineFragment['status'];
+  /**
+   * The status the batch was saved with; null on a new batch. Without the
+   * authorise permission, the Auth status field offers Pending and this
+   * (lineAuthorisation).
+   */
+  savedStatus: InboundLineFragment['status'];
   donorId: string | null;
   donorName: string | null;
   shippedNumberOfPacks: number | undefined;
@@ -265,9 +285,6 @@ type DraftBatch = {
   duplicatedFrom?: PackSizeBase;
 };
 
-// The three authorisation states a line can hold (the fragment's non-null set).
-type AuthStatus = NonNullable<DraftBatch['status']>;
-
 // Each auth state's dot class (spec col 18): amber awaiting, green approved,
 // red rejected — the colours live in the CSS module, one class per state.
 const AUTH_STATUS_CLASS: Record<AuthStatus, string> = {
@@ -275,7 +292,6 @@ const AUTH_STATUS_CLASS: Record<AuthStatus, string> = {
   PASSED: styles.statusPassed,
   REJECTED: styles.statusRejected,
 };
-const AUTH_STATUSES: AuthStatus[] = ['PENDING', 'PASSED', 'REJECTED'];
 const AUTH_STATUS_LABEL: Record<AuthStatus, () => string> = {
   PENDING: () => t('label.pending'),
   PASSED: () => t('label.passed'),
@@ -329,9 +345,10 @@ const emptyBatch = (): DraftBatch => ({
   sellPricePerPack: 0,
   note: '',
   vvmStatusId: null,
-  // A new line can't carry a status on insert (the server assigns Pending when
-  // authorisation is required); null here, shown read-only as Pending.
+  // A new batch starts Pending (OMS-FUN-ISE-001.13): null here is sent as no
+  // status, which the server saves as Pending where authorisation is required.
   status: null,
+  savedStatus: null,
   donorId: null,
   donorName: null,
   shippedNumberOfPacks: undefined,
@@ -367,6 +384,7 @@ const fromLine = (
   note: line.note ?? '',
   vvmStatusId: line.vvmStatusId ?? null,
   status: line.status,
+  savedStatus: line.status,
   donorId: line.donor?.id ?? null,
   donorName: line.donor?.name ?? null,
   shippedNumberOfPacks: line.shippedNumberOfPacks ?? undefined,
@@ -462,6 +480,12 @@ type ChosenItem = {
 const Body: Component<InboundShipmentLineEditModalProps> = props => {
   const [item, setItem] = createSignal<ChosenItem | null>(null);
   const [batches, setBatches] = createStore<DraftBatch[]>([]);
+  // Each existing batch as it was loaded, keyed by id: a save sends only the
+  // batches that differ from it (OMS-FUN-ISE-001.14), and a batch a user
+  // without the authorise permission signs off again goes back to it
+  // (restoresLoadedBatch). Copies, since the store writes through to the
+  // objects it is given. Not reactive: read only on a save or a status pick.
+  const loadedBatches = new Map<string, DraftBatch>();
   const [saving, setSaving] = createSignal(false);
   const [errorMessage, setErrorMessage] = createSignal<string>();
   // True while an item's existing lines are being fetched (mount, and each "OK
@@ -559,7 +583,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       purchaseOrderLinked: !!props.purchaseOrderId,
       costLocked: props.costLocked,
     };
-    setBatches(lines.map(line => fromLine(line, shipment)));
+    const seeded = lines.map(line => fromLine(line, shipment));
+    setBatches(seeded);
+    loadedBatches.clear();
+    for (const b of seeded) loadedBatches.set(b.id, { ...b });
     setLoadedRequested(first.requisitionLine?.requestedQuantity ?? null);
     setTransferComment(first.transferComment);
     // A PO-linked shipment's existing lines already cite the order line they
@@ -872,6 +899,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           ...source,
           id: newId,
           isNew: true,
+          // A new batch, so it starts Pending whatever its source holds
+          // (OMS-FUN-ISE-001.13).
+          status: null,
+          savedStatus: null,
           costOverridden: false,
           sellOverridden: false,
           volumeOverridden: false,
@@ -892,6 +923,26 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     // A new draft row splices out; an existing line is flagged for a delete op.
     if (batches[index].isNew) setBatches(produce(d => d.splice(index, 1)));
     else setBatches(index, 'deleted', true);
+  };
+
+  // A batch's Auth status pick. A user without the authorise permission who
+  // picks a batch's saved sign-off again gets the batch back as it was loaded:
+  // it is closed to them once more, so edits made while it was Pending would
+  // only have the save refused (OMS-FUN-ISE-001.15).
+  const changeStatus = (id: string, status: AuthStatus) => {
+    const index = indexById(id);
+    if (index < 0) return;
+    const loaded = loadedBatches.get(id);
+    if (
+      loaded &&
+      restoresLoadedBatch(
+        props.canAuthorise,
+        batches[index].savedStatus,
+        status
+      )
+    )
+      setBatches(index, { ...loaded });
+    else setBatches(index, 'status', status);
   };
 
   // The rows the table shows: the draft minus soft-deleted batches.
@@ -942,6 +993,47 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     return requested == null ? undefined : { requested };
   };
 
+  // Where batches carry an authorisation state (spec rules → line
+  // authorisation): a PO-linked shipment whose store requires it.
+  const authorisation = () => props.prefs.authorisation && props.isExternal;
+  // A batch's fields take no input when the shipment doesn't, or when the
+  // batch is signed off and the user can't authorise (OMS-FUN-ISE-001.15).
+  const batchLocked = (b: DraftBatch) =>
+    !!props.readOnly ||
+    (authorisation() && lockedBySignOff(props.canAuthorise, b.status));
+
+  // An existing batch's update. Built for each batch as loaded too, so a save
+  // can send only the ones the user changed (changedUpdates).
+  const toUpdate = (b: DraftBatch) => ({
+    id: b.id,
+    packSize: b.packSize,
+    numberOfPacks: b.numberOfPacks,
+    // Cost price is only sent when editable — a store-linked / PO-linked
+    // shipment locks it (server rejects a changed value; a no-op is fine).
+    ...(props.costLocked ? {} : { costPricePerPack: b.costPricePerPack }),
+    sellPricePerPack: b.sellPricePerPack,
+    batch: b.batch || undefined,
+    location: { value: b.locationId },
+    expiryDate: { value: b.expiryDate },
+    manufactureDate: { value: b.manufactureDate },
+    note: { value: b.note || null },
+    vvmStatusId: { value: b.vvmStatusId },
+    // Line authorisation status — sent as a plain value (not a {value}
+    // patch), only on a PO-linked shipment that requires authorisation.
+    // A changed batch carries its current value: an edited status is the
+    // real change, an unchanged one a no-op (OMS-FUN-ISE-001.10 blocks a
+    // change once Received but allows the no-op). Omitted elsewhere so a
+    // manual shipment never carries it.
+    ...(authorisation() ? { status: b.status ?? undefined } : {}),
+    donorId: { value: b.donorId },
+    shippedNumberOfPacks: b.shippedNumberOfPacks,
+    shippedPackSize: b.shippedPackSize,
+    volumePerPack: b.volumePerPack,
+    manufacturerId: { value: b.manufacturerId },
+    campaignId: { value: b.campaignId },
+    programId: { value: b.programId },
+  });
+
   const buildBatch = (): BatchInboundShipmentVariables['input'] | null => {
     const chosen = item();
     if (!chosen) return null;
@@ -970,40 +1062,16 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         programId: b.programId ?? undefined,
         // A PO-linked line must cite the order line it fills.
         purchaseOrderLineId: props.purchaseOrderId ? poLineId() : undefined,
+        // A new batch may be signed off before its first save by a user who
+        // can authorise (OMS-FUN-ISE-001.12); none sent is Pending.
+        ...(authorisation() ? { status: b.status ?? undefined } : {}),
       }));
-    const update = batches
-      .filter(b => !b.isNew && !b.deleted)
-      .map(b => ({
-        id: b.id,
-        packSize: b.packSize,
-        numberOfPacks: b.numberOfPacks,
-        // Cost price is only sent when editable — a store-linked / PO-linked
-        // shipment locks it (server rejects a changed value; a no-op is fine).
-        ...(props.costLocked ? {} : { costPricePerPack: b.costPricePerPack }),
-        sellPricePerPack: b.sellPricePerPack,
-        batch: b.batch || undefined,
-        location: { value: b.locationId },
-        expiryDate: { value: b.expiryDate },
-        manufactureDate: { value: b.manufactureDate },
-        note: { value: b.note || null },
-        vvmStatusId: { value: b.vvmStatusId },
-        // Line authorisation status — sent as a plain value (not a {value}
-        // patch), only on a PO-linked shipment that requires authorisation.
-        // The line's current value goes on every save: unchanged lines are a
-        // no-op, an edited one is the real change (OMS-FUN-ISE-001.10 blocks a
-        // change once Received but allows the no-op). Omitted elsewhere so a
-        // manual shipment never carries it.
-        ...(props.prefs.authorisation && props.isExternal
-          ? { status: b.status ?? undefined }
-          : {}),
-        donorId: { value: b.donorId },
-        shippedNumberOfPacks: b.shippedNumberOfPacks,
-        shippedPackSize: b.shippedPackSize,
-        volumePerPack: b.volumePerPack,
-        manufacturerId: { value: b.manufacturerId },
-        campaignId: { value: b.campaignId },
-        programId: { value: b.programId },
-      }));
+    const update = changedUpdates(
+      batches.filter(b => !b.isNew && !b.deleted).map(toUpdate),
+      new Map(
+        [...loadedBatches].map(([id, b]) => [id, JSON.stringify(toUpdate(b))])
+      )
+    );
     const del = batches
       .filter(b => !b.isNew && b.deleted)
       .map(b => ({ id: b.id }));
@@ -1110,6 +1178,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     setItem(null);
     setPoLineId(undefined);
     setBatches([]);
+    loadedBatches.clear();
     setErrorMessage(undefined);
     setMarkedItemId(undefined);
     // Focus the selector so the next item can be typed / picked.
@@ -1201,7 +1270,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             ref={batchNumberFields.ref(b.id)}
             label={t('label.batch')}
             hideLabel
-            disabled={props.readOnly}
+            disabled={batchLocked(b)}
             size="small"
             value={b.batch}
             warning={
@@ -1228,7 +1297,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
               ref={batchFields.ref(b.id)}
               label={t('label.packs-received')}
               hideLabel
-              disabled={props.readOnly}
+              disabled={batchLocked(b)}
               size="small"
               value={b.numberOfPacks}
               min={0}
@@ -1282,7 +1351,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                     <NumberField
                       label={t('label.shipped-number-of-packs')}
                       hideLabel
-                      disabled={props.readOnly}
+                      disabled={batchLocked(b)}
                       size="small"
                       value={b.shippedNumberOfPacks}
                       min={0}
@@ -1363,7 +1432,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           <NumberField
             label={t('label.received-pack-size')}
             hideLabel
-            disabled={props.readOnly}
+            disabled={batchLocked(b)}
             size="small"
             value={b.packSize}
             // Don't clamp below 1 — a pack size < 1 is a server rule
@@ -1400,7 +1469,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                     <NumberField
                       label={t('label.shipped-pack-size')}
                       hideLabel
-                      disabled={props.readOnly}
+                      disabled={batchLocked(b)}
                       size="small"
                       value={b.shippedPackSize}
                       min={0}
@@ -1459,7 +1528,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             ref={expiryFields.ref(b.id)}
             label={t('label.expiry')}
             hideLabel
-            disabled={props.readOnly}
+            disabled={batchLocked(b)}
             size="small"
             value={b.expiryDate}
             warning={
@@ -1500,7 +1569,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           <LocationVolumeSelect
             label={t('label.location')}
             hideLabel
-            disabled={props.readOnly}
+            disabled={batchLocked(b)}
             size="small"
             locations={props.locations}
             value={b.locationId ?? undefined}
@@ -1516,10 +1585,11 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     // the detail table's row-selection Approve/Reject/Pending actions.
     // OMS-FUN-ISE-001.10 governs when a change is allowed (blocked once
     // Received, a no-op to the same value excepted); we submit and surface any
-    // rejection inline rather than pre-gating. A brand-new batch can't carry a
-    // status on insert (the server assigns Pending), so it stays read-only
-    // (shown as Pending) until saved.
-    ...(props.prefs.authorisation && props.isExternal
+    // rejection inline rather than pre-gating. Who may sign a batch off is
+    // mirrored instead (rules → permissions): a user who can authorise is
+    // offered every state, a new batch included (.12); anyone else Pending and
+    // the batch's saved state (.15, .16), so a new batch reads as Pending.
+    ...(authorisation()
       ? [
           {
             c: { id: 'authStatus' },
@@ -1535,24 +1605,24 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
               // a fixed three-value list). size="small" matches the neighbouring
               // per-batch fields' height, and the coloured option dots — which a
               // native <option> can't render — read the state at a glance. A
-              // brand-new line can't carry a status on insert (the server
-              // assigns Pending), so it stays read-only.
+              // field with a single state to offer has no choice to make, so
+              // it reads as disabled.
+              const options = () =>
+                authStatusOptions(props.canAuthorise, b.savedStatus);
               return (
                 <Select
                   label={t('label.auth-status')}
                   hideLabel
                   size="small"
                   value={b.status ?? 'PENDING'}
-                  disabled={b.isNew || props.readOnly}
-                  options={AUTH_STATUSES.map(status => ({
+                  disabled={props.readOnly || options().length < 2}
+                  options={options().map(status => ({
                     value: status,
                     label: AUTH_STATUS_LABEL[status](),
                     adornment: <StatusDot status={status} />,
                   }))}
                   // Fixed 3-option list ⇒ the string out is one of the union.
-                  onValueChange={v =>
-                    updateBatch(b.id, 'status', v as AuthStatus)
-                  }
+                  onValueChange={v => changeStatus(b.id, v as AuthStatus)}
                 />
               );
             },
@@ -1622,7 +1692,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                 <VvmStatusSelect
                   label={t('label.vvm-status')}
                   hideLabel
-                  disabled={props.readOnly}
+                  disabled={batchLocked(b)}
                   size="small"
                   value={b.vvmStatusId ?? undefined}
                   onChange={s =>
@@ -1647,7 +1717,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             hideLabel
             size="small"
             value={b.costPricePerPack}
-            disabled={props.costLocked || props.readOnly}
+            disabled={props.costLocked || batchLocked(b)}
             emptyValue={0}
             onChange={v => changeCost(b.id, v ?? 0)}
           />
@@ -1684,7 +1754,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           <CurrencyField
             label={t('label.pack-sell-price')}
             hideLabel
-            disabled={props.readOnly}
+            disabled={batchLocked(b)}
             size="small"
             value={b.sellPricePerPack}
             emptyValue={0}
@@ -1752,7 +1822,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                 <NameSearch
                   label={t('label.donor')}
                   hideLabel
-                  disabled={props.readOnly}
+                  disabled={batchLocked(b)}
                   size="small"
                   storeId={props.storeId}
                   role="donor"
@@ -1786,7 +1856,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         return (
           <ProgramSelect
             hideLabel
-            disabled={props.readOnly}
+            disabled={batchLocked(b)}
             size="small"
             storeId={props.storeId}
             itemIds={[item()?.id].filter(id => id !== undefined)}
@@ -1806,6 +1876,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         return (
           <ActivitySelect
             hideLabel
+            disabled={batchLocked(b)}
             size="small"
             campaignId={b.campaignId ?? undefined}
             campaign={
@@ -1832,7 +1903,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           <DateField
             label={t('label.manufacture-date')}
             hideLabel
-            disabled={props.readOnly}
+            disabled={batchLocked(b)}
             size="small"
             value={b.manufactureDate}
             max={todayCalendarDate()}
@@ -1872,7 +1943,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           <NameSearch
             label={t('label.manufacturer')}
             hideLabel
-            disabled={props.readOnly}
+            disabled={batchLocked(b)}
             size="small"
             storeId={props.storeId}
             role="manufacturer"
@@ -1904,7 +1975,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           <NumberField
             label={t('label.volume-per-pack')}
             hideLabel
-            disabled={props.readOnly}
+            disabled={batchLocked(b)}
             decimalLimit={10}
             size="small"
             value={b.volumePerPack}
@@ -1926,7 +1997,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           <TextField
             label={t('label.note')}
             hideLabel
-            disabled={props.readOnly}
+            disabled={batchLocked(b)}
             size="small"
             value={b.note}
             onInput={e => updateBatch(b.id, 'note', e.currentTarget.value)}

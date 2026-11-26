@@ -4,8 +4,9 @@
 // destination from it, and the command palette lists every destination in it
 // (D107 — `cmdkKey` only renames a row, it never decides whether there is one).
 //
-// Paths are relative to the store root (/{storeId}). A section's own `path` is
-// a landing destination; its `children` are the inner sub-menu entries.
+// Paths are relative to the store root (/{storeId}). An entry with `children`
+// is a section: a menu heading, not a place, so it gets no route
+// (spec/navigation § sections are headings).
 //
 // Home's path is the EMPTY string, which is not a special case but the literal
 // reading of the line above: Home IS the store root, so its store-relative path
@@ -354,12 +355,14 @@ export const navConfig: NavItem[] = [
   { labelKey: 'help', path: 'help' },
 ];
 
-// Flattened list of every destination (sections + inner entries) — used to
-// generate one route each.
+// Every destination — sections' children and childless top-level entries —
+// used to generate one route each.
 export const flattenNav = (config: NavItem[]): NavItem[] =>
-  config.flatMap(item => [item, ...(item.children ?? [])]);
+  config.flatMap(item => item.children ?? [item]);
 
 export const navDestinations: NavItem[] = flattenNav(navConfig);
+
+export const navSections: NavItem[] = navConfig.filter(item => item.children);
 
 // Home's pre-move address (CK-1.7 moved Home to the store root): App.tsx keeps
 // a redirect route for it, OUTSIDE the registry. Declared here, beside the

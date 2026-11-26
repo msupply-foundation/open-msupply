@@ -1,6 +1,6 @@
 use super::{
-    DBType, PermissionType, StorageConnection, UserPermissionRow,
-    user_permission_row::user_permission,
+    DBType, PermissionType, StorageConnection, UserOnStoreFilter, UserPermissionRow,
+    user_permission_row::user_permission, user_row::apply_user_on_store_filter,
 };
 use crate::{EqualFilter, Pagination, Sort};
 use crate::{
@@ -19,6 +19,8 @@ pub struct UserPermissionFilter {
     pub store_id: Option<EqualFilter<String>>,
     pub permission: Option<EqualFilter<PermissionType>>,
     pub has_context: Option<bool>,
+    pub context_id: Option<EqualFilter<String>>,
+    pub user_on_store: UserOnStoreFilter,
 }
 
 #[derive(PartialEq, Debug)]
@@ -104,12 +106,22 @@ fn create_filtered_query(filter: Option<UserPermissionFilter>) -> BoxedUserPermi
             store_id,
             permission,
             has_context,
+            context_id,
+            user_on_store,
         } = f;
 
+        // Every permission is on a store, though the column allows none.
+        apply_user_on_store_filter!(
+            query,
+            user_on_store,
+            user_permission::user_id,
+            user_permission::store_id.assume_not_null()
+        );
         apply_equal_filter!(query, id, user_permission::id);
         apply_equal_filter!(query, user_id, user_permission::user_id);
         apply_equal_filter!(query, store_id, user_permission::store_id);
         apply_equal_filter!(query, permission, user_permission::permission);
+        apply_equal_filter!(query, context_id, user_permission::context_id);
 
         query = match has_context {
             Some(true) => query.filter(user_permission::context_id.is_not_null()),

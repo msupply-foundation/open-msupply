@@ -1,7 +1,9 @@
-import { Show } from 'solid-js';
+import { createMemo, Show } from 'solid-js';
 import type { JSX } from 'solid-js';
 import { type Column as TanColumn, type Header } from '@tanstack/solid-table';
+import { InfoTooltip } from '../feedback/InfoTooltip';
 import { renderTemplate } from './renderTemplate';
+import type { ColumnWidth } from './columnResize';
 import styles from './DataTable.module.css';
 
 // A header cell: a sortable label + a resize handle on the trailing edge.
@@ -25,12 +27,24 @@ export function HeaderCell<T>(props: {
    * are DataTable's (autoFitColumn); this cell only carries the gesture.
    */
   onAutoFit: (column: TanColumn<T>) => void;
+  /**
+   * Called as a resize drag starts, with the width this header is RENDERED at,
+   * so the drag starts from the width the user sees rather than the column's
+   * min-width floor (DataTable.startColumnResize).
+   */
+  onResizeStart: (column: TanColumn<T>, renderedPx: number) => void;
+  /** This column's width, and whether it's exact (DataTable.columnWidth). */
+  columnWidth: (column: TanColumn<T>) => ColumnWidth;
 }): JSX.Element {
   const column = () => props.header.column;
   const canSort = () => column().getCanSort();
   const canResize = () => column().getCanResize();
-  const isResizing = () => column().getIsResizing();
+  // A memo, so the handle only re-renders when THIS column starts or stops
+  // resizing: getIsResizing reads TanStack's drag state, which changes on every
+  // tick of a drag (#1890).
+  const isResizing = createMemo(() => column().getIsResizing());
   const align = () => column().columnDef.meta?.align;
+  const description = () => column().columnDef.meta?.description;
   // A real growth cap (delivered as max-width). TanStack merges its default
   // maxSize (Number.MAX_SAFE_INTEGER) into every columnDef, so treat only a
   // value below that sentinel as an actual cap.
@@ -39,6 +53,16 @@ export function HeaderCell<T>(props: {
     return max != null && max < Number.MAX_SAFE_INTEGER ? max : undefined;
   };
   const pin = () => props.pinnedStyle(column());
+  const width = () => props.columnWidth(column());
+  // Hand DataTable the width this header renders at, then start TanStack's
+  // drag (mouse + touch). A second finger is no resize — TanStack ignores it,
+  // so it must not move the start width either.
+  const startResize = (event: MouseEvent | TouchEvent) => {
+    if ('touches' in event && event.touches.length > 1) return;
+    const th = (event.currentTarget as HTMLElement).closest('th');
+    if (th) props.onResizeStart(column(), th.getBoundingClientRect().width);
+    props.header.getResizeHandler()(event);
+  };
   const sorted = () => column().getIsSorted();
   // The arrow slot is RESERVED on every sortable header (empty until sorted,
   // fixed width — see .sortIndicator) so toggling a sort never shifts the
@@ -80,13 +104,20 @@ export function HeaderCell<T>(props: {
       // Cross-FE test-id contract (e2e/TESTIDS.md): every header cell carries
       // `header-<columnId>`, sortable or not.
       data-testid={`header-${column().id}`}
-      // Auto table layout (columns flex to fill); getSize() is the min-width
-      // FLOOR (a column's `size`, or a resize drag) — a SOFT default the drag
-      // moves both ways. maxSize is the growth cap, applied as max-width
-      // (docs/CELL_TYPES.md). A pinned column additionally gets sticky position
-      // + its edge offset.
+      // Auto table layout (columns flex to fill). A column's default `size` is
+      // its min-width FLOOR, which content or the table's spare room stretches
+      // it past. A width the user set (a resize drag or a double-click) is also
+      // its `width`, which makes it exact: it takes no share of the spare
+      // room, which goes to the columns still on their defaults (#1890). So it
+      // draws at the width it was dragged to, and the press that starts a drag
+      // (which sets the size to the drawn width) leaves it where it is. The
+      // one column that stays a floor is the one filling the row once every
+      // column has a width (DataTable.columnWidth). maxSize is the growth cap,
+      // applied as max-width (docs/CELL_TYPES.md). A pinned column
+      // additionally gets sticky position + its edge offset.
       style={{
-        'min-width': `${column().getSize()}px`,
+        'min-width': `${width().px}px`,
+        ...(width().exact ? { width: `${width().px}px` } : {}),
         ...(maxWidthPx() !== undefined
           ? { 'max-width': `${maxWidthPx()}px` }
           : {}),
@@ -102,6 +133,23 @@ export function HeaderCell<T>(props: {
               on a locale change (see renderTemplate.ts). */}
           {renderTemplate(column().columnDef.header, props.header.getContext())}
         </span>
+        {/* What the column's figure means (meta.description), behind an info
+            mark beside the label. Its own click stops here, so opening it
+            never sorts the column. */}
+        <Show when={description()}>
+          {text => (
+            <span
+              class={styles.thInfo}
+              onClick={event => event.stopPropagation()}
+            >
+              <InfoTooltip
+                text={text()}
+                placement="bottom"
+                triggerTestId={`header-info-${column().id}`}
+              />
+            </span>
+          )}
+        </Show>
         {indicator()}
       </span>
       {/* Resize handle on the trailing edge. TanStack's getResizeHandler drives the drag
@@ -132,11 +180,14 @@ export function HeaderCell<T>(props: {
               props.onAutoFit(column());
               return;
             }
-            props.header.getResizeHandler()(event);
+            startResize(event);
           }}
-          onTouchStart={props.header.getResizeHandler()}
+          onTouchStart={startResize}
           onClick={event => event.stopPropagation()}
           aria-hidden="true"
+          // e2e/TESTIDS.md: the divider is pointer-only and hidden from
+          // assistive tech, so a test reaches it by this id.
+          data-testid={`column-resize-${column().id}`}
         />
       </Show>
     </th>

@@ -178,6 +178,7 @@ Each is its own compose project — one container running the server and its own
 | `DEPLOY_REFERENCE_FILE` | `e2e` | the dataset a new deployment is seeded from. `reference1` does not load on current servers. |
 | `DEPLOY_SHARED_DAEMON` | unset | see above |
 | `DEPLOY_BUNDLES_DIR` | `/opt/omsupply/bundles` | the Launchpad's store of plugin bundles, report bundles and schemas; must exist |
+| `DATASET_MAX_GB` | `50` | the biggest dataset that can be uploaded on the dashboard's Datasets page |
 | `BUNDLE_RETAIN_DAYS` | `30` | how long a branch's plugin bundles are kept on the dashboard — see [Plugin bundles](#plugin-bundles) |
 
 ### Deployment state
@@ -345,7 +346,7 @@ Two more tabs: **Plugin bundles** (see [below](#plugin-bundles)) and **Downloads
 
 **The B2 key.** Listing the bucket takes a key: the repository secrets `B2_LIST_KEY_ID` and `B2_LIST_APPLICATION_KEY`, which the workflow hands only to its lookup container, for the length of the run. Nothing is stored on the box. Make the key in Backblaze under **App Keys → Add a New Application Key**: restricted to `msupply-releases`, **Read Only**, without **Allow List All Bucket Names**. Don't reuse the release workflows' `B2_KEY_ID`: that one can write to the bucket. Without the secrets, or with a key that can't list the bucket, the run fails and the last good list stays.
 
-Its files are in `.github/deploy/dashboard/`. How it works and why — the container split around the docker socket, sign-in and access, where each field comes from — is in the header comments of `compose.dashboard.yaml`, `snapshot.mjs`, `releases.mjs`, `web.mjs` and `publish-launchpad.yaml`. The page itself is a Solid app in `ui/`, built into the image by the `Dockerfile`'s first stage; `ui/README.md` says how to run it locally.
+Its files are in `.github/deploy/dashboard/`. How it works and why — the container split around the docker socket, sign-in and access, where each field comes from — is in the header comments of `compose.dashboard.yaml`, `snapshot.mjs`, `releases.mjs`, `web.mjs`, `datasets.mjs` and `publish-launchpad.yaml`. The page itself is a Solid app in `ui/`, built into the image by the `Dockerfile`'s first stage; `ui/README.md` says how to run it locally.
 
 **1. Create the GitHub App** people sign in through, once, under the organisation (Settings → Developer settings → GitHub Apps → New):
 
@@ -381,7 +382,7 @@ They come from **`publish-bundles.yaml`**:
 - **RC branches and release tags** release a version the same way, once the branch has this workflow. RC branches cut before it can be published by running the workflow by hand from `develop` on the RC; a plugin whose halves still disagree there (CIV before 3.0.0) is skipped with a warning and the rest publish.
 - **Pre-releases:** build a branch from the dashboard's Plugins page (its **Build from a branch** button, or **Build plugin bundles** on a server's own page, for anyone with write access), or run the workflow by hand from Actions. The Plugins page shows builds in flight and any that failed in the last day. Anything that differs from a release shows as a pre-release, the newest per branch, pruned after `BUNDLE_RETAIN_DAYS` (default 30).
 - **Compatibility** is recorded beside each version, not as part of it. Today it is derived from the version (the server loads a plugin whose major.minor is at most its own) and from the frontend half's host runtime; see `compatOf` in `.github/scripts/publish-bundles.mjs`.
-- **How:** the build runs `pnpm build:plugins` on a hosted runner and drops the `plugins/examples` bundles. A short job on the `deploy` lane then runs `publish-bundles.mjs` in a throwaway `node` container, which writes into the **Launchpad store** (`DEPLOY_BUNDLES_DIR`, see [User and directories](#user-and-directories)): `index.json` plus one file per distinct bundle, named by its sha256. The dashboard mounts it read-only.
+- **How:** the build runs `pnpm build:plugins` on a hosted runner and drops the `plugins/examples` bundles. A short job on the `deploy` lane then runs `publish-bundles.mjs` in a throwaway `node` container, which writes into the **Launchpad store** (`DEPLOY_BUNDLES_DIR`, see [User and directories](#user-and-directories)): `index.json` plus one file per distinct bundle, named by its sha256. The dashboard mounts it read-only, all but `datasets/` (see [Datasets](#datasets)), which it writes.
 
 **The store is a cache, not the record.** The plugin build is reproducible (the same commit gives byte-identical bundles), so a pruned bundle, or a lost store, is rebuilt by running the workflow on the commit it came from. Nothing on the box needs backing up for this.
 
@@ -403,7 +404,8 @@ The store is a cache here too: the report build is reproducible, so anything los
 
 A new server, or one being reset, can start with more than the small sample data built into the image (`e2e`, `reference1`): any postgres custom-format dump (`pg_dump -Fc`) of an open-mSupply database added to the Launchpad, such as the reference system's (<https://reference.msupply.foundation>, 3 months, 12 months or 3 years of a fictional country's supply chain) or an anonymised client database.
 
-- **Adding one:** run **`publish-dataset.yaml`** by hand with a name (e.g. `reference-3-months`), the dump's URL - or `file:///path` for one you have copied onto the box - a label and a line of description. It downloads the dump into the store under `datasets/<name>/`, and reads the open-mSupply version it was taken at and its users straight out of it with `pg_restore` — nothing is restored. It must be a custom-format dump without privileges (`pg_dump -Fc --no-owner --no-privileges`); anything else is refused. Restoring any dump runs the SQL it holds, so only add dumps from somewhere you trust. Adding a name that exists replaces it; removing one (`remove`) deletes its file. Servers started from either keep their data.
+- **Adding one:** on the dashboard's **Datasets** page, **Add a dataset** (for anyone with write access): upload a dump from your machine with a name (e.g. `reference-3-months`), a label and a line of description. Uploads go in chunks and pick up where they stopped, after a dropped connection, a reload or a dashboard restart: pick the same file under the same name again. The dashboard reads the open-mSupply version it was taken at and its users straight out of it with `pg_restore` (the image's postgres 17, the servers' own) — nothing is restored — and files it under `datasets/<name>/` in the store. It must be a custom-format dump without privileges (`pg_dump -Fc --no-owner --no-privileges`) that has been through the anonymiser (`private/internal/anonymise/anonymise.sh`, or with `--credentials-only` for a database with no real people in it, such as the reference system's); anything else is refused, and the page says why. The anonymiser leaves a mark in the database (`anonymisation_report`), and the dashboard takes only a dump that has it. The anonymiser has by then set every login and site to `pass`, cleared site tokens and hardware ids and plugins' logins to other systems, and turned sync off, so a dataset added this way is safe to download and start locally. The dashboard does not check those itself: the mark is written with them, and repeating the anonymiser's rules here would only drift from them. One added before the mark was required, through the old workflow, shows as **Not checked** and has no such promise. It stops a raw production dump going up by mistake, not someone set on getting round it. Restoring any dump runs the SQL it holds, so only add dumps from somewhere you trust. Adding a name that exists replaces it, if you tick **Replace**; **Remove** deletes its file. Servers started from either keep their data. 50 GB at most (the `DATASET_MAX_GB` repository variable).
+- **Who did what:** the dashboard checks with GitHub that you still have write access before each change, and writes a line per add, replace, edit and removal to `datasets/.audit.jsonl` in the store, as well as its log. There is no workflow run to look back at.
 - **Choosing one:** the new-server form lists every dataset under **With example data**, and a server's **Reset data** has the same list, so a reset can switch data. Migrations only go forward, so a dataset is offered only to versions at least as new as the one it was taken at; the others are listed greyed out with why. A branch, a pull request or develop not yet deployed counts as current.
 - **Logins:** every user's password is set to `pass` as the server is seeded, as in the sample data, whatever the dump's own passwords were. A server's **Log in** card lists the dataset's users.
 - **How it is seeded:** `docker-deploy.yaml` restores the dump in a one-off container of the server's own image, on its new database volume, before the server first starts: the image's `entry-postgres.sh` restores it (images from v3.2 can), its migrations run, every password becomes `pass`, then `refresh-dates` (which also turns outgoing sync off) - see `.github/scripts/seed-from-dump.sh`. A seed that fails removes the volume, so the next deploy starts again rather than keeping a half-restored database.
@@ -411,15 +413,10 @@ A new server, or one being reset, can start with more than the small sample data
 
 ## Verifying
 
+Every lane should be listed, online, with the labels its role needs:
+
 ```bash
 gh api repos/msupply-foundation/open-msupply-internal/actions/runners -q '.runners[]|[.name,.status,(.labels|map(.name)|join(","))]|@tsv'
-```
-
-Then run the benchmark workflow and compare its summary against other machines:
-
-```bash
-gh workflow run integration-test-check.yaml --ref develop \
-  -f cache=both -f change=layered -f cold=false
 ```
 
 ## Decisions
@@ -441,7 +438,7 @@ Why the box is set up this way, so nobody has to rediscover it. Decisions record
 - **The proxy's host port is read back, not configured.** A `PROXY_PORT` repository variable used to duplicate what the proxy already knew, and a mismatch reported every deployment as unroutable. If it is still set on the repository it is inert. See `docker-deploy.yaml`.
 - **`DEPLOY_SHARED_DAEMON` skips the registry rather than adding a local one.** The image then exists only on this box's disk: a prune or a rebuilt box means recompiling rather than pulling, but costs no data, since databases are volumes. `skip_if_exists` probes the daemon instead of the registry while it is set. See `docker-named-deployment.yaml`.
 - **`e2e`, not `reference1`, as the default dataset.** `reference1` is a 2023 V5/V6 export, and `SyncBufferRow.source_site_id` is a plain `i32` with no `#[serde(default)]`, so it fails to deserialise (`missing field 'source_site_id'`) before integration. Fixing it is a server change: that `#[serde(default)]` plus a re-export. `e2e` is exercised nightly, so it cannot rot unnoticed.
-- **The dashboard's design** — the socket-holding container with no network and no listener, sign-in with the viewer's own token, and buttons that dispatch the existing workflows so there is one writer — is in the header comments of `.github/deploy/dashboard/compose.dashboard.yaml`, `snapshot.mjs` and `web.mjs`.
+- **The dashboard's design** — the socket-holding container with no network and no listener, sign-in with the viewer's own token, and buttons that dispatch the existing workflows so there is one writer, except for datasets, which it writes itself — is in the header comments of `.github/deploy/dashboard/compose.dashboard.yaml`, `snapshot.mjs`, `web.mjs` and `datasets.mjs`.
 - **Plugin bundles are organised by each plugin's own version, not by branch or commit**, and released by bumping the version, with no git tags yet. Compatibility with core is kept as a separate field so it can stop being tied to the version number later.
 - **Plugin bundles live on this box, not in git** (#645). Committing them back from CI would put a bot commit on `develop` and the RC branches after every plugin change, and would leave QA's branch builds with nowhere to go. A reproducible build means the box only ever holds a cache. They are served by the dashboard because it already has the sign-in and the route. See [Plugin bundles](#plugin-bundles).
 - **How deployments are deployed** — compose files from the running workflow's commit, version overrides for old releases, and why the workflows are not split into `@develop` run files — is Fork 4 of `frontend/kdd/server-image-build/draft-kdd.md`.

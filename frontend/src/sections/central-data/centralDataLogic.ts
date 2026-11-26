@@ -61,6 +61,13 @@ export const TABLES: {
     hasStatus: false,
   },
   {
+    value: 'STORE',
+    labelKey: 'stores',
+    sheet: 'store',
+    searchKey: 'label.code-or-name-contains',
+    hasStatus: true,
+  },
+  {
     value: 'USER',
     labelKey: 'label.users',
     sheet: 'user',
@@ -80,6 +87,48 @@ export const TABLES: {
     sheet: 'master_list',
     searchKey: 'label.code-or-name-contains',
     hasStatus: true,
+  },
+  {
+    value: 'MASTER_LIST_LINE',
+    labelKey: 'label.master-list-lines',
+    sheet: 'master_list_line',
+    searchKey: 'label.master-list-name-or-item-code-contains',
+    hasStatus: false,
+  },
+  {
+    value: 'MASTER_LIST_NAME_JOIN',
+    labelKey: 'label.names-on-master-lists',
+    sheet: 'master_list_name_join',
+    searchKey: 'label.master-list-name-or-name-code-contains',
+    hasStatus: false,
+  },
+  {
+    value: 'NAME_STORE_JOIN',
+    labelKey: 'label.names-in-stores',
+    sheet: 'name_store_join',
+    searchKey: 'label.code-contains',
+    hasStatus: false,
+  },
+  {
+    value: 'ITEM_STORE_JOIN',
+    labelKey: 'label.items-in-stores',
+    sheet: 'item_store_join',
+    searchKey: 'label.item-code-or-store-code-contains',
+    hasStatus: false,
+  },
+  {
+    value: 'USER_STORE_JOIN',
+    labelKey: 'label.users-in-stores',
+    sheet: 'user_store_join',
+    searchKey: 'label.username-or-store-code-contains',
+    hasStatus: false,
+  },
+  {
+    value: 'USER_PERMISSION',
+    labelKey: 'label.user-permissions',
+    sheet: 'user_permission',
+    searchKey: 'label.username-or-store-code-contains',
+    hasStatus: false,
   },
 ];
 
@@ -272,6 +321,15 @@ export const totals = (summary: Summary) =>
 export const changeCount = (summary: Summary) => {
   const { inserted, updated, deleted } = totals(summary);
   return inserted + updated + deleted;
+};
+
+/** What the preview card says under its lists: the errors, that Import is
+ *  ready, or that the file changes nothing so there's nothing to import. */
+export const previewNotice = (
+  summary: Summary
+): 'errors' | 'ready' | 'nothing-to-import' => {
+  if (summary.errorCount > 0) return 'errors';
+  return changeCount(summary) > 0 ? 'ready' : 'nothing-to-import';
 };
 
 /** The changed-row badge; unchanged rows are never listed. A restore counts

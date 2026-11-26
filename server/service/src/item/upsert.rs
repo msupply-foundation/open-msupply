@@ -1,8 +1,5 @@
 use crate::record_key::{KeyCase, other_with_key};
-use repository::{
-    ItemRow, ItemRowRepository, LocationTypeRowRepository, RepositoryError, StorageConnection,
-    UnitRowRepository,
-};
+use repository::{ItemRow, ItemRowRepository, RepositoryError, StorageConnection};
 
 #[derive(Debug, PartialEq)]
 pub enum UpsertItemError {
@@ -15,56 +12,52 @@ pub enum UpsertItemError {
     DefaultPackSizeNotPositive,
     NegativeVaccineDoses,
     NegativeVolumePerPack,
-    /// `unit_id` names no unit.
-    UnitNotFound,
-    /// `restricted_location_type_id` names no location type.
-    LocationTypeNotFound,
-    DatabaseError(RepositoryError),
 }
 
-impl From<RepositoryError> for UpsertItemError {
-    fn from(error: RepositoryError) -> Self {
-        UpsertItemError::DatabaseError(error)
+/// Adds or updates one item, which `item_errors` has passed. `saved` is the item with `row.id`,
+/// read without its legacy record, which is kept; `row`'s is written only for a new item. The
+/// caller finds the row's unit and location type, as an import does from the tables it holds.
+pub fn upsert_item_unchecked(
+    connection: &StorageConnection,
+    saved: Option<&ItemRow>,
+    row: &ItemRow,
+) -> Result<(), RepositoryError> {
+    let repo = ItemRowRepository::new(connection);
+    match saved {
+        Some(_) => repo.update_keeping_legacy_record(row),
+        None => repo.upsert_one(row),
     }
 }
 
-/// Adds or updates one item. Keeps a saved item's `legacy_record`; `row`'s is written only for a
-/// new item. Joins the caller's transaction when there is one, so an import's earlier rows count.
-pub fn upsert_item(connection: &StorageConnection, row: &ItemRow) -> Result<(), UpsertItemError> {
-    connection
-        .transaction_sync(|connection| -> Result<(), UpsertItemError> {
-            let saved =
-                ItemRowRepository::new(connection).find_one_by_id_without_legacy_record(&row.id)?;
-            validate(saved.as_ref(), row)?;
-            check_references(connection, saved.as_ref(), row)?;
-            save(connection, saved.as_ref(), row)
-        })
-        .map_err(|error| error.to_inner_error())
-}
-
-/// As `upsert_item`, for a caller that has read `saved` by `row.id`, without its legacy record,
-/// and found the row's unit and location type, as an import does from the tables it holds.
-pub fn upsert_resolved_item(
+/// Every rule `row` breaks. `saved` is as for `upsert_item_unchecked`.
+pub fn item_errors(
     connection: &StorageConnection,
     saved: Option<&ItemRow>,
     row: &ItemRow,
-) -> Result<(), UpsertItemError> {
-    connection
-        .transaction_sync(|connection| -> Result<(), UpsertItemError> {
-            validate(saved, row)?;
-            save(connection, saved, row)
-        })
-        .map_err(|error| error.to_inner_error())
-}
-
-/// Refuses a code another item has, then writes.
-fn save(
-    connection: &StorageConnection,
-    saved: Option<&ItemRow>,
-    row: &ItemRow,
-) -> Result<(), UpsertItemError> {
+) -> Result<Vec<UpsertItemError>, RepositoryError> {
+    // Only a value the row changes is checked, so saved items with bad numbers stay editable.
+    let changes = |field: fn(&ItemRow) -> f64| saved.is_none_or(|saved| field(saved) != field(row));
+    let mut errors: Vec<_> = [
+        (row.code.trim().is_empty(), UpsertItemError::CodeRequired),
+        (row.name.trim().is_empty(), UpsertItemError::NameRequired),
+        (
+            row.default_pack_size <= 0.0 && changes(|item| item.default_pack_size),
+            UpsertItemError::DefaultPackSizeNotPositive,
+        ),
+        (
+            row.vaccine_doses < 0 && changes(|item| item.vaccine_doses.into()),
+            UpsertItemError::NegativeVaccineDoses,
+        ),
+        (
+            row.volume_per_pack < 0.0 && changes(|item| item.volume_per_pack),
+            UpsertItemError::NegativeVolumePerPack,
+        ),
+    ]
+    .into_iter()
+    .filter_map(|(broken, error)| broken.then_some(error))
+    .collect();
     let repo = ItemRowRepository::new(connection);
-    if let Some(other_id) = other_with_key(
+    if let Some(other) = other_with_key(
         saved.map(|saved| saved.code.as_str()),
         &row.id,
         &row.code,
@@ -72,68 +65,16 @@ fn save(
         |code| repo.find_by_trimmed_code_without_legacy_record(code),
         |other| &other.id,
     )? {
-        return Err(UpsertItemError::DuplicateCode { other_id });
+        errors.push(UpsertItemError::DuplicateCode { other_id: other.id });
     }
-    match saved {
-        Some(_) => repo.update_keeping_legacy_record(row)?,
-        None => repo.upsert_one(row)?,
-    }
-    Ok(())
-}
-
-fn validate(saved: Option<&ItemRow>, row: &ItemRow) -> Result<(), UpsertItemError> {
-    if row.code.trim().is_empty() {
-        return Err(UpsertItemError::CodeRequired);
-    }
-    if row.name.trim().is_empty() {
-        return Err(UpsertItemError::NameRequired);
-    }
-    // Only a value the row changes is checked, so saved items with bad numbers stay editable.
-    let changes = |field: fn(&ItemRow) -> f64| saved.is_none_or(|saved| field(saved) != field(row));
-    if row.default_pack_size <= 0.0 && changes(|item| item.default_pack_size) {
-        return Err(UpsertItemError::DefaultPackSizeNotPositive);
-    }
-    if row.vaccine_doses < 0 && changes(|item| item.vaccine_doses.into()) {
-        return Err(UpsertItemError::NegativeVaccineDoses);
-    }
-    if row.volume_per_pack < 0.0 && changes(|item| item.volume_per_pack) {
-        return Err(UpsertItemError::NegativeVolumePerPack);
-    }
-    Ok(())
-}
-
-fn check_references(
-    connection: &StorageConnection,
-    saved: Option<&ItemRow>,
-    row: &ItemRow,
-) -> Result<(), UpsertItemError> {
-    // Foreign keys hold a saved reference to an existing record, so only a changed one is checked.
-    // The database would refuse a missing one too, but only as a general error.
-    let new_reference = |field: fn(&ItemRow) -> Option<&str>| {
-        field(row).filter(|_| saved.is_none_or(|saved| field(saved) != field(row)))
-    };
-    if let Some(unit_id) = new_reference(|item| item.unit_id.as_deref())
-        && !UnitRowRepository::new(connection).check_exists_by_id(unit_id)?
-    {
-        return Err(UpsertItemError::UnitNotFound);
-    }
-    if let Some(location_type_id) =
-        new_reference(|item| item.restricted_location_type_id.as_deref())
-        && !LocationTypeRowRepository::new(connection).check_exists_by_id(location_type_id)?
-    {
-        return Err(UpsertItemError::LocationTypeNotFound);
-    }
-    Ok(())
+    Ok(errors)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{
-        UnitRow, UnitRowRepository,
-        mock::{MockDataInserts, mock_location_type_a},
-        test_db::setup_all,
-    };
+    use crate::test_helpers::save_checked;
+    use repository::{mock::MockDataInserts, test_db::setup_all};
 
     fn item(id: &str, code: &str) -> ItemRow {
         ItemRow {
@@ -145,8 +86,13 @@ mod tests {
         }
     }
 
-    fn upsert(connection: &StorageConnection, row: &ItemRow) -> Result<(), UpsertItemError> {
-        upsert_item(connection, row)
+    fn upsert(connection: &StorageConnection, row: &ItemRow) -> Result<(), Vec<UpsertItemError>> {
+        let saved = ItemRowRepository::new(connection)
+            .find_one_by_id_without_legacy_record(&row.id)
+            .unwrap();
+        save_checked(item_errors(connection, saved.as_ref(), row), || {
+            upsert_item_unchecked(connection, saved.as_ref(), row)
+        })
     }
 
     fn ids_coded(connection: &StorageConnection, code: &str) -> Vec<String> {
@@ -238,42 +184,9 @@ mod tests {
             ),
         ];
         for (row, error) in checks {
-            assert_eq!(upsert(&connection, &row), Err(error));
+            assert_eq!(upsert(&connection, &row), Err(vec![error]));
         }
         upsert(&connection, &item("a", "PARA")).unwrap();
-    }
-
-    #[actix_rt::test]
-    async fn its_unit_and_location_type_must_exist() {
-        let (_, connection, _, _) = setup_all(
-            "upsert_item_references",
-            MockDataInserts::none().location_types(),
-        )
-        .await;
-        UnitRowRepository::new(&connection)
-            .upsert_one(&UnitRow {
-                id: "tab".to_string(),
-                name: "Tab".to_string(),
-                ..Default::default()
-            })
-            .unwrap();
-        let with = |unit_id: &str, location_type_id: &str| ItemRow {
-            unit_id: Some(unit_id.to_string()),
-            restricted_location_type_id: Some(location_type_id.to_string()),
-            ..item("a", "PARA")
-        };
-        let unit = "tab".to_string();
-        let location_type = mock_location_type_a().id;
-
-        assert_eq!(
-            upsert(&connection, &with("no_such_unit", &location_type)),
-            Err(UpsertItemError::UnitNotFound)
-        );
-        assert_eq!(
-            upsert(&connection, &with(&unit, "no_such_location_type")),
-            Err(UpsertItemError::LocationTypeNotFound)
-        );
-        upsert(&connection, &with(&unit, &location_type)).unwrap();
     }
 
     #[actix_rt::test]
@@ -282,45 +195,13 @@ mod tests {
             setup_all("upsert_item_duplicate_code", MockDataInserts::none()).await;
         upsert(&connection, &item("a", "PARA")).unwrap();
 
-        let duplicate = Err(UpsertItemError::DuplicateCode {
+        let duplicate = Err(vec![UpsertItemError::DuplicateCode {
             other_id: "a".to_string(),
-        });
+        }]);
         assert_eq!(upsert(&connection, &item("b", "PARA")), duplicate);
         assert_eq!(upsert(&connection, &item("b", " PARA ")), duplicate);
         // Letter case counts, as it does in lookups.
         upsert(&connection, &item("b", "para")).unwrap();
-    }
-
-    /// The import finds the saved item and its references itself; the other rules still hold.
-    #[actix_rt::test]
-    async fn a_resolved_item_still_needs_good_numbers_and_its_own_code() {
-        let (_, connection, _, _) =
-            setup_all("upsert_resolved_item", MockDataInserts::none()).await;
-        upsert(&connection, &item("a", "PARA")).unwrap();
-
-        assert_eq!(
-            upsert_resolved_item(&connection, None, &item("b", " PARA ")),
-            Err(UpsertItemError::DuplicateCode {
-                other_id: "a".to_string()
-            })
-        );
-        let no_pack_size = ItemRow {
-            default_pack_size: 0.0,
-            ..item("b", "AMOX")
-        };
-        assert_eq!(
-            upsert_resolved_item(&connection, None, &no_pack_size),
-            Err(UpsertItemError::DefaultPackSizeNotPositive)
-        );
-
-        let repo = ItemRowRepository::new(&connection);
-        let saved = repo.find_one_by_id_without_legacy_record("a").unwrap();
-        let renamed = ItemRow {
-            name: "Paracetamol 500mg".to_string(),
-            ..item("a", "PARA")
-        };
-        upsert_resolved_item(&connection, saved.as_ref(), &renamed).unwrap();
-        assert_eq!(repo.find_one_by_id("a").unwrap(), Some(renamed));
     }
 
     #[actix_rt::test]
@@ -348,7 +229,7 @@ mod tests {
         };
         assert_eq!(
             upsert(&connection, &changed),
-            Err(UpsertItemError::DefaultPackSizeNotPositive)
+            Err(vec![UpsertItemError::DefaultPackSizeNotPositive])
         );
         let negative_volume = ItemRow {
             volume_per_pack: -0.5,
@@ -356,7 +237,7 @@ mod tests {
         };
         assert_eq!(
             upsert(&connection, &negative_volume),
-            Err(UpsertItemError::NegativeVolumePerPack)
+            Err(vec![UpsertItemError::NegativeVolumePerPack])
         );
     }
 

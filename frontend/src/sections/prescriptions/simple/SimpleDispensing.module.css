@@ -17,6 +17,41 @@
   grid-column: 4;
 }
 
+/* The number is a key's whole label, so it needs none of a labelled button's
+   4rem floor or side padding: three keys and the another-amount key fit a
+   card a third of the cards' room wide. `button.key` (not `.key`) so this
+   outranks the library button's own size rule whichever stylesheet loads
+   first. */
+.amounts > button.key:not(.another, .lone) {
+  min-inline-size: 0;
+  padding-inline: 0;
+}
+
+/* After the usual amounts, the another-amount key is a square as tall as
+   they are, with a dashed edge: it asks for an amount rather than giving one.
+   Quiet ink, as the least used key on the card. No fill of its own, so the
+   gaps in the dashes show the card, not a fill a step darker (a torn edge in
+   the dark theme), and the field edge's colour so the dashes read in both
+   themes. Outranks the icon button's own box (`.iconButton[data-bordered]`). */
+.amounts > button.another {
+  inline-size: var(--button-height);
+  block-size: var(--button-height);
+  border-style: dashed;
+  border-color: var(--input-border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+/* With no usual amounts it is the card's one key, in the first amount's
+   place and shaped like one, so it doesn't read as amounts that failed to
+   load. */
+.amounts > button.lone {
+  inline-size: auto;
+  block-size: var(--button-height);
+  border-radius: var(--radius-sm);
+}
+
 /* A phone's one-row card (DetailCard layout="inline"): the amounts at the
    inline end, each key a fixed width so they line up down the page and the
    name keeps what is left. The number is the key's whole label, so it needs
@@ -27,11 +62,6 @@
   grid-template-columns: repeat(3, 2.75rem) auto;
   margin-block-start: 0;
   padding-block-start: 0;
-}
-
-.amounts[data-one-row] > button.key:not(.another) {
-  min-inline-size: 0;
-  padding-inline: 0;
 }
 
 /*
@@ -145,6 +175,30 @@
   margin-block-end: var(--space-4);
 }
 
+/* A darker edge than the app's other fields, so it reads as a search rather
+   than an empty form field. The element holding the input is the lookup's
+   control; its focus, error and disabled edges still win. */
+.search :has(> input) {
+  border-color: var(--text-secondary);
+}
+
+/* The cards: a tighter gap than a card grid's, so three fit beside the docked
+   list on a laptop. A card is never narrower than its three keys and the
+   another-amount key need (the page's minColumnWidth reads this), wider on a
+   touch screen, whose keys are taller and need a thumb's width too.
+   `div.cards` outranks the grid's own gap whichever stylesheet loads first. */
+div.cards {
+  --medicine-card-min: 14rem;
+
+  gap: var(--space-3);
+}
+
+@media (pointer: coarse) {
+  div.cards {
+    --medicine-card-min: 17rem;
+  }
+}
+
 /* The amount box (AmountDialog): the usual amounts, then the field. */
 .amountBox {
   display: flex;
@@ -167,4 +221,14 @@
 .amountChoices > .amounts {
   grid-template-columns: repeat(3, minmax(4rem, 6rem));
   justify-content: start;
+}
+
+/* Correct the stock's body: the medicine and what the system shows. */
+.correctFigure {
+  margin: 0;
+}
+
+/* In Correct the stock's place for staff who can't adjust stock: who can. */
+.correctHint {
+  font-size: var(--text-xs);
 }

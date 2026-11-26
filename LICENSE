@@ -1,12 +1,15 @@
 MSUPPLY OPEN SOURCE LICENSE
-LOW INCOME AND MIDDLE INCOME ECONOMIES
-Version 1, February 2023
+LOW INCOME AND MIDDLE INCOME ECONOMIES AND SELECTED PUBLICLY FUNDED HEALTH SERVICES
+Version 2, November 2026
 
 This open source licence incorporates and extends the GNU AFFERO GENERAL PUBLIC LICENSE (Version 3, 19 November 2007), but alters it in the following ways:
 
 It operates as a waiver of the copyright holder’s Copyright and Similar Rights in this work provided that:
 
-The purpose of any reproduction is and is only to facilitate or improve the delivery of health services to persons living in territories defined by the World Bank as Low Income or Middle Income Economies (“Beneficiaries”);
+The purpose of any reproduction is and is only to facilitate or improve the delivery of health services to persons in either of the following categories  (hereafter “Beneficiaries”):
+* Those living in territories defined by the World Bank as Low Income or Middle Income Economies, 
+* Recipients of publicly funded health services in Australia, Canada, New Zealand and the United Kingdom
+
 The use of any reproduction is and is only to facilitate or improve the delivery of health services to Beneficiaries;
 Any work containing any modification of this work is not made available by a modifier to or for use by any third party other than in circumstances in which each modification of this work is conspicuously marked as changed and the object code and corresponding source code, in the preferred form in which a programmer would modify the program. In addition the entirety of the work containing any modification of this work must be made readily and freely available to all persons by download via the Internet;
 This licence, unmodified including title and version date, is applied to and conspicuously published on each reproduction of and on the entirety of any work containing any modification of this work without application of any inconsistent additional conditions;
