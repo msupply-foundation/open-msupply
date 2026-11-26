@@ -99,7 +99,12 @@ const errorColumns: Column<RowError, never>[] = [
   },
 ];
 
-export const ImportPreviewCard = (props: { preview: Preview }) => {
+/** `rechecked`: the preview was run again after an Import whose reply was
+ *  lost, so nothing was just uploaded. */
+export const ImportPreviewCard = (props: {
+  preview: Preview;
+  rechecked?: boolean;
+}) => {
   const errorCount = () => props.preview.summary.errorCount;
   const changes = () => changeCount(props.preview.summary);
   const notice = () => previewNotice(props.preview.summary);
@@ -213,16 +218,20 @@ export const ImportPreviewCard = (props: { preview: Preview }) => {
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
-            <Alert severity="success" testId="central-data-upload-successful">
-              {t('messages.central-data-upload-successful')}
-            </Alert>
+            <Show when={!props.rechecked}>
+              <Alert severity="success" testId="central-data-upload-successful">
+                {t('messages.central-data-upload-successful')}
+              </Alert>
+            </Show>
             <Alert severity="info" testId="central-data-all-or-nothing">
               {t('messages.central-data-problem-imports-nothing')}
             </Alert>
           </Match>
           <Match when={notice() === 'nothing-to-import'}>
             <Alert severity="success" testId="central-data-nothing-to-import">
-              {t('messages.central-data-nothing-to-import')}
+              {props.rechecked
+                ? t('messages.central-data-nothing-left-to-import')
+                : t('messages.central-data-nothing-to-import')}
             </Alert>
           </Match>
           <Match when={notice() === 'errors'}>

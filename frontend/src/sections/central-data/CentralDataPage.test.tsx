@@ -25,6 +25,7 @@ interface AlertProps {
 }
 interface PreviewCardProps {
   preview: { fileId: string; fileName: string; summary: unknown };
+  rechecked?: boolean;
 }
 interface PreviewFooterProps extends PreviewCardProps {
   busy: boolean;
@@ -346,6 +347,7 @@ describe('CentralDataPage import', () => {
     });
     // The pinned footer acts on the same upload.
     expect(shown.footer!.preview).toBe(shown.previewCard!.preview);
+    expect(shown.previewCard!.rechecked).toBe(false);
     expect(alerts()).toEqual([]);
   });
 
@@ -563,6 +565,8 @@ describe('CentralDataPage import', () => {
       fileName: 'units.xlsx',
       summary: applied,
     });
+    // So the card doesn't call it an upload.
+    expect(shown.previewCard!.rechecked).toBe(true);
     expect(alerts()).toEqual([
       [
         'central-data-import-rechecked',

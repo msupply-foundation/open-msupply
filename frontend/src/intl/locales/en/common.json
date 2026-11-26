@@ -2836,6 +2836,7 @@
   "messages.central-data-import-rechecked": "Couldn't tell whether the import finished, so the file was checked again. The preview now shows what importing it would still change.",
   "messages.central-data-import-start-from-export": "Not sure what the file looks like? Download your tables from the Export tab and edit that file.",
   "messages.central-data-imported": "Imported. {{new}} new, {{updated}} updated, {{deleted}} deleted.",
+  "messages.central-data-nothing-left-to-import": "The file matches what's saved, so there's nothing left to import.",
   "messages.central-data-nothing-to-import": "Upload successful! The file matches what's saved, so there's nothing to import.",
   "messages.central-data-problem-imports-nothing": "If there is a problem with an import row, no data is imported!",
   "messages.central-data-upload-successful": "Upload successful! Click \"Import\" below to continue.",

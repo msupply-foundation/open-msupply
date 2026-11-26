@@ -137,10 +137,10 @@ const preview = (updated: number, errorCount: number): Preview => ({
 });
 
 /** Renders the card and its footer for `p`. */
-const open = (p: Preview) =>
+const open = (p: Preview, rechecked = false) =>
   createRoot(d => {
     dispose = d;
-    resolve(ImportPreviewCard({ preview: p }));
+    resolve(ImportPreviewCard({ preview: p, rechecked }));
     resolve(
       ImportPreviewFooter({
         preview: p,
@@ -201,6 +201,32 @@ describe('OMS-REG-CDIO-01.212 — the preview card notice', () => {
     expect(alerts()).toEqual([]);
     expect(shown.changedRows).toBe(0);
     expect(shown.errorTables).toBe(1);
+    expect(importDisabled()).toBe(true);
+  });
+});
+
+describe('OMS-REG-CDIO-01.102 — the preview after an Import whose reply was lost', () => {
+  it('with changes left, says nothing was uploaded: only the info notice shows', () => {
+    open(preview(1, 0), true);
+    expect(alerts()).toEqual([
+      [
+        'info',
+        'central-data-all-or-nothing',
+        'messages.central-data-problem-imports-nothing',
+      ],
+    ]);
+    expect(importDisabled()).toBe(false);
+  });
+
+  it('with nothing left to change, says so without the upload lead-in', () => {
+    open(preview(0, 0), true);
+    expect(alerts()).toEqual([
+      [
+        'success',
+        'central-data-nothing-to-import',
+        'messages.central-data-nothing-left-to-import',
+      ],
+    ]);
     expect(importDisabled()).toBe(true);
   });
 });
