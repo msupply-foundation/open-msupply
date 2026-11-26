@@ -160,7 +160,11 @@ export const InternalOrderToolbar: Component<
         )
       : targetMonthOptions(
           props.node.maxMonthsOfStock,
-          props.node.minMonthsOfStock
+          props.node.minMonthsOfStock,
+          // Program orders take their order type's target.
+          props.isProgram
+            ? undefined
+            : (props.node.supplyIntervalAndBuffer ?? undefined)
         );
   };
 
