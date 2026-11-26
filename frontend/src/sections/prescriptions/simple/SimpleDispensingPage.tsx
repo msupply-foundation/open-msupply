@@ -146,8 +146,10 @@ const SimpleDispensingPage: Component = () => {
   // store must still go to the store it was dispensed in.
   const storeOpened = untrack(() => params.storeId);
   const recordsHref = `/${storeOpened}/dispensary/dispensing/records`;
-  const simpleHref = `/${storeOpened}/dispensary/dispensing/simple`;
-  const visitHref = (id: string) => `${simpleHref}/${id}`;
+  // The screen is at Dispensing's own address; a dispensed visit open on it,
+  // under '/simple' (prescriptions/index.tsx).
+  const simpleHref = `/${storeOpened}/dispensary/dispensing`;
+  const visitHref = (id: string) => `${simpleHref}/simple/${id}`;
   const navigate = useNavigate();
 
   // The visit in progress, kept while staff go elsewhere (rules › Dispensing

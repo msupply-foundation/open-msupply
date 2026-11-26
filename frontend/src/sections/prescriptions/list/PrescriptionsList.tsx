@@ -123,8 +123,7 @@ const PrescriptionsList: Component = () => {
   const simpleStore = () =>
     prescriptionPreferences().dispensingScreen === 'SIMPLE';
   const newRecord = () => {
-    if (simpleStore())
-      navigate(`/${params.storeId}/dispensary/dispensing/simple`);
+    if (simpleStore()) navigate(`/${params.storeId}/dispensary/dispensing`);
     else setCreateOpen(true);
   };
 
