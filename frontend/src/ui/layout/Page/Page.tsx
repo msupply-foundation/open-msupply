@@ -69,7 +69,8 @@ export interface PageProps {
    * panels (DetailCard `surface="panel"`). A table that fills the body paints
    * its own white over the shade. Only the tender page
    * (spec/procurement/ui-surface.md § S1) and the Simple dispensing screen
-   * (spec/prescriptions/ui-surface.md § S9) set it.
+   * (spec/prescriptions/ui-surface.md § S9) and the Reports page
+   * (spec/reports/ui-surface.md § S1, DashboardCard `surface="panel"`) set it.
    * TO-DO: make it the default for every page once stakeholders approve the
    * look (#2172).
    */
