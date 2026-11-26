@@ -1,4 +1,11 @@
-import { createSignal, Match, Show, Switch, type Component } from 'solid-js';
+import {
+  createSignal,
+  For,
+  Match,
+  Show,
+  Switch,
+  type Component,
+} from 'solid-js';
 import { t, tPlural } from '@/intl';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { createFocusTarget } from '@/ui/utils/createFocusTarget';
@@ -12,7 +19,7 @@ import {
   runBatchStocktakeLines,
   type LineEditCommit,
 } from '../lines/stocktakeLineUpdate';
-import type { LineErrors } from '../lines/stocktakeLineErrors';
+import { lineErrorCauses, type LineErrors } from '../lines/stocktakeLineErrors';
 
 export interface ReduceToZeroActionProps {
   storeId: string;
@@ -106,12 +113,6 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
   const [errors, setErrors] = createSignal<LineErrors>(new Map());
 
   const errorCount = () => errors().size;
-  // Every rejection is the reserved-stock rule → name that cause outright. A
-  // mixed bag (a reason became invalid, the stocktake was locked meanwhile)
-  // falls back to the bare count, since one sentence can't explain all of them.
-  const allReservedStock = () =>
-    errorCount() > 0 &&
-    [...errors().values()].every(e => e === 'StockLineReducedBelowZero');
 
   const run = async () => {
     if (phase() !== 'confirm') return; // re-entry guard
@@ -180,17 +181,19 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
         >
           <Match when={phase() === 'summary'}>
             {/* Two facts, two lines: what WAS reduced (the action did work, so
-                this is not a plain error) and what wasn't, with the cause when
-                every rejection shares one. severity="warning" because the
-                result is partial, not failed. */}
+                this is not a plain error) and what wasn't, then each cause.
+                severity="warning" because the result is partial, not
+                failed. */}
             <Alert severity="warning" testId="reduce-to-zero-summary">
               <Show when={reducedCount() > 0}>
                 <p>{tPlural('messages.lines-reduced', reducedCount())}</p>
               </Show>
               <p>{tPlural('messages.lines-not-reduced', errorCount())}</p>
-              <Show when={allReservedStock()}>
-                <p>{t('error.reduced-below-zero')}</p>
-              </Show>
+              {/* Each cause once: reserved stock, stock moved since the
+                  count started, … (OMS-REG-INV-03.99). */}
+              <For each={lineErrorCauses(errors().values())}>
+                {cause => <p>{cause}</p>}
+              </For>
             </Alert>
           </Match>
         </Switch>
