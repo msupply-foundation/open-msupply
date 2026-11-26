@@ -69,7 +69,7 @@ Counts are English strings containing the term, split by the Lao used.
 | download                | ດາວໂຫຼດ      | 14/14         |                                                                                                                                                                  |
 | file                    | ໄຟລ໌         | 34/35         | _ແຟ້ມ_ once, for a medical file                                                                                                                                  |
 | row                     | ແຖວ          | 26/26         | also "line" (_ແຖວສະຕ໋ອກ_)                                                                                                                                        |
-| column                  | ຄໍລຳ         | 10/13         | _ຖັນ_ 3 (`table.column-visible`, `table.columns`, `table.edit-columns`)                                                                                          |
+| column                  | ຄໍລຳ         | 13/13         |                                                                                                                                                                  |
 | sheet (Excel worksheet) | —            | 0             | only _ໃບ_ for a paper stocktake sheet (2); see open questions                                                                                                    |
 | table                   | ຕາຕະລາງ      | 6/6           |                                                                                                                                                                  |
 | record (data record)    | ລາຍການຂໍ້ມູນ | 16            | _ບັນທຶກ_ in 3 (`sync-status.footer-records-queued_other`, `warning.high-number-records-to-sync`, `messages.custom-fields-in-header`); _ບັນທຶກ_ also means "save" |
@@ -105,7 +105,7 @@ Settled by the drafts, not yet by a Lao reviewer. Change them here when one does
 | English                          | Lao               | Notes                                                                                          |
 | -------------------------------- | ----------------- | ---------------------------------------------------------------------------------------------- |
 | dispense (verb, button)          | ຈ່າຍຢາ            | not Google's _ແຈກຢາຍ_ ("distribute")                                                           |
-| dispensing record                | ການຈ່າຍຢາ         | keeps _ໃບສັ່ງຢາ_ for a prescriber's prescription; see open questions                           |
+| dispensing record                | ການຈ່າຍຢາ         | keeps _ໃບສັ່ງຢາ_ for a prescriber's prescription (`label.prescription-request`)                |
 | Dispensing records (list/button) | ປະຫວັດການຈ່າຍຢາ   | "dispensing history"                                                                           |
 | unnamed patient                  | ຄົນເຈັບບໍ່ລະບຸຊື່ | "no name given", not "has no name"                                                             |
 | common medicines                 | ຢາທີ່ໃຊ້ເລື້ອຍ    | coined; _ຢາທົ່ວໄປ_ would read as "generic medicines"                                           |
@@ -118,28 +118,27 @@ Settled by the drafts, not yet by a Lao reviewer. Change them here when one does
 | left (quantity left)             | ເຫຼືອ             | not _ຊ້າຍ_ (left-hand side)                                                                    |
 | screen                           | ໜ້າຈໍ             |                                                                                                |
 
+### Terms settled for issue #2747 (2026-11-27)
+
+Applied across the catalog, pending a Lao reviewer's confirmation. Change them here and in the catalog if one disagrees.
+
+| English                          | Lao                         | Notes                                                                                                     |
+| -------------------------------- | --------------------------- | --------------------------------------------------------------------------------------------------------- |
+| more / add                       | ເພີ່ມ                       | _ເພິ່ມ_ (22 strings) was a misspelling                                                                    |
+| dispensing record                | ການຈ່າຍຢາ                   | every string whose English says "dispensing"; _ໃບສັ່ງຢາ_ only where the English says "prescription"       |
+| clear (filter, field)            | ລ້າງ                        | _ລຶບ_ is "delete"; keep it where clearing really deletes data (desktop `clear-data`, legacy translations) |
+| column                           | ຄໍລຳ                        | not _ຖັນ_                                                                                                 |
+| hardware ID                      | ID ອຸປະກອນ                  | "X ID" is _ID_ + the Lao noun, as in _ID ຄົນເຈັບ_                                                         |
+| site ID                          | ID ສະຖານທີ່                 |                                                                                                           |
+| namespace                        | ເນມສະເປດ                    | transliterated, like other computing words                                                                |
+| vendor / product ID (USB device) | ID ຜູ້ຜະລິດ / ID ຜະລິດຕະພັນ | _ສິນຄ້າ_ is a stock product; this is the device's                                                         |
+
 ## Open questions
 
-- **column: _ຄໍລຳ_ (10) vs _ຖັນ_ (3).** `table.column-visible`, `table.columns` and
-  `table.edit-columns` use _ຖັນ_; the reset-column labels and import errors use _ຄໍລຳ_. Drafts use
-  _ຄໍລຳ_.
-- **clear: _ລຶບ_ (7) vs _ລ້າງ_ (6).** `label.clear-filter` = _ລຶບຕົວກັ່ນຕອງ_ but
-  `label.clear-all-filters` = _ລ້າງທັງໝົດ_, `common.clear` = _ລ້າງ_. _ລຶບ_ is also "delete", so for
-  clearing a filter or field _ລ້າງ_ is the safer choice; the PMs should pick one.
 - **record: _ລາຍການຂໍ້ມູນ_ (16) vs _ບັນທຶກ_ (3)** for a database record (keys above).
 - **total: _ລວມ_ (25) vs _ຍອດລວມ_ (15).** _ຍອດລວມ_ in headings (`heading.total`), _ລວມ_ inside
   longer labels; not a conflict so much as two uses.
 - **sheet / workbook / cell** (Excel terms) have no catalog precedent. The central-data drafts
   use _ແຜ່ນງານ_ (worksheet), _ໄຟລ໌ Excel_ (workbook) and _ເຊວ_ (cell); a Lao reviewer should
   confirm.
-- **more: _ເພິ່ມ_ (misspelt, 22 strings) vs _ເພີ່ມ_ (116).** `button.more`, `common.more`,
-  `button.order-more` and others use _ເພິ່ມ_; it's a typo for _ເພີ່ມ_.
-- **dispensing record: _ໃບສັ່ງຢາ_ (15) vs _ການຈ່າຍຢາ_ (11).** _ໃບສັ່ງຢາ_ is the older majority,
-  but it is also the word for a prescriber's prescription (`label.prescription-request`), so
-  strings that name both (`messages.cant-delete-generated-dispensation`,
-  `messages.confirm-ready-to-dispense`) already use _ການຈ່າຍຢາ_ for the dispensing record. New
-  drafts use _ການຈ່າຍຢາ_. Still on _ໃບສັ່ງຢາ_: `button.view-prescription`,
-  `error.failed-to-create-prescription`, `error.prescription-not-found`,
-  `label.cancel-prescription`, `label.create-prescription`, `messages.deleted-prescriptions_other`,
-  `messages.prescription-will-be-created` and others. A Lao reviewer should pick one.
 - **status labels without _ແລ້ວ_**: 18 of 52 single-word "-ed" `label.` values leave it off.
