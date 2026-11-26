@@ -140,7 +140,8 @@ function getIsComplete(draft: ItemVariantFragment) {
   return (
     !!draft.name &&
     draft.packagingVariants.every(
-      pv => pv.packSize !== 0 && pv.volumePerUnit !== 0
+      // The server rejects a packaging level with a blank name
+      pv => !!pv.name.trim() && pv.packSize !== 0 && pv.volumePerUnit !== 0
     )
   );
 }

@@ -255,6 +255,47 @@ describe('isFormValid', () => {
     expect(isFormValid(form)).toBe(true);
   });
 
+  it("doesn't treat spaces added to a seeded name as a rename", () => {
+    const form = emptyForm();
+    form.name = 'One level';
+    form.packaging[0].packSize = 10;
+    form.packaging[0].volumePerUnit = 1;
+    form.packaging[1].name = `${form.packaging[1].name} `;
+    expect(isFormValid(form)).toBe(true);
+  });
+
+  // A row saved with no name and no values (possible before .33) is blank:
+  // it doesn't block Save, and the save removes it.
+  it('drops a saved row that has no name and no values', () => {
+    const form = formFromVariant(
+      variantRow({
+        packagingVariants: [
+          {
+            id: 'pv-1',
+            name: 'Primary',
+            packagingLevel: 1,
+            packSize: 1,
+            volumePerUnit: 0.5,
+            barcode: null,
+          },
+          {
+            id: 'pv-empty',
+            name: '',
+            packagingLevel: 2,
+            packSize: null,
+            volumePerUnit: null,
+            barcode: null,
+          },
+        ],
+      })
+    );
+    expect(isFormValid(form)).toBe(true);
+    const input = buildUpsertInput(form, ITEM_ID, 'variant-1');
+    expect(input.packagingVariants?.map(row => row.id)).not.toContain(
+      'pv-empty'
+    );
+  });
+
   // OMS-REG-CAT-05.33
   it('is invalid when an entered packaging row has a blank name', () => {
     const form = validForm();

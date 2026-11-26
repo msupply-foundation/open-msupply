@@ -122,16 +122,17 @@ export const formFromVariant = (variant: ItemVariantRow): DraftItemVariant => {
  * hasn't been entered: the seeded rows are "a starting point, not a rule"
  * (rules.md § item variants and packaging), so a blank one is left out of the
  * save rather than blocking it (OMS-REG-CAT-05.21). Renaming a row enters it,
- * so it's checked rather than silently dropped (OMS-REG-CAT-05.31); clearing
- * the name of an otherwise blank row doesn't. A row holding a barcode is never
- * blank: leaving it out would delete the barcode everywhere, and mark it
- * removed so auto-confirm won't bring it back.
+ * so it's checked rather than silently dropped (OMS-REG-CAT-05.32); clearing
+ * the name of an otherwise blank row, or adding spaces to it, doesn't. So a
+ * saved row with no name and no values is blank too, and a save removes it.
+ * A row holding a barcode is never blank: leaving it out would delete the
+ * barcode everywhere, and mark it removed so auto-confirm won't bring it back.
  */
 const isBlankRow = (row: DraftPackagingRow): boolean =>
   row.packSize === undefined &&
   row.volumePerUnit === undefined &&
   !row.barcode &&
-  (row.name.trim() === '' || row.name === row.initialName);
+  (row.name.trim() === '' || row.name.trim() === row.initialName.trim());
 
 /** Each invalid cell of a packaging row, with the message it shows. */
 export type PackagingRowErrors = Partial<
@@ -186,8 +187,8 @@ export const isFormValid = (form: DraftItemVariant): boolean =>
  * a full-replacement set (contract.md ⚠️ wire trap, rules.md § item variants
  * and packaging) — an omitted row is a deletion, so every save resends every
  * current row — except blank ones, which were never entered (so blanking an
- * existing row's values without a barcode, keeping its name, removes it). A value left blank goes as null,
- * as the server stores it. `locationTypeId`/`manufacturerId`/`vvmType` are
+ * existing row's values without a barcode, keeping its name, removes it). A
+ * value left blank goes as null, as the server stores it. `locationTypeId`/`manufacturerId`/`vvmType` are
  * NullableStringUpdate wrappers — `{ value: null }` clears, `{ value: id }`
  * sets; always sent (never omitted) so an edit can also clear a previously-set
  * value.

@@ -482,7 +482,7 @@
   "error.missing-inputs": "{{count}}",
   "error.missing-required-field": "Campo obrigatório ausente: {{fieldName}}",
   "error.more-info": "Mais informações",
-  "error.must-be-greater-than-zero": "Deve ser maior que 0",
+  "error.must-be-greater-than-zero": "Deve ser maior que zero",
   "error.name-program-duplicate": "Já existe um nome de curso de vacinação para este programa",
   "error.no-asset-create-permission": "Você não possui permissão para criar um novo ativo",
   "error.no-asset-create-scan-permission": "Você não possui permissão para criar um novo ativo via leitura de código Data Matrix",

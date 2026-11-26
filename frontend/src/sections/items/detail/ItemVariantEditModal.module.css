@@ -25,3 +25,10 @@
   min-height: var(--input-height);
   font-weight: var(--weight-medium);
 }
+
+/* Inputs grow on touch (TextField.module.css); the level follows them. */
+@media (pointer: coarse) {
+  .level {
+    min-height: var(--input-height-touch);
+  }
+}
