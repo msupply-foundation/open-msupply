@@ -1,9 +1,10 @@
 # One item's full read-only record (spec/items S2). Re-reads the items query
 # filtered by id AND isActive:true — an inactive/unknown id resolves to an empty
 # page, which the client renders as its not-found state (OMS-REG-CAT-04.32). storeId scopes
-# stats, store properties and master-list membership. Three legacy-record fields
-# (volumePerPack, margin, weight) are parsed from the item's legacy JSON on the
-# server (contract wire trap) — read as normal fields here.
+# stats, store properties and master-list membership. Weight is parsed from the
+# item's legacy JSON on the server (contract wire trap) — read as a normal field
+# here. Margin is the store's (itemStoreProperties), not ItemNode.margin: legacy
+# mSupply keeps margin per store (#2075).
 query itemDetail($storeId: String!, $id: EqualFilterStringInput) {
   items(storeId: $storeId, filter: { id: $id, isActive: true }) {
     ... on ItemConnector {
@@ -27,7 +28,6 @@ query itemDetail($storeId: String!, $id: EqualFilterStringInput) {
         volumePerPack
         volumePerOuterPack
         weight
-        margin
         customFields
         restrictedLocationType {
           id
@@ -35,6 +35,7 @@ query itemDetail($storeId: String!, $id: EqualFilterStringInput) {
         }
         itemStoreProperties(storeId: $storeId) {
           defaultSellPricePerPack
+          margin
           ignoreForOrders
         }
         masterLists(storeId: $storeId) {
