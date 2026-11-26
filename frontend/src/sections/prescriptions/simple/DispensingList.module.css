@@ -167,13 +167,45 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-1) var(--space-2);
-  padding: var(--space-2) var(--space-4) 0;
+  margin: var(--space-2) var(--space-4) 0;
+}
+
+/* A notice naming a visit: a full-width box in the notice's tone, holding
+   the message and View. The box takes the alert's tint recipe; the alert
+   inside drops its own panel and reads a size up, as the panel's news. */
+.notice[data-boxed] {
+  --notice-colour: var(--success-main);
+
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid
+    color-mix(in srgb, var(--notice-colour) 45%, var(--bg-white));
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--notice-colour) 10%, var(--bg-white));
+}
+
+.notice[data-boxed][data-severity='info'] {
+  --notice-colour: var(--info-main);
+}
+
+.notice[data-boxed][data-severity='warning'] {
+  --notice-colour: var(--warning-main);
+}
+
+.notice[data-boxed][data-severity='error'] {
+  --notice-colour: var(--error-main);
 }
 
 /* The message takes the row; View, where the visit it names can be opened,
    sits at its end, and wraps under it where there is no room. */
 .noticeAlert {
   flex: 1 1 12rem;
+}
+
+.notice[data-boxed] > .noticeAlert {
+  padding: 0;
+  background: none;
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
 }
 
 /* The list itself — on a phone, the sheet's content, a column whose lines

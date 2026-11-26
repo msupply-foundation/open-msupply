@@ -306,23 +306,35 @@ export const DispensingList = (props: {
             with the sheet closed; under the head where the list is docked. */}
         <Show when={props.notice}>
           {notice => (
-            <div class={styles.notice}>
+            /* A notice naming a visit (just dispensed, or its changes saved
+             * or discarded) is the panel's news: a full-width box, with View
+             * inside it at its end. Any other is the compact chip.
+             */
+            <div
+              class={styles.notice}
+              data-boxed={notice().viewHref ? '' : undefined}
+              data-severity={notice().severity}
+            >
               <Alert
                 severity={notice().severity}
-                compact
+                compact={!notice().viewHref}
+                icon={
+                  notice().viewHref && notice().severity === 'success'
+                    ? CheckCircleIcon
+                    : undefined
+                }
                 class={styles.noticeAlert}
                 testId="dispense-notice"
               >
                 {notice().text}
               </Alert>
               {/* Beside the message, not in it: the alert is a message
-                  panel, with no controls of its own. */}
+                  panel, with no controls of its own. The box holds both. */}
               <Show when={notice().viewHref}>
                 {href => (
                   <LinkButton
                     href={href()}
                     variant="ghost"
-                    size="small"
                     data-testid="view-dispensed-visit-button"
                   >
                     {t('button.view')}
