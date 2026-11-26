@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  lineDiscount,
   linePacks,
   orderTotals,
   projectedLineCost,
@@ -94,38 +95,101 @@ describe('OMS-FUN-PO-07.16 — the supplier discount apportioned to a line', () 
   });
 });
 
-describe('OMS-FUN-PO-07.12 — the totals band’s three figures', () => {
-  const node = {
-    orderTotalBeforeDiscount: 60,
-    orderTotalAfterDiscount: 45,
-    supplierDiscountAmount: 15,
-    supplierDiscountPercentage: 25,
-  };
-
-  it('reads across as subtotal − discount = order total', () => {
-    const totals = orderTotals(node);
-    expect(totals.subtotal).toBe(60);
-    expect(totals.discount).toBe(15);
-    expect(totals.total).toBe(45);
-    expect(totals.subtotal - totals.discount).toBe(totals.total);
+describe('OMS-FUN-PO-07.22 — a line’s discount', () => {
+  // 10 packs at 8.00 before discount, 6.00 after: 20.00 off by the line's own
+  // discount, and the stored cost of 60.00 is what the table shows.
+  const priced = (over = {}) => ({
+    requestedNumberOfUnits: 100,
+    requestedPackSize: 10,
+    pricePerPackBeforeDiscount: 8,
+    lineTotalAfterSupplierDiscount: 60,
+    ...over,
   });
 
-  it('carries the stored percentage, which is what the label names', () => {
-    expect(orderTotals(node).discountPercentage).toBe(25);
+  it('is the packs at the before-discount price less the line cost', () => {
+    expect(lineDiscount(priced())).toBe(20);
+  });
+
+  it('takes in a supplier discount’s share, so the row still reads across', () => {
+    // The contract's live figures: a 25% supplier discount takes the 60.00
+    // line to 45.00, so 35.00 is off the 80.00 it lists at.
+    const line = priced({ lineTotalAfterSupplierDiscount: 45 });
+    expect(lineDiscount(line)).toBe(35);
     expect(
-      orderTotals({ ...node, supplierDiscountPercentage: null })
-        .discountPercentage
+      linePacks(line) * line.pricePerPackBeforeDiscount - lineDiscount(line)
+    ).toBe(line.lineTotalAfterSupplierDiscount);
+  });
+
+  it('is zero on an undiscounted line, never a negative zero', () => {
+    expect(
+      lineDiscount(
+        priced({
+          requestedNumberOfUnits: 3,
+          requestedPackSize: 1,
+          pricePerPackBeforeDiscount: 0.1,
+          // 3 × 0.1 is 0.30000000000000004 in floating point.
+          lineTotalAfterSupplierDiscount: 0.3000000000000001,
+        })
+      )
     ).toBe(0);
   });
 
-  it('is the undiscounted total itself where no supplier discount is set', () => {
-    const undiscounted = orderTotals({
-      ...node,
-      orderTotalAfterDiscount: 60,
-      supplierDiscountAmount: 0,
-      supplierDiscountPercentage: null,
-    });
-    expect(undiscounted.discount).toBe(0);
-    expect(undiscounted.total).toBe(60);
+  it('is zero at a pack size of zero, where the line costs nothing', () => {
+    expect(
+      lineDiscount(
+        priced({ requestedPackSize: 0, lineTotalAfterSupplierDiscount: 0 })
+      )
+    ).toBe(0);
+  });
+});
+
+describe('OMS-FUN-PO-07.12 — the totals band’s figures', () => {
+  const stock = (cost: number) => ({
+    item: { id: 'stock', type: 'STOCK' as const },
+    lineTotalAfterSupplierDiscount: cost,
+  });
+  const service = (cost: number) => ({
+    item: { id: 'service', type: 'SERVICE' as const },
+    lineTotalAfterSupplierDiscount: cost,
+  });
+
+  it('reads across as subtotal + charges = order total', () => {
+    const totals = orderTotals({ orderTotalAfterDiscount: 130 }, [
+      stock(100),
+      stock(23.45),
+      service(6.55),
+    ]);
+    expect(totals.charges).toBe(6.55);
+    expect(totals.subtotal).toBeCloseTo(123.45, 10);
+    expect(totals.total).toBe(130);
+    expect(totals.hasCharges).toBe(true);
+  });
+
+  it('has no charges, and a subtotal that is the total, with no service line', () => {
+    const totals = orderTotals({ orderTotalAfterDiscount: 60 }, [stock(60)]);
+    expect(totals.hasCharges).toBe(false);
+    expect(totals.charges).toBe(0);
+    expect(totals.subtotal).toBe(60);
+  });
+
+  it('names charges for a service line priced at nothing', () => {
+    expect(
+      orderTotals({ orderTotalAfterDiscount: 60 }, [stock(60), service(0)])
+        .hasCharges
+    ).toBe(true);
+  });
+
+  // OMS-FUN-PO-07.16 / .17: a supplier discount the order carries comes off
+  // the stock lines alone, so the subtotal is their discounted costs and the
+  // service line is charged in full.
+  it('keeps a supplier discount in the subtotal, and out of the charges', () => {
+    // 60.00 of stock at 25% off is 45.00; a 10.00 service line is not
+    // discounted, so the server's total is 55.00.
+    const totals = orderTotals({ orderTotalAfterDiscount: 55 }, [
+      stock(45),
+      service(10),
+    ]);
+    expect(totals.subtotal).toBe(45);
+    expect(totals.charges).toBe(10);
   });
 });

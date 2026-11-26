@@ -2,22 +2,22 @@ use super::{
     CentralDataTable, Change, ExportFilter, ImportTable, RecordCount, RowFailure, RowOutcome,
     SheetImport, SheetStart,
     cells::{Row, RowError, and_list, collect},
-    delete::{DELETE_COLUMN, already_deleted_as, check_delete, is_delete},
+    delete::{DELETE_COLUMN, already_deleted_by, check_delete, is_delete},
     field_changes,
     lookup::{
-        InMemory, KeyPart, NOT_FOUND, active_first, differs, find_by_id_or_composite_key,
-        find_reference, key_conflict,
+        InMemory, KeyPart, active_first, differs, find_by_id_or_composite_key, find_reference,
+        key_conflict,
     },
     sheet::Value,
     sorted_by, stores_with_names,
     user_refs::{
-        ID, STORE_CODE, STORE_ID, USER_ID, USERNAME, check_not_protected, exportable_users,
-        protected_error, user_column, users_by_id,
+        ID, STORE_CODE, STORE_ID, SetupAdmin, USER_ID, USERNAME, check_not_protected,
+        exportable_users, locked_users, protected_error, user_column, users_by_id,
     },
 };
 use crate::{
     i64_to_u32,
-    user_account::upsert::protected_user_ids,
+    user_account::upsert::{protected_user_ids, server_user_ids},
     user_store_join::{
         DeleteUserStoreJoinError, UpsertUserStoreJoinError, default_stores, delete_user_store_join,
         find_user_store_join, has_store_access, upsert_user_store_join_unchecked_default,
@@ -80,8 +80,7 @@ impl ImportTable for UserStoreJoinTable {
         filter: &ExportFilter,
     ) -> Result<Vec<Vec<Value>>, RepositoryError> {
         // Read whole, not paged: the export has already checked the row cap.
-        let joins = UserStoreJoinRepository::new(connection)
-            .query_by_filter(exportable(connection, filter)?)?;
+        let joins = UserStoreJoinRepository::new(connection).query_by_filter(exportable(filter))?;
         let users = users_by_id(connection)?;
         let stores = stores_with_names(connection)?;
         let rows = joins
@@ -113,8 +112,8 @@ impl ImportTable for UserStoreJoinTable {
     ) -> Result<RecordCount, RepositoryError> {
         let repo = UserStoreJoinRepository::new(connection);
         Ok(RecordCount {
-            matching: i64_to_u32(repo.count(Some(exportable(connection, filter)?))?),
-            total: i64_to_u32(repo.count(Some(exportable(connection, &ExportFilter::default())?))?),
+            matching: i64_to_u32(repo.count(Some(exportable(filter)))?),
+            total: i64_to_u32(repo.count(Some(exportable(&ExportFilter::default())))?),
         })
     }
 
@@ -128,6 +127,8 @@ impl ImportTable for UserStoreJoinTable {
             users: InMemory::new(UserAccountRowRepository::new(connection).find_all()?),
             stores: InMemory::new(StoreRowRepository::new(connection).all()?),
             protected: protected_user_ids(connection)?,
+            server_users: server_user_ids(),
+            setup_admin: SetupAdmin::read(connection)?,
             importer: start.user_id.to_string(),
             default_checks: Vec::new(),
             written: Vec::new(),
@@ -144,7 +145,11 @@ struct UserStoreJoinSheet {
     /// Read once: far fewer than joins, and unchanged while this sheet runs.
     users: InMemory<UserAccountRow>,
     stores: InMemory<StoreRow>,
+    /// No `DELETE` row takes their stores away.
     protected: Vec<String>,
+    /// No row gives them stores: the users the server records its own work as.
+    server_users: Vec<String>,
+    setup_admin: Option<SetupAdmin>,
     importer: String,
     /// Each row that adds or changes a join, with the join and whether the row makes it the user's
     /// default, should the sheet leave the user more than one. Its message is set then.
@@ -195,15 +200,20 @@ impl SheetImport for UserStoreJoinSheet {
             .map(|saved| saved.user_id.as_str())
             .or(user_id.as_deref())
         {
-            check_not_protected(row, &self.protected, &self.users, user_id, "stores")?;
+            let (locked, change) =
+                locked_users(&self.protected, &self.server_users, delete, "stores");
+            check_not_protected(row, locked, &self.users, user_id, &change)?;
         }
         if delete {
-            // Named by the row's user and store, as found.
-            let missing = match (&user_id, &store_id) {
-                (Some(user_id), Some(store_id)) => self.record(user_id, store_id),
-                _ => id.clone().unwrap_or_default(),
+            let Some(saved) = existing else {
+                // Named by the row's user and store, as found.
+                return already_deleted_by(
+                    row,
+                    user_id.as_ref().zip(store_id.as_ref()),
+                    |(user_id, store_id)| self.record(user_id, store_id),
+                );
             };
-            return self.delete(connection, row, existing, missing);
+            return self.delete(connection, row, saved);
         }
 
         let saved = existing.as_ref();
@@ -234,7 +244,11 @@ impl SheetImport for UserStoreJoinSheet {
         };
         let change = Change::between_upserts(saved, &new);
         if change != Change::Unchanged {
-            upsert_user_store_join_unchecked_default(connection, &self.protected, &new)
+            if let (Some(admin), Some(store)) = (&self.setup_admin, self.stores.get(&new.store_id))
+            {
+                admin.check_store(row, &self.users, &new.user_id, store, "stores")?;
+            }
+            upsert_user_store_join_unchecked_default(connection, &self.server_users, &new)
                 .map_err(|error| self.upsert_failure(row, &new, error))?;
             let gives_default = new.is_default && !saved.is_some_and(|saved| saved.is_default);
             self.default_checks.push((
@@ -444,12 +458,8 @@ impl UserStoreJoinSheet {
         &mut self,
         connection: &StorageConnection,
         row: &Row,
-        existing: Option<UserStoreJoinRow>,
-        missing: String,
+        saved: UserStoreJoinRow,
     ) -> Result<RowOutcome, RowFailure> {
-        let Some(saved) = existing else {
-            return already_deleted_as(row, missing, Vec::new());
-        };
         check_delete(
             row,
             COLUMNS,
@@ -472,9 +482,12 @@ impl UserStoreJoinSheet {
                          you couldn't log in again",
                         )
                         .into(),
-                    DeleteUserStoreJoinError::Protected => {
-                        protected_error(row, self.users.key_or_id(&saved.user_id), "stores").into()
-                    }
+                    DeleteUserStoreJoinError::Protected => protected_error(
+                        row,
+                        self.users.key_or_id(&saved.user_id),
+                        "take away their stores",
+                    )
+                    .into(),
                     DeleteUserStoreJoinError::DatabaseError(error) => RowFailure::Database(error),
                 })?;
         self.deleted.insert(saved.id.clone());
@@ -500,7 +513,7 @@ impl UserStoreJoinSheet {
         let username = self.users.key_or_id(&join.user_id);
         match error {
             UpsertUserStoreJoinError::UserNotFound => row
-                .error(row.reference_column(USERNAME, USER_ID), NOT_FOUND)
+                .not_found(row.reference_column(USERNAME, USER_ID))
                 .into(),
             UpsertUserStoreJoinError::UserDeleted => row
                 .error(
@@ -508,9 +521,11 @@ impl UserStoreJoinSheet {
                     format!("{username} is deleted, so they can't be given a store"),
                 )
                 .into(),
-            UpsertUserStoreJoinError::Protected => protected_error(row, username, "stores").into(),
+            UpsertUserStoreJoinError::Protected => {
+                protected_error(row, username, "change their stores").into()
+            }
             UpsertUserStoreJoinError::StoreNotFound => row
-                .error(row.reference_column(STORE_CODE, STORE_ID), NOT_FOUND)
+                .not_found(row.reference_column(STORE_CODE, STORE_ID))
                 .into(),
             // Unreachable here: `find_join` finds a saved user and store, so a row never adds a
             // second.
@@ -536,16 +551,13 @@ impl UserStoreJoinSheet {
 }
 
 /// The joins an export holds, searched by `filter`.
-fn exportable(
-    connection: &StorageConnection,
-    filter: &ExportFilter,
-) -> Result<UserStoreJoinFilter, RepositoryError> {
-    let (user_id, user_on_store) = exportable_users(connection, filter)?;
-    Ok(UserStoreJoinFilter {
+fn exportable(filter: &ExportFilter) -> UserStoreJoinFilter {
+    let (user_id, user_on_store) = exportable_users(filter);
+    UserStoreJoinFilter {
         user_id: Some(user_id),
         user_on_store,
         ..Default::default()
-    })
+    }
 }
 
 /// One per column. The export adds `store_name`.

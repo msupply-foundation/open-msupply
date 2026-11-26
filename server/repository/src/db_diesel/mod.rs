@@ -283,6 +283,7 @@ pub use name_link_row::*;
 pub use name_property::*;
 pub use name_property_row::*;
 pub use name_row::*;
+pub use name_search::has_search_words;
 pub use name_store_join::*;
 pub use name_tag::*;
 pub use name_tag_join::*;

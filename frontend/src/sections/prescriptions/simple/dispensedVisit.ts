@@ -118,6 +118,25 @@ export const afterCancelRead = (
   return read.record.status === 'CANCELLED' ? 'cancelled' : 'not-cancelled';
 };
 
+/**
+ * The one dispensed visit Export/Print is for (rules › printing a dispensed
+ * visit), by its record id: the visit open on the screen, once read
+ * (`openedId`); otherwise, with nothing on the list and no edit under way,
+ * the visit the screen's message names (`namedId`). Undefined when there is
+ * none, so a list not yet dispensed is never printed.
+ */
+export const printableVisit = (screen: {
+  viewing: boolean;
+  openedId: string | undefined;
+  editing: boolean;
+  listed: number;
+  namedId: string | undefined;
+}): string | undefined => {
+  if (screen.viewing) return screen.openedId;
+  if (screen.editing || screen.listed > 0) return undefined;
+  return screen.namedId;
+};
+
 /** Only a finished visit can be cancelled, never a cancellation's mirror. */
 export const canCancelVisit = (record: DispensedRecord): boolean =>
   canCancelPrescription(

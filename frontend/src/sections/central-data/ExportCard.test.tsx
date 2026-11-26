@@ -398,6 +398,22 @@ describe('ExportCard', () => {
     });
   });
 
+  it('gives items in stores an item code or store code search and no Status filter (OMS-REG-CDIO-01.46, .195)', async () => {
+    open();
+    expect(
+      shown.fields['central-data-export-item_store_join-search']!.placeholder
+    ).toBe('label.item-code-or-store-code-contains');
+    expect(
+      shown.selects['central-data-export-item_store_join-status']
+    ).toBeUndefined();
+
+    shown.checkboxes['central-data-export-item_store_join']!.onChange(true);
+    await settle();
+    expect(countRequests().at(-1)).toEqual({
+      tables: [{ table: 'ITEM_STORE_JOIN', contains: null, isActive: null }],
+    });
+  });
+
   it('gives users in stores a username or store code search and no Status filter (OMS-REG-CDIO-01.46, .162)', async () => {
     open();
     expect(

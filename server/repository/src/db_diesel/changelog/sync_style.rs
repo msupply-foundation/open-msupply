@@ -96,8 +96,9 @@ impl ChangelogTableName {
                 transport: V5_V6,
                 multi_device_site: true,
             },
+            // Set on central by the central data import; sites only receive it
             ItemStoreJoin => SyncStyle {
-                authoring: vec![Anyone],
+                authoring: vec![CentralForStore],
                 distribution: vec![D::Remote],
                 transport: V5,
                 multi_device_site: false,

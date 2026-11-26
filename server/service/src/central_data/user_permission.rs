@@ -2,21 +2,21 @@ use super::{
     CentralDataTable, Change, ExportFilter, ImportTable, RecordCount, RowFailure, RowOutcome,
     SheetImport, SheetStart,
     cells::{Row, RowError, collect},
-    delete::{DELETE_COLUMN, already_deleted_as, check_delete, is_delete},
+    delete::{DELETE_COLUMN, already_deleted_by, check_delete, is_delete},
     lookup::{
-        InMemory, KeyPart, NOT_FOUND, SavedCode, active_first, differs,
-        find_by_id_or_composite_key, find_reference, key_conflict, key_or, read_contexts,
+        InMemory, KeyPart, SavedCode, active_first, differs, find_by_id_or_composite_key,
+        find_reference, key_conflict, key_or, read_contexts,
     },
     sheet::Value,
     sorted_by, stores_with_names,
     user_refs::{
-        ID, STORE_CODE, STORE_ID, USER_ID, USERNAME, check_not_protected, exportable_users,
-        protected_error, users_by_id,
+        ID, STORE_CODE, STORE_ID, SetupAdmin, USER_ID, USERNAME, check_not_protected,
+        exportable_users, locked_users, protected_error, users_by_id,
     },
 };
 use crate::{
     i64_to_u32,
-    user_account::upsert::protected_user_ids,
+    user_account::upsert::{protected_user_ids, server_user_ids},
     user_permission::{
         DeleteUserPermissionError, UpsertUserPermissionError, delete_user_permission,
         find_user_permission, new_user_permission_id, upsert_user_permission,
@@ -90,8 +90,8 @@ impl ImportTable for UserPermissionTable {
         filter: &ExportFilter,
     ) -> Result<Vec<Vec<Value>>, RepositoryError> {
         // Read whole, not paged: the export has already checked the row cap.
-        let permissions = UserPermissionRepository::new(connection)
-            .query_by_filter(exportable(connection, filter)?)?;
+        let permissions =
+            UserPermissionRepository::new(connection).query_by_filter(exportable(filter))?;
         let records = References::read(connection)?;
         let rows = permissions
             .iter()
@@ -127,8 +127,8 @@ impl ImportTable for UserPermissionTable {
     ) -> Result<RecordCount, RepositoryError> {
         let repo = UserPermissionRepository::new(connection);
         Ok(RecordCount {
-            matching: i64_to_u32(repo.count(Some(exportable(connection, filter)?))?),
-            total: i64_to_u32(repo.count(Some(exportable(connection, &ExportFilter::default())?))?),
+            matching: i64_to_u32(repo.count(Some(exportable(filter)))?),
+            total: i64_to_u32(repo.count(Some(exportable(&ExportFilter::default())))?),
         })
     }
 
@@ -143,6 +143,8 @@ impl ImportTable for UserPermissionTable {
             stores: InMemory::new(StoreRowRepository::new(connection).all()?),
             contexts: read_contexts(connection)?,
             protected: protected_user_ids(connection)?,
+            server_users: server_user_ids(),
+            setup_admin: SetupAdmin::read(connection)?,
             importer: start.user_id.to_string(),
         }))
     }
@@ -153,7 +155,11 @@ struct UserPermissionSheet {
     users: InMemory<UserAccountRow>,
     stores: InMemory<StoreRow>,
     contexts: InMemory<ContextRow>,
+    /// No `DELETE` row takes their permissions away.
     protected: Vec<String>,
+    /// No row gives them permissions: the users the server records its own work as.
+    server_users: Vec<String>,
+    setup_admin: Option<SetupAdmin>,
     importer: String,
 }
 
@@ -200,14 +206,16 @@ impl SheetImport for UserPermissionSheet {
             .map(|saved| saved.user_id.as_str())
             .or(key.user_id.as_deref())
         {
-            check_not_protected(row, &self.protected, &self.users, user_id, "permissions")?;
+            let (locked, change) =
+                locked_users(&self.protected, &self.server_users, delete, "permissions");
+            check_not_protected(row, locked, &self.users, user_id, &change)?;
         }
         if delete {
-            // Named by the row's user, store, permission and context, as found.
-            let missing = key
-                .record()
-                .map_or_else(|| id.clone().unwrap_or_default(), |key| self.record(&key));
-            return self.delete(connection, row, existing, missing);
+            let Some(saved) = existing else {
+                // Named by the row's user, store, permission and context, as found.
+                return already_deleted_by(row, key.record(), |key| self.record(&key));
+            };
+            return self.delete(connection, row, saved);
         }
         if let Some(saved) = existing {
             return Ok(RowOutcome {
@@ -241,7 +249,13 @@ impl SheetImport for UserPermissionSheet {
             context_id: key.context_id.flatten(),
         };
         new.id = id.unwrap_or_else(|| new_user_permission_id(&new));
-        upsert_user_permission(connection, &self.protected, &new)
+        if let (Some(admin), Some(store)) = (
+            &self.setup_admin,
+            new.store_id.as_deref().and_then(|id| self.stores.get(id)),
+        ) {
+            admin.check_store(row, &self.users, &new.user_id, store, "permissions")?;
+        }
+        upsert_user_permission(connection, &self.server_users, &new)
             .map_err(|error| upsert_failure(row, &new, self.users.get(&new.user_id), error))?;
         Ok(RowOutcome {
             record: self.record(&new),
@@ -348,12 +362,8 @@ impl UserPermissionSheet {
         &self,
         connection: &StorageConnection,
         row: &Row,
-        existing: Option<UserPermissionRow>,
-        missing: String,
+        saved: UserPermissionRow,
     ) -> Result<RowOutcome, RowFailure> {
-        let Some(saved) = existing else {
-            return already_deleted_as(row, missing, Vec::new());
-        };
         check_delete(
             row,
             COLUMNS,
@@ -375,9 +385,12 @@ impl UserPermissionSheet {
                 DeleteUserPermissionError::LocksOutSelf => row
                     .error(DELETE_COLUMN, locks_out_message(&saved.permission))
                     .into(),
-                DeleteUserPermissionError::Protected => {
-                    protected_error(row, self.users.key_or_id(&saved.user_id), "permissions").into()
-                }
+                DeleteUserPermissionError::Protected => protected_error(
+                    row,
+                    self.users.key_or_id(&saved.user_id),
+                    "take away their permissions",
+                )
+                .into(),
                 DeleteUserPermissionError::DatabaseError(error) => RowFailure::Database(error),
             },
         )?;
@@ -463,12 +476,12 @@ fn upsert_failure(
                 format!("{username} is deleted, so they can't be given a permission"),
             )
             .into(),
-        UpsertUserPermissionError::UserNotFound => row.error(user_column, NOT_FOUND).into(),
+        UpsertUserPermissionError::UserNotFound => row.not_found(user_column).into(),
         UpsertUserPermissionError::StoreNotFound => row
-            .error(row.reference_column(STORE_CODE, STORE_ID), NOT_FOUND)
+            .not_found(row.reference_column(STORE_CODE, STORE_ID))
             .into(),
         UpsertUserPermissionError::ContextNotFound => row
-            .error(row.reference_column(CONTEXT_NAME, CONTEXT_ID), NOT_FOUND)
+            .not_found(row.reference_column(CONTEXT_NAME, CONTEXT_ID))
             .into(),
         UpsertUserPermissionError::StoreRequired => row
             .error(
@@ -477,7 +490,7 @@ fn upsert_failure(
             )
             .into(),
         UpsertUserPermissionError::Protected => {
-            protected_error(row, username, "permissions").into()
+            protected_error(row, username, "change their permissions").into()
         }
         UpsertUserPermissionError::UnknownPermission => row
             .error(PERMISSION, "This server doesn't know this permission")
@@ -500,19 +513,16 @@ fn upsert_failure(
 }
 
 /// The permissions an export holds, searched by `filter`: those the server checks.
-fn exportable(
-    connection: &StorageConnection,
-    filter: &ExportFilter,
-) -> Result<UserPermissionFilter, RepositoryError> {
-    let (user_id, user_on_store) = exportable_users(connection, filter)?;
-    Ok(UserPermissionFilter {
+fn exportable(filter: &ExportFilter) -> UserPermissionFilter {
+    let (user_id, user_on_store) = exportable_users(filter);
+    UserPermissionFilter {
         user_id: Some(user_id),
         permission: Some(EqualFilter::equal_any(
             PermissionType::known_iter().collect(),
         )),
         user_on_store,
         ..Default::default()
-    })
+    }
 }
 
 /// What exported permissions refer to.

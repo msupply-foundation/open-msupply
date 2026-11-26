@@ -321,6 +321,8 @@
   "label.is-vaccine": "Vasina",
   "label.issue": "Fo Sai",
   "label.item": "Item",
+  "label.item-code-or-store-code-contains": "Kodigu Item ka kodigu Store kontein",
+  "label.items-in-stores": "Items iha Store sira",
   "label.items-no-stock": "Items ne'ebe laiha stock",
   "label.items-no-stock_one": "Item ne'ebe laiha Stock",
   "label.items-no-stock_other": "Items ne'ebe laiha Stock",
