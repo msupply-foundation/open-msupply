@@ -23,11 +23,12 @@ Runbook for the box that runs the containerised CI jobs and hosts the deployment
 | `docker-compose-v2` | the deploy runs `docker compose`; without the plugin `docker compose -f ...` fails as `unknown shorthand flag: 'f'` |
 | `qemu-user-static`, `binfmt-support` | arm64 image builds on release tags — see below |
 | `git`, `curl`, `tar`, `jq` | `actions/checkout`, and fetching the runner |
+| `python3` | the [light lanes](#lanes)' stdlib-only checks (the mirror dry run, the spec anchors). Ubuntu ships it; listed so a minimal image doesn't lose it |
 
 ```bash
 sudo apt-get update
 sudo apt-get install -y docker.io docker-buildx docker-compose-v2 \
-  qemu-user-static binfmt-support git curl tar jq
+  qemu-user-static binfmt-support git curl tar jq python3
 sudo systemctl enable --now docker
 ```
 
@@ -111,6 +112,7 @@ A lane carries exactly one role:
 | `build` | `actions-runner-1` … `-4` | the image build — CPU-bound, ~19 minutes cold |
 | `deploy` | `actions-runner-deploy` | every plan, deploy and teardown job of the deployment workflows — about a minute each |
 | `e2e` | `actions-runner-e2e` | the nightly front-end e2e suite (`frontend-e2e-nightly.yaml`), which also asks for `x64` |
+| `light` | `actions-runner-light1` … `-light4` | jobs of a few seconds: every PR workflow's `changes / Detect`, `Server CI result`, the spec and report-version checks, the mirror dry run, and the label, issue and deployment-status housekeeping. GitHub bills each as a whole minute on its hosted runners, where together they were about half the org's hosted minutes |
 
 A label nothing carries makes its jobs queue for ever with no error.
 
@@ -127,7 +129,7 @@ Then, per lane — the registration token expires after an hour, so mint one eac
 
 ```bash
 OWNER_REPO=msupply-foundation/open-msupply-internal
-lane=1; labels=build          # deploy lane: lane=deploy labels=deploy; e2e: lane=e2e labels=e2e
+lane=1; labels=build          # deploy lane: lane=deploy labels=deploy; e2e: lane=e2e labels=e2e; light: lane=light1 labels=light
 mkdir -p ~/actions-runner-$lane && tar xzf /tmp/runner.tar.gz -C ~/actions-runner-$lane
 TOKEN=$(gh api -X POST repos/$OWNER_REPO/actions/runners/registration-token -q .token)
 ~/actions-runner-$lane/config.sh --unattended --replace \
@@ -137,7 +139,7 @@ TOKEN=$(gh api -X POST repos/$OWNER_REPO/actions/runners/registration-token -q .
 
 ### systemd
 
-The units are tracked in [`.github/deploy/host/`](https://github.com/msupply-foundation/open-msupply-internal/tree/develop/.github/deploy/host): one template for the build and e2e lanes (`actions-runner@.service`, `%i` is the lane) and one for the deploy lane, with `@USER@` and `@HOME@` standing for the runner user's.
+The units are tracked in [`.github/deploy/host/`](https://github.com/msupply-foundation/open-msupply-internal/tree/develop/.github/deploy/host): one template for the build, e2e and light lanes (`actions-runner@.service`, `%i` is the lane) and one for the deploy lane, with `@USER@` and `@HOME@` standing for the runner user's.
 
 **`docker-deploy-services.yaml` checks the box against them on its daily run.** When they differ, its job summary shows the diff and the commands to apply it — the files written out in full, so they paste onto a box with no checkout — with the restarts they need left for a moment when nothing is running. Nothing is applied automatically. To change a unit, change the repo's copy, merge, then paste what the next run's summary gives; an edit made only on the box is reported until the repo agrees. A lane running under a unit set up by hand (`actions-runner-<lane>.service`) shows as `UNTRACKED`, and the commands move it onto `actions-runner@<lane>`. A lane that is installed but not enabled is left alone: lanes are switched off on purpose, to keep the box within its memory.
 
@@ -145,7 +147,8 @@ On a new box, before any lane can run that workflow, copy the two files from the
 
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable --now actions-runner@1 actions-runner@2 actions-runner@3 actions-runner@4 actions-runner@e2e actions-runner-deploy
+sudo systemctl enable --now actions-runner@1 actions-runner@2 actions-runner@3 actions-runner@4 actions-runner@e2e \
+  actions-runner@light1 actions-runner@light2 actions-runner@light3 actions-runner@light4 actions-runner-deploy
 ```
 
 ```bash
@@ -153,7 +156,7 @@ systemctl status 'actions-runner*'
 journalctl -u actions-runner@1 -f
 ```
 
-Adding a build lane is installing and registering `actions-runner-5`, then `systemctl enable --now actions-runner@5`. A second deploy lane is also safe — nothing publishes a host port, so there is nothing for two lanes to collide on.
+Adding a build lane is installing and registering `actions-runner-5`, then `systemctl enable --now actions-runner@5`. A light lane is the same with `light5`: an idle lane costs almost nothing, and four keep a burst of PR pushes from queueing. A second deploy lane is also safe — nothing publishes a host port, so there is nothing for two lanes to collide on.
 
 **Not used: JIT runners.** GitHub can mint a one-shot config per job (`generate-jitconfig`), which makes lanes ephemeral and removes registration entirely. It needs a token with **Administration: write** held on the box, which we do not want there, so the lanes are registered once by hand instead.
 
@@ -382,7 +385,7 @@ They come from **`publish-bundles.yaml`**:
 - **RC branches and release tags** release a version the same way, once the branch has this workflow. RC branches cut before it can be published by running the workflow by hand from `develop` on the RC; a plugin whose halves still disagree there (CIV before 3.0.0) is skipped with a warning and the rest publish.
 - **Pre-releases:** build a branch from the dashboard's Plugins page (its **Build from a branch** button, or **Build plugin bundles** on a server's own page, for anyone with write access), or run the workflow by hand from Actions. The Plugins page shows builds in flight and any that failed in the last day. Anything that differs from a release shows as a pre-release, the newest per branch, pruned after `BUNDLE_RETAIN_DAYS` (default 30).
 - **Compatibility** is recorded beside each version, not as part of it. Today it is derived from the version (the server loads a plugin whose major.minor is at most its own) and from the frontend half's host runtime; see `compatOf` in `.github/scripts/publish-bundles.mjs`.
-- **How:** the build runs `pnpm build:plugins` on a hosted runner and drops the `plugins/examples` bundles. A short job on the `deploy` lane then runs `publish-bundles.mjs` in a throwaway `node` container, which writes into the **Launchpad store** (`DEPLOY_BUNDLES_DIR`, see [User and directories](#user-and-directories)): `index.json` plus one file per distinct bundle, named by its sha256. The dashboard mounts it read-only, all but `datasets/` (see [Datasets](#datasets)), which it writes.
+- **How:** the build runs `pnpm build:plugins` on the mac mini and drops the `plugins/examples` bundles. A short job on the `deploy` lane then runs `publish-bundles.mjs` in a throwaway `node` container, which writes into the **Launchpad store** (`DEPLOY_BUNDLES_DIR`, see [User and directories](#user-and-directories)): `index.json` plus one file per distinct bundle, named by its sha256. The dashboard mounts it read-only, all but `datasets/` (see [Datasets](#datasets)), which it writes.
 
 **The store is a cache, not the record.** The plugin build is reproducible (the same commit gives byte-identical bundles), so a pruned bundle, or a lost store, is rebuilt by running the workflow on the commit it came from. Nothing on the box needs backing up for this.
 
@@ -429,7 +432,7 @@ Why the box is set up this way, so nobody has to rediscover it. Decisions record
 - **No dedicated runner account.** On a box that does nothing but CI it buys no isolation worth the extra moving part, and every path then has to be written for a user you are not logged in as, which is where runbooks rot.
 - **Lanes registered by hand, not JIT.** JIT runners are ephemeral and never need registering, but minting their config needs a token with Administration: write living on the box. Registration is a one-off per lane; the token is a standing credential.
 - **Distro `docker.io`, not Docker's own repo.** Nothing these jobs do is version-sensitive, and the distro package updates through normal `apt` with no third-party repo or GPG key on a machine that holds registry credentials.
-- **Lane roles are exclusive.** A lane carries one label so a 19-minute build never queues ahead of a one-minute deploy or teardown. That is why `e2e` became a role of its own rather than borrowing `build`; the reasoning is in the header of `frontend-e2e-nightly.yaml`.
+- **Lane roles are exclusive.** A lane carries one label so a 19-minute build never queues ahead of a one-minute deploy or teardown. That is why `e2e` became a role of its own rather than borrowing `build`; the reasoning is in the header of `frontend-e2e-nightly.yaml`. It is also why `light` exists: the few-second jobs once ran on GitHub's hosted runners to stay out of the build queue, and each was billed as a whole minute.
 - **One machine-id per deployment**, not the host's: two deployments sharing one collide when both pair to the same central server. See `docker-deploy.yaml`.
 - **Local HTTPS with a self-signed CA, not a real certificate.** The office and the VPN reach deployments without the edge, so the edge's certificate is not there. A private CA is the only certificate the box can issue itself. It was removed once, when the edge took over TLS and nobody had installed its root; but office and VPN users still followed `https://` deployment links and got nothing. A warning to click through beats a page that doesn't load.
 - **Two front doors split by port, not by client address.** Every request reaches the proxy from the edge's address, so telling the internet from the office there would mean trusting `X-Forwarded-For`, and a mistake in that is a way past the gate. The edge knows the real client and picks the port. The open door is 80 because people reach it directly and type its addresses; the gated door is 8080 because only the edge connects to it, and is told the port once. See the header of `.github/deploy/proxy/proxy.Caddyfile`.
