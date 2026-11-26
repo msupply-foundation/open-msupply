@@ -42,7 +42,7 @@ As on the [Linux box](self-hosted-runners/#lanes), each lane carries exactly one
 |---|---|---|
 | `check` | most of them | the PR checks: the front end check and its accessibility scan, the React client tests and code checks, and the weekly cache clean |
 | `build` | one | the long builds: the Android APK, the mac demo, the server build and the plugin bundles |
-| `light` | two | jobs of a few seconds, shared with the Linux box's light lanes (they ask for `[self-hosted, light]`, no OS) - see the [runbook](self-hosted-runners/#lanes) |
+| `light` | one | jobs of a few seconds, shared with the Linux box's light lanes (they ask for `[self-hosted, light]`, no OS) - see the [runbook](self-hosted-runners/#lanes) |
 
 So however many long builds land at once, they hold the one build lane and never a lane a PR check waits on (a check once queued for 165 minutes behind builds), and a few-second job never waits behind either. A light job takes whichever machine's light lane is free, so every PR's required checks keep running while either machine is down. A new mac job asks for the role it belongs to; one asking for plain `[self-hosted, macOS]` would take any lane and undo all this.
 

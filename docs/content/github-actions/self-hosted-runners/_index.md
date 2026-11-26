@@ -112,7 +112,7 @@ A lane carries exactly one role:
 | `build` | `actions-runner-1` … `-4` | the image build — CPU-bound, ~19 minutes cold |
 | `deploy` | `actions-runner-deploy` | every plan, deploy and teardown job of the deployment workflows — about a minute each |
 | `e2e` | `actions-runner-e2e` | the nightly front-end e2e suite (`frontend-e2e-nightly.yaml`), which also asks for `x64` |
-| `light` | `actions-runner-light1` … `-light4` | jobs of a few seconds (a couple of minutes at most): every PR workflow's `changes / Detect`, `Server CI result`, the spec and report-version checks, the mirror dry run, and the label, issue and deployment-status housekeeping. GitHub bills each as a whole minute on its hosted runners, where together they were about half the org's hosted minutes. The mac mini has light lanes too, and these jobs ask for `[self-hosted, light]` with no OS, so they take whichever is free. Only `Spec references` asks for `Linux` as well, for the box's docker |
+| `light` | `actions-runner-light1` | jobs of a few seconds (a couple of minutes at most): every PR workflow's `changes / Detect`, `Server CI result`, the spec and report-version checks, the mirror dry run, and the label, issue and deployment-status housekeeping. GitHub bills each as a whole minute on its hosted runners, where together they were about half the org's hosted minutes. The mac mini has a light lane too, and these jobs ask for `[self-hosted, light]` with no OS, so they take whichever is free. Only `Spec references` asks for `Linux` as well, for the box's docker |
 
 A label nothing carries makes its jobs queue for ever with no error.
 
@@ -148,7 +148,7 @@ On a new box, before any lane can run that workflow, copy the two files from the
 ```bash
 sudo systemctl daemon-reload
 sudo systemctl enable --now actions-runner@1 actions-runner@2 actions-runner@3 actions-runner@4 actions-runner@e2e \
-  actions-runner@light1 actions-runner@light2 actions-runner@light3 actions-runner@light4 actions-runner-deploy
+  actions-runner@light1 actions-runner-deploy
 ```
 
 ```bash
@@ -156,7 +156,7 @@ systemctl status 'actions-runner*'
 journalctl -u actions-runner@1 -f
 ```
 
-Adding a build lane is installing and registering `actions-runner-5`, then `systemctl enable --now actions-runner@5`. A light lane is the same with `light5`: an idle lane costs almost nothing, and four keep a burst of PR pushes from queueing. A second deploy lane is also safe — nothing publishes a host port, so there is nothing for two lanes to collide on.
+Adding a build lane is installing and registering `actions-runner-5`, then `systemctl enable --now actions-runner@5`. One light lane here and one on the mac are enough: their jobs take seconds, so a burst of PR pushes clears in well under a minute. If they start to queue, a second is the same steps with `light2`, and an idle lane costs almost nothing. A second deploy lane is also safe — nothing publishes a host port, so there is nothing for two lanes to collide on.
 
 **Not used: JIT runners.** GitHub can mint a one-shot config per job (`generate-jitconfig`), which makes lanes ephemeral and removes registration entirely. It needs a token with **Administration: write** held on the box, which we do not want there, so the lanes are registered once by hand instead.
 
