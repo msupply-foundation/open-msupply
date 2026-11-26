@@ -35,6 +35,7 @@ import {
 } from './simpleDispensingLogic';
 import type { VisitLine } from './dispensedVisit';
 import { StepHeading } from './StepHeading';
+import { whoTheListIsFor } from './listHead';
 import { CorrectStockAction } from './CorrectStockDialog';
 import styles from './DispensingList.module.css';
 
@@ -397,13 +398,10 @@ export const DispensingList = (props: {
                     </span>
                   </div>
                   <p class={styles.for} data-testid="dispensing-list-for">
-                    {props.editing
-                      ? t('label.for-patient', {
-                          name: props.editing.forName ?? '',
-                        })
-                      : props.forName === undefined
-                        ? t('label.for-not-chosen-yet')
-                        : t('label.for-patient', { name: props.forName })}
+                    {(() => {
+                      const who = whoTheListIsFor(props);
+                      return t(who.key, { name: who.name ?? '' });
+                    })()}
                   </p>
                 </>
               }
@@ -485,7 +483,9 @@ export const DispensingList = (props: {
               <Show
                 when={hasLines()}
                 fallback={
-                  <p class={styles.empty}>{t('messages.no-medicines-added')}</p>
+                  <p class={styles.empty} data-testid="dispensing-list-empty">
+                    {t('messages.nothing-yet-press-an-amount')}
+                  </p>
                 }
               >
                 <table class={styles.lines}>

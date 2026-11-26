@@ -1409,7 +1409,7 @@ const SimpleDispensingPage: Component = () => {
                 ? undefined
                 : !canPress()
                   ? t('messages.choose-who-first')
-                  : t('messages.press-an-amount')
+                  : t('messages.press-an-amount-or-search')
             }
             testId="choose-medicines-hint"
           />
@@ -1417,7 +1417,7 @@ const SimpleDispensingPage: Component = () => {
             <ItemSearch
               label={t('label.search-all-medicines')}
               hideLabel
-              placeholder={t('label.search-all-medicines')}
+              placeholder={t('placeholder.not-listed-search-all-medicines')}
               storeId={storeOpened}
               // The same medicines as the line editor's search.
               includeHiddenWithStock
