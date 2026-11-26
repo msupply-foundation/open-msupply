@@ -72,6 +72,7 @@ Counts are Spanish renderings in strings whose English contains the term.
 | status                    | estado                         | 41 of 45                       |                                                                  |
 | total                     | total                          | 23 of 23                       |                                                                  |
 | choose / select           | seleccionar                    | 20 of 21                       | vs _escoger_ 1 (`button.choose-file`)                            |
+| common medicines | medicamentos frecuentes |  | settled 2026-11-26 (Simple screen common medicines editor) |
 
 ## Open questions for the PMs
 

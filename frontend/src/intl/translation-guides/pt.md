@@ -81,6 +81,7 @@ Don't introduce new abbreviations (_Qtd._, _Cód._, _Ref._): none appear in the 
 | total                       | total                               | 42 of 44                                                                                                                         |
 | "Unable to …"               | Não foi possível …                  | 46 of 51                                                                                                                         |
 | "… contains" (search label) | … contém                            | `label.code-or-name-contains` _Código ou nome contém_                                                                            |
+| common medicines | medicamentos frequentes | settled 2026-11-26 (Simple screen common medicines editor) |
 
 ## Open questions
 

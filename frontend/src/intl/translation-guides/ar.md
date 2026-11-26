@@ -98,6 +98,7 @@ rendering among the English strings containing the term.
 | choose / select         | اختر / اختيار         | 17 of 29    | _حدد / تحديد_ 12                                                                                  |
 | confirm                 | تأكيد / أكّد          | 14 of 15    |                                                                                                   |
 | clear                   | مسح                   | 4 of 4      |                                                                                                   |
+| common medicines | الأدوية الشائعة |  | settled 2026-11-26 (Simple screen common medicines editor) |
 
 ## Right-to-left notes
 

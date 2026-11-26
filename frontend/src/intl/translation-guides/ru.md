@@ -83,6 +83,7 @@ Counts are Russian renderings among the strings whose English contains the term.
 | confirm                  | подтвердить                                   | 19 of 20                                                                                         |
 | choose / select          | выбрать / выберите                            | 41 of 46                                                                                         |
 | clear (filter)           | очистить                                      | 2 of 2                                                                                           |
+| common medicines | часто выдаваемые препараты | settled 2026-11-26 (Simple screen common medicines editor) |
 
 ## Open questions
 
