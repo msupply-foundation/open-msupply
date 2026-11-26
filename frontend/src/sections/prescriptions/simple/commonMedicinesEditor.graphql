@@ -1,0 +1,36 @@
+# The common medicines editor (spec/prescriptions › setting up the common
+# medicines). It reads the store's list afresh with simpleCommonMedicines,
+# then the listed medicines with this: the active stock items among them,
+# which are what a save may name. No visibility filter: a medicine hidden in
+# the store with none on hand has no card but is still on the list.
+query commonMedicineItems(
+  $storeId: String!
+  $ids: [String!]!
+  $page: PaginationInput
+) {
+  items(
+    storeId: $storeId
+    filter: { id: { equalAny: $ids }, type: { equalTo: STOCK }, isActive: true }
+    page: $page
+  ) {
+    ... on ItemConnector {
+      __typename
+      nodes {
+        id
+        code
+        name
+        unitName
+      }
+    }
+  }
+}
+
+# Replaces the store's whole list, in order (contract › common medicines).
+mutation upsertCommonMedicines(
+  $storeId: String!
+  $input: [CommonMedicineInput!]!
+) {
+  upsertCommonMedicines(storeId: $storeId, input: $input) {
+    __typename
+  }
+}

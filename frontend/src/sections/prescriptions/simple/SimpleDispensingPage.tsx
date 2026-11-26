@@ -64,6 +64,7 @@ import {
 } from './simpleDispense.generated';
 import { AmountDialog } from './AmountDialog';
 import { CorrectStockDialog } from './CorrectStockDialog';
+import { CommonMedicinesEditor } from './CommonMedicinesEditor';
 import {
   addAmount,
   buildCards,
@@ -877,6 +878,11 @@ const SimpleDispensingPage: Component = () => {
     }
   };
 
+  // The common medicines editor (rules › setting up the common medicines):
+  // open or not. Saving it reads the list again, so the cards follow at once
+  // and a visit on the list keeps its lines.
+  const [settingUp, setSettingUp] = createSignal(false);
+
   // Delete dispensing record, for the visit being edited: a Picked record
   // can't be cancelled, only deleted. Asks first.
   const [confirmingDelete, setConfirmingDelete] = createSignal<string>();
@@ -1436,21 +1442,38 @@ const SimpleDispensingPage: Component = () => {
     >
       <div class={styles.columns}>
         <div class={styles.cardsColumn}>
-          <StepHeading
-            n={2}
-            heading
-            label={t('heading.choose-medicines')}
-            // No hint over a dispensed visit: there is no one to choose and
-            // nothing to press (ui-surface S9).
-            hint={
-              viewingId() !== undefined
-                ? undefined
-                : !canPress()
-                  ? t('messages.choose-who-first')
-                  : t('messages.press-an-amount')
-            }
-            testId="choose-medicines-hint"
-          />
+          <div class={styles.stepRow}>
+            <StepHeading
+              n={2}
+              heading
+              label={t('heading.choose-medicines')}
+              // No hint over a dispensed visit: there is no one to choose and
+              // nothing to press (ui-surface S9).
+              hint={
+                viewingId() !== undefined
+                  ? undefined
+                  : !canPress()
+                    ? t('messages.choose-who-first')
+                    : t('messages.press-an-amount')
+              }
+              testId="choose-medicines-hint"
+            />
+            {/* Once the cards show; not over a dispensed visit, whose cards
+                are disabled (rules › setting up the common medicines). */}
+            <Show
+              when={(cards() ?? []).length > 0 && viewingId() === undefined}
+            >
+              <Button
+                variant="ghost"
+                icon={<EditIcon />}
+                disabled={locked()}
+                data-testid="edit-common-medicines-button"
+                onClick={() => setSettingUp(true)}
+              >
+                {t('button.edit-common-medicines')}
+              </Button>
+            </Show>
+          </div>
           <div class={styles.search}>
             <ItemSearch
               label={t('label.search-all-medicines')}
@@ -1492,7 +1515,36 @@ const SimpleDispensingPage: Component = () => {
                     : 'messages.no-common-medicines-dispensable'
                 )}
                 data-testid="nothing-here"
-              />
+              >
+                {/* Either way the fix starts in the editor; not over a
+                    dispensed visit (rules › setting up the common
+                    medicines). */}
+                <Show when={viewingId() === undefined}>
+                  <Button
+                    variant="ghost"
+                    icon={
+                      medicines()?.length === 0 ? (
+                        <PlusCircleIcon />
+                      ) : (
+                        <EditIcon />
+                      )
+                    }
+                    disabled={locked()}
+                    data-testid={
+                      medicines()?.length === 0
+                        ? 'add-common-medicines-button'
+                        : 'edit-common-medicines-button'
+                    }
+                    onClick={() => setSettingUp(true)}
+                  >
+                    {t(
+                      medicines()?.length === 0
+                        ? 'button.add-common-medicines'
+                        : 'button.edit-common-medicines'
+                    )}
+                  </Button>
+                </Show>
+              </EmptyState>
             }
           >
             <Match when={(cards() ?? []).length > 0}>
@@ -1628,6 +1680,16 @@ const SimpleDispensingPage: Component = () => {
             onClose={closeAmount}
           />
         )}
+      </Show>
+      <Show when={settingUp()}>
+        <CommonMedicinesEditor
+          storeId={storeOpened}
+          onClose={() => setSettingUp(false)}
+          onSaved={() => {
+            setSettingUp(false);
+            void refetchMedicines();
+          }}
+        />
       </Show>
       {/* Over the amount box when opened from it, so it is rendered after. */}
       <Show when={correcting()} keyed>
