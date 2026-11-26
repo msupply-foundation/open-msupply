@@ -2012,6 +2012,7 @@ tr[data-accent='error'] > :first-child::before {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
   gap: var(--space-3) var(--space-4);
+  --on-input-line: 0;
 }
 
 /* Fields inside a panel are usually editable inputs (the modal cards), which
@@ -2094,6 +2095,26 @@ tr[data-accent='error'] > :first-child::before {
    the wrapped row could never shrink to wrap. */
 .cardFields[data-field-widths] > * {
   min-inline-size: 0;
+}
+
+/* A card field group that holds an input box (a modal's batch card) puts its
+   read-only values on the box's line, as FormRow does (LabelledValue reads
+   this; #2598). Same box test as FormRow's; the 0 is in .cardFields above. */
+.cardFields:has(
+  :is(
+    input:not(
+      [type='checkbox'],
+      [type='radio'],
+      [type='hidden'],
+      [type='file']
+    ),
+    select,
+    textarea,
+    [aria-haspopup='listbox'],
+    [aria-haspopup='dialog']
+  ):not(dialog:not([open]) *, [popover]:not(:popover-open) *)
+) {
+  --on-input-line: 1;
 }
 
 /* Sizing per field, in <FormRowItem>'s terms — see CardView's cardFlex for why

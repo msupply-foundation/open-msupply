@@ -104,18 +104,25 @@
    now", which is what a LOCKED cost price is, and conflating the two loses the
    distinction the receiver needs.
    The first attempt at this looked broken because it wasn't anchored: bare
-   text at the top of where an input would be, with a caption above it. Here it
-   takes the small input's exact height and centres in it, so it sits on the
-   same line as every value beside it and the row's rhythm is unchanged. Right
-   aligned with tabular figures, matching the number fields it's read against. */
+   text at the top of where an input would be, with a caption above it. On a
+   card, LabelledValue puts it on the input line (its value is padded down in a
+   field group with a box, #2598). In table view it takes the small input's
+   exact height and centres in it, so it sits on the same line as every value
+   beside it and the row's rhythm is unchanged; that is scoped to table view
+   because on a card it would add to LabelledValue's padding and sit half a box
+   low. Right aligned with tabular figures, matching the number fields it's read
+   against. */
 .statValue {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  min-block-size: var(--input-height-sm);
   color: var(--text-body);
   font-size: var(--input-font-sm);
   font-variant-numeric: tabular-nums;
+}
+
+:global([data-view='table']) .statValue {
+  min-block-size: var(--input-height-sm);
 }
 
 /* A discrepancy — received differs from what the supplier says was shipped.

@@ -15,6 +15,8 @@
   flex-direction: column;
   gap: var(--space-1);
   min-inline-size: 0;
+  /* The input box a value lines up with (see "On the input line" below). */
+  --value-line-box: var(--input-height);
 }
 
 .field[data-variant='field'] {
@@ -58,4 +60,39 @@
 .field[data-size='small'] .label,
 .field[data-size='small'] .value {
   font-size: var(--input-font-sm);
+}
+
+.field[data-size='small'] {
+  --value-line-box: var(--input-height-sm);
+}
+
+/* On the input line (#2598). An input's text sits in the middle of its box,
+   while a stacked value's text sits straight under its label, so beside a box
+   the read-only number rode about half a box higher than the editable one. A
+   row that holds an input box (FormRow, a card's field group) sets
+   --on-input-line to 1; the value then drops its FIRST line to the middle of
+   an input box of its own size, so a value that wraps keeps its first line on
+   the box's line, like table view's first-line cells. Padding, not flex
+   centring: the value's children stay in one inline run. A value that IS a
+   control (a card cell's box, checkbox, button or menu trigger) is already
+   where it belongs, and a blank one has nothing to line up. */
+@media (pointer: coarse) {
+  .field {
+    --value-line-box: var(--input-height-touch);
+  }
+
+  .field[data-size='small'] {
+    --value-line-box: var(--input-height-sm-touch);
+  }
+}
+
+.field[data-layout='stacked']
+  > .value:not(
+    :empty,
+    :has(> [data-mono]:only-child:empty),
+    :has(input, select, textarea, button, [role='switch'], [aria-haspopup])
+  ) {
+  padding-block-start: calc(
+    var(--on-input-line, 0) * max(0px, (var(--value-line-box) - 1lh) / 2)
+  );
 }

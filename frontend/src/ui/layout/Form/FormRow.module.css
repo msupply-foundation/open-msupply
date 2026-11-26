@@ -16,6 +16,29 @@
   flex-wrap: wrap;
   gap: var(--space-3) var(--space-4);
   align-items: start;
+  --on-input-line: 0;
+}
+
+/* A row that holds an input box puts its read-only values on the box's line
+   (LabelledValue reads this; #2598). A checkbox or radio is shorter than the
+   line, so it doesn't count as a box, and nor does one in a closed dialog or
+   popover declared inside the row. Set to 0 on every row so a row nested in
+   one that has a box decides for itself (the 0 is in .row above). */
+.row:has(
+  :is(
+    input:not(
+      [type='checkbox'],
+      [type='radio'],
+      [type='hidden'],
+      [type='file']
+    ),
+    select,
+    textarea,
+    [aria-haspopup='listbox'],
+    [aria-haspopup='dialog']
+  ):not(dialog:not([open]) *, [popover]:not(:popover-open) *)
+) {
+  --on-input-line: 1;
 }
 
 .row > * {
