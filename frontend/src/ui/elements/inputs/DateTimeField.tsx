@@ -6,7 +6,7 @@ import {
   type JSX,
 } from 'solid-js';
 import { TimeField as KTimeField } from '@kobalte/core/time-field';
-import { locale } from '../../../intl';
+import { locale, t } from '../../../intl';
 import { CalendarIcon } from '../../icons';
 import { Popover } from '../feedback/Popover';
 import type { FocusTarget } from '../../utils/createFocusTarget';
@@ -163,7 +163,7 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
             value={dateText()}
             placeholder={formatPlaceholder(fmt())}
             disabled={props.disabled}
-            aria-label={`${props.label}, date`}
+            aria-label={t('label.field-date-part', { label: props.label })}
             aria-describedby={describedBy}
             aria-invalid={invalid}
             onInput={e => setDateText(e.currentTarget.value)}
@@ -175,7 +175,7 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
           <Popover
             placement="bottom-end"
             triggerClass={styles.iconBtn}
-            triggerLabel="Open calendar"
+            triggerLabel={t('label.open-calendar')}
             triggerProps={{ disabled: props.disabled }}
             trigger={<CalendarIcon class={styles.calendarIcon} />}
           >
@@ -199,7 +199,7 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
               setTime(t ?? undefined);
               emit(parts()?.date ?? null, t ?? undefined);
             }}
-            aria-label={`${props.label}, time`}
+            aria-label={t('label.field-time-part', { label: props.label })}
             hourCycle={props.hourCycle}
             disabled={props.disabled}
             onKeyDown={(e: KeyboardEvent) => {
