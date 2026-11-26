@@ -34,7 +34,11 @@ To see the end of that log file use `tail ~/actions-runner/_diag/FILENAME_FROM_C
 
 ### Lanes
 
-The mac mini runs several runner instances ("lanes"), each taking one job at a time, all with the same labels (`self-hosted,macOS`). Its jobs are mostly short PR checks - the front end check (`frontend-check-test.yaml`, whose check-and-build job and accessibility scan run side by side) and the React client checks - plus the Android APK, the mac demo and the server build. With several lanes, a long build holds one lane rather than every PR check.
+The mac mini runs several runner instances ("lanes"), each taking one job at a time. Its jobs are mostly short PR checks - the front end check (`frontend-check-test.yaml`, whose check-and-build job and accessibility scan run side by side) and the React client checks - plus the long builds: the Android APK, the mac demo, the server build and the plugin bundles (`publish-bundles.yaml`).
+
+The long builds ask for `[self-hosted, macOS, build]`, and only one lane carries `build`, so however many land at once they hold that lane and never the others. PR checks ask for plain `[self-hosted, macOS]` and take any lane, the build lane included when it is free: a build that waits a few minutes behind a check costs nothing, whereas a check that waits behind builds holds up whoever is waiting on their PR (it once queued for 165 minutes). A new long-running mac job asks for `build` too.
+
+To give an existing lane the `build` label without re-registering it, find its id with `gh api repos/msupply-foundation/open-msupply-internal/actions/runners -q '.runners[]|[.id,.name]|@tsv'`, then `gh api -X POST repos/msupply-foundation/open-msupply-internal/actions/runners/<id>/labels -f 'labels[]=build'`. Add it before a workflow that asks for it merges: a label no lane carries makes its jobs queue for ever.
 
 Each lane keeps Node 24 in its own tool cache (`actions/setup-node`), `.github/scripts/frontend-check-setup.sh` installs pnpm there once per version, and pnpm's store and Playwright's browsers stay on the mac between jobs. The front end check's "behaviour anchors" step needs `python3`, which the Xcode Command Line Tools provide.
 
