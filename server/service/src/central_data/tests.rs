@@ -2854,6 +2854,68 @@ async fn an_item_export_searches_code_and_name_and_filters_by_status() {
     assert_eq!(matching(Some(""), None), 2);
 }
 
+// covers: OMS-REG-CDIO-01.211
+
+#[actix_rt::test]
+async fn a_new_name_missing_its_type_lists_the_types() {
+    let (_, service_provider, dir) = name_setup("central_data_name_missing_type").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let path = write_file(
+        dir.path(),
+        name_sheet(vec![new_name_row(&[
+            ("code", "NEWN"),
+            ("name", "New name"),
+        ])]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(
+            2,
+            Some("type"),
+            "type is required for a new name and must be one of FACILITY, BUILD, INVAD, REPACK, STORE, OTHERS"
+        )]
+    );
+}
+
+// covers: OMS-REG-CDIO-01.211
+
+#[actix_rt::test]
+async fn a_missing_choice_cell_lists_its_choices() {
+    let (_, service_provider, dir) = item_setup("central_data_item_missing_choice").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let path = write_file(
+        dir.path(),
+        item_sheet(vec![item_row([
+            "",
+            "AMOX",
+            "Amoxicillin",
+            "",
+            "",
+            "",
+            "",
+            "20",
+            "",
+            "TRUE",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+        ])]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(
+            2,
+            Some("type"),
+            "type is required for a new item and must be one of STOCK, SERVICE, NON_STOCK"
+        )]
+    );
+}
+
 // covers: OMS-REG-CDIO-01.12, .35, .37, .58, .63, .81, .84, .86, .87
 
 #[actix_rt::test]
@@ -3720,7 +3782,7 @@ async fn a_user_export_searches_usernames_and_filters_by_status() {
     assert_eq!(counts(None, Some(false)).matching, 1);
 }
 
-// covers: OMS-REG-CDIO-01.12, .37, .58, .63, .87, .93, .94, .97
+// covers: OMS-REG-CDIO-01.12, .37, .58, .63, .87, .93, .94, .97, .211
 
 #[actix_rt::test]
 async fn user_rows_add_and_update_by_username_and_hash_passwords() {
@@ -3739,9 +3801,17 @@ async fn user_rows_add_and_update_by_username_and_hash_passwords() {
         row_errors(&summary),
         vec![
             (2, Some("password"), "password is required for a new user"),
-            (2, Some("language"), "language is required for a new user"),
+            (
+                2,
+                Some("language"),
+                "language is required for a new user and must be one of ENGLISH, FRENCH, SPANISH, LAOS, KHMER, PORTUGUESE, RUSSIAN, TETUM"
+            ),
             (3, Some("username"), "username is required for a new user"),
-            (3, Some("language"), "language is required for a new user"),
+            (
+                3,
+                Some("language"),
+                "language is required for a new user and must be one of ENGLISH, FRENCH, SPANISH, LAOS, KHMER, PORTUGUESE, RUSSIAN, TETUM"
+            ),
         ]
     );
 
@@ -6013,7 +6083,7 @@ async fn a_store_export_searches_name_and_code_and_filters_by_status() {
     assert_eq!(count(Some("ward"), Some(true)).matching, 0);
 }
 
-// covers: OMS-REG-CDIO-01.12, .37, .138, .141, .142
+// covers: OMS-REG-CDIO-01.12, .37, .138, .141, .142, .211
 
 #[actix_rt::test]
 async fn store_rows_add_and_update_by_code() {
@@ -6041,7 +6111,7 @@ async fn store_rows_add_and_update_by_code() {
             (
                 4,
                 Some("store_mode"),
-                "store_mode is required for a new store"
+                "store_mode is required for a new store and must be one of STORE, DISPENSARY"
             ),
             (
                 4,
@@ -7723,7 +7793,7 @@ async fn a_user_permission_export_searches_username_and_store_code() {
     assert_eq!(count(Some("REPORT")).matching, 0);
 }
 
-// covers: OMS-REG-CDIO-01.12, .25, .36, .154, .155
+// covers: OMS-REG-CDIO-01.12, .25, .36, .154, .155, .211
 
 #[actix_rt::test]
 async fn user_permission_rows_add_and_delete_by_user_store_permission_and_context() {
@@ -7745,6 +7815,14 @@ async fn user_permission_rows_add_and_delete_by_user_store_permission_and_contex
         ]),
     );
     let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    // Every permission this server knows.
+    let permissions: Vec<String> = PermissionType::known_iter()
+        .map(|permission| permission.as_ref().to_string())
+        .collect();
+    let permission_required = format!(
+        "permission is required for a new user permission and must be one of {}",
+        permissions.join(", ")
+    );
     assert_eq!(
         row_errors(&summary),
         vec![
@@ -7753,11 +7831,7 @@ async fn user_permission_rows_add_and_delete_by_user_store_permission_and_contex
                 Some("store_code"),
                 "store_code is required for a new user permission"
             ),
-            (
-                2,
-                Some("permission"),
-                "permission is required for a new user permission"
-            ),
+            (2, Some("permission"), permission_required.as_str()),
             (
                 3,
                 Some("username"),

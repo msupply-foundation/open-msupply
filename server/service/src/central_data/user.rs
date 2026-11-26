@@ -1,7 +1,7 @@
 use super::{
     CentralDataTable, Change, EndSessions, ExportFilter, ImportTable, RecordCount, RowFailure,
     RowOutcome, SheetImport, SheetStart,
-    cells::{Row, RowError, choice_cell, collect},
+    cells::{Row, RowError, choice_cell, collect, one_of},
     delete::{DELETE, DELETE_COLUMN, already_deleted, check_delete, is_delete},
     fail_if_any, field_changes,
     lookup::find_record,
@@ -257,7 +257,7 @@ impl SheetImport for UserSheet {
         let is_active = is_active
             .or(saved.map(|user| user.is_active))
             .unwrap_or(true);
-        row.require_for_new(
+        row.require_for_new_with_choices(
             &mut errors,
             "user",
             &[
@@ -265,6 +265,7 @@ impl SheetImport for UserSheet {
                 (PASSWORD, password.is_none() && saved.is_none()),
                 (LANGUAGE, language.is_none()),
             ],
+            &[(LANGUAGE, || one_of(LANGUAGES))],
         );
 
         let hashed_password = match (password, saved) {
