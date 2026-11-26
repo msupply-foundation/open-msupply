@@ -367,8 +367,8 @@ const SimpleDispensingPage: Component = () => {
   // just created: read the record so their code, date of birth and gender
   // show.
   const showDetails = async (id: string) => {
-    const full = await fetchPatientOptionById(storeOpened, id);
-    if (full && patient()?.id === id) setPatient(full);
+    const read = await fetchPatientOptionById(storeOpened, id);
+    if (read.kind === 'found' && patient()?.id === id) setPatient(read.patient);
   };
 
   // The list: client state until the visit is dispensed, the kept visit's.
