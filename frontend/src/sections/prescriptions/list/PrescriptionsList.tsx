@@ -3,7 +3,10 @@ import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
-import { prescriptionPreferences } from '../../../store/storeContext';
+import {
+  hasPermission,
+  prescriptionPreferences,
+} from '../../../store/storeContext';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
@@ -71,6 +74,7 @@ import {
   DeletePrescriptionsAction,
   ExportPrescriptionsAction,
 } from './actions';
+import { VerifyAllAction } from './actions/VerifyAllAction';
 
 // The prescriptions list (spec/prescriptions/ui-surface.md S1): the standard
 // list screen over `invoices` pinned to type PRESCRIPTION. Read-only rows
@@ -370,6 +374,15 @@ const PrescriptionsList: Component = () => {
               customFieldFilter={() => query().cf}
               customFields={cfDefs}
             />
+            {/* A Simple store verifies a month's records together, when it
+                does the monthly report (rules › verifying the month's
+                records); a Standard store verifies each on its record. */}
+            <Show when={simpleStore() && hasPermission('PRESCRIPTION_MUTATE')}>
+              <VerifyAllAction
+                storeId={params.storeId}
+                onVerified={() => void refetch()}
+              />
+            </Show>
           </HeaderButtons>
         </Header>
       }
