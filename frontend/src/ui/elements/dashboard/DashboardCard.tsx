@@ -20,6 +20,13 @@ export interface DashboardCardProps {
    * bottom-inline-end.
    */
   footer?: JSX.Element;
+  /**
+   * Surface treatment. `raised` (default) is the shadowed card the Dashboard
+   * uses. `panel` is for a card on a shaded page body (Page `shaded`): the
+   * same fill, a hairline outline, the small radius and no shadow, as
+   * DetailCard's `panel` surface. Only the Reports page uses it (#2224).
+   */
+  surface?: 'raised' | 'panel';
   /** e2e testid — the widget's published id (e2e/TESTIDS.md § Dashboard). */
   testId?: string;
   /** The StatsPanel children. */
@@ -41,7 +48,12 @@ export const DashboardCard = (props: DashboardCardProps) => {
   const footer = children(() => props.footer);
   const icon = children(() => props.icon);
   return (
-    <section class={styles.card} id={props.id} data-testid={props.testId}>
+    <section
+      class={styles.card}
+      id={props.id}
+      data-surface={props.surface ?? 'raised'}
+      data-testid={props.testId}
+    >
       <h2 class={styles.title}>
         <Show when={icon()}>
           <span class={styles.icon} aria-hidden="true">
