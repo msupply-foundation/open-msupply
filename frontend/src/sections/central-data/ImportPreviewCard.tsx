@@ -1,4 +1,4 @@
-import { For, Show } from 'solid-js';
+import { For, Match, Show, Switch } from 'solid-js';
 import { formatNumber, t, tPlural } from '@/intl';
 import { CardGrid } from '@/ui/layout/CardGrid/CardGrid';
 import { DetailCard } from '@/ui/layout/Detail/DetailCard';
@@ -24,6 +24,7 @@ import {
   changeBadge,
   changeCount,
   describeFields,
+  previewNotice,
   tableEntry,
   type ImportOutcome,
 } from './centralDataLogic';
@@ -101,6 +102,7 @@ const errorColumns: Column<RowError, never>[] = [
 export const ImportPreviewCard = (props: { preview: Preview }) => {
   const errorCount = () => props.preview.summary.errorCount;
   const changes = () => changeCount(props.preview.summary);
+  const notice = () => previewNotice(props.preview.summary);
   const changePage = createLocalPagination(
     () => props.preview.summary.changes,
     { pageSize: PAGE_SIZE }
@@ -178,65 +180,72 @@ export const ImportPreviewCard = (props: { preview: Preview }) => {
           </For>
         </CardGrid>
 
-        <Show when={errorCount() === 0 && changes() > 0}>
-          <Accordion collapsible>
-            <AccordionItem value="changed-rows">
-              <AccordionTrigger>
-                {tPlural('label.review-changed-rows', changes(), {
-                  count: formatNumber(changes()),
-                })}
-              </AccordionTrigger>
-              <AccordionContent>
-                <Stack>
-                  <DataTable
-                    columns={changeColumns}
-                    rows={changePage.rows()}
-                    rowKey={row => `${row.sheet}:${row.row}`}
-                    showFullScreen={false}
-                    pagination={changePage.pagination()}
-                  />
-                  <Show when={changes() > props.preview.summary.changes.length}>
-                    <Text>
-                      {t('messages.and-count-more', {
-                        count: formatNumber(
-                          changes() - props.preview.summary.changes.length
-                        ),
-                      })}
-                    </Text>
-                  </Show>
-                </Stack>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        </Show>
-
-        <Show
-          when={errorCount() > 0}
-          fallback={
-            <Alert severity="success" testId="central-data-all-or-nothing">
-              {t('messages.central-data-all-or-nothing')}
+        <Switch>
+          <Match when={notice() === 'ready'}>
+            <Accordion collapsible>
+              <AccordionItem value="changed-rows">
+                <AccordionTrigger>
+                  {tPlural('label.review-changed-rows', changes(), {
+                    count: formatNumber(changes()),
+                  })}
+                </AccordionTrigger>
+                <AccordionContent>
+                  <Stack>
+                    <DataTable
+                      columns={changeColumns}
+                      rows={changePage.rows()}
+                      rowKey={row => `${row.sheet}:${row.row}`}
+                      showFullScreen={false}
+                      pagination={changePage.pagination()}
+                    />
+                    <Show
+                      when={changes() > props.preview.summary.changes.length}
+                    >
+                      <Text>
+                        {t('messages.and-count-more', {
+                          count: formatNumber(
+                            changes() - props.preview.summary.changes.length
+                          ),
+                        })}
+                      </Text>
+                    </Show>
+                  </Stack>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+            <Alert severity="success" testId="central-data-upload-successful">
+              {t('messages.central-data-upload-successful')}
             </Alert>
-          }
-        >
-          <DataTable
-            columns={errorColumns}
-            rows={errorPage.rows()}
-            rowKey={error =>
-              `${error.sheet}:${error.row}:${error.column ?? ''}:${error.message}`
-            }
-            showFullScreen={false}
-            pagination={errorPage.pagination()}
-          />
-          <Show when={errorCount() > props.preview.summary.errors.length}>
-            <Text>
-              {t('messages.and-count-more', {
-                count: formatNumber(
-                  errorCount() - props.preview.summary.errors.length
-                ),
-              })}
-            </Text>
-          </Show>
-        </Show>
+            <Alert severity="info" testId="central-data-all-or-nothing">
+              {t('messages.central-data-problem-imports-nothing')}
+            </Alert>
+          </Match>
+          <Match when={notice() === 'nothing-to-import'}>
+            <Alert severity="success" testId="central-data-nothing-to-import">
+              {t('messages.central-data-nothing-to-import')}
+            </Alert>
+          </Match>
+          <Match when={notice() === 'errors'}>
+            <DataTable
+              columns={errorColumns}
+              rows={errorPage.rows()}
+              rowKey={error =>
+                `${error.sheet}:${error.row}:${error.column ?? ''}:${error.message}`
+              }
+              showFullScreen={false}
+              pagination={errorPage.pagination()}
+            />
+            <Show when={errorCount() > props.preview.summary.errors.length}>
+              <Text>
+                {t('messages.and-count-more', {
+                  count: formatNumber(
+                    errorCount() - props.preview.summary.errors.length
+                  ),
+                })}
+              </Text>
+            </Show>
+          </Match>
+        </Switch>
       </Stack>
     </DetailCard>
   );
@@ -272,7 +281,7 @@ export const ImportPreviewFooter = (props: {
         <Button
           variant="primary"
           data-testid="central-data-confirm-import"
-          disabled={errorCount() > 0 || changes() === 0}
+          disabled={previewNotice(props.preview.summary) !== 'ready'}
           loading={props.busy}
           onClick={() => props.onConfirm()}
         >

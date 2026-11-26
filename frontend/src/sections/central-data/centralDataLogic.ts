@@ -323,6 +323,15 @@ export const changeCount = (summary: Summary) => {
   return inserted + updated + deleted;
 };
 
+/** What the preview card says under its lists: the errors, that Import is
+ *  ready, or that the file changes nothing so there's nothing to import. */
+export const previewNotice = (
+  summary: Summary
+): 'errors' | 'ready' | 'nothing-to-import' => {
+  if (summary.errorCount > 0) return 'errors';
+  return changeCount(summary) > 0 ? 'ready' : 'nothing-to-import';
+};
+
 /** The changed-row badge; unchanged rows are never listed. A restore counts
  *  as updated, but has its own badge, as it brings back a deleted record. */
 const CHANGE_BADGE: Record<
