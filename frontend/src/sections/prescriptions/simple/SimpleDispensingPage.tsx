@@ -1310,6 +1310,9 @@ const SimpleDispensingPage: Component = () => {
       // The cards and the list fill the body and own its scroll, so the list
       // can dock at its inline end, the body's full height.
       fillBody
+      // The cards stand on the shade as panels (#2172); the docked list keeps
+      // its own surface.
+      shaded
       header={
         <Header>
           <Show
@@ -1430,7 +1433,9 @@ const SimpleDispensingPage: Component = () => {
             />
           </div>
           {/* At most three columns, never narrower than three amount
-              buttons and the another-amount button need. */}
+              buttons and the another-amount button need (wider on a touch
+              screen, for its taller keys): three beside the docked list on a
+              laptop. */}
           {/* Until someone is chosen the cards' buttons are disabled,
               so they dim as every disabled control does. The names and
               stock stay full strength: staff read them while choosing. */}
@@ -1457,7 +1462,8 @@ const SimpleDispensingPage: Component = () => {
             <Match when={(cards() ?? []).length > 0}>
               <CardGrid
                 equalHeight
-                minColumnWidth="max(17rem, calc((100% - 2 * var(--space-5)) / 3))"
+                class={styles.cards}
+                minColumnWidth="max(var(--medicine-card-min), calc((100% - 2 * var(--space-3)) / 3))"
               >
                 <For each={cards()}>
                   {card => (

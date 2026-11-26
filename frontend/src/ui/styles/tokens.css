@@ -60,8 +60,9 @@
   /* The shaded page body that field panels sit on (Page `shaded`), taken from
      the tenders prototype. Its own value, not a rung of the app-shell ladder
      below: a new surface, tuned on its own.
-     TO-DO: only the tender page uses it. Roll it out as every page body's
-     background once stakeholders approve the look (#2172). */
+     TO-DO: only the tender page and the Simple dispensing screen use it.
+     Roll it out as every page body's background once stakeholders approve
+     the look (#2172). */
   --page-body-shade: #f5f5f5;
   --bg-icon: #e5eeff;
   /* Read-only field fill — its only consumers are TextField's two [readonly]

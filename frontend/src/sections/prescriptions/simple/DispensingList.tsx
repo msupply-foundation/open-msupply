@@ -155,6 +155,9 @@ export const DispensingList = (props: {
     return sum;
   };
   const hasLines = () => props.lines.length > 0;
+  // Nothing to check yet: the head's band is muted.
+  const nothingListed = () =>
+    props.visit ? !props.visit.lines?.length : !hasLines();
   // The total the panel shows: the dispensed visit's once it is read, else
   // the list's once something is on it.
   const shownTotal = (): number | undefined =>
@@ -320,7 +323,13 @@ export const DispensingList = (props: {
         {/* The list itself: the panel's whole content where it is docked,
             the sheet the bar opens on a phone. */}
         <div id={sheetId} class={styles.sheet}>
-          <header class={styles.head}>
+          {/* A band in the inverse of the page's colours, so the list is
+              found from across the counter; muted while there is nothing on
+              it to check. */}
+          <header
+            class={styles.head}
+            data-empty={nothingListed() ? '' : undefined}
+          >
             <Show
               when={props.visit}
               fallback={
