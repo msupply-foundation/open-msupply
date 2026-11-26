@@ -43,10 +43,36 @@ export type Notice = {
   /** The visit the message is about, once dispensed: View opens it. */
   dispensedId?: string;
   /**
+   * The message after Dispense: the screen is ready for the next patient,
+   * and the list says so until the next person is chosen or the next amount
+   * pressed, which take the message away (ui-surface S9 › dispensed).
+   */
+  dispensed?: true;
+  /**
    * Says the stock was corrected (rules › correcting the stock): shown over
    * the notice about short lines, which it answers, until the list changes.
    */
   corrected?: true;
+};
+
+/**
+ * A notice as the list shows it: one naming a dispensed visit offers View;
+ * the message after Dispense also says the screen is ready for the next
+ * patient and offers Dispensing records (ui-surface S9 › dispensed).
+ */
+export const withNoticeLinks = <
+  N extends Pick<Notice, 'severity' | 'text'> &
+    Partial<Pick<Notice, 'dispensedId' | 'dispensed'>>,
+>(
+  notice: N | undefined,
+  links: { visitHref: (id: string) => string; recordsHref: string }
+): (N & { viewHref?: string; recordsHref?: string }) | undefined => {
+  if (!notice?.dispensedId) return notice;
+  return {
+    ...notice,
+    viewHref: links.visitHref(notice.dispensedId),
+    recordsHref: notice.dispensed ? links.recordsHref : undefined,
+  };
 };
 
 export interface KeptVisit {

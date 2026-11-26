@@ -304,8 +304,9 @@ export const DetailViewsShowcase = () => (
           <code>--page-body-shade</code>), and each group of fields on it is a{' '}
           <code>DetailCard</code> with <code>surface="panel"</code>: the raised
           fill, a hairline, a small radius and no shadow. A table that fills the
-          body keeps its own white. Only the tender page uses it so far; it
-          becomes the default for every page once approved (#2172).
+          body keeps its own white. Only the tender page and the Simple
+          dispensing screen use it so far; it becomes the default for every page
+          once approved (#2172).
         </Lead>
         <PageFrame>
           <Page shaded>

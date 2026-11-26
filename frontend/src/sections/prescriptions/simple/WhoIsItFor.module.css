@@ -15,17 +15,19 @@
   min-inline-size: 0;
 }
 
-/* The unnamed patient, chosen: a field-sized box, tinted and dashed, so it
-   reads as a choice made, not a registered patient. */
+/* The unnamed patient, chosen: a box sized to its words, with the warning
+   tone's tint and a dashed edge in that tone, so it reads as a choice made,
+   not a registered patient (ui-surface S9). */
 .unnamed {
   display: inline-flex;
-  flex: 1 1 auto;
+  flex: none;
   align-items: center;
-  min-block-size: var(--input-height);
-  padding-inline: var(--space-3);
-  border: 1px dashed var(--input-border);
+  padding: var(--space-1) var(--space-3);
+  border: 1.5px dashed var(--color-warning);
   border-radius: var(--radius-md);
-  background: var(--surface-sunken);
+  background: color-mix(in srgb, var(--color-warning) 10%, var(--bg-white));
+  color: var(--text-body);
+  font-size: var(--text-sm);
   font-weight: var(--weight-semibold);
 }
 

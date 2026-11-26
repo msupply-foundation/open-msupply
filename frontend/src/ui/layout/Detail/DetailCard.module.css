@@ -23,8 +23,9 @@
    raised fill (white in light, a step above the shade in dark), outlined by
    the hairline, with the small radius the table frame uses. No shadow: the
    shade already separates it.
-   TO-DO: only the tender page's cards use it. Once stakeholders approve the
-   look, it becomes how every group of fields on a page body looks (#2172). */
+   TO-DO: only the tender page's and the Simple dispensing screen's cards use
+   it. Once stakeholders approve the look, it becomes how every group of
+   fields on a page body looks (#2172). */
 .card[data-surface='panel'] {
   background: var(--surface-raised);
   border: 1px solid var(--color-border-value);
@@ -69,6 +70,16 @@
   overflow-wrap: anywhere;
 }
 
+/* `truncateTitle`: one line, cut short, the whole title on hover (the
+   heading's `title`). The heading box is shrink-to-fit, so the title is held
+   to it to have something to cut against. */
+.title[data-truncate] {
+  max-inline-size: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .actions {
   display: flex;
   align-items: center;
@@ -90,7 +101,7 @@
    cards where fitting them on one screen matters more than room per card. */
 .card[data-density='compact'] {
   gap: var(--space-2);
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-2) var(--space-3);
 }
 
 .card[data-density='compact'] .title {

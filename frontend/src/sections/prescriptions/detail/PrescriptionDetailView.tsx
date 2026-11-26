@@ -58,6 +58,7 @@ import {
   hasPermission,
   prescriptionPreferences,
 } from '../../../store/storeContext';
+import { notFoundReturnMessage } from '../dispensingScreen';
 import { storeNameOf } from '../../../auth/authContext';
 import {
   asPrescriptionStatus,
@@ -564,10 +565,15 @@ const PrescriptionDetailView: Component = () => {
     return cols;
   };
 
+  // The store's dispensing screen: the list, or in a store that dispenses on
+  // the Simple screen, the Simple screen, which is served at the same address.
+  // The breadcrumb, a missing record's OK and deleting the record all go
+  // there, never to a Simple store's Dispensing records (ui-surface S3).
+  const dispensingHref = () => `/${params.storeId}/dispensary/dispensing`;
   const crumbs = (node?: PrescriptionFieldsFragment) => [
     {
       label: t('dispensing'),
-      to: `/${params.storeId}/dispensary/dispensing`,
+      to: dispensingHref(),
     },
     { label: node ? `${node.invoiceNumber}` : '…' },
   ];
@@ -583,8 +589,10 @@ const PrescriptionDetailView: Component = () => {
           <NotFoundNotice
             testId="prescription-not-found-notice"
             title={t('error.prescription-not-found')}
-            description={t('messages.click-to-return-to-prescriptions')}
-            onClose={() => navigate(`/${params.storeId}/dispensary/dispensing`)}
+            description={t(
+              notFoundReturnMessage(prescriptionPreferences().dispensingScreen)
+            )}
+            onClose={() => navigate(dispensingHref())}
           />
         </Show>
       }
@@ -725,11 +733,7 @@ const PrescriptionDetailView: Component = () => {
                       );
                   })
                 }
-                onDeleted={() =>
-                  navigate(`/${params.storeId}/dispensary/dispensing`, {
-                    replace: true,
-                  })
-                }
+                onDeleted={() => navigate(dispensingHref(), { replace: true })}
               />
             }
             contentFooter={
