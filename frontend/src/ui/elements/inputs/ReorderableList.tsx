@@ -75,6 +75,14 @@ export interface ReorderableListProps {
   /** `data-testid` on the list element (locale-stable test hook). */
   testId?: string;
   class?: string;
+  /**
+   * Controls of the row's own, between its text and the move buttons — the
+   * common medicines editor's amount fields and remove button. With it, a row
+   * holds inputs, so a drag starts only from the handle: a row draggable all
+   * over would turn selecting an input's text with the mouse into a drag. The
+   * row wraps its controls under the text where it runs short.
+   */
+  rowEnd?: (item: ReorderableItem) => JSX.Element;
 }
 
 /*
@@ -97,6 +105,11 @@ export interface ReorderableListProps {
  */
 export const ReorderableList = (props: ReorderableListProps): JSX.Element => {
   const [draggingId, setDraggingId] = createSignal<string>();
+  // With row controls, the row a pointer is pressed on by its handle: only
+  // that row is draggable, and only while the press lasts.
+  const [armedId, setArmedId] = createSignal<string>();
+  const draggable = (id: string) =>
+    !props.disabled && (props.rowEnd === undefined || armedId() === id);
 
   /*
    * Focus across a move, the shared registry's (./moveFocus.ts): a reorder
@@ -186,7 +199,8 @@ export const ReorderableList = (props: ReorderableListProps): JSX.Element => {
         {(item, index) => (
           <li
             class={styles.row}
-            draggable={!props.disabled}
+            data-row-end={props.rowEnd ? '' : undefined}
+            draggable={draggable(item.id)}
             data-dragging={draggingId() === item.id ? '' : undefined}
             onDragStart={event => {
               if (props.disabled) return;
@@ -195,7 +209,10 @@ export const ReorderableList = (props: ReorderableListProps): JSX.Element => {
               event.dataTransfer?.setData('text/plain', item.id);
               if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
             }}
-            onDragEnd={() => setDraggingId(undefined)}
+            onDragEnd={() => {
+              setDraggingId(undefined);
+              setArmedId(undefined);
+            }}
             onDragOver={event => {
               const dragged = draggingId();
               if (props.disabled || dragged === undefined) return;
@@ -213,6 +230,14 @@ export const ReorderableList = (props: ReorderableListProps): JSX.Element => {
               class={styles.handle}
               title={names().dragHandle}
               aria-hidden="true"
+              onPointerDown={() => {
+                setArmedId(item.id);
+                // Released anywhere, the press is over; a drag ends with
+                // dragend instead, which pointerup doesn't follow.
+                window.addEventListener('pointerup', () => setArmedId(), {
+                  once: true,
+                });
+              }}
             >
               <MenuLinesIcon />
             </span>
@@ -233,6 +258,9 @@ export const ReorderableList = (props: ReorderableListProps): JSX.Element => {
                 <span class={styles.description}>{item.description}</span>
               </Show>
             </span>
+            <Show when={props.rowEnd}>
+              {rowEnd => <span class={styles.rowEnd}>{rowEnd()(item)}</span>}
+            </Show>
             <span class={styles.actions}>
               <MoveButton item={item} index={index()} to="top" />
               <MoveButton item={item} index={index()} to="up" />

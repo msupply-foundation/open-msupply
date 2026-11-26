@@ -114,3 +114,20 @@
 .chevronUp {
   transform: rotate(180deg);
 }
+
+/* A row with controls of its own wraps them, and the move buttons after them,
+   under its text where the row runs short (a phone). */
+.row[data-row-end] {
+  flex-wrap: wrap;
+}
+
+.row[data-row-end] .text {
+  flex: 1 1 10rem;
+}
+
+.rowEnd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
