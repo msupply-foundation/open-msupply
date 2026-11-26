@@ -961,6 +961,7 @@
   "heading.configure-rates-per-store": "Configure rates per store",
   "heading.confirm-finalise": "Are you sure you want to finalise?",
   "heading.consumption-history": "Consumption History (monthly)",
+  "heading.consumption-history-in-unit": "Consumption History (monthly in {{unit}})",
   "heading.contact-us": "Contact us",
   "heading.correct-the-stock": "Correct the stock",
   "heading.course": "Course",
