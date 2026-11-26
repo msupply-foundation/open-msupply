@@ -29,13 +29,17 @@
 
 /* After the usual amounts, the another-amount key is a square as tall as
    they are, with a dashed edge: it asks for an amount rather than giving one.
-   Quiet ink, as the least used key on the card. Outranks the icon button's
-   own box (`.iconButton[data-bordered]`). */
+   Quiet ink, as the least used key on the card. No fill of its own, so the
+   gaps in the dashes show the card, not a fill a step darker (a torn edge in
+   the dark theme), and the field edge's colour so the dashes read in both
+   themes. Outranks the icon button's own box (`.iconButton[data-bordered]`). */
 .amounts > button.another {
   inline-size: var(--button-height);
   block-size: var(--button-height);
   border-style: dashed;
+  border-color: var(--input-border);
   border-radius: var(--radius-sm);
+  background: transparent;
   color: var(--text-secondary);
 }
 
