@@ -789,7 +789,7 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
               props.inputTestId ? `${props.inputTestId}-clear` : undefined
             }
             disabled={props.disabled}
-            aria-label="Clear selection"
+            aria-label={t('label.clear-selection')}
             onClick={() => {
               handleChange(null);
               inputEl?.focus();
@@ -798,7 +798,10 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
             <CloseIcon />
           </button>
         </Show>
-        <KCombobox.Trigger class={styles.toggle} aria-label="Toggle options">
+        <KCombobox.Trigger
+          class={styles.toggle}
+          aria-label={t('label.toggle-options')}
+        >
           <KCombobox.Icon class={styles.toggleIcon}>
             <ChevronDownIcon />
           </KCombobox.Icon>
