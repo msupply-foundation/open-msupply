@@ -24,6 +24,10 @@
 }
 
 .panel {
+  /* As Dialog: a panel declared inside a form row or card doesn't inherit the
+     row's input-line flag (FormRow.module.css). */
+  --on-input-line: 0;
+
   position: fixed;
   inset: auto;
   margin: 0;

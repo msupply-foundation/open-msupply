@@ -14,6 +14,9 @@
   --dialog-min-body-height: 0;
   /* holdHeight's measured floor — set inline, read only under [data-hold-height]. */
   --dialog-held-height: 0px;
+  /* A dialog declared inside a form row or card doesn't inherit the row's
+     input-line flag (FormRow.module.css): its values line up with its own rows. */
+  --on-input-line: 0;
 
   /* Fixed width (steady box), clamped down to the viewport on narrow screens. */
   width: min(var(--dialog-width), calc(100vw - 2rem));
