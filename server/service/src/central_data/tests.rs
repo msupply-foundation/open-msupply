@@ -2857,6 +2857,30 @@ async fn an_item_export_searches_code_and_name_and_filters_by_status() {
 // covers: OMS-REG-CDIO-01.211
 
 #[actix_rt::test]
+async fn a_new_name_missing_its_type_lists_the_types() {
+    let (_, service_provider, dir) = name_setup("central_data_name_missing_type").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let path = write_file(
+        dir.path(),
+        name_sheet(vec![new_name_row(&[
+            ("code", "NEWN"),
+            ("name", "New name"),
+        ])]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(
+            2,
+            Some("type"),
+            "type is required for a new name and must be one of FACILITY, BUILD, INVAD, REPACK, STORE, OTHERS"
+        )]
+    );
+}
+
+// covers: OMS-REG-CDIO-01.211
+
+#[actix_rt::test]
 async fn a_missing_choice_cell_lists_its_choices() {
     let (_, service_provider, dir) = item_setup("central_data_item_missing_choice").await;
     let ctx = service_provider.basic_context().unwrap();
@@ -3758,7 +3782,7 @@ async fn a_user_export_searches_usernames_and_filters_by_status() {
     assert_eq!(counts(None, Some(false)).matching, 1);
 }
 
-// covers: OMS-REG-CDIO-01.12, .37, .58, .63, .87, .93, .94, .97
+// covers: OMS-REG-CDIO-01.12, .37, .58, .63, .87, .93, .94, .97, .211
 
 #[actix_rt::test]
 async fn user_rows_add_and_update_by_username_and_hash_passwords() {
@@ -6059,7 +6083,7 @@ async fn a_store_export_searches_name_and_code_and_filters_by_status() {
     assert_eq!(count(Some("ward"), Some(true)).matching, 0);
 }
 
-// covers: OMS-REG-CDIO-01.12, .37, .138, .141, .142
+// covers: OMS-REG-CDIO-01.12, .37, .138, .141, .142, .211
 
 #[actix_rt::test]
 async fn store_rows_add_and_update_by_code() {
@@ -7769,7 +7793,7 @@ async fn a_user_permission_export_searches_username_and_store_code() {
     assert_eq!(count(Some("REPORT")).matching, 0);
 }
 
-// covers: OMS-REG-CDIO-01.12, .25, .36, .154, .155
+// covers: OMS-REG-CDIO-01.12, .25, .36, .154, .155, .211
 
 #[actix_rt::test]
 async fn user_permission_rows_add_and_delete_by_user_store_permission_and_context() {
