@@ -630,6 +630,8 @@
   "messages.verify-all-done_one": "Registu dispensasaun ida verifika ona.",
   "messages.verify-all-done_other": "Registus dispensasaun {{count}} verifika ona.",
   "messages.verify-all-failed": "Laiha buat ida mak verifika: iha tempu ne'e nia laran, registu dispensasaun ida muda ka hamos tiha ona. Haree fali numeru iha okos, hafoin verifika fali.",
+  "messages.verify-all-left-out_one": "Registu dispensasaun ida ho estatus 'Hili tiha ona' iha ka antes {{month}} laiha buat ida ne'ebe dispensa, nune'e la verifika. Loke ida ne'e husi lista atu remata ka hamos.",
+  "messages.verify-all-left-out_other": "Registus dispensasaun {{count}} ho estatus 'Hili tiha ona' iha ka antes {{month}} laiha buat ida ne'ebe dispensa, nune'e sira la verifika. Loke sira husi lista atu remata ka hamos sira.",
   "messages.verify-all-none": "Laiha registu dispensasaun ho estatus 'Hili tiha ona' ne'ebe dispensa iha ka antes {{month}}, nune'e laiha buat ida atu verifika.",
   "messages.verify-all-not-read": "Labele lee registus dispensasaun ne'ebe atu verifika.",
   "outbound-shipment": "Remessa sasan Sai",
