@@ -79,7 +79,12 @@ impl<'a> UserStoreJoinRowRepository<'a> {
         Ok(result)
     }
 
-    /// Writes a delete changelog, so the removal syncs.
+    fn _delete(&self, id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(user_store_join::table.filter(user_store_join::id.eq(id)))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
     pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         let changelog = UserStoreJoinRow::generate_changelog(
             RowOrId::Id(id),
@@ -87,15 +92,8 @@ impl<'a> UserStoreJoinRowRepository<'a> {
             RowActionType::Delete,
             SourceSiteId::CurrentSiteId,
         )?;
-        self.delete_by_id(id)?;
+        self._delete(id)?;
         ChangelogRepository::new(self.connection).insert(&changelog)
-    }
-
-    /// Writes no changelog.
-    pub fn delete_by_id(&self, id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(user_store_join::table.filter(user_store_join::id.eq(id)))
-            .execute(self.connection.lock().connection())?;
-        Ok(())
     }
 
     pub fn find_many_by_id(
@@ -168,7 +166,7 @@ impl Delete for UserStoreJoinRowDelete {
             ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
         };
 
-        UserStoreJoinRowRepository::new(con).delete_by_id(&self.0)?;
+        UserStoreJoinRowRepository::new(con)._delete(&self.0)?;
         ChangelogRepository::new(con).insert(&changelog)?;
         Ok(())
     }
