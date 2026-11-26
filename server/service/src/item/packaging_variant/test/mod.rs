@@ -327,5 +327,22 @@ mod query {
             result.unwrap_err(),
             UpsertPackagingVariantError::LessThanZero("volume_per_unit".to_string())
         );
+
+        // Test that we can't create a record with a blank name
+        let result = service.upsert_packaging_variant(
+            &context,
+            UpsertPackagingVariant {
+                id: test_packaging_variant_id.to_string(),
+                item_variant_id: test_item_variant_id.to_string(),
+                name: "  ".to_string(),
+                packaging_level: 1,
+                pack_size: Some(1.0),
+                volume_per_unit: Some(1.0),
+            },
+        );
+        assert_eq!(
+            result.unwrap_err(),
+            UpsertPackagingVariantError::NameIsBlank
+        );
     }
 }

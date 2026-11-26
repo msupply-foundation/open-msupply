@@ -50,7 +50,7 @@ export const SidePanel = (props: SidePanelProps) => (
     // becomes an overlay; never a Tab stop of its own (KB-T1 allows only 0/-1).
     tabindex="-1"
     data-testid="detail-panel"
-    aria-label={props.label ?? 'Details'}
+    aria-label={props.label ?? t('label.details')}
   >
     <div class={styles.header}>
       <h2 class={styles.heading}>{props.label}</h2>

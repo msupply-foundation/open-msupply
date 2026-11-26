@@ -2,14 +2,14 @@ use super::{
     CentralDataTable, Change, ExportFilter, ImportTable, RecordCount, RowFailure, RowOutcome,
     SheetImport, SheetStart,
     cells::{Row, choice_cell, collect, keep_or_saved},
-    field_changes,
-    lookup::{InMemory, NOT_FOUND, active_first, find_record, find_reference},
+    fail_if_any, field_changes,
+    lookup::{InMemory, active_first, find_record, find_reference},
     name_with_code,
     sheet::Value,
 };
 use crate::{
     i64_to_u32,
-    item::upsert::{UpsertItemError, upsert_resolved_item},
+    item::upsert::{UpsertItemError, item_errors, upsert_item_unchecked},
 };
 use repository::{
     ItemFilter, ItemRepository, ItemRow, ItemRowRepository, ItemSortField, ItemType,
@@ -269,9 +269,6 @@ impl SheetImport for ItemSheet {
             "vaccine",
             &[(VACCINE_DOSES, vaccine_doses.is_none())],
         );
-        if !errors.is_empty() {
-            return Err(RowFailure::Invalid(errors));
-        }
 
         let item = ItemRow {
             id: saved
@@ -295,15 +292,20 @@ impl SheetImport for ItemSheet {
                 UNIVERSAL_CODE,
                 saved.and_then(|item| item.universal_code.as_deref()),
             ),
-            // No column: `upsert_resolved_item` keeps the saved one.
+            // No column: `upsert_item_unchecked` keeps the saved one.
             legacy_record: String::new(),
             custom_fields: saved.and_then(|item| item.custom_fields.clone()),
         };
 
         let change = Change::between(existing.as_ref(), &item, |item| item.is_active);
         if change != Change::Unchanged {
-            upsert_resolved_item(connection, saved, &item)
-                .map_err(|error| upsert_failure(row, error))?;
+            for error in item_errors(connection, saved, &item)? {
+                upsert_failure(row, error).add_to(&mut errors)?;
+            }
+        }
+        fail_if_any(&mut errors)?;
+        if change != Change::Unchanged {
+            upsert_item_unchecked(connection, saved, &item)?;
         }
         Ok(RowOutcome {
             fields: existing
@@ -371,10 +373,6 @@ fn upsert_failure(row: &Row, error: UpsertItemError) -> RowFailure {
         UpsertItemError::NegativeVolumePerPack => row
             .error(VOLUME_PER_PACK, "volume_per_pack can't be negative")
             .into(),
-        // Not checked here: `find_reference` finds them among the saved records.
-        UpsertItemError::UnitNotFound => row.error(UNIT_ID, NOT_FOUND).into(),
-        UpsertItemError::LocationTypeNotFound => row.error(LOCATION_TYPE_ID, NOT_FOUND).into(),
-        UpsertItemError::DatabaseError(error) => RowFailure::Database(error),
     }
 }
 

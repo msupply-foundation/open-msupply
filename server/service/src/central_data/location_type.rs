@@ -3,13 +3,14 @@ use super::{
     RowOutcome, SheetImport, SheetStart,
     cells::{Row, RowError, collect, keep_or_saved},
     delete::{DELETE_COLUMN, already_deleted, check_delete, is_delete},
-    field_changes,
+    fail_if_any, field_changes,
     lookup::find_record,
     name_with_code,
     sheet::Value,
 };
 use crate::location_type::{
-    DeleteLocationTypeError, UpsertLocationTypeError, delete_location_type, upsert_location_type,
+    DeleteLocationTypeError, UpsertLocationTypeError, delete_location_type, location_type_errors,
+    upsert_location_type_unchecked,
 };
 use repository::{
     LocationTypeRow, LocationTypeRowRepository, LocationTypeUser, RepositoryError,
@@ -136,9 +137,6 @@ impl SheetImport for LocationTypeSheet {
                 (MAX_TEMPERATURE, max_temperature.is_none()),
             ],
         );
-        if !errors.is_empty() {
-            return Err(RowFailure::Invalid(errors));
-        }
 
         let location_type = LocationTypeRow {
             id: existing
@@ -154,8 +152,14 @@ impl SheetImport for LocationTypeSheet {
 
         let change = Change::between_upserts(existing.as_ref(), &location_type);
         if change != Change::Unchanged {
-            upsert_location_type(connection, &location_type)
-                .map_err(|error| upsert_failure(row, &location_type, error))?;
+            for error in location_type_errors(connection, &location_type)? {
+                let reads = reads(&error);
+                upsert_failure(row, &location_type, error).add_rule(reads, &mut errors)?;
+            }
+        }
+        fail_if_any(&mut errors)?;
+        if change != Change::Unchanged {
+            upsert_location_type_unchecked(connection, &location_type)?;
         }
         Ok(RowOutcome {
             fields: existing
@@ -227,7 +231,14 @@ fn upsert_failure(
         UpsertLocationTypeError::DuplicateCode { other_id } => row
             .error(CODE, format!("location type {other_id} has this code"))
             .into(),
-        UpsertLocationTypeError::DatabaseError(error) => RowFailure::Database(error),
+    }
+}
+
+/// The columns `error`'s rule reads beside the one it's reported on.
+fn reads(error: &UpsertLocationTypeError) -> &'static [&'static str] {
+    match error {
+        UpsertLocationTypeError::MaxBelowMin => &[MIN_TEMPERATURE],
+        _ => &[],
     }
 }
 

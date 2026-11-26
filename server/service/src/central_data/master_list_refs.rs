@@ -3,7 +3,7 @@
 //! the server needs it as it is.
 use super::{
     cells::{Row, RowError},
-    lookup::{InMemory, KeyPart, NOT_FOUND, active_first, differs, find_reference},
+    lookup::{InMemory, KeyPart, active_first, differs, find_reference},
 };
 use repository::{
     EqualFilter, MasterListRow, MasterListRowRepository, RepositoryError, StorageConnection,
@@ -58,14 +58,6 @@ pub(super) fn protected_error(row: &Row, what: &str) -> RowError {
         format!(
             "{MISSING_PROGRAM} is protected, as the server needs it, so import can't change {what}"
         ),
-    )
-}
-
-/// On the column the row found the master list by.
-pub(super) fn not_found_error(row: &Row) -> RowError {
-    row.error(
-        row.reference_column(MASTER_LIST_NAME, MASTER_LIST_ID),
-        NOT_FOUND,
     )
 }
 

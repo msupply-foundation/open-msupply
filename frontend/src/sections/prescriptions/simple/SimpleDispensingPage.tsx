@@ -32,6 +32,7 @@ import {
   t,
 } from '@/intl';
 import { hasPermission, prescriptionPreferences } from '@/store/storeContext';
+import { ExportPrintButton } from '@/domain/reports';
 import { fetchPatientOptionById, minimalPatientOption } from '@/domain/patient';
 import { ItemSearch } from '@/domain/item';
 import { round9 } from '@/domain/allocation';
@@ -96,6 +97,7 @@ import {
   canCancelVisit,
   canEditVisit,
   cannotEditReason,
+  printableVisit,
   dispensedAt,
   visitHeading,
   visitLines,
@@ -121,7 +123,12 @@ import {
 } from './DispensingList';
 import { StepHeading } from './StepHeading';
 import { WhoIsItFor } from './WhoIsItFor';
-import { leaveVisit, visitFor, type Notice } from './keptVisit';
+import {
+  leaveVisit,
+  visitFor,
+  withNoticeLinks,
+  type Notice,
+} from './keptVisit';
 import styles from './SimpleDispensing.module.css';
 
 /*
@@ -139,7 +146,10 @@ const SimpleDispensingPage: Component = () => {
   // store must still go to the store it was dispensed in.
   const storeOpened = untrack(() => params.storeId);
   const recordsHref = `/${storeOpened}/dispensary/dispensing/records`;
-  const simpleHref = `/${storeOpened}/dispensary/dispensing/simple`;
+  // The screen is at Dispensing's own address; a dispensed visit open on it,
+  // under '/simple' (prescriptions/index.tsx).
+  const simpleHref = `/${storeOpened}/dispensary/dispensing`;
+  const visitHref = (id: string) => `${simpleHref}/simple/${id}`;
   const navigate = useNavigate();
 
   // The visit in progress, kept while staff go elsewhere (rules › Dispensing
@@ -365,8 +375,8 @@ const SimpleDispensingPage: Component = () => {
   // just created: read the record so their code, date of birth and gender
   // show.
   const showDetails = async (id: string) => {
-    const full = await fetchPatientOptionById(storeOpened, id);
-    if (full && patient()?.id === id) setPatient(full);
+    const read = await fetchPatientOptionById(storeOpened, id);
+    if (read.kind === 'found' && patient()?.id === id) setPatient(read.patient);
   };
 
   // The list: client state until the visit is dispensed, the kept visit's.
@@ -504,6 +514,7 @@ const SimpleDispensingPage: Component = () => {
         ? t('messages.dispensed-at', { time: localisedTime(new Date()) })
         : t('messages.dispensed-to', { name: who.name }),
       dispensedId,
+      dispensed: true,
     });
     // The cards read their stock again, on whichever screen shows the visit
     // now: this one, or one opened while the save was out.
@@ -1202,10 +1213,21 @@ const SimpleDispensingPage: Component = () => {
       const cancelled = visitNotice();
       return cancelled?.id === viewing ? cancelled.notice : undefined;
     }
-    const notice = shownNotice();
-    if (!notice || !('dispensedId' in notice) || !notice.dispensedId)
-      return notice;
-    return { ...notice, viewHref: `${simpleHref}/${notice.dispensedId}` };
+    return withNoticeLinks(shownNotice(), { visitHref, recordsHref });
+  };
+
+  // The one dispensed visit Export/Print is for (rules › printing a dispensed
+  // visit): the visit open on the screen, once read; else, with nothing on
+  // the list and no edit under way, the visit the message names.
+  const printableId = (): string | undefined => {
+    const said = shownNotice();
+    return printableVisit({
+      viewing: viewingId() !== undefined,
+      openedId: openedRecord()?.id,
+      editing: editing() !== undefined,
+      listed: lines.length,
+      namedId: said && 'dispensedId' in said ? said.dispensedId : undefined,
+    });
   };
 
   /** The breadcrumb's last crumb: who the open visit was for, and when. */
@@ -1294,6 +1316,9 @@ const SimpleDispensingPage: Component = () => {
       // The cards and the list fill the body and own its scroll, so the list
       // can dock at its inline end, the body's full height.
       fillBody
+      // The cards stand on the shade as panels (#2172); the docked list keeps
+      // its own surface.
+      shaded
       header={
         <Header>
           <Show
@@ -1357,6 +1382,14 @@ const SimpleDispensingPage: Component = () => {
                   : t('button.new-dispense')}
               </LinkButton>
             </Show>
+            {/* The store's forms for one dispensed visit, never a list in
+                progress (rules › printing a dispensed visit). */}
+            <ExportPrintButton
+              context="PRESCRIPTION"
+              dataId={printableId() ?? ''}
+              disabled={printableId() === undefined}
+              disabledReason={t('messages.print-dispensed-visit-only')}
+            />
             <LinkButton
               href={recordsHref}
               variant="secondary"
@@ -1382,7 +1415,7 @@ const SimpleDispensingPage: Component = () => {
                 ? undefined
                 : !canPress()
                   ? t('messages.choose-who-first')
-                  : t('messages.press-an-amount')
+                  : t('messages.press-an-amount-or-search')
             }
             testId="choose-medicines-hint"
           />
@@ -1390,7 +1423,7 @@ const SimpleDispensingPage: Component = () => {
             <ItemSearch
               label={t('label.search-all-medicines')}
               hideLabel
-              placeholder={t('label.search-all-medicines')}
+              placeholder={t('placeholder.not-listed-search-all-medicines')}
               storeId={storeOpened}
               // The same medicines as the line editor's search.
               includeHiddenWithStock
@@ -1406,7 +1439,9 @@ const SimpleDispensingPage: Component = () => {
             />
           </div>
           {/* At most three columns, never narrower than three amount
-              buttons and the another-amount button need. */}
+              buttons and the another-amount button need (wider on a touch
+              screen, for its taller keys): three beside the docked list on a
+              laptop. */}
           {/* Until someone is chosen the cards' buttons are disabled,
               so they dim as every disabled control does. The names and
               stock stay full strength: staff read them while choosing. */}
@@ -1433,7 +1468,8 @@ const SimpleDispensingPage: Component = () => {
             <Match when={(cards() ?? []).length > 0}>
               <CardGrid
                 equalHeight
-                minColumnWidth="max(17rem, calc((100% - 2 * var(--space-5)) / 3))"
+                class={styles.cards}
+                minColumnWidth="max(var(--medicine-card-min), calc((100% - 2 * var(--space-3)) / 3))"
               >
                 <For each={cards()}>
                   {card => (

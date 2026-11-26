@@ -110,6 +110,13 @@ export const TABLES: {
     hasStatus: false,
   },
   {
+    value: 'ITEM_STORE_JOIN',
+    labelKey: 'label.items-in-stores',
+    sheet: 'item_store_join',
+    searchKey: 'label.item-code-or-store-code-contains',
+    hasStatus: false,
+  },
+  {
     value: 'USER_STORE_JOIN',
     labelKey: 'label.users-in-stores',
     sheet: 'user_store_join',

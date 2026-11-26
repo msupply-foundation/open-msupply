@@ -285,7 +285,7 @@ mod tests {
 
         // Sync style: CentralForStore — as Remote: rows central sends for our own store are
         // accepted, even post-initialisation (central refuses them from a site, see
-        // `on_central_refuses_user_permissions`).
+        // `on_central_refuses_central_for_store_tables`).
         assert_eq!(
             validate_on_remote(
                 &SyncBufferRow {
@@ -554,16 +554,22 @@ mod tests {
     }
 
     #[test]
-    fn on_central_refuses_user_permissions() {
-        // #1639: user permissions are managed on central (`CentralForStore`), so a site
-        // may not push them — not for its own store, not for another site's store, and
-        // not as a delete.
+    fn on_central_refuses_central_for_store_tables() {
+        // #1639: user permissions and items in stores are managed on central
+        // (`CentralForStore`), so a site may not push them — not for its own store, not
+        // for another site's store, and not as a delete.
         let source_site_stores = vec!["remote_store_a".to_string()];
 
-        for table in [UserPermission, UserStoreJoin] {
+        for table in [UserPermission, UserStoreJoin, ItemStoreJoin] {
             for store_id in [Some("remote_store_a"), Some("store_a"), None] {
                 for action in [SyncAction::Upsert, SyncAction::Delete] {
                     for is_multi_device in [false, true] {
+                        // A multi-device site can't push a table that isn't multi-device
+                        let expected = if is_multi_device && !table.sync_style().multi_device_site {
+                            ValidationError::NonMultiDeviceDataOnMultiDeviceSite
+                        } else {
+                            ValidationError::CentralOnlyEditableByCentral
+                        };
                         assert_eq!(
                             validate_on_central(
                                 &SyncBufferRow {
@@ -576,7 +582,7 @@ mod tests {
                                 &source_site_stores,
                                 is_multi_device,
                             ),
-                            Err(ValidationError::CentralOnlyEditableByCentral),
+                            Err(expected),
                             "{table} {action} for store {store_id:?}, multi-device {is_multi_device}"
                         );
                     }

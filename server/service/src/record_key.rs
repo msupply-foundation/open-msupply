@@ -10,7 +10,7 @@ pub(crate) enum KeyCase {
 }
 
 /// Another record with `key`. Only a save that brings in the clash is checked, so existing
-/// duplicates stay editable.
+/// duplicates stay editable. A blank key clashes with none.
 pub(crate) fn other_with_key<R>(
     saved_key: Option<&str>,
     id: &str,
@@ -26,7 +26,7 @@ pub(crate) fn other_with_key<R>(
             KeyCase::Any => key.to_lowercase(),
         }
     };
-    if saved_key.is_some_and(|saved| fold(saved) == fold(key)) {
+    if fold(key).is_empty() || saved_key.is_some_and(|saved| fold(saved) == fold(key)) {
         return Ok(None);
     }
     Ok(find_by_key(key)?

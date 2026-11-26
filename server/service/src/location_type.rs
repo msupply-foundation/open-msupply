@@ -33,13 +33,6 @@ pub enum UpsertLocationTypeError {
     DuplicateCode {
         other_id: String,
     },
-    DatabaseError(RepositoryError),
-}
-
-impl From<RepositoryError> for UpsertLocationTypeError {
-    fn from(error: RepositoryError) -> Self {
-        UpsertLocationTypeError::DatabaseError(error)
-    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -55,19 +48,12 @@ impl From<RepositoryError> for DeleteLocationTypeError {
     }
 }
 
-/// Adds or updates one location type. Joins the caller's transaction when there is one, so an
-/// import's earlier rows count.
-pub fn upsert_location_type(
+/// Adds or updates one location type, which `location_type_errors` has passed.
+pub fn upsert_location_type_unchecked(
     connection: &StorageConnection,
     row: &LocationTypeRow,
-) -> Result<(), UpsertLocationTypeError> {
-    connection
-        .transaction_sync(|connection| -> Result<(), UpsertLocationTypeError> {
-            validate(connection, row)?;
-            LocationTypeRowRepository::new(connection).upsert_one(row)?;
-            Ok(())
-        })
-        .map_err(|error| error.to_inner_error())
+) -> Result<(), RepositoryError> {
+    LocationTypeRowRepository::new(connection).upsert_one(row)
 }
 
 /// Refused while in use. Joins the caller's transaction when there is one.
@@ -87,45 +73,55 @@ pub fn delete_location_type(
         .map_err(|error| error.to_inner_error())
 }
 
-fn validate(
+/// Every rule `row` breaks.
+pub fn location_type_errors(
     connection: &StorageConnection,
     row: &LocationTypeRow,
-) -> Result<(), UpsertLocationTypeError> {
+) -> Result<Vec<UpsertLocationTypeError>, RepositoryError> {
+    let mut errors = Vec::new();
     if row.code.trim().is_empty() {
-        return Err(UpsertLocationTypeError::CodeRequired);
+        errors.push(UpsertLocationTypeError::CodeRequired);
     }
     if row.name.trim().is_empty() {
-        return Err(UpsertLocationTypeError::NameRequired);
+        errors.push(UpsertLocationTypeError::NameRequired);
     }
     if row.max_temperature < row.min_temperature {
-        return Err(UpsertLocationTypeError::MaxBelowMin);
+        errors.push(UpsertLocationTypeError::MaxBelowMin);
     }
     // Trimmed on purpose; sync's `code_is_taken` is exact.
     let repo = LocationTypeRowRepository::new(connection);
     let saved = repo.find_one_by_id(&row.id)?;
-    match other_with_key(
+    if let Some(other) = other_with_key(
         saved.as_ref().map(|saved| saved.code.as_str()),
         &row.id,
         &row.code,
         KeyCase::Exact,
         |code| repo.find_by_trimmed_code(code),
         |other| &other.id,
-    )?
-    .map(|other| other.id)
-    {
-        Some(other_id) => Err(UpsertLocationTypeError::DuplicateCode { other_id }),
-        None => Ok(()),
+    )? {
+        errors.push(UpsertLocationTypeError::DuplicateCode { other_id: other.id });
     }
+    Ok(errors)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_helpers::save_checked;
     use repository::{
         ItemRow, ItemRowRepository, RequisitionLineRow, RequisitionLineRowRepository,
         mock::{MockDataInserts, mock_draft_request_requisition_line, mock_location_type_a},
         test_db::setup_all,
     };
+
+    fn save(
+        connection: &StorageConnection,
+        row: &LocationTypeRow,
+    ) -> Result<(), Vec<UpsertLocationTypeError>> {
+        save_checked(location_type_errors(connection, row), || {
+            upsert_location_type_unchecked(connection, row)
+        })
+    }
 
     fn location_type(id: &str, code: &str) -> LocationTypeRow {
         LocationTypeRow {
@@ -135,13 +131,6 @@ mod tests {
             min_temperature: 2.0,
             max_temperature: 8.0,
         }
-    }
-
-    fn upsert(
-        connection: &StorageConnection,
-        row: &LocationTypeRow,
-    ) -> Result<(), UpsertLocationTypeError> {
-        upsert_location_type(connection, row)
     }
 
     fn ids_coded(connection: &StorageConnection, code: &str) -> Vec<String> {
@@ -164,7 +153,7 @@ mod tests {
         repo.upsert_one(&location_type("a", "COLD")).unwrap();
         repo.upsert_one(&location_type("b", "COLD")).unwrap();
 
-        upsert(&connection, &location_type("a", "FROZEN")).unwrap();
+        save(&connection, &location_type("a", "FROZEN")).unwrap();
         assert_eq!(ids_coded(&connection, "COLD"), vec!["b"]);
         assert_eq!(ids_coded(&connection, "FROZEN"), vec!["a"]);
     }
@@ -191,16 +180,16 @@ mod tests {
             setup_all("upsert_location_type_checks", MockDataInserts::none()).await;
 
         assert_eq!(
-            upsert(&connection, &location_type("a", " ")),
-            Err(UpsertLocationTypeError::CodeRequired)
+            save(&connection, &location_type("a", " ")),
+            Err(vec![UpsertLocationTypeError::CodeRequired])
         );
         let unnamed = LocationTypeRow {
             name: "".to_string(),
             ..location_type("a", "COLD")
         };
         assert_eq!(
-            upsert(&connection, &unnamed),
-            Err(UpsertLocationTypeError::NameRequired)
+            save(&connection, &unnamed),
+            Err(vec![UpsertLocationTypeError::NameRequired])
         );
         let backwards = LocationTypeRow {
             min_temperature: 8.0,
@@ -208,8 +197,8 @@ mod tests {
             ..location_type("a", "COLD")
         };
         assert_eq!(
-            upsert(&connection, &backwards),
-            Err(UpsertLocationTypeError::MaxBelowMin)
+            save(&connection, &backwards),
+            Err(vec![UpsertLocationTypeError::MaxBelowMin])
         );
         // Equal is a fixed temperature.
         let fixed = LocationTypeRow {
@@ -217,7 +206,7 @@ mod tests {
             max_temperature: 4.0,
             ..location_type("a", "COLD")
         };
-        upsert(&connection, &fixed).unwrap();
+        save(&connection, &fixed).unwrap();
     }
 
     #[actix_rt::test]
@@ -227,18 +216,15 @@ mod tests {
             MockDataInserts::none(),
         )
         .await;
-        upsert(&connection, &location_type("a", "COLD")).unwrap();
+        save(&connection, &location_type("a", "COLD")).unwrap();
 
-        let duplicate = Err(UpsertLocationTypeError::DuplicateCode {
+        let duplicate = Err(vec![UpsertLocationTypeError::DuplicateCode {
             other_id: "a".to_string(),
-        });
-        assert_eq!(upsert(&connection, &location_type("b", "COLD")), duplicate);
-        assert_eq!(
-            upsert(&connection, &location_type("b", " COLD ")),
-            duplicate
-        );
+        }]);
+        assert_eq!(save(&connection, &location_type("b", "COLD")), duplicate);
+        assert_eq!(save(&connection, &location_type("b", " COLD ")), duplicate);
         // Letter case counts, as it does in lookups.
-        upsert(&connection, &location_type("b", "cold")).unwrap();
+        save(&connection, &location_type("b", "cold")).unwrap();
     }
 
     #[actix_rt::test]
@@ -264,7 +250,7 @@ mod tests {
         );
         assert!(repo.find_one_by_id(&in_use.id).unwrap().is_some());
 
-        upsert(&connection, &location_type("unused", "UNUSED")).unwrap();
+        save(&connection, &location_type("unused", "UNUSED")).unwrap();
         delete_location_type(&connection, "unused").unwrap();
         assert_eq!(
             LocationTypeRowRepository::new(&connection)
@@ -281,7 +267,7 @@ mod tests {
             MockDataInserts::all(),
         )
         .await;
-        upsert(&connection, &location_type("requested", "REQUESTED")).unwrap();
+        save(&connection, &location_type("requested", "REQUESTED")).unwrap();
         RequisitionLineRowRepository::new(&connection)
             .upsert_one(&RequisitionLineRow {
                 location_type_id: Some("requested".to_string()),

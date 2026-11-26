@@ -64,6 +64,16 @@ export interface PageProps {
    * the body itself scrolls its content.
    */
   fillBody?: boolean;
+  /**
+   * Shades the body (`--page-body-shade`), so the groups of fields on it read as
+   * panels (DetailCard `surface="panel"`). A table that fills the body paints
+   * its own white over the shade. Only the tender page
+   * (spec/procurement/ui-surface.md § S1) and the Simple dispensing screen
+   * (spec/prescriptions/ui-surface.md § S9) set it.
+   * TO-DO: make it the default for every page once stakeholders approve the
+   * look (#2172).
+   */
+  shaded?: boolean;
 }
 
 /*
@@ -159,6 +169,7 @@ export const Page = (props: PageProps) => {
         <div class={styles.middle}>
           <div
             class={`${styles.body} ${props.fillBody ? styles.bodyFill : ''}`}
+            data-shaded={props.shaded ? '' : undefined}
           >
             {props.children}
           </div>

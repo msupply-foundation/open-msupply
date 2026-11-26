@@ -167,13 +167,45 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-1) var(--space-2);
-  padding: var(--space-2) var(--space-4) 0;
+  margin: var(--space-2) var(--space-4) 0;
+}
+
+/* A notice naming a visit: a full-width box in the notice's tone, holding
+   the message and View. The box takes the alert's tint recipe; the alert
+   inside drops its own panel and reads a size up, as the panel's news. */
+.notice[data-boxed] {
+  --notice-colour: var(--success-main);
+
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid
+    color-mix(in srgb, var(--notice-colour) 45%, var(--bg-white));
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--notice-colour) 10%, var(--bg-white));
+}
+
+.notice[data-boxed][data-severity='info'] {
+  --notice-colour: var(--info-main);
+}
+
+.notice[data-boxed][data-severity='warning'] {
+  --notice-colour: var(--warning-main);
+}
+
+.notice[data-boxed][data-severity='error'] {
+  --notice-colour: var(--error-main);
 }
 
 /* The message takes the row; View, where the visit it names can be opened,
    sits at its end, and wraps under it where there is no room. */
 .noticeAlert {
   flex: 1 1 12rem;
+}
+
+.notice[data-boxed] > .noticeAlert {
+  padding: 0;
+  background: none;
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
 }
 
 /* The list itself — on a phone, the sheet's content, a column whose lines
@@ -185,15 +217,33 @@
   min-block-size: 0;
 }
 
-/* The head: a band ruled off from the lines, in the table-header surface. */
+/*
+ * The head: a band in the inverse of the page's colours — the darkest thing
+ * on the screen in the light theme, the lightest in the dark — so the list is
+ * found from across the counter. Its text takes the band's own ink.
+ */
 .head {
   display: flex;
   flex: none;
   flex-direction: column;
   gap: var(--space-1);
   padding: var(--space-3) var(--space-4);
-  border-block-end: 1px solid var(--color-border-value);
-  background: var(--bg-toolbar);
+  background: var(--text-body);
+  color: var(--bg-white);
+}
+
+/* Nothing on the list to check yet: the band is muted, its text still at AA
+   contrast on it. */
+.head[data-empty] {
+  background: var(--gray-dark);
+}
+
+/* The head's quieter lines (the count, who it is for, the editing menu): the
+   band's ink, a touch softer, never the page's secondary grey, which the
+   band would swallow. */
+.head :is(.count, .for, .moreActions) {
+  color: inherit;
+  opacity: 0.85;
 }
 
 /* The step's heading with the count beside it, the count at the inline end. */
@@ -223,8 +273,8 @@
 }
 
 .moreActions:hover {
-  background: color-mix(in srgb, var(--text-body) 8%, transparent);
-  color: var(--text-body);
+  background: color-mix(in srgb, var(--bg-white) 16%, transparent);
+  opacity: 1;
 }
 
 .moreActions > svg {
@@ -423,6 +473,42 @@ button.deleteAction[data-variant] {
   font-size: var(--text-xl);
   font-weight: var(--weight-bold);
   font-variant-numeric: tabular-nums;
+}
+
+/* Just dispensed: Ready for the next patient, under the message, with an
+   arrow pointing to the cards (mirrored right to left, data-flip-rtl). */
+.ready {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-2);
+}
+
+.readyArrow {
+  flex: none;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  margin-block-start: 0.125rem;
+  color: var(--primary-main);
+}
+
+.ready p {
+  margin: 0;
+}
+
+.readyHeading {
+  font-weight: var(--weight-semibold);
+}
+
+.readyHint {
+  margin-block-start: var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+/* Dispensing records, at the actions row's inline start. */
+.recordsLink {
+  margin-inline-end: auto;
 }
 
 /* Clear, and Dispense after it once it comes, at the inline end. */

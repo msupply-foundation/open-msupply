@@ -2,11 +2,13 @@ use super::{
     CentralDataTable, Change, ExportFilter, FieldChange, ImportTable, RecordCount, RowFailure,
     RowOutcome, SheetImport, SheetStart,
     cells::{Row, RowError, and_list, collect, keep_or_saved},
-    field_changes,
+    fail_if_any, field_changes,
     lookup::{active_first, find_record},
     sheet::Value,
 };
-use crate::currency::{UpsertCurrencyError, home_currencies, upsert_currency_leaving_home};
+use crate::currency::{
+    UpsertCurrencyError, currency_errors, home_currencies, upsert_currency_unchecked,
+};
 use chrono::NaiveDate;
 use repository::{
     CurrencyRow, CurrencyRowRepository, CurrencyUser, RepositoryError, StorageConnection,
@@ -143,9 +145,6 @@ impl SheetImport for CurrencySheet {
                 (IS_ACTIVE, is_active.is_none()),
             ],
         );
-        if !errors.is_empty() {
-            return Err(RowFailure::Invalid(errors));
-        }
 
         let currency = CurrencyRow {
             id: existing
@@ -163,8 +162,14 @@ impl SheetImport for CurrencySheet {
 
         let change = Change::between(existing.as_ref(), &currency, |currency| currency.is_active);
         if change != Change::Unchanged {
-            upsert_currency_leaving_home(connection, &currency, self.today)
-                .map_err(|error| upsert_failure(row, &currency, error))?;
+            for error in currency_errors(connection, &currency, existing.as_ref())? {
+                let reads = reads(&error);
+                upsert_failure(row, &currency, error).add_rule(reads, &mut errors)?;
+            }
+        }
+        fail_if_any(&mut errors)?;
+        if change != Change::Unchanged {
+            upsert_currency_unchecked(connection, &currency, self.today)?;
             let was_home = existing
                 .as_ref()
                 .is_some_and(|saved| saved.is_home_currency);
@@ -246,6 +251,17 @@ impl SheetImport for CurrencySheet {
     }
 }
 
+/// The columns `error`'s rule reads beside the one it's reported on.
+fn reads(error: &UpsertCurrencyError) -> &'static [&'static str] {
+    match error {
+        UpsertCurrencyError::HomeRateNotOne | UpsertCurrencyError::HomeCurrencyInactive => {
+            &[IS_HOME_CURRENCY]
+        }
+        UpsertCurrencyError::DuplicateCode { .. } => &[CODE],
+        _ => &[],
+    }
+}
+
 fn upsert_failure(row: &Row, currency: &CurrencyRow, error: UpsertCurrencyError) -> RowFailure {
     match error {
         UpsertCurrencyError::CodeRequired => row.error(CODE, "code is required").into(),
@@ -262,13 +278,6 @@ fn upsert_failure(row: &Row, currency: &CurrencyRow, error: UpsertCurrencyError)
                 ),
             )
             .into(),
-        // Unreachable here: the sheet checks the home currency after its last row.
-        UpsertCurrencyError::HomeCurrencyTaken { home } => row
-            .error(
-                IS_HOME_CURRENCY,
-                format!("{} is the home currency", home.code),
-            )
-            .into(),
         UpsertCurrencyError::HomeCurrencyInUse(user) => row
             .error(
                 IS_HOME_CURRENCY,
@@ -282,9 +291,6 @@ fn upsert_failure(row: &Row, currency: &CurrencyRow, error: UpsertCurrencyError)
                 ),
             )
             .into(),
-        UpsertCurrencyError::HomeCurrencyRequired => row
-            .error(IS_HOME_CURRENCY, "There must be a home currency")
-            .into(),
         // A row can't change a code, so only making a currency active brings this in.
         UpsertCurrencyError::DuplicateCode { other_id } => row
             .error(
@@ -295,7 +301,6 @@ fn upsert_failure(row: &Row, currency: &CurrencyRow, error: UpsertCurrencyError)
                 ),
             )
             .into(),
-        UpsertCurrencyError::DatabaseError(error) => RowFailure::Database(error),
     }
 }
 

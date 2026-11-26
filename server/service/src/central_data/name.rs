@@ -3,17 +3,19 @@ use super::{
     SheetImport, SheetStart,
     cells::{Row, RowError, choice_cell, collect, keep_or_saved},
     delete::{DELETE, DELETE_COLUMN, already_deleted, check_delete, is_delete},
-    field_changes,
+    fail_if_any, field_changes,
     lookup::{
-        InMemory, LookupError, NOT_FOUND, NamesOfType, active_first, find_record, find_reference,
-        lookup_reference, record_conflict,
+        InMemory, LookupError, NamesOfType, active_first, find_record, find_reference,
+        lookup_reference_record, record_conflict,
     },
     name_with_code,
     sheet::Value,
 };
 use crate::{
     i64_to_u32,
-    name::upsert::{DeleteNameError, UpsertNameError, delete_name, upsert_name},
+    name::upsert::{
+        DeleteNameError, UpsertNameError, delete_name, name_errors, upsert_name_unchecked,
+    },
 };
 use chrono::NaiveDateTime;
 use repository::{
@@ -365,9 +367,6 @@ impl SheetImport for NameSheet {
                 (ON_HOLD, on_hold.is_none()),
             ],
         );
-        if !errors.is_empty() {
-            return Err(RowFailure::Invalid(errors));
-        }
 
         let text = |column: &str, value: fn(&NameRow) -> &Option<String>| {
             row.optional_text(column, saved.and_then(|name| value(name).as_deref()))
@@ -416,7 +415,14 @@ impl SheetImport for NameSheet {
 
         let written = Change::between_upserts(saved, &new);
         if written != Change::Unchanged {
-            upsert_name(connection, &new).map_err(|error| upsert_failure(row, &new, error))?;
+            for error in name_errors(connection, saved, &new)? {
+                let reads = reads(&error);
+                upsert_failure(row, &new, error).add_rule(reads, &mut errors)?;
+            }
+        }
+        fail_if_any(&mut errors)?;
+        if written != Change::Unchanged {
+            upsert_name_unchecked(connection, saved, &new)?;
         }
         // Counted now, though written once the store is found. Given only a code, it's taken to
         // differ from the saved one, as the store's id isn't known yet.
@@ -491,24 +497,18 @@ impl NameSheet {
                     continue;
                 }
             };
-            let Some(mut name) = names.find_one_by_id(&later.name_id)? else {
+            let Some(saved) = names.find_one_by_id(&later.name_id)? else {
                 continue;
             };
-            if name.supplying_store_id == store_id {
+            if saved.supplying_store_id == store_id {
                 continue;
             }
-            name.supplying_store_id = store_id;
-            match upsert_name(connection, &name) {
-                Ok(()) => {}
-                Err(UpsertNameError::DatabaseError(error)) => return Err(error),
-                // Unreachable: its row saved the rest of the name, and the store was just found.
-                Err(_) => errors.push(RowError {
-                    sheet: later.sheet,
-                    row: Some(later.row),
-                    column: Some(SUPPLYING_STORE_ID.to_string()),
-                    message: NOT_FOUND.to_string(),
-                }),
-            }
+            // Its row passed `name_errors`, which doesn't check the store, just found.
+            let name = NameRow {
+                supplying_store_id: store_id,
+                ..saved.clone()
+            };
+            upsert_name_unchecked(connection, Some(&saved), &name)?;
         }
         Ok(errors)
     }
@@ -586,12 +586,21 @@ fn find_supplying_store(
     id: Option<&str>,
 ) -> Result<Result<Option<String>, (bool, RowError)>, RepositoryError> {
     Ok(
-        lookup_reference(stores, id, code, std::convert::identity)?.map_err(|error| {
-            (
-                error.error == LookupError::NotFound,
-                error.to_row_error(sheet, row, SUPPLYING_STORE_CODE, SUPPLYING_STORE_ID, code),
-            )
-        }),
+        lookup_reference_record(stores, id, code, std::convert::identity)?
+            .map(|store| store.map(|store| store.id))
+            .map_err(|error| {
+                (
+                    error.error == LookupError::NotFound,
+                    error.to_row_error(
+                        sheet,
+                        row,
+                        SUPPLYING_STORE_CODE,
+                        SUPPLYING_STORE_ID,
+                        code,
+                        id,
+                    ),
+                )
+            }),
     )
 }
 
@@ -621,6 +630,15 @@ fn patient_error(row: &Row, patient: &NameRow) -> RowError {
     )
 }
 
+/// The columns `error`'s rule reads beside the one it's reported on.
+fn reads(error: &UpsertNameError) -> &'static [&'static str] {
+    match error {
+        // Codes are unique within a type.
+        UpsertNameError::DuplicateCode { .. } => &[TYPE],
+        _ => &[],
+    }
+}
+
 fn upsert_failure(row: &Row, name: &NameRow, error: UpsertNameError) -> RowFailure {
     match error {
         UpsertNameError::CodeRequired => row.error(CODE, "code is required").into(),
@@ -645,9 +663,6 @@ fn upsert_failure(row: &Row, name: &NameRow, error: UpsertNameError) -> RowFailu
         UpsertNameError::InvalidCustomData => row
             .error(CUSTOM_DATA, "custom_data must be JSON, or blank")
             .into(),
-        // Not checked here: `find_reference` finds them among the saved records.
-        UpsertNameError::CurrencyNotFound => row.error(CURRENCY_ID, NOT_FOUND).into(),
-        UpsertNameError::DatabaseError(error) => RowFailure::Database(error),
     }
 }
 

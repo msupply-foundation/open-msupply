@@ -120,6 +120,24 @@ export const localisedTime = (value: Date | string | number): string =>
     format(calendarDateOrInstantToDate(value), 'p', { locale: dateFnsLocale() })
   );
 
+/**
+ * A month and its year in the app's language, e.g. "October 2026" or, in Lao,
+ * "ຕຸລາ 2026". From the browser's own month names, as the date picker's
+ * (dateTimeConvert.ts, MonthYearGrids.tsx), not date-fns: date-fns has no Lao,
+ * so it would name Lao staff the month in English. The calendar is pinned to
+ * Gregorian, or Dari and Pashto would name the Solar Hijri month, and the
+ * digits go through the app's own digit rule, as every date here does.
+ */
+export const localisedMonthYear = (value: Date | string | number): string =>
+  localiseDigits(
+    new Intl.DateTimeFormat(locale(), {
+      month: 'long',
+      year: 'numeric',
+      calendar: 'gregory',
+      numberingSystem: 'latn',
+    }).format(calendarDateOrInstantToDate(value))
+  );
+
 export const localisedDateTime = (value: Date | string | number): string =>
   localiseDigits(
     format(calendarDateOrInstantToDate(value), 'Pp', {

@@ -1,5 +1,6 @@
 import { children, createSignal, For, Show, type JSX } from 'solid-js';
 import * as DropdownMenu from '@kobalte/core/dropdown-menu';
+import { t } from '../../../intl';
 import { ChevronDownIcon } from '../../icons';
 import { createRipple } from '../../utils/createRipple';
 import { usePortalMount } from '../../utils/portalMount';
@@ -227,7 +228,7 @@ export const SplitButton = (props: SplitButtonProps) => {
           class={styles.caret}
           data-variant={variant()}
           data-testid={props.testId ? `${props.testId}-dropdown` : undefined}
-          aria-label={props.menuLabel ?? 'More options'}
+          aria-label={props.menuLabel ?? t('label.more-options')}
           disabled={inert()}
           title={props.disabled ? props.disabledTitle : undefined}
           onPointerDown={event => {

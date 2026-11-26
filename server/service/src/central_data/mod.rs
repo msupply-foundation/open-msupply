@@ -20,6 +20,7 @@ pub mod cells;
 mod currency;
 pub mod delete;
 mod item;
+mod item_store_join;
 mod location_type;
 pub mod lookup;
 mod master_list;
@@ -63,6 +64,7 @@ pub enum CentralDataTable {
     MasterListLine,
     MasterListNameJoin,
     NameStoreJoin,
+    ItemStoreJoin,
     UserStoreJoin,
     UserPermission,
 }
@@ -148,6 +150,7 @@ impl CentralDataTable {
             CentralDataTable::MasterListLine => "master_list_line",
             CentralDataTable::MasterListNameJoin => "master_list_name_join",
             CentralDataTable::NameStoreJoin => "name_store_join",
+            CentralDataTable::ItemStoreJoin => "item_store_join",
             CentralDataTable::UserStoreJoin => "user_store_join",
             CentralDataTable::UserPermission => "user_permission",
         }
@@ -167,6 +170,7 @@ static TABLES: &[&(dyn ImportTable + Sync)] = &[
     &master_list_line::MasterListLineTable,
     &master_list_name_join::MasterListNameJoinTable,
     &name_store_join::NameStoreJoinTable,
+    &item_store_join::ItemStoreJoinTable,
     &user_store_join::UserStoreJoinTable,
     &user_permission::UserPermissionTable,
 ];
@@ -232,7 +236,7 @@ pub(crate) struct SheetStart<'a> {
 /// before the import.
 #[derive(Default)]
 pub(crate) struct Added {
-    /// Each sees its own name through a join `upsert_store` makes, with an id of its own.
+    /// Each sees its own name through a join `upsert_store_unchecked` makes, with an id of its own.
     pub stores: HashSet<String>,
 }
 
@@ -340,6 +344,50 @@ pub(crate) enum RowFailure {
 impl From<RepositoryError> for RowFailure {
     fn from(error: RepositoryError) -> Self {
         RowFailure::Database(error)
+    }
+}
+
+/// Fails the row with `errors`, if it has any.
+fn fail_if_any(errors: &mut Vec<RowError>) -> Result<(), RowFailure> {
+    if errors.is_empty() {
+        return Ok(());
+    }
+    Err(RowFailure::Invalid(std::mem::take(errors)))
+}
+
+/// Adds `error` to `errors`, unless its column already has one: a row shows at most one error per
+/// column, as a later check may have run against the value an earlier error left.
+fn add_error(errors: &mut Vec<RowError>, error: RowError) {
+    let taken = error.column.is_some() && errors.iter().any(|other| other.column == error.column);
+    if !taken {
+        errors.push(error);
+    }
+}
+
+impl RowFailure {
+    /// Adds its errors to `errors` with `add_error`.
+    fn add_to(self, errors: &mut Vec<RowError>) -> Result<(), RepositoryError> {
+        match self {
+            RowFailure::Database(error) => Err(error),
+            RowFailure::Invalid(found) => {
+                for error in found {
+                    add_error(errors, error);
+                }
+                Ok(())
+            }
+        }
+    }
+
+    /// As `add_to`, for a rule that also `reads` other columns: nothing when one already has an
+    /// error, as the rule then ran against the value that cell left.
+    fn add_rule(self, reads: &[&str], errors: &mut Vec<RowError>) -> Result<(), RepositoryError> {
+        let read_failed = errors
+            .iter()
+            .any(|error| reads.contains(&error.column.as_deref().unwrap_or_default()));
+        match self {
+            RowFailure::Invalid(_) if read_failed => Ok(()),
+            failure => failure.add_to(errors),
+        }
     }
 }
 

@@ -33,6 +33,11 @@ export type DraftPackagingRow = {
   packSize: number | undefined;
   volumePerUnit: number | undefined;
   barcode?: string;
+  /**
+   * The name the row had when the form opened (its seeded label, or its saved
+   * name). Renaming a row enters it (isBlankRow); never sent.
+   */
+  initialName: string;
 };
 
 export type DraftItemVariant = {
@@ -53,13 +58,20 @@ const SEEDED_LEVELS: [number, LocaleKey][] = [
   [3, 'label.tertiary'],
 ];
 
-const blankRow = (packagingLevel: number, labelKey: LocaleKey) => ({
-  id: generateUUID(),
-  name: t(labelKey),
-  packagingLevel,
-  packSize: undefined,
-  volumePerUnit: undefined,
-});
+const blankRow = (
+  packagingLevel: number,
+  labelKey: LocaleKey
+): DraftPackagingRow => {
+  const name = t(labelKey);
+  return {
+    id: generateUUID(),
+    name,
+    packagingLevel,
+    packSize: undefined,
+    volumePerUnit: undefined,
+    initialName: name,
+  };
+};
 
 /**
  * A fresh create form: three seeded packaging rows — Primary/Secondary/
@@ -89,6 +101,7 @@ export const formFromVariant = (variant: ItemVariantRow): DraftItemVariant => {
     packSize: row.packSize ?? undefined,
     volumePerUnit: row.volumePerUnit ?? undefined,
     barcode: row.barcode ?? undefined,
+    initialName: row.name,
   }));
   const missing = SEEDED_LEVELS.filter(
     ([level]) => !saved.some(row => row.packagingLevel === level)
@@ -105,47 +118,77 @@ export const formFromVariant = (variant: ItemVariantRow): DraftItemVariant => {
 };
 
 /**
- * A row with no pack size, no volume and no barcode hasn't been entered: the
- * seeded rows are "a starting point, not a rule" (rules.md § item variants and
- * packaging), so a blank one is left out of the save rather than blocking it
- * (OMS-REG-CAT-05.21). A row holding a barcode is never blank: leaving it out
- * would delete the barcode everywhere, and mark it removed so auto-confirm
- * won't bring it back.
+ * A row with no pack size, no volume, no barcode and the name it opened with
+ * hasn't been entered: the seeded rows are "a starting point, not a rule"
+ * (rules.md § item variants and packaging), so a blank one is left out of the
+ * save rather than blocking it (OMS-REG-CAT-05.21). Renaming a row enters it,
+ * so it's checked rather than silently dropped (OMS-REG-CAT-05.32); clearing
+ * the name of an otherwise blank row, or adding spaces to it, doesn't. So a
+ * saved row with no name and no values is blank too, and a save removes it.
+ * A row holding a barcode is never blank: leaving it out would delete the
+ * barcode everywhere, and mark it removed so auto-confirm won't bring it back.
  */
 const isBlankRow = (row: DraftPackagingRow): boolean =>
-  row.packSize === undefined && row.volumePerUnit === undefined && !row.barcode;
+  row.packSize === undefined &&
+  row.volumePerUnit === undefined &&
+  !row.barcode &&
+  (row.name.trim() === '' || row.name.trim() === row.initialName.trim());
 
-const isPositiveOrBlank = (value: number | undefined): boolean =>
-  value === undefined || value > 0;
+/** Each invalid cell of a packaging row, with the message it shows. */
+export type PackagingRowErrors = Partial<
+  Record<'name' | 'packSize' | 'volumePerUnit', string>
+>;
 
 /**
- * A row holding a barcode was made on the Barcodes tab, which sets no volume
- * and only sometimes a pack size, so either may stay blank. Every other
- * entered row needs both.
+ * A value must be positive (rules.md's positive-values rule, the client-side
+ * mirror of the server's LessThanZero guard). A row holding a barcode was made
+ * on the Barcodes tab, which sets no volume and only sometimes a pack size, so
+ * there either may stay blank; every other entered row needs both.
  */
-const isRowValid = (row: DraftPackagingRow): boolean =>
-  row.barcode
-    ? isPositiveOrBlank(row.packSize) && isPositiveOrBlank(row.volumePerUnit)
-    : isBlankRow(row) ||
-      ((row.packSize ?? 0) > 0 && (row.volumePerUnit ?? 0) > 0);
+const valueError = (
+  value: number | undefined,
+  blankAllowed: boolean
+): string | undefined => {
+  if (value === undefined)
+    return blankAllowed ? undefined : t('error.field-required');
+  return value > 0 ? undefined : t('error.must-be-greater-than-zero');
+};
 
 /**
- * ui-surface S3 — Save disabled until the name is set and every entered
- * packaging row has a POSITIVE pack size and volume per unit (rules.md's
- * "positive" requirement; the client-side mirror of the server's LessThanZero
- * guard). Blank rows are skipped; a row holding a barcode may leave either
- * blank.
+ * ui-surface S3 — the cells of an entered packaging row that block Save, each
+ * flagged in the grid with why (OMS-REG-CAT-05.31, .32): a name that isn't
+ * blank, and a positive pack size and volume per unit. A blank row has none.
+ */
+export const packagingRowErrors = (
+  row: DraftPackagingRow
+): PackagingRowErrors => {
+  if (isBlankRow(row)) return {};
+  const errors: PackagingRowErrors = {};
+  if (row.name.trim() === '') errors.name = t('error.field-required');
+  const packSize = valueError(row.packSize, !!row.barcode);
+  if (packSize) errors.packSize = packSize;
+  const volumePerUnit = valueError(row.volumePerUnit, !!row.barcode);
+  if (volumePerUnit) errors.volumePerUnit = volumePerUnit;
+  return errors;
+};
+
+/**
+ * ui-surface S3 — Save disabled until the name is set and no packaging row has
+ * an invalid cell (packagingRowErrors). Blank rows are skipped.
  */
 export const isFormValid = (form: DraftItemVariant): boolean =>
-  form.name.trim() !== '' && form.packaging.every(isRowValid);
+  form.name.trim() !== '' &&
+  form.packaging.every(
+    row => Object.keys(packagingRowErrors(row)).length === 0
+  );
 
 /**
  * The upsert input — always the FULL current field set: packagingVariants is
  * a full-replacement set (contract.md ⚠️ wire trap, rules.md § item variants
  * and packaging) — an omitted row is a deletion, so every save resends every
  * current row — except blank ones, which were never entered (so blanking an
- * existing row without a barcode removes it). A value left blank goes as null,
- * as the server stores it. `locationTypeId`/`manufacturerId`/`vvmType` are
+ * existing row's values without a barcode, keeping its name, removes it). A
+ * value left blank goes as null, as the server stores it. `locationTypeId`/`manufacturerId`/`vvmType` are
  * NullableStringUpdate wrappers — `{ value: null }` clears, `{ value: id }`
  * sets; always sent (never omitted) so an edit can also clear a previously-set
  * value.

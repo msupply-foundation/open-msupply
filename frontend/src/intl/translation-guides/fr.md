@@ -76,6 +76,13 @@ Where this file and the glossary disagree, the glossary wins. Fix this file to m
 | change badges: New / Updated / Deleted / Unchanged | Ajout / Mise à jour / Suppression / Sans changement            | `label.change-*`, the same nouns as the count chips; not `label.new` (_Créé_)          |
 | change badge: Restored                             | Restauration                                                   | `label.change-restored`, a deleted record brought back                                 |
 | Change (the kind of change, a column header)       | Type de modification                                           | `label.change-kind`; `label.change` is a stock quantity's _Variation (unités)_         |
+| dispense (verb, button) / a dispense (noun)        | Délivrer / délivrance                                          | 2026-11-26 drafts; also "Give {{quantity}}" on the Simple screen                       |
+| unnamed patient                                    | patient anonyme                                                | 2026-11-26 drafts; see open questions                                                  |
+| medicine(s) (Simple dispensing screen)             | article(s)                                                     | glossary lists _médicament_ as Non utilisé; see open questions                         |
+| amount (of a medicine, Simple screen)              | quantité                                                       | `label.amount` _Montant_ is money; don't reuse it for quantities                       |
+| recorded consumption                               | consommation constatée                                         | avoids the Non utilisé verb _enregistrer_                                              |
+| delivery lead time                                 | délai de livraison                                             |                                                                                        |
+| tag (store tag)                                    | étiquette                                                      | from `label.tag-colour`; also the word for printed labels                              |
 
 ## `fr-DJ` (Djibouti) watch list
 
@@ -96,6 +103,14 @@ replaces:
 These questions aren't settled by the glossary. Each lists where the variants appear; where the
 drafts had to choose, the choice is noted.
 
+- **_médicament_ on the Simple dispensing screen.** The English says "medicine" on purpose there
+  (`label.medicines`, `heading.choose-medicines`, `messages.no-common-medicines` and others), and
+  _médicament_ is the natural word, but the glossary lists it as Non utilisé (for Item). The
+  2026-11-26 drafts follow the glossary with _article(s)_; the PMs may want an exception.
+- **"Visit" on the Simple screen.** _Visite_ is Non utilisé (Encounter). The drafts use
+  _consultation_ as the catalog does (`messages.print-dispensed-visit-only`), or reword around
+  it (_Délivrance impossible._).
+- **Unnamed patient**: _patient anonyme_ vs the literal _patient sans nom_.
 - **Count chips as nouns** (`label.count-new`, `-updated`, `-deleted`, `-unchanged`): _3 ajouts_, _3 suppressions_ read the same for feminine records (_unités_). The fallback is the masculine _3 nouveaux_, _3 supprimés_.
 - **Importation et exportation vs Import et export** (`central-data`, a Manage menu entry): the drafts use the longer form, matching the catalog's other import nouns. The short form may fit the menu better.
 - **prescription vs ordonnance**: the prescription-request screens need two words. The drafts

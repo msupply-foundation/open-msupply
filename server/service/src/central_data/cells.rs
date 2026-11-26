@@ -203,6 +203,12 @@ impl<'a> Row<'a> {
             message: message.into(),
         }
     }
+
+    /// _not found_ on `column`, quoting its cell.
+    pub fn not_found(&self, column: &str) -> RowError {
+        let value = self.text(column).unwrap_or_default();
+        self.error(column, super::lookup::not_found(column, &value))
+    }
 }
 
 /// `TRUE` or `FALSE` in any letter case, or `1` or `0`.

@@ -52,17 +52,14 @@ fragment PurchaseOrderInfo on PurchaseOrderNode {
   customFields
   # Side panel (S9) — pricing, other, dates.
   #
-  # `orderTotalBeforeDiscount` is the panel's Subtotal and is ALREADY net of
-  # every line discount: the only discount it precedes is the supplier's
-  # (contract ⚠️ the field called "before discount"). Service lines are lines,
-  # so both totals include them (contract § pricing and totals).
-  orderTotalBeforeDiscount
+  # The order total, every discount included — the panel's Final cost and the
+  # totals band's Order total. Service lines are lines, so it includes them
+  # (contract § pricing and totals).
   orderTotalAfterDiscount
-  # Two views of ONE stored figure: the percentage is stored, the amount is
-  # resolved against the subtotal. An amount saved while the subtotal is zero
-  # is discarded silently (contract § an order's own screen).
+  # Entered nowhere on this screen, but an order may still carry one
+  # (synchronised from an older central server, or entered before it was
+  # removed) — the line editor's cost preview takes it off as the server does.
   supplierDiscountPercentage
-  supplierDiscountAmount
   donor {
     id
     name
@@ -112,7 +109,8 @@ query purchaseOrder($storeId: String!, $id: String!) {
 # size (rules § pricing and totals), so purchaseOrderPricing.ts computes it from
 # exactly those fields. Line cost DOES: `lineTotalAfterSupplierDiscount` is the
 # server's own figure (contract § pricing and totals), so the column reads it
-# rather than multiplying price by packs itself.
+# rather than multiplying price by packs itself. Discount is what separates it
+# from the packs at the before-discount price.
 #
 # The same row is what a row click hands the line editor (spec S10), so it also
 # carries the editor's own fields — the before-discount price, the two texts,
@@ -204,11 +202,13 @@ query purchaseOrderDetailLines(
 #  4. The toolbar's Expected delivery date itself, which has no order-level
 #     field at all: it shows the LATEST expected date among the lines (rules §
 #     the two delivery dates are not the order's alone).
+#  5. The totals band's Charges — the service lines' cost — which no
+#     order-level field carries.
 #
 # A bounded, single-record working set, not a table: one order's lines, read
 # once, no sort and no user filter (ui-standards/tables.md § pagination & scale
-# — the bounded-working-set exception). Five scalars per line, so it stays small
-# even on the 48-line orders the master-list route makes.
+# — the bounded-working-set exception). A handful of scalars per line, so it
+# stays small even on the 48-line orders the master-list route makes.
 query purchaseOrderLineSet($storeId: String!, $orderId: String!) {
   purchaseOrderLines(
     storeId: $storeId
@@ -226,6 +226,12 @@ query purchaseOrderLineSet($storeId: String!, $orderId: String!) {
         # for the finalise warning, on the same expression the outstanding
         # list is filtered by.
         outstandingNumberOfUnits
+        # A service line's cost is a charge in the totals band.
+        item {
+          id
+          type
+        }
+        lineTotalAfterSupplierDiscount
       }
     }
   }

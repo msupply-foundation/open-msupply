@@ -2,11 +2,13 @@ use super::{
     CentralDataTable, Change, ExportFilter, ImportTable, RecordCount, RowFailure, RowOutcome,
     SheetImport, SheetStart,
     cells::{Row, RowError, collect, keep_or_saved},
-    field_changes,
+    fail_if_any, field_changes,
     lookup::{duplicate_name_error, find_by_id_or_name},
     sheet::Value,
 };
-use crate::master_list::upsert::{UpsertMasterListError, upsert_master_list};
+use crate::master_list::upsert::{
+    UpsertMasterListError, master_list_errors, upsert_master_list_unchecked,
+};
 use repository::{MasterListRow, MasterListRowRepository, RepositoryError, StorageConnection};
 use util::{constants::MISSING_PROGRAM, uuid::uuid};
 
@@ -128,9 +130,6 @@ impl SheetImport for MasterListSheet {
                 (IS_DEFAULT_PRICE_LIST, is_default_price_list.is_none()),
             ],
         );
-        if !errors.is_empty() {
-            return Err(RowFailure::Invalid(errors));
-        }
 
         let master_list = MasterListRow {
             id: saved
@@ -158,8 +157,14 @@ impl SheetImport for MasterListSheet {
 
         let change = Change::between(saved, &master_list, |master_list| master_list.is_active);
         if change != Change::Unchanged {
-            upsert_master_list(connection, &master_list)
-                .map_err(|error| upsert_failure(row, &master_list, error))?;
+            for error in master_list_errors(connection, &master_list)? {
+                let reads = reads(&error);
+                upsert_failure(row, &master_list, error).add_rule(reads, &mut errors)?;
+            }
+        }
+        fail_if_any(&mut errors)?;
+        if change != Change::Unchanged {
+            upsert_master_list_unchecked(connection, &master_list)?;
         }
         Ok(RowOutcome {
             fields: existing
@@ -178,6 +183,15 @@ fn protected_error(row: &Row, name: &str) -> RowError {
         row.found_by(NAME),
         format!("{name} is protected, as the server needs it, so import can't change it"),
     )
+}
+
+/// The columns `error`'s rule reads beside the one it's reported on.
+fn reads(error: &UpsertMasterListError) -> &'static [&'static str] {
+    match error {
+        // Only active records hold on to their name.
+        UpsertMasterListError::DuplicateName { .. } => &[IS_ACTIVE],
+        _ => &[],
+    }
 }
 
 fn upsert_failure(
@@ -201,7 +215,6 @@ fn upsert_failure(
             .into(),
         // Unreachable here: `import_row` refuses it first.
         UpsertMasterListError::Protected => protected_error(row, MISSING_PROGRAM).into(),
-        UpsertMasterListError::DatabaseError(error) => RowFailure::Database(error),
     }
 }
 

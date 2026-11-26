@@ -84,6 +84,23 @@ rendering.
 | contains (search label)     | شامل                            | 7                                          | _نام کاربری شامل_, _کد یا نام شامل_                                                                     |
 | tab                         | تب                              | 10                                         | never _زبانه_                                                                                           |
 
+### Terms settled in the 2026-11-26 backlog drafts
+
+Settled by the drafts, not yet by a Dari reviewer.
+
+| English                          | Dari                    | Notes                                                                    |
+| -------------------------------- | ----------------------- | ------------------------------------------------------------------------ |
+| dispensing record                | سابقه توزیع             | pl. _سوابق توزیع_; _نسخه_ is kept for a prescription; see open questions |
+| dispense (button) / dispensed    | توزیع / توزیع شده       |                                                                          |
+| unnamed patient                  | مراجعه کننده بی‌نام     |                                                                          |
+| medicine                         | دوا (pl. ادویه، دواهای) | Afghan form; not _دارو_. Common medicines = _دواهای رایج_                |
+| stock / stock line               | موجودی / سطر موجودی     | never _انبار_ (warehouse)                                                |
+| amount (of a medicine)           | مقدار                   | `label.amount` _مبلغ_ is money                                           |
+| tag                              | برچسب                   |                                                                          |
+| template                         | الگو                    | catalog majority over _قالب_                                             |
+| delivery lead time               | زمان تحویل              |                                                                          |
+| quoted button name in a sentence | «…»                     | e.g. «توزیع»; the catalog also has straight quotes ('…' 27, «» 17)       |
+
 ## Open questions
 
 - **item**: _واکسین و مواد خشک_ (87, e.g. `label.item`, `items`) vs _جنس/اجناس_ (63, e.g.
@@ -104,6 +121,15 @@ rendering.
 - **sheet**: _ورق_ (`report.stocktake-sheet`) vs _برگه_ (`report.stock-take-sheet`).
 - **store**: _ذخیره گاه_ (76) vs _ذخیرگاه_ (26).
 - **total**: _مجموع_ (33) vs _کل_ (14, `description.total`).
+- **dispensing record**: _نسخه_ (`button.view-prescription`, `label.cancel-prescription`,
+  `label.create-prescription`, `error.prescription-not-found`,
+  `messages.deleted-prescriptions_*`) vs _سابقه توزیع (دوا)_ (`button.new-dispensing-record`,
+  `error.no-dispensing-records`, `error.prescription-not-created`). _نسخه_ is also the
+  prescription in the prescription-request screens, so the 2026-11-26 drafts use _سابقه توزیع_.
+- **item in consumption estimates**: drafted as _جنس_ (see **item** above).
+- **patient**: _مراجعین_ (`patients`, `label.patients`) vs _مراجعه کنندگان_
+  (`nav.dispensary.patients`); and `button.unlink-patient`, `button.view-patient` misspell it as
+  _مراجع کننده_.
 
 ## Right-to-left notes
 
