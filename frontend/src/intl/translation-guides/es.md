@@ -75,6 +75,10 @@ Counts are Spanish renderings in strings whose English contains the term.
 
 ## Open questions for the PMs
 
+- **reason: _razón_ vs _motivo_** (15 vs 6 strings). The stocktake flow uses both:
+  `error.provide-valid-reason` and `stocktake.line-error.reason-not-provided` _razón_,
+  `error.provide-reason` _motivo_. _Motivo de ajuste_ is the more usual pharmacy term.
+  `label.reason-adjustment` also has a typo, _Razónale de Ajuste_.
 - **upload: _cargar_ vs _subir_.** _cargar_ in `label.upload`, `label.upload-files`,
   `heading.upload-cce-documents`, `messages.upload-invite`, `messages.upload-error`,
   `filename.cce`, `filename.cce-failed-uploads`; _subir_ in `button.choose-file`,

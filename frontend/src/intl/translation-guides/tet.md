@@ -109,6 +109,8 @@ questions.
 
 ## Open questions
 
+- **adjustment reason word order**: _razaun ajustamentu_ (`stocktake.line-error.reason-not-provided`,
+  Tetum order) vs _Ajustamentu razaun_ (`error.provide-valid-reason`, English order).
 - **Status vs Estatus**: _estatus_ (9, e.g. `label.status`) vs _status_ kept in English (5:
   `button.save-and-confirm-status`, `info.manual-shipment`, `messages.off-hold-confirmation`).
 - **error**: _erru_ (5) vs _sala_ (`auth.alert-title`) vs _problema_ (`error.unable-to-load-data`).
