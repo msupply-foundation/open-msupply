@@ -36,21 +36,29 @@ To see the end of that log file use `tail ~/actions-runner/_diag/FILENAME_FROM_C
 
 The mac mini runs several runner instances ("lanes"), each taking one job at a time. Its jobs are mostly short PR checks - the front end check (`frontend-check-test.yaml`, whose check-and-build job and accessibility scan run side by side) and the React client checks - plus the long builds: the Android APK, the mac demo, the server build and the plugin bundles (`publish-bundles.yaml`).
 
-The long builds ask for `[self-hosted, macOS, build]`, and only one lane carries `build`, so however many land at once they hold that lane and never the others. PR checks ask for plain `[self-hosted, macOS]` and take any lane, the build lane included when it is free: a build that waits a few minutes behind a check costs nothing, whereas a check that waits behind builds holds up whoever is waiting on their PR (it once queued for 165 minutes). A new long-running mac job asks for `build` too.
+As on the [Linux box](self-hosted-runners/#lanes), each lane carries exactly one role, and every mac job asks for one:
 
-To give an existing lane the `build` label without re-registering it, find its id with `gh api repos/msupply-foundation/open-msupply-internal/actions/runners -q '.runners[]|[.id,.name]|@tsv'`, then `gh api -X POST repos/msupply-foundation/open-msupply-internal/actions/runners/<id>/labels -f 'labels[]=build'`. Add it before a workflow that asks for it merges: a label no lane carries makes its jobs queue for ever.
+| label | lanes | what runs there |
+|---|---|---|
+| `check` | most of them | the PR checks: the front end check and its accessibility scan, the React client tests and code checks, and the weekly cache clean |
+| `build` | one | the long builds: the Android APK, the mac demo, the server build and the plugin bundles |
+| `light` | two | jobs of a few seconds, shared with the Linux box's light lanes (they ask for `[self-hosted, light]`, no OS) - see the [runbook](self-hosted-runners/#lanes) |
+
+So however many long builds land at once, they hold the one build lane and never a lane a PR check waits on (a check once queued for 165 minutes behind builds), and a few-second job never waits behind either. A light job takes whichever machine's light lane is free, so every PR's required checks keep running while either machine is down. A new mac job asks for the role it belongs to; one asking for plain `[self-hosted, macOS]` would take any lane and undo all this.
+
+To give an existing lane a role without re-registering it, find its id with `gh api repos/msupply-foundation/open-msupply-internal/actions/runners -q '.runners[]|[.id,.name]|@tsv'`, then `gh api -X POST repos/msupply-foundation/open-msupply-internal/actions/runners/<id>/labels -f 'labels[]=check'` (or `build`). Add it before a workflow that asks for it merges: a label no lane carries makes its jobs queue for ever.
 
 Each lane keeps Node 24 in its own tool cache (`actions/setup-node`), `.github/scripts/frontend-check-setup.sh` installs pnpm there once per version, and pnpm's store and Playwright's browsers stay on the mac between jobs. The front end check's "behaviour anchors" step needs `python3`, which the Xcode Command Line Tools provide.
 
-To add a lane, register another runner instance in its own directory, then install it as a service:
+To add a lane, register another runner instance in its own directory with its role (`check`, `build` or `light`), then install it as a service:
 
 ```bash
-lane=2
+lane=2; role=check
 mkdir -p ~/actions-runner-$lane && cd ~/actions-runner-$lane
 # Download and unpack the runner as GitHub's "New self-hosted runner" page shows, then:
 TOKEN=$(gh api -X POST repos/msupply-foundation/open-msupply-internal/actions/runners/registration-token -q .token)
 ./config.sh --unattended --url https://github.com/msupply-foundation/open-msupply-internal \
-  --token "$TOKEN" --name "tmfmacmini-$lane" --labels self-hosted,macOS
+  --token "$TOKEN" --name "tmfmacmini-$lane" --labels self-hosted,macOS,$role
 ./svc.sh install && ./svc.sh start
 ```
 
