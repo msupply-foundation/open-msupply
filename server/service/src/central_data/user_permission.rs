@@ -1,7 +1,7 @@
 use super::{
     CentralDataTable, Change, ExportFilter, ImportTable, RecordCount, RowFailure, RowOutcome,
     SheetImport, SheetStart, add_error,
-    cells::{Row, RowError, collect},
+    cells::{Row, RowError, collect, one_of},
     delete::{DELETE_COLUMN, already_deleted_by, check_delete, is_delete},
     fail_if_any,
     lookup::{
@@ -221,7 +221,7 @@ impl SheetImport for UserPermissionSheet {
         // A new permission's checks.
         if !delete && existing.is_none() {
             if references_found {
-                row.require_for_new(
+                row.require_for_new_with_choices(
                     &mut errors,
                     "user permission",
                     &[
@@ -232,6 +232,7 @@ impl SheetImport for UserPermissionSheet {
                         ),
                         (PERMISSION, key.permission.is_none()),
                     ],
+                    &[(PERMISSION, || one_of(&PERMISSIONS))],
                 );
             }
             if let (Some(admin), Some(user_id), Some(store)) = (

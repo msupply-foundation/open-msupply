@@ -1,7 +1,7 @@
 use super::{
     Added, CentralDataTable, Change, ExportFilter, ImportTable, RecordCount, RowFailure,
     RowOutcome, SheetImport, SheetStart,
-    cells::{Row, RowError, choice_cell, collect, keep_or_saved},
+    cells::{Row, RowError, choice_cell, collect, keep_or_saved, one_of},
     fail_if_any, field_changes,
     lookup::{NamesOfType, active_first, find_record, find_reference},
     name::{TYPES as NAME_TYPES, type_label},
@@ -180,7 +180,7 @@ impl SheetImport for StoreSheet {
         let name_id = name_id
             .flatten()
             .or(saved.map(|store| store.name_id.clone()));
-        row.require_for_new(
+        row.require_for_new_with_choices(
             &mut errors,
             "store",
             &[
@@ -190,6 +190,7 @@ impl SheetImport for StoreSheet {
                 (IS_DISABLED, is_disabled.is_none()),
                 (NAME_CODE, name_id.is_none() && !name_failed),
             ],
+            &[(STORE_MODE, || one_of(MODES))],
         );
 
         let new = StoreRow {

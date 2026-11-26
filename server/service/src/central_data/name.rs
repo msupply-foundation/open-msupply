@@ -1,7 +1,7 @@
 use super::{
     CentralDataTable, Change, ExportFilter, ImportTable, RecordCount, RowFailure, RowOutcome,
     SheetImport, SheetStart,
-    cells::{Row, RowError, choice_cell, collect, keep_or_saved},
+    cells::{Row, RowError, choice_cell, collect, keep_or_saved, one_of},
     delete::{DELETE, DELETE_COLUMN, already_deleted, check_delete, is_delete},
     fail_if_any, field_changes,
     lookup::{
@@ -353,7 +353,7 @@ impl SheetImport for NameSheet {
         let is_manufacturer = is_manufacturer.or(saved.map(|name| name.is_manufacturer));
         let is_donor = is_donor.or(saved.map(|name| name.is_donor));
         let on_hold = on_hold.or(saved.map(|name| name.on_hold));
-        row.require_for_new(
+        row.require_for_new_with_choices(
             &mut errors,
             "name",
             &[
@@ -366,6 +366,7 @@ impl SheetImport for NameSheet {
                 (IS_DONOR, is_donor.is_none()),
                 (ON_HOLD, on_hold.is_none()),
             ],
+            &[(TYPE, || one_of(TYPES))],
         );
 
         let text = |column: &str, value: fn(&NameRow) -> &Option<String>| {

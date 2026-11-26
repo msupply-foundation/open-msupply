@@ -1,7 +1,7 @@
 use super::{
     CentralDataTable, Change, ExportFilter, ImportTable, RecordCount, RowFailure, RowOutcome,
     SheetImport, SheetStart,
-    cells::{Row, choice_cell, collect, keep_or_saved},
+    cells::{Row, choice_cell, collect, keep_or_saved, one_of},
     fail_if_any, field_changes,
     lookup::{InMemory, active_first, find_record, find_reference},
     name_with_code,
@@ -252,7 +252,7 @@ impl SheetImport for ItemSheet {
             volume_per_pack,
             saved.map(|item| item.volume_per_pack),
         );
-        row.require_for_new(
+        row.require_for_new_with_choices(
             &mut errors,
             "item",
             &[
@@ -262,6 +262,7 @@ impl SheetImport for ItemSheet {
                 (TYPE, r#type.is_none()),
                 (IS_ACTIVE, is_active.is_none()),
             ],
+            &[(TYPE, || one_of(TYPES))],
         );
         // Missing only for a new vaccine.
         row.require_for_new(
