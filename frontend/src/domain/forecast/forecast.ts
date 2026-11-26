@@ -358,12 +358,18 @@ export const intervalAndBufferParams = (
   }),
 });
 
+/** Messages name the delivery lead time only where the store has one. */
+export const hasLeadTime = (
+  intervalAndBuffer: SupplyIntervalAndBufferFragment
+): boolean => intervalAndBuffer.deliveryLeadTimeMonths > 0;
+
 /** "supply interval 3 + safety buffer 0.5" (+ lead time where set). */
 export const storeTargetMakeup = (
   intervalAndBuffer: SupplyIntervalAndBufferFragment
-): string => {
-  const params = intervalAndBufferParams(intervalAndBuffer);
-  return intervalAndBuffer.deliveryLeadTimeMonths > 0
-    ? t('label.supply-interval-plus-buffer-plus-lead-time', params)
-    : t('label.supply-interval-plus-buffer', params);
-};
+): string =>
+  t(
+    hasLeadTime(intervalAndBuffer)
+      ? 'label.supply-interval-plus-buffer-plus-lead-time'
+      : 'label.supply-interval-plus-buffer',
+    intervalAndBufferParams(intervalAndBuffer)
+  );

@@ -3,6 +3,7 @@ import { setDictionaries, setLocale } from '../../../intl/intl';
 import commonEn from '../../../intl/locales/en/common.json';
 import {
   fixedTargetOptions,
+  generalOrderIntervalAndBuffer,
   intervalAndBufferBehindTarget,
   storeFixedIntervalAndBuffer,
   targetDiffersFromFixed,
@@ -155,46 +156,51 @@ describe('thresholdMonthOptions', () => {
   });
 });
 
-describe('storeFixedIntervalAndBuffer (OMS-REG-REPL-17.18 / .19)', () => {
-  it('fixes a general order with the preference off on a store with a supply interval', () => {
+describe('generalOrderIntervalAndBuffer', () => {
+  it("is the store's interval and buffer on a general order", () => {
     expect(
-      storeFixedIntervalAndBuffer({
-        canChangeTargetMonths: false,
+      generalOrderIntervalAndBuffer({
         supplyIntervalAndBuffer: intervalAndBuffer,
-        isProgram: false,
+        program: null,
       })
     ).toEqual(intervalAndBuffer);
+  });
+
+  it('is nothing on a store with no supply interval', () => {
+    expect(
+      generalOrderIntervalAndBuffer({
+        supplyIntervalAndBuffer: null,
+        program: null,
+      })
+    ).toBeUndefined();
+  });
+
+  it('is nothing on a program order (its order type sets both thresholds)', () => {
+    expect(
+      generalOrderIntervalAndBuffer({
+        supplyIntervalAndBuffer: intervalAndBuffer,
+        program: { id: 'p', name: 'EPI' },
+      })
+    ).toBeUndefined();
+  });
+});
+
+describe('storeFixedIntervalAndBuffer (OMS-REG-REPL-17.18 / .19)', () => {
+  it('fixes the target with the preference off', () => {
+    expect(storeFixedIntervalAndBuffer(false, intervalAndBuffer)).toEqual(
+      intervalAndBuffer
+    );
   });
 
   it('leaves the target changeable with the preference on, or unset (OMS-REG-REPL-17.19)', () => {
     for (const canChangeTargetMonths of [true, undefined])
       expect(
-        storeFixedIntervalAndBuffer({
-          canChangeTargetMonths,
-          supplyIntervalAndBuffer: intervalAndBuffer,
-          isProgram: false,
-        })
+        storeFixedIntervalAndBuffer(canChangeTargetMonths, intervalAndBuffer)
       ).toBeUndefined();
   });
 
-  it('leaves the target changeable on a store with no supply interval', () => {
-    expect(
-      storeFixedIntervalAndBuffer({
-        canChangeTargetMonths: false,
-        supplyIntervalAndBuffer: null,
-        isProgram: false,
-      })
-    ).toBeUndefined();
-  });
-
-  it('never applies to a program order (its order type sets both thresholds)', () => {
-    expect(
-      storeFixedIntervalAndBuffer({
-        canChangeTargetMonths: false,
-        supplyIntervalAndBuffer: intervalAndBuffer,
-        isProgram: true,
-      })
-    ).toBeUndefined();
+  it('leaves the target changeable without a general-order interval', () => {
+    expect(storeFixedIntervalAndBuffer(false, undefined)).toBeUndefined();
   });
 
   it('names the supply interval and safety buffer in the lock tooltip', () => {

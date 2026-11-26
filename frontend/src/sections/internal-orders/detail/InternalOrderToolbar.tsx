@@ -11,6 +11,7 @@ import { type DebouncedEdit } from '../../../domain/debouncedEdit';
 import type { InternalOrderInfoFragment } from './internalOrderDetail.generated';
 import {
   fixedTargetOptions,
+  generalOrderIntervalAndBuffer,
   storeFixedIntervalAndBuffer,
   targetDiffersFromFixed,
   targetDiffersFromStoreMessage,
@@ -93,11 +94,10 @@ export const InternalOrderToolbar: Component<
   const fixedIntervalAndBuffer = () =>
     fieldsLocked()
       ? undefined
-      : storeFixedIntervalAndBuffer({
-          canChangeTargetMonths: props.canChangeTargetMonths,
-          supplyIntervalAndBuffer: props.node.supplyIntervalAndBuffer,
-          isProgram: props.isProgram,
-        });
+      : storeFixedIntervalAndBuffer(
+          props.canChangeTargetMonths,
+          generalOrderIntervalAndBuffer(props.node)
+        );
   // A target the store fixes that this order doesn't have yet (set before the
   // store fixed it, or since its facility record changed) stays changeable,
   // but only onto the store's.
@@ -161,10 +161,7 @@ export const InternalOrderToolbar: Component<
       : targetMonthOptions(
           props.node.maxMonthsOfStock,
           props.node.minMonthsOfStock,
-          // Program orders take their order type's target.
-          props.isProgram
-            ? undefined
-            : (props.node.supplyIntervalAndBuffer ?? undefined)
+          generalOrderIntervalAndBuffer(props.node)
         );
   };
 
