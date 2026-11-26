@@ -1,6 +1,7 @@
 use super::{
     Change, RowFailure, RowOutcome,
     cells::{Row, RowError, parse_bool},
+    fail_if_any,
     sheet::Value,
 };
 use repository::trim_spaces;
@@ -51,11 +52,9 @@ pub(crate) fn already_deleted_by<K>(
 fn already_deleted_as(
     row: &Row,
     record: String,
-    errors: Vec<RowError>,
+    mut errors: Vec<RowError>,
 ) -> Result<RowOutcome, RowFailure> {
-    if !errors.is_empty() {
-        return Err(RowFailure::Invalid(errors));
-    }
+    fail_if_any(&mut errors)?;
     Ok(RowOutcome {
         record_id: row.text(ID).unwrap_or_else(|| record.clone()),
         record,

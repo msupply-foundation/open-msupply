@@ -15,38 +15,27 @@ pub enum UpsertMasterListError {
     },
     /// The `MISSING_PROGRAM` placeholder.
     Protected,
-    DatabaseError(RepositoryError),
 }
 
-impl From<RepositoryError> for UpsertMasterListError {
-    fn from(error: RepositoryError) -> Self {
-        UpsertMasterListError::DatabaseError(error)
-    }
-}
-
-/// Joins the caller's transaction, so an import's earlier rows count.
-pub fn upsert_master_list(
+/// Adds or updates one master list, which `master_list_errors` has passed.
+pub fn upsert_master_list_unchecked(
     connection: &StorageConnection,
     row: &MasterListRow,
-) -> Result<(), UpsertMasterListError> {
-    connection
-        .transaction_sync(|connection| -> Result<(), UpsertMasterListError> {
-            validate(connection, row)?;
-            MasterListRowRepository::new(connection).upsert_one(row)?;
-            Ok(())
-        })
-        .map_err(|error| error.to_inner_error())
+) -> Result<(), RepositoryError> {
+    MasterListRowRepository::new(connection).upsert_one(row)
 }
 
-fn validate(
+/// Every rule `row` breaks.
+pub fn master_list_errors(
     connection: &StorageConnection,
     row: &MasterListRow,
-) -> Result<(), UpsertMasterListError> {
+) -> Result<Vec<UpsertMasterListError>, RepositoryError> {
+    let mut errors = Vec::new();
     if row.id == MISSING_PROGRAM {
-        return Err(UpsertMasterListError::Protected);
+        errors.push(UpsertMasterListError::Protected);
     }
     if row.name.trim().is_empty() {
-        return Err(UpsertMasterListError::NameRequired);
+        errors.push(UpsertMasterListError::NameRequired);
     }
     let repo = MasterListRowRepository::new(connection);
     let saved = repo.find_one_by_id(&row.id)?;
@@ -59,30 +48,35 @@ fn validate(
         |master_list| &master_list.name,
         |master_list| master_list.is_active,
     )? {
-        return Err(UpsertMasterListError::DuplicateName { other_id });
+        errors.push(UpsertMasterListError::DuplicateName { other_id });
     }
-    if row.code.trim().is_empty() {
-        return Ok(());
-    }
-    match other_with_key(
+    if let Some(other) = other_with_key(
         saved.as_ref().map(|saved| saved.code.as_str()),
         &row.id,
         &row.code,
         KeyCase::Exact,
         |code| repo.find_by_trimmed_code(code),
         |other| &other.id,
-    )?
-    .map(|other| other.id)
-    {
-        Some(other_id) => Err(UpsertMasterListError::DuplicateCode { other_id }),
-        None => Ok(()),
+    )? {
+        errors.push(UpsertMasterListError::DuplicateCode { other_id: other.id });
     }
+    Ok(errors)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_helpers::save_checked;
     use repository::{mock::MockDataInserts, test_db::setup_all};
+
+    fn save(
+        connection: &StorageConnection,
+        row: &MasterListRow,
+    ) -> Result<(), Vec<UpsertMasterListError>> {
+        save_checked(master_list_errors(connection, row), || {
+            upsert_master_list_unchecked(connection, row)
+        })
+    }
 
     fn master_list(id: &str, name: &str) -> MasterListRow {
         MasterListRow {
@@ -106,25 +100,25 @@ mod tests {
     async fn a_master_list_cannot_take_another_ones_name() {
         let (_, connection, _, _) =
             setup_all("upsert_master_list_duplicate_name", MockDataInserts::none()).await;
-        upsert_master_list(&connection, &master_list("a", "Essential")).unwrap();
+        save(&connection, &master_list("a", "Essential")).unwrap();
 
         // Spaces around a name don't make it another name; letter case does.
         assert_eq!(
-            upsert_master_list(&connection, &master_list("b", " Essential ")),
-            Err(UpsertMasterListError::DuplicateName {
+            save(&connection, &master_list("b", " Essential ")),
+            Err(vec![UpsertMasterListError::DuplicateName {
                 other_id: "a".to_string()
-            })
+            }])
         );
-        upsert_master_list(&connection, &master_list("b", "essential")).unwrap();
+        save(&connection, &master_list("b", "essential")).unwrap();
         assert_eq!(
-            upsert_master_list(&connection, &master_list("b", "Essential")),
-            Err(UpsertMasterListError::DuplicateName {
+            save(&connection, &master_list("b", "Essential")),
+            Err(vec![UpsertMasterListError::DuplicateName {
                 other_id: "a".to_string()
-            })
+            }])
         );
         assert_eq!(
-            upsert_master_list(&connection, &master_list("c", " ")),
-            Err(UpsertMasterListError::NameRequired)
+            save(&connection, &master_list("c", " ")),
+            Err(vec![UpsertMasterListError::NameRequired])
         );
     }
 
@@ -138,15 +132,15 @@ mod tests {
             is_active: false,
             ..master_list(id, "Essential")
         };
-        upsert_master_list(&connection, &inactive("old")).unwrap();
-        upsert_master_list(&connection, &master_list("a", "Essential")).unwrap();
-        upsert_master_list(&connection, &inactive("older")).unwrap();
+        save(&connection, &inactive("old")).unwrap();
+        save(&connection, &master_list("a", "Essential")).unwrap();
+        save(&connection, &inactive("older")).unwrap();
 
         assert_eq!(
-            upsert_master_list(&connection, &master_list("old", "Essential")),
-            Err(UpsertMasterListError::DuplicateName {
+            save(&connection, &master_list("old", "Essential")),
+            Err(vec![UpsertMasterListError::DuplicateName {
                 other_id: "a".to_string()
-            })
+            }])
         );
     }
 
@@ -156,17 +150,17 @@ mod tests {
     async fn a_code_is_optional_but_unique() {
         let (_, connection, _, _) =
             setup_all("upsert_master_list_duplicate_code", MockDataInserts::none()).await;
-        upsert_master_list(&connection, &coded("a", "Essential", "EML")).unwrap();
+        save(&connection, &coded("a", "Essential", "EML")).unwrap();
 
         assert_eq!(
-            upsert_master_list(&connection, &coded("b", "Clinic", " EML ")),
-            Err(UpsertMasterListError::DuplicateCode {
+            save(&connection, &coded("b", "Clinic", " EML ")),
+            Err(vec![UpsertMasterListError::DuplicateCode {
                 other_id: "a".to_string()
-            })
+            }])
         );
         // Lists without a code don't clash.
-        upsert_master_list(&connection, &master_list("b", "Clinic")).unwrap();
-        upsert_master_list(&connection, &master_list("c", "Hospital")).unwrap();
+        save(&connection, &master_list("b", "Clinic")).unwrap();
+        save(&connection, &master_list("c", "Hospital")).unwrap();
     }
 
     // covers: OMS-REG-CDIO-01.125
@@ -180,8 +174,8 @@ mod tests {
             .unwrap();
 
         assert_eq!(
-            upsert_master_list(&connection, &master_list(MISSING_PROGRAM, MISSING_PROGRAM)),
-            Err(UpsertMasterListError::Protected)
+            save(&connection, &master_list(MISSING_PROGRAM, MISSING_PROGRAM)),
+            Err(vec![UpsertMasterListError::Protected])
         );
         assert_eq!(
             MasterListRowRepository::new(&connection)

@@ -3,10 +3,11 @@ use super::{
     SheetImport, SheetStart,
     cells::{Row, RowError, collect},
     delete::{DELETE_COLUMN, already_deleted_by, check_delete, is_delete},
-    field_changes,
+    fail_if_any, field_changes,
     lookup::{
         InMemory, KeyPart, KeyedTable, LocationsOfStore, SavedCode, differs,
-        find_by_id_or_composite_key, find_reference, find_reference_record, key_conflict, key_or,
+        find_by_id_or_composite_key, find_reference, find_reference_record, find_saved,
+        key_conflict, key_or,
     },
     name_with_code,
     sheet::Value,
@@ -14,7 +15,10 @@ use super::{
 };
 use crate::{
     i64_to_u32,
-    item_store_join::{UpsertItemStoreJoinError, delete_item_store_join, upsert_item_store_join},
+    item_store_join::{
+        UpsertItemStoreJoinError, delete_item_store_join, item_store_join_errors,
+        upsert_item_store_join_unchecked,
+    },
 };
 use repository::{
     ItemRow, ItemRowRepository, ItemStoreJoinFilter, ItemStoreJoinRow, ItemStoreJoinRowRepository,
@@ -186,29 +190,21 @@ impl SheetImport for ItemStoreJoinSheet {
         let store_id = collect(&mut errors, store_id).flatten();
 
         let id = row.text(ID);
-        // A missing item or store is that error, not a conflict or "required", so the record
-        // is found by its key only when both are; by id, for its store and price, otherwise.
-        let existing = if references_found {
-            match self.find_join(
-                connection,
-                row,
-                id.as_deref(),
-                item_id.as_deref(),
-                store_id.as_deref(),
-            )? {
-                Ok(existing) => existing,
-                // Another item or store: the row's location and price can't be checked.
-                Err(error) => {
-                    errors.push(error);
-                    return Err(RowFailure::Invalid(errors));
-                }
-            }
-        } else {
-            match &id {
-                Some(id) => ItemStoreJoinRowRepository::new(connection).find_one_by_id(id)?,
-                None => None,
-            }
-        };
+        let existing = find_saved(
+            references_found,
+            id.as_deref(),
+            &mut errors,
+            || {
+                self.find_join(
+                    connection,
+                    row,
+                    id.as_deref(),
+                    item_id.as_deref(),
+                    store_id.as_deref(),
+                )
+            },
+            |id| ItemStoreJoinRowRepository::new(connection).find_one_by_id(id),
+        )?;
         let saved = existing.as_ref();
         // `find_join` makes another item or store a conflict, so these are the saved join's.
         let item_id = item_id.or(saved.map(|join| join.item_id.clone()));
@@ -246,31 +242,6 @@ impl SheetImport for ItemStoreJoinSheet {
                 None => None,
             }
         };
-        if !delete {
-            // Found by id, a location can be another store's.
-            if let (false, Some(Some(location)), Some(store_id)) =
-                (repeats, &row_location, &store_id)
-                && &location.store_id != store_id
-            {
-                errors.push(row.error(
-                    row.reference_column(LOCATION_CODE, LOCATION_ID),
-                    self.in_another_store(
-                        &location.code,
-                        std::slice::from_ref(&location.store_id),
-                        store_id,
-                    ),
-                ));
-            }
-            if let Some(price) = price
-                && price < 0.0
-                && saved.is_none_or(|join| join.default_sell_price_per_pack != price)
-            {
-                errors.push(row.error(PRICE, format!("{PRICE} can't be negative")));
-            }
-        }
-        if !errors.is_empty() {
-            return Err(RowFailure::Invalid(errors));
-        }
         // Read only when the row leaves its item blank, as a row with only an id does.
         let item = match (item, &item_id) {
             (Some(item), _) => Some(item),
@@ -278,6 +249,7 @@ impl SheetImport for ItemStoreJoinSheet {
             (None, None) => None,
         };
         if delete {
+            fail_if_any(&mut errors)?;
             let Some(saved) = existing else {
                 // Named by the row's item and store, as found.
                 return already_deleted_by(
@@ -298,19 +270,18 @@ impl SheetImport for ItemStoreJoinSheet {
         let price = price.or(saved.map(|join| join.default_sell_price_per_pack));
         let ignore_for_orders = ignore_for_orders.or(saved.map(|join| join.ignore_for_orders));
         let margin = margin.or(saved.map(|join| join.margin));
-        row.require_for_new(
-            &mut errors,
-            "item in a store",
-            &[
-                (ITEM_CODE, item_id.is_none()),
-                (STORE_CODE, store_id.is_none()),
-                (PRICE, price.is_none()),
-                (IGNORE_FOR_ORDERS, ignore_for_orders.is_none()),
-                (MARGIN, margin.is_none()),
-            ],
-        );
-        if !errors.is_empty() {
-            return Err(RowFailure::Invalid(errors));
+        if references_found {
+            row.require_for_new(
+                &mut errors,
+                "item in a store",
+                &[
+                    (ITEM_CODE, item_id.is_none()),
+                    (STORE_CODE, store_id.is_none()),
+                    (PRICE, price.is_none()),
+                    (IGNORE_FOR_ORDERS, ignore_for_orders.is_none()),
+                    (MARGIN, margin.is_none()),
+                ],
+            );
         }
 
         let new = ItemStoreJoinRow {
@@ -329,12 +300,19 @@ impl SheetImport for ItemStoreJoinSheet {
             },
             item_id: item_id.unwrap_or_default(),
         };
-        let store = self.stores.get(&new.store_id);
         let change = Change::between_upserts(saved, &new);
         if change != Change::Unchanged {
-            upsert_item_store_join(connection, &new)
-                .map_err(|error| self.upsert_failure(row, &new, item.as_ref(), error))?;
+            for error in item_store_join_errors(connection, saved, &new)? {
+                let reads = reads(&error);
+                self.upsert_failure(row, &new, item.as_ref(), error)
+                    .add_rule(reads, &mut errors)?;
+            }
         }
+        fail_if_any(&mut errors)?;
+        if change != Change::Unchanged {
+            upsert_item_store_join_unchecked(connection, &new)?;
+        }
+        let store = self.stores.get(&new.store_id);
         let item_code = item.as_ref().map(|item| item.code.as_str());
         Ok(RowOutcome {
             fields: match existing {
@@ -507,14 +485,6 @@ impl ItemStoreJoinSheet {
     ) -> RowFailure {
         let location_column = row.reference_column(LOCATION_CODE, LOCATION_ID);
         match error {
-            // Not reached here: the row's references are found among the saved records.
-            UpsertItemStoreJoinError::ItemNotFound => row
-                .not_found(row.reference_column(ITEM_CODE, ITEM_ID))
-                .into(),
-            UpsertItemStoreJoinError::StoreNotFound => row
-                .not_found(row.reference_column(STORE_CODE, STORE_ID))
-                .into(),
-            UpsertItemStoreJoinError::LocationNotFound => row.not_found(location_column).into(),
             UpsertItemStoreJoinError::LocationInAnotherStore {
                 location_code,
                 location_store_id,
@@ -527,8 +497,8 @@ impl ItemStoreJoinSheet {
             UpsertItemStoreJoinError::NegativePrice => row
                 .error(PRICE, format!("{PRICE} can't be negative"))
                 .into(),
-            // Unreachable here: `find_join` turns a saved item and store into a match or a
-            // conflict.
+            // Unreachable here: `find_join` turns a found item and store into a match or a
+            // conflict, and with one not found `reads` skips it.
             UpsertItemStoreJoinError::DuplicateJoin { other_id } => row
                 .error(
                     row.reference_column(ITEM_CODE, ITEM_ID),
@@ -539,8 +509,19 @@ impl ItemStoreJoinSheet {
                     ),
                 )
                 .into(),
-            UpsertItemStoreJoinError::DatabaseError(error) => RowFailure::Database(error),
         }
+    }
+}
+
+/// The columns `error`'s rule reads beside the one it's reported on: a key half not found is the
+/// saved join's.
+fn reads(error: &UpsertItemStoreJoinError) -> &'static [&'static str] {
+    match error {
+        UpsertItemStoreJoinError::LocationInAnotherStore { .. } => &[STORE_CODE, STORE_ID],
+        UpsertItemStoreJoinError::DuplicateJoin { .. } => {
+            &[ITEM_CODE, ITEM_ID, STORE_CODE, STORE_ID]
+        }
+        _ => &[],
     }
 }
 

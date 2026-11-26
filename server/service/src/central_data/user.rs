@@ -3,7 +3,7 @@ use super::{
     RowOutcome, SheetImport, SheetStart,
     cells::{Row, RowError, choice_cell, collect},
     delete::{DELETE, DELETE_COLUMN, already_deleted, check_delete, is_delete},
-    field_changes,
+    fail_if_any, field_changes,
     lookup::find_record,
     sheet::{Sheet, Value},
 };
@@ -11,7 +11,7 @@ use crate::user_account::{
     UserAccountService,
     upsert::{
         DeleteUserError, UpsertUserError, UsernameError, delete_user, ends_sessions,
-        protected_user_ids, save_user,
+        protected_user_ids, save_user_unchecked, user_errors,
     },
 };
 use repository::{
@@ -266,16 +266,19 @@ impl SheetImport for UserSheet {
                 (LANGUAGE, language.is_none()),
             ],
         );
-        if !errors.is_empty() {
-            return Err(RowFailure::Invalid(errors));
-        }
 
         let hashed_password = match (password, saved) {
             (None, saved) => saved.map(|user| user.hashed_password.clone()),
             // Not worth bcrypt's time in a preview or an errors file: a password given for a
             // saved user counts as a change.
             (Some(_), _) if !self.commit => Some(NOT_HASHED.to_string()),
-            (Some(password), saved) => Some(self.hash(row, &password, saved)?),
+            (Some(password), saved) => match self.hash(row, &password, saved) {
+                Ok(hashed) => Some(hashed),
+                Err(error) => {
+                    errors.push(error);
+                    None
+                }
+            },
         };
 
         let user = UserAccountRow {
@@ -312,8 +315,13 @@ impl SheetImport for UserSheet {
             change => change,
         };
         if change != Change::Unchanged {
-            save_user(connection, &self.importer, &user)
-                .map_err(|error| upsert_failure(row, error))?;
+            for error in user_errors(connection, &self.importer, saved, &user)? {
+                upsert_failure(row, error).add_to(&mut errors)?;
+            }
+        }
+        fail_if_any(&mut errors)?;
+        if change != Change::Unchanged {
+            save_user_unchecked(connection, &user)?;
             if ends_sessions(saved, &user) {
                 self.sessions_to_end.push(EndSessions {
                     user_id: user.id.clone(),
@@ -428,7 +436,6 @@ fn upsert_failure(row: &Row, error: UpsertUserError) -> RowFailure {
                 "This is you. You can't make yourself inactive, or you couldn't log in again",
             )
             .into(),
-        UpsertUserError::DatabaseError(error) => RowFailure::Database(error),
         // Cells lose their spaces but keep a tab or line break.
         UpsertUserError::Username(UsernameError::Padded) => row
             .error(
@@ -436,9 +443,8 @@ fn upsert_failure(row: &Row, error: UpsertUserError) -> RowFailure {
                 "username can't start or end with a tab or line break",
             )
             .into(),
-        // Unreachable here: `find_record` turns a saved username into a match or a conflict, and
-        // `import_row` refuses a protected user first.
-        error @ (UpsertUserError::Username(_) | UpsertUserError::Protected) => RowError {
+        // Unreachable here: `find_record` turns a saved username into a match or a conflict.
+        error @ UpsertUserError::Username(_) => RowError {
             sheet: row.sheet.to_string(),
             row: Some(row.number),
             column: None,

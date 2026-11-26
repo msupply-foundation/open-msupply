@@ -1,46 +1,25 @@
 use repository::{
-    ItemRowRepository, MasterListLineRow, MasterListLineRowRepository, MasterListRowRepository,
-    RepositoryError, StorageConnection,
+    MasterListLineRow, MasterListLineRowRepository, RepositoryError, StorageConnection,
 };
 use util::constants::MISSING_PROGRAM;
 
 #[derive(Debug, PartialEq)]
 pub enum UpsertMasterListLineError {
-    MasterListNotFound,
     /// The `MISSING_PROGRAM` placeholder, which holds no items.
     Protected,
-    ItemNotFound,
     /// A price below 0. Checked only when the price changes, so a saved line with one stays
     /// editable.
     NegativePrice,
     /// Another line already puts the item on the master list.
-    DuplicateLine {
-        other_id: String,
-    },
-    DatabaseError(RepositoryError),
+    DuplicateLine { other_id: String },
 }
 
-impl From<RepositoryError> for UpsertMasterListLineError {
-    fn from(error: RepositoryError) -> Self {
-        UpsertMasterListLineError::DatabaseError(error)
-    }
-}
-
-/// Puts an item on a master list, at the line's price. Joins the caller's transaction, so an
-/// import's earlier rows count.
-pub fn upsert_master_list_line(
+/// Puts an item on a master list, at the line's price. `row` has passed `master_list_line_errors`.
+pub fn upsert_master_list_line_unchecked(
     connection: &StorageConnection,
     row: &MasterListLineRow,
-) -> Result<(), UpsertMasterListLineError> {
-    connection
-        .transaction_sync(|connection| -> Result<(), UpsertMasterListLineError> {
-            let repo = MasterListLineRowRepository::new(connection);
-            let saved = repo.find_one_by_id(&row.id)?;
-            validate(connection, saved.as_ref(), row)?;
-            repo.upsert_one(row)?;
-            Ok(())
-        })
-        .map_err(|error| error.to_inner_error())
+) -> Result<(), RepositoryError> {
+    MasterListLineRowRepository::new(connection).upsert_one(row)
 }
 
 /// Takes the item off the master list.
@@ -62,43 +41,55 @@ pub fn find_master_list_lines(
         .find_by_master_list_and_item(master_list_id, item_id)
 }
 
-/// Only what the save changes is checked, so a saved line that no longer passes stays editable.
-fn validate(
+/// Every rule `row` breaks. Only what the save changes is checked, so a saved line that no longer
+/// passes stays editable. The caller finds its master list and item, so a missing one isn't checked
+/// here.
+pub fn master_list_line_errors(
     connection: &StorageConnection,
     saved: Option<&MasterListLineRow>,
     row: &MasterListLineRow,
-) -> Result<(), UpsertMasterListLineError> {
+) -> Result<Vec<UpsertMasterListLineError>, RepositoryError> {
+    let mut errors = Vec::new();
     let master_list_changes = saved.is_none_or(|saved| saved.master_list_id != row.master_list_id);
     let item_changes = saved.is_none_or(|saved| saved.item_id != row.item_id);
     let price_changes = saved.is_none_or(|saved| saved.price_per_unit != row.price_per_unit);
     if price_changes && row.price_per_unit.is_some_and(|price| price < 0.0) {
-        return Err(UpsertMasterListLineError::NegativePrice);
+        errors.push(UpsertMasterListLineError::NegativePrice);
     }
-    if master_list_changes {
-        if row.master_list_id == MISSING_PROGRAM {
-            return Err(UpsertMasterListLineError::Protected);
-        }
-        if !MasterListRowRepository::new(connection).check_exists_by_id(&row.master_list_id)? {
-            return Err(UpsertMasterListLineError::MasterListNotFound);
-        }
-    }
-    if item_changes && !ItemRowRepository::new(connection).check_exists_by_id(&row.item_id)? {
-        return Err(UpsertMasterListLineError::ItemNotFound);
+    if master_list_changes && row.master_list_id == MISSING_PROGRAM {
+        errors.push(UpsertMasterListLineError::Protected);
     }
     if (master_list_changes || item_changes)
         && let Some(other) = find_master_list_lines(connection, &row.master_list_id, &row.item_id)?
             .into_iter()
             .find(|other| other.id != row.id)
     {
-        return Err(UpsertMasterListLineError::DuplicateLine { other_id: other.id });
+        errors.push(UpsertMasterListLineError::DuplicateLine { other_id: other.id });
     }
-    Ok(())
+    Ok(errors)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{ItemRow, MasterListRow, mock::MockDataInserts, test_db::setup_all};
+    use crate::test_helpers::save_checked;
+    use repository::{
+        ItemRow, ItemRowRepository, MasterListRow, MasterListRowRepository, mock::MockDataInserts,
+        test_db::setup_all,
+    };
+
+    fn save(
+        connection: &StorageConnection,
+        row: &MasterListLineRow,
+    ) -> Result<(), Vec<UpsertMasterListLineError>> {
+        let saved = MasterListLineRowRepository::new(connection)
+            .find_one_by_id(&row.id)
+            .unwrap();
+        save_checked(
+            master_list_line_errors(connection, saved.as_ref(), row),
+            || upsert_master_list_line_unchecked(connection, row),
+        )
+    }
 
     fn line(id: &str, item_id: &str) -> MasterListLineRow {
         MasterListLineRow {
@@ -133,50 +124,36 @@ mod tests {
                 .unwrap();
         }
 
-        upsert_master_list_line(&connection, &line("a", "paracetamol")).unwrap();
+        save(&connection, &line("a", "paracetamol")).unwrap();
         assert_eq!(
-            upsert_master_list_line(&connection, &line("b", "paracetamol")),
-            Err(UpsertMasterListLineError::DuplicateLine {
+            save(&connection, &line("b", "paracetamol")),
+            Err(vec![UpsertMasterListLineError::DuplicateLine {
                 other_id: "a".to_string()
-            })
+            }])
         );
         assert_eq!(
-            upsert_master_list_line(&connection, &line("b", "nothing")),
-            Err(UpsertMasterListLineError::ItemNotFound)
-        );
-        assert_eq!(
-            upsert_master_list_line(
-                &connection,
-                &MasterListLineRow {
-                    master_list_id: "no_list".to_string(),
-                    ..line("b", "ibuprofen")
-                }
-            ),
-            Err(UpsertMasterListLineError::MasterListNotFound)
-        );
-        assert_eq!(
-            upsert_master_list_line(
+            save(
                 &connection,
                 &MasterListLineRow {
                     master_list_id: MISSING_PROGRAM.to_string(),
                     ..line("b", "ibuprofen")
                 }
             ),
-            Err(UpsertMasterListLineError::Protected)
+            Err(vec![UpsertMasterListLineError::Protected])
         );
 
         assert_eq!(
-            upsert_master_list_line(
+            save(
                 &connection,
                 &MasterListLineRow {
                     price_per_unit: Some(-1.0),
                     ..line("b", "ibuprofen")
                 }
             ),
-            Err(UpsertMasterListLineError::NegativePrice)
+            Err(vec![UpsertMasterListLineError::NegativePrice])
         );
         // A price of 0 is a price.
-        upsert_master_list_line(
+        save(
             &connection,
             &MasterListLineRow {
                 price_per_unit: Some(0.0),
@@ -192,7 +169,7 @@ mod tests {
                 ..line("d", "paracetamol")
             })
             .unwrap();
-        upsert_master_list_line(
+        save(
             &connection,
             &MasterListLineRow {
                 price_per_unit: Some(-1.0),
@@ -203,8 +180,8 @@ mod tests {
         delete_master_list_line(&connection, "d").unwrap();
 
         // Its price changes; moving it onto the item another line has is a duplicate.
-        upsert_master_list_line(&connection, &line("b", "ibuprofen")).unwrap();
-        upsert_master_list_line(
+        save(&connection, &line("b", "ibuprofen")).unwrap();
+        save(
             &connection,
             &MasterListLineRow {
                 price_per_unit: None,
@@ -220,10 +197,10 @@ mod tests {
             }]
         );
         assert_eq!(
-            upsert_master_list_line(&connection, &line("b", "paracetamol")),
-            Err(UpsertMasterListLineError::DuplicateLine {
+            save(&connection, &line("b", "paracetamol")),
+            Err(vec![UpsertMasterListLineError::DuplicateLine {
                 other_id: "a".to_string()
-            })
+            }])
         );
 
         delete_master_list_line(&connection, "a").unwrap();

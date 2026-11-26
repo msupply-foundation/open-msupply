@@ -1,12 +1,12 @@
 use super::{
     CentralDataTable, Change, ExportFilter, ImportTable, RecordCount, RowFailure, RowOutcome,
-    SheetImport, SheetStart,
+    SheetImport, SheetStart, add_error,
     cells::{Row, RowError, and_list, collect},
     delete::{DELETE_COLUMN, already_deleted_by, check_delete, is_delete},
-    field_changes,
+    fail_if_any, field_changes,
     lookup::{
         InMemory, KeyPart, active_first, differs, find_by_id_or_composite_key, find_reference,
-        key_conflict,
+        find_saved, key_conflict,
     },
     sheet::Value,
     sorted_by, stores_with_names,
@@ -20,7 +20,8 @@ use crate::{
     user_account::upsert::{protected_user_ids, server_user_ids},
     user_store_join::{
         DeleteUserStoreJoinError, UpsertUserStoreJoinError, default_stores, delete_user_store_join,
-        find_user_store_join, has_store_access, upsert_user_store_join_unchecked_default,
+        find_user_store_join, has_store_access, upsert_user_store_join_unchecked,
+        user_store_join_errors,
     },
 };
 use repository::{
@@ -180,21 +181,26 @@ impl SheetImport for UserStoreJoinSheet {
             active_first(users, |user| user.deleted_datetime.is_none())
         })?;
         let store_id = find_reference(&self.stores, row, STORE_CODE, STORE_ID, |stores| stores)?;
+        let references_found = user_id.is_ok() && store_id.is_ok();
         let user_id = collect(&mut errors, user_id).flatten();
         let store_id = collect(&mut errors, store_id).flatten();
-        // Then a missing reference is that error, not "required".
-        if !errors.is_empty() {
-            return Err(RowFailure::Invalid(errors));
-        }
 
         let id = row.text(ID);
-        let existing = self.find_join(
-            connection,
-            row,
+        let existing = find_saved(
+            references_found,
             id.as_deref(),
-            user_id.as_deref(),
-            store_id.as_deref(),
-        )??;
+            &mut errors,
+            || {
+                self.find_join(
+                    connection,
+                    row,
+                    id.as_deref(),
+                    user_id.as_deref(),
+                    store_id.as_deref(),
+                )
+            },
+            |id| UserStoreJoinRowRepository::new(connection).find_one_by_id(id),
+        )?;
         if let Some(user_id) = existing
             .as_ref()
             .map(|saved| saved.user_id.as_str())
@@ -202,9 +208,27 @@ impl SheetImport for UserStoreJoinSheet {
         {
             let (locked, change) =
                 locked_users(&self.protected, &self.server_users, delete, "stores");
-            check_not_protected(row, locked, &self.users, user_id, &change)?;
+            if let Err(error) = check_not_protected(row, locked, &self.users, user_id, &change) {
+                add_error(&mut errors, error);
+            }
+        }
+        let saved = existing.as_ref();
+        let user_id = user_id.or(saved.map(|join| join.user_id.clone()));
+        let store_id = store_id.or(saved.map(|join| join.store_id.clone()));
+        let is_default = is_default.or(saved.map(|join| join.is_default));
+        if !delete && references_found {
+            row.require_for_new(
+                &mut errors,
+                "user's store",
+                &[
+                    (USERNAME, user_id.is_none()),
+                    (STORE_CODE, store_id.is_none()),
+                    (IS_DEFAULT, is_default.is_none()),
+                ],
+            );
         }
         if delete {
+            fail_if_any(&mut errors)?;
             let Some(saved) = existing else {
                 // Named by the row's user and store, as found.
                 return already_deleted_by(
@@ -214,23 +238,6 @@ impl SheetImport for UserStoreJoinSheet {
                 );
             };
             return self.delete(connection, row, saved);
-        }
-
-        let saved = existing.as_ref();
-        let user_id = user_id.or(saved.map(|join| join.user_id.clone()));
-        let store_id = store_id.or(saved.map(|join| join.store_id.clone()));
-        let is_default = is_default.or(saved.map(|join| join.is_default));
-        row.require_for_new(
-            &mut errors,
-            "user's store",
-            &[
-                (USERNAME, user_id.is_none()),
-                (STORE_CODE, store_id.is_none()),
-                (IS_DEFAULT, is_default.is_none()),
-            ],
-        );
-        if !errors.is_empty() {
-            return Err(RowFailure::Invalid(errors));
         }
 
         let new = UserStoreJoinRow {
@@ -245,11 +252,20 @@ impl SheetImport for UserStoreJoinSheet {
         let change = Change::between_upserts(saved, &new);
         if change != Change::Unchanged {
             if let (Some(admin), Some(store)) = (&self.setup_admin, self.stores.get(&new.store_id))
+                && let Err(error) =
+                    admin.check_store(row, &self.users, &new.user_id, store, "stores")
             {
-                admin.check_store(row, &self.users, &new.user_id, store, "stores")?;
+                add_error(&mut errors, error);
             }
-            upsert_user_store_join_unchecked_default(connection, &self.server_users, &new)
-                .map_err(|error| self.upsert_failure(row, &new, error))?;
+            for error in user_store_join_errors(connection, &self.server_users, saved, &new)? {
+                let reads = reads(&error);
+                self.upsert_failure(row, &new, error)
+                    .add_rule(reads, &mut errors)?;
+            }
+        }
+        fail_if_any(&mut errors)?;
+        if change != Change::Unchanged {
+            upsert_user_store_join_unchecked(connection, saved, &new)?;
             let gives_default = new.is_default && !saved.is_some_and(|saved| saved.is_default);
             self.default_checks.push((
                 row.error(IS_DEFAULT, String::new()),
@@ -512,9 +528,6 @@ impl UserStoreJoinSheet {
     ) -> RowFailure {
         let username = self.users.key_or_id(&join.user_id);
         match error {
-            UpsertUserStoreJoinError::UserNotFound => row
-                .not_found(row.reference_column(USERNAME, USER_ID))
-                .into(),
             UpsertUserStoreJoinError::UserDeleted => row
                 .error(
                     user_column(row),
@@ -524,11 +537,8 @@ impl UserStoreJoinSheet {
             UpsertUserStoreJoinError::Protected => {
                 protected_error(row, username, "change their stores").into()
             }
-            UpsertUserStoreJoinError::StoreNotFound => row
-                .not_found(row.reference_column(STORE_CODE, STORE_ID))
-                .into(),
             // Unreachable here: `find_join` finds a saved user and store, so a row never adds a
-            // second.
+            // second, and with one not found `reads` skips it.
             UpsertUserStoreJoinError::DuplicateJoin { other_id } => row
                 .error(
                     STORE_CODE,
@@ -538,15 +548,25 @@ impl UserStoreJoinSheet {
                     ),
                 )
                 .into(),
-            // Finding the record makes a changed user or store a conflict first.
+            // Finding the record makes a changed user or store a conflict first, and with one not
+            // found `reads` skips it.
             UpsertUserStoreJoinError::RecordChanged => row
                 .error(
                     ID,
                     "A user's store can't change its user or store: delete it and add another",
                 )
                 .into(),
-            UpsertUserStoreJoinError::DatabaseError(error) => RowFailure::Database(error),
         }
+    }
+}
+
+/// The columns `error`'s rule reads beside the one it's reported on: a key half not found is the
+/// saved join's.
+fn reads(error: &UpsertUserStoreJoinError) -> &'static [&'static str] {
+    match error {
+        UpsertUserStoreJoinError::DuplicateJoin { .. }
+        | UpsertUserStoreJoinError::RecordChanged => &[USERNAME, USER_ID, STORE_CODE, STORE_ID],
+        _ => &[],
     }
 }
 
