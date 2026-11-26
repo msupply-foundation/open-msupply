@@ -15,6 +15,9 @@ pub enum UpsertMasterListError {
     },
     /// The `MISSING_PROGRAM` placeholder.
     Protected,
+    /// A discount below 0% or above 100%. Checked only when the discount changes, so a saved list
+    /// with one stays editable.
+    DiscountOutOfRange,
 }
 
 /// Adds or updates one master list, which `master_list_errors` has passed.
@@ -39,6 +42,16 @@ pub fn master_list_errors(
     }
     let repo = MasterListRowRepository::new(connection);
     let saved = repo.find_one_by_id(&row.id)?;
+    let discount_changes = saved
+        .as_ref()
+        .is_none_or(|saved| saved.discount_percentage != row.discount_percentage);
+    if discount_changes
+        && row
+            .discount_percentage
+            .is_some_and(|discount| !(0.0..=100.0).contains(&discount))
+    {
+        errors.push(UpsertMasterListError::DiscountOutOfRange);
+    }
     if let Some(other_id) = other_active_with_key(
         saved.as_ref(),
         row,
@@ -161,6 +174,44 @@ mod tests {
         // Lists without a code don't clash.
         save(&connection, &master_list("b", "Clinic")).unwrap();
         save(&connection, &master_list("c", "Hospital")).unwrap();
+    }
+
+    // covers: OMS-REG-CDIO-01.210
+
+    #[actix_rt::test]
+    async fn a_discount_is_from_0_to_100_percent() {
+        let (_, connection, _, _) =
+            setup_all("upsert_master_list_discount", MockDataInserts::none()).await;
+        let discounted = |id: &str, discount: f64| MasterListRow {
+            discount_percentage: Some(discount),
+            ..master_list(id, id)
+        };
+
+        for discount in [-0.5, 100.5] {
+            assert_eq!(
+                save(&connection, &discounted("a", discount)),
+                Err(vec![UpsertMasterListError::DiscountOutOfRange])
+            );
+        }
+        save(&connection, &discounted("a", 0.0)).unwrap();
+        save(&connection, &discounted("b", 100.0)).unwrap();
+
+        // A saved discount out of range stays editable while it's left as it is.
+        MasterListRowRepository::new(&connection)
+            .upsert_one(&discounted("c", 150.0))
+            .unwrap();
+        save(
+            &connection,
+            &MasterListRow {
+                description: "Changed".to_string(),
+                ..discounted("c", 150.0)
+            },
+        )
+        .unwrap();
+        assert_eq!(
+            save(&connection, &discounted("c", 120.0)),
+            Err(vec![UpsertMasterListError::DiscountOutOfRange])
+        );
     }
 
     // covers: OMS-REG-CDIO-01.125

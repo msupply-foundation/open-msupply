@@ -4659,6 +4659,7 @@ async fn an_inactive_master_list_does_not_hold_on_to_its_name() {
             id: "old_eml".to_string(),
             code: String::new(),
             is_active: false,
+            is_default_price_list: false,
             ..essential_medicines()
         })
         .unwrap();
@@ -4721,6 +4722,176 @@ async fn an_inactive_master_list_does_not_hold_on_to_its_name() {
         Some("Changed".to_string())
     );
     assert!(find_master_list(&connection, "older_eml").is_some());
+}
+
+// covers: OMS-REG-CDIO-01.209
+
+#[actix_rt::test]
+async fn a_master_list_sheet_leaves_at_most_one_default_price_list() {
+    // Essential medicines is the default price list.
+    let (connection, service_provider, dir) =
+        master_list_setup("central_data_master_list_default_price_list").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let hiv = ["hiv", "", "HIV program", "", "TRUE", "TRUE", ""];
+    let clinic = ["clinic", "", "Clinic", "", "FALSE", "TRUE", ""];
+
+    // A new default beside the saved one, active or not, is an error on each row that made one.
+    let path = write_file(
+        dir.path(),
+        master_list_sheet(vec![master_list_row(hiv), master_list_row(clinic)]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                2,
+                Some("is_default_price_list"),
+                "HIV program would be the default price list, and so would Clinic and Essential medicines, but there can be only one. Set is_default_price_list to FALSE for all but one"
+            ),
+            (
+                3,
+                Some("is_default_price_list"),
+                "Clinic would be the default price list, and so would Essential medicines and HIV program, but there can be only one. Set is_default_price_list to FALSE for all but one"
+            ),
+        ]
+    );
+
+    // Moving the default to another list imports in either row order.
+    let take_default = ["eml", "", "", "", "", "FALSE", ""];
+    for rows in [[hiv, take_default], [take_default, hiv]] {
+        let path = write_file(
+            dir.path(),
+            master_list_sheet(rows.into_iter().map(master_list_row).collect()),
+        );
+        let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+        assert_eq!(summary.errors, vec![]);
+    }
+    let path = write_file(
+        dir.path(),
+        master_list_sheet(vec![master_list_row(hiv), master_list_row(take_default)]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert!(
+        find_master_list(&connection, "hiv")
+            .unwrap()
+            .is_default_price_list
+    );
+    assert!(
+        !find_master_list(&connection, "eml")
+            .unwrap()
+            .is_default_price_list
+    );
+
+    // No default price list is fine.
+    let path = write_file(
+        dir.path(),
+        master_list_sheet(vec![master_list_row(["hiv", "", "", "", "", "FALSE", ""])]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+
+    // Lists that already share it must be put right in the same sheet, even by a row that doesn't
+    // touch them: no row is to blame, so the sheet gets the error.
+    let repo = MasterListRowRepository::new(&connection);
+    for id in ["eml", "hiv"] {
+        repo.upsert_one(&MasterListRow {
+            is_default_price_list: true,
+            ..find_master_list(&connection, id).unwrap()
+        })
+        .unwrap();
+    }
+    let path = write_file(
+        dir.path(),
+        master_list_sheet(vec![master_list_row([
+            "eml", "", "", "Changed", "", "", "",
+        ])]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        summary.errors,
+        vec![RowError {
+            sheet: "master_list".to_string(),
+            row: None,
+            column: Some("is_default_price_list".to_string()),
+            message: "Essential medicines and HIV program are each the default price list, but there can be only one. Set is_default_price_list to FALSE for all but one".to_string(),
+        }]
+    );
+}
+
+// covers: OMS-REG-CDIO-01.210
+
+#[actix_rt::test]
+async fn a_master_list_discount_is_from_0_to_100() {
+    // Essential medicines gives 12.5%.
+    let (connection, service_provider, dir) =
+        master_list_setup("central_data_master_list_discount").await;
+    let ctx = service_provider.basic_context().unwrap();
+
+    let path = write_file(
+        dir.path(),
+        master_list_sheet(vec![
+            master_list_row(["eml", "", "", "", "", "", "-1"]),
+            master_list_row(["", "", "HIV program", "", "TRUE", "FALSE", "100.5"]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                2,
+                Some("discount_percentage"),
+                "discount_percentage must be from 0 to 100"
+            ),
+            (
+                3,
+                Some("discount_percentage"),
+                "discount_percentage must be from 0 to 100"
+            ),
+        ]
+    );
+
+    let path = write_file(
+        dir.path(),
+        master_list_sheet(vec![
+            master_list_row(["eml", "", "", "", "", "", "0"]),
+            master_list_row(["", "", "HIV program", "", "TRUE", "FALSE", "100"]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(
+        find_master_list(&connection, "eml")
+            .unwrap()
+            .discount_percentage,
+        Some(0.0)
+    );
+
+    // A saved discount out of range stays editable while the row leaves it as it is.
+    MasterListRowRepository::new(&connection)
+        .upsert_one(&MasterListRow {
+            discount_percentage: Some(150.0),
+            ..essential_medicines()
+        })
+        .unwrap();
+    let path = write_file(
+        dir.path(),
+        master_list_sheet(vec![master_list_row([
+            "eml", "", "", "Changed", "", "", "150",
+        ])]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
 }
 
 // covers: OMS-REG-CDIO-01.123
@@ -4815,6 +4986,7 @@ async fn a_shared_master_list_name_asks_for_the_id() {
     MasterListRowRepository::new(&connection)
         .upsert_one(&MasterListRow {
             id: "eml_copy".to_string(),
+            is_default_price_list: false,
             ..essential_medicines()
         })
         .unwrap();
