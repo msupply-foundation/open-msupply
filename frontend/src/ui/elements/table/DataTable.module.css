@@ -685,8 +685,8 @@ tr[data-row-state='disabled']:not(.rowClickable) {
 }
 
 /* Sort indicator (ui-standards § tables .sort-arrow) — a RESERVED slot on every
-   sortable header: always rendered (empty until sorted) at a fixed width, so
-   toggling a sort never shifts the header text. Action blue, per spec. */
+   sortable header: always rendered (the idle ↕ below until sorted) at a fixed
+   width, so toggling a sort never shifts the header text. Action blue, per spec. */
 .sortIndicator {
   flex-shrink: 0;
   inline-size: var(--space-3);
@@ -711,6 +711,13 @@ tr[data-row-state='disabled']:not(.rowClickable) {
 .th[data-align='right'] .sortIndicator {
   order: -1;
   margin-inline: 0 var(--space-1);
+}
+
+/* Unsorted sortable column: a faint ↕. CSS, not text, so the header's text
+   stays its label; empty alt text keeps it silent. Muted ink still meets 3:1. */
+.th[data-sortable]:not([aria-sort]) .sortIndicator::before {
+  content: '↕' / '';
+  color: var(--text-disabled);
 }
 
 /* A clickable row (list → detail, or detail → edit modal); only when
