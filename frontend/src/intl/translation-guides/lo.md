@@ -54,8 +54,7 @@ say who settled it and when.
   (1/1), _ID_ (36/36), _AMC_ (21/21), _MOS_ (12/12), _VVM_ (14/14), _URL_ (8/8), _JSON_, _API_,
   _Open mSupply_. Exception: _SOH_ → _ສະຕ໋ອກຄົງເຫຼືອ_ (0/6 kept).
 - **Common computing words are transliterated into Lao script**, not kept in Latin: _ໄຟລ໌_,
-  _ອັບໂຫຼດ_, _ດາວໂຫຼດ_, _ເຊີບເວີ_ (87/87), _ອັບເດດ_, _ຊິງຄ໌_ (65/66; `label.clear-sync-token`
-  keeps _Sync Token_).
+  _ອັບໂຫຼດ_, _ດາວໂຫຼດ_, _ເຊີບເວີ_ (87/87), _ອັບເດດ_, _ຊິງຄ໌_ (66/66).
 
 ## Glossary
 
@@ -105,7 +104,6 @@ Settled by the drafts, not yet by a Lao reviewer. Change them here when one does
 | English                          | Lao               | Notes                                                                                          |
 | -------------------------------- | ----------------- | ---------------------------------------------------------------------------------------------- |
 | dispense (verb, button)          | ຈ່າຍຢາ            | not Google's _ແຈກຢາຍ_ ("distribute")                                                           |
-| dispensing record                | ການຈ່າຍຢາ         | keeps _ໃບສັ່ງຢາ_ for a prescriber's prescription (`label.prescription-request`)                |
 | Dispensing records (list/button) | ປະຫວັດການຈ່າຍຢາ   | "dispensing history"                                                                           |
 | unnamed patient                  | ຄົນເຈັບບໍ່ລະບຸຊື່ | "no name given", not "has no name"                                                             |
 | common medicines                 | ຢາທີ່ໃຊ້ເລື້ອຍ    | coined; _ຢາທົ່ວໄປ_ would read as "generic medicines"                                           |
@@ -118,7 +116,7 @@ Settled by the drafts, not yet by a Lao reviewer. Change them here when one does
 | left (quantity left)             | ເຫຼືອ             | not _ຊ້າຍ_ (left-hand side)                                                                    |
 | screen                           | ໜ້າຈໍ             |                                                                                                |
 
-### Terms settled for issue #2747 (2026-11-27)
+### Terms settled in the 2026-11-27 consistency fixes
 
 Applied across the catalog, pending a Lao reviewer's confirmation. Change them here and in the catalog if one disagrees.
 
@@ -127,6 +125,7 @@ Applied across the catalog, pending a Lao reviewer's confirmation. Change them h
 | more / add                       | ເພີ່ມ                       | _ເພິ່ມ_ (22 strings) was a misspelling                                                                    |
 | dispensing record                | ການຈ່າຍຢາ                   | every string whose English says "dispensing"; _ໃບສັ່ງຢາ_ only where the English says "prescription"       |
 | clear (filter, field)            | ລ້າງ                        | _ລຶບ_ is "delete"; keep it where clearing really deletes data (desktop `clear-data`, legacy translations) |
+| sync token                       | ໂທເຄັນຊິງຄ໌                 | transliterated; was left as _Sync Token_                                                                  |
 | column                           | ຄໍລຳ                        | not _ຖັນ_                                                                                                 |
 | hardware ID                      | ID ອຸປະກອນ                  | "X ID" is _ID_ + the Lao noun, as in _ID ຄົນເຈັບ_                                                         |
 | site ID                          | ID ສະຖານທີ່                 |                                                                                                           |
