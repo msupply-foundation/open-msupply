@@ -167,6 +167,7 @@ fn map_error(error: ServiceError) -> Result<UpsertItemVariantErrorInterface> {
                 }
                 UpsertPackagingVariantError::CantChangeItemVariant => BadUserInput(formatted_error),
                 UpsertPackagingVariantError::LessThanZero(_field) => BadUserInput(formatted_error),
+                UpsertPackagingVariantError::NameIsBlank => BadUserInput(formatted_error),
 
                 UpsertPackagingVariantError::DatabaseError(_repository_error) => {
                     InternalError(formatted_error)

@@ -336,6 +336,7 @@
   "error.missing-inputs": "{{count}}",
   "error.missing-required-field": "Falta el campo requerido: {{fieldName}}",
   "error.more-info": "Más información",
+  "error.must-be-greater-than-zero": "Debe ser mayor que cero",
   "error.name-program-duplicate": "Ya existe un nombre de esquema de vacunación para este programa",
   "error.no-asset-create-permission": "No tienes el permiso para crear un nuevo activo.",
   "error.no-asset-create-scan-permission": "No tienes permisos para crear un nuevo activo medainte escaneo de la matriz de datos.",

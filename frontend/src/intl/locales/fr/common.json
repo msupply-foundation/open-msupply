@@ -692,6 +692,7 @@
   "error.missing-required-field": "Champ obligatoire manquant : {{fieldName}}",
   "error.monthly-demand-is-zero": "Aucune demande mensuelle",
   "error.more-info": "Plus d'informations",
+  "error.must-be-greater-than-zero": "Doit être supérieur à zéro",
   "error.name-program-duplicate": "Le nom du schéma de vaccination existe déjà pour ce programme",
   "error.new-stock-invalid": "Impossible d'ajouter le stock. Vérifiez les détails et réessayez.",
   "error.new-version-available": "Une nouvelle version est disponible",

@@ -653,6 +653,7 @@
   "error.missing-required-field": "Missing required field: {{fieldName}}",
   "error.monthly-demand-is-zero": "No monthly demand",
   "error.more-info": "More information",
+  "error.must-be-greater-than-zero": "Must be greater than zero",
   "error.name-program-duplicate": "Vaccine course name already exists for this program",
   "error.new-stock-invalid": "Could not add the stock. Check the details and try again.",
   "error.new-version-available": "A new version is available",

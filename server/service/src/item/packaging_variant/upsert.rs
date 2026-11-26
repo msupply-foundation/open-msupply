@@ -17,6 +17,7 @@ pub enum UpsertPackagingVariantError {
     ItemVariantDoesNotExist,
     CantChangeItemVariant,
     LessThanZero(String),
+    NameIsBlank,
     DatabaseError(RepositoryError),
 }
 
@@ -112,6 +113,10 @@ fn validate(
         && old_packaging_variant.item_variant_id != input.item_variant_id
     {
         return Err(UpsertPackagingVariantError::CantChangeItemVariant);
+    }
+
+    if input.name.trim().is_empty() {
+        return Err(UpsertPackagingVariantError::NameIsBlank);
     }
 
     if input.packaging_level <= 0 {

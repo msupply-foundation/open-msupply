@@ -678,6 +678,7 @@
   "error.missing-required-field": "ورک شوی اړین ساحه: {{fieldName}}",
   "error.monthly-demand-is-zero": "هیڅ میاشتنۍ غوښتنه نشته",
   "error.more-info": "نور معلومات",
+  "error.must-be-greater-than-zero": "باید له صفر څخه زیات وي",
   "error.name-program-duplicate": "د دې پروګرام لپاره د واکسین کورس نوم لا دمخه شتون لري",
   "error.new-stock-invalid": "ذخیره اضافه نشو کولی. توضیحات وګورئ او بیا هڅه وکړئ.",
   "error.new-version-available": "یوه نوې نسخه شتون لري",

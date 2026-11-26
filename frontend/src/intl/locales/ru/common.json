@@ -380,6 +380,7 @@
   "error.missing-inputs": "{{count}}",
   "error.missing-required-field": "Отсутствует обязательное поле: {{fieldName}}",
   "error.more-info": "Дополнительная информация",
+  "error.must-be-greater-than-zero": "Должно быть больше нуля",
   "error.name-program-duplicate": "Название курса вакцинации уже существует для этой программы",
   "error.no-asset-create-permission": "У вас нет разрешения на создание нового актива.",
   "error.no-asset-create-scan-permission": "У вас нет разрешения на создание нового актива посредством сканирования матрицы данных.",

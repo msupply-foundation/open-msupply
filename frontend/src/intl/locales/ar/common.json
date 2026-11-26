@@ -344,6 +344,7 @@
   "error.missing-central-sync": "تعذر الوصول إلى خادم mSupply المركزي",
   "error.missing-inputs": "{{count}}",
   "error.more-info": "المزيد من المعلومات",
+  "error.must-be-greater-than-zero": "يجب أن يكون أكبر من صفر",
   "error.name-program-duplicate": "اسم الدورة التدريبية للقاح موجود مسبقاً لهذا البرنامج",
   "error.no-asset-create-permission": "ليس لديك إذن لإنشاء تجهيزات جديدة.",
   "error.no-asset-edit-permission": "ليس لديك إذن لإنشاء تجهيزات جديدة.",

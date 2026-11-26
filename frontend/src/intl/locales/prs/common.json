@@ -678,6 +678,7 @@
   "error.missing-required-field": "فیلد اجباری وجود ندارد: {{fieldName}}",
   "error.monthly-demand-is-zero": "تقاضای ماهانه وجود ندارد",
   "error.more-info": "اطلاعات بیشتر",
+  "error.must-be-greater-than-zero": "باید بزرگ‌تر از صفر باشد",
   "error.name-program-duplicate": "نام دوره واکسن برای این برنامه قبلاً وجود دارد",
   "error.new-stock-invalid": "موجودی اضافه نشد. جزئیات را بررسی کرده و دوباره تلاش کنید.",
   "error.new-version-available": "نسخه جدیدی در دسترس است",

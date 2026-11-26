@@ -652,6 +652,7 @@
   "error.missing-required-field": "ຂາດຊ່ອງຂໍ້ມູນທີ່ຈຳເປັນ: {{fieldName}}",
   "error.monthly-demand-is-zero": "ບໍ່ມີຄວາມຕ້ອງການລາຍເດືອນ",
   "error.more-info": "ຂໍ້ມູນເພິ່ມເຕີມ",
+  "error.must-be-greater-than-zero": "ຕ້ອງຫຼາຍກວ່າສູນ",
   "error.name-program-duplicate": "ຊື່ຫຼັກສູດວັກແຊງນີ້ມີຢູ່ແລ້ວສຳລັບໂຄງການນີ້",
   "error.new-stock-invalid": "ບໍ່ສາມາດເພີ່ມສະຕ໋ອກໄດ້. ກວດເບິ່ງລາຍລະອຽດແລ້ວລອງໃໝ່.",
   "error.new-version-available": "ມີເວີຊັນໃໝ່ໃຫ້ໃຊ້",

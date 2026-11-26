@@ -120,6 +120,7 @@
   "error.item-not-found": "Item la hetan",
   "error.login": "Naran ujuáriu ou liafuan passe invalidu",
   "error.master-list-not-found": "Master List la hetan",
+  "error.must-be-greater-than-zero": "Tenke boot liu husi zero",
   "error.no-data": "Laiha dadus ne'ebe disponivel",
   "error.no-inbound-items": "La iha items ne'ebe aumenta ba iha remessa ne'e.",
   "error.no-inbound-shipments": "La iha remessas sasan tama atu hatudu.",
