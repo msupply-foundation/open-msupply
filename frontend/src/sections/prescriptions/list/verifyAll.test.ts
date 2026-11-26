@@ -1,10 +1,16 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import type { GraphqlResult } from '@/api/graphql';
-import type { VerifyPrescriptionsResult } from './prescriptions.generated';
+import { setDictionaries, setLocale } from '@/intl/intl';
+import type {
+  PrescriptionsToVerifyResult,
+  VerifyPrescriptionsResult,
+} from './prescriptions.generated';
 import {
+  countMessage,
   lastMonth,
   monthEnd,
   monthLabel,
+  splitToVerify,
   verifiableMonths,
   verifyOutcome,
 } from './verifyAll';
@@ -135,5 +141,51 @@ describe('verifyOutcome', () => {
         1
       )
     ).toEqual({ kind: 'reported' });
+  });
+});
+
+type LineType =
+  PrescriptionsToVerifyResult['invoices']['nodes'][number]['lines']['nodes'][number]['type'];
+const record = (id: string, types: LineType[]) => ({
+  id,
+  lines: { nodes: types.map(type => ({ type })) },
+});
+
+describe('splitToVerify — OMS-REG-DIS-12.322', () => {
+  it('verifies a record with something dispensed', () => {
+    expect(
+      splitToVerify([
+        record('a', ['STOCK_OUT']),
+        record('b', ['STOCK_OUT', 'UNALLOCATED_STOCK']),
+      ])
+    ).toEqual({ ids: ['a', 'b'], leftOut: 0 });
+  });
+
+  it('leaves out a record with no lines, or only a prescribed-quantity placeholder or a service line', () => {
+    expect(
+      splitToVerify([
+        record('none', []),
+        record('placeholder', ['UNALLOCATED_STOCK']),
+        record('service', ['SERVICE']),
+        record('dispensed', ['STOCK_OUT']),
+      ])
+    ).toEqual({ ids: ['dispensed'], leftOut: 3 });
+  });
+});
+
+describe('countMessage', () => {
+  afterEach(() => setLocale('en'));
+
+  it("writes the count in the language's own digits, as the month's", () => {
+    setDictionaries({
+      ar: {
+        'messages.verify-all-count_other': '{{count}} — {{month}}',
+        'messages.verify-all-count_many': '{{count}} — {{month}}',
+      },
+    });
+    setLocale('ar');
+    const message = countMessage('messages.verify-all-count', 12, 'month');
+    expect(message).toContain('١٢');
+    expect(message).not.toMatch(/[0-9]/);
   });
 });

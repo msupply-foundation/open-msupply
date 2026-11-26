@@ -3575,6 +3575,8 @@
   "messages.verify-all-done_one": "1 dispensing record verified.",
   "messages.verify-all-done_other": "{{count}} dispensing records verified.",
   "messages.verify-all-failed": "Nothing was verified: a dispensing record was changed or deleted in the meantime. Check the number below and verify again.",
+  "messages.verify-all-left-out_one": "1 Picked dispensing record in or before {{month}} has nothing dispensed, so it isn't verified. Open it from the list to finish or delete it.",
+  "messages.verify-all-left-out_other": "{{count}} Picked dispensing records in or before {{month}} have nothing dispensed, so they aren't verified. Open them from the list to finish or delete them.",
   "messages.verify-all-none": "No Picked dispensing records were dispensed in or before {{month}}, so there is nothing to verify.",
   "messages.verify-all-not-read": "The dispensing records to verify couldn't be read.",
   "messages.waiting-for-central-server": "Waiting for the central server to prepare this site…",

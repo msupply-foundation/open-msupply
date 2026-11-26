@@ -258,23 +258,23 @@ export const DeletePrescriptions = {
 export type PrescriptionsToVerifyVariables = {
   storeId: string;
   pickedUpTo: string;
-  page?: {
-    first?: number | null;
-    offset?: number | null;
-  } | null;
 };
 
 export type PrescriptionsToVerifyResult = {
   invoices: ({
-  totalCount: number;
   nodes: Array<{
   id: string;
+  lines: {
+  nodes: Array<{
+  type: "STOCK_IN" | "STOCK_OUT" | "UNALLOCATED_STOCK" | "SERVICE";
+}>;
+};
 }>;
 });
 };
 
 export const PrescriptionsToVerify = {
-  query: "query prescriptionsToVerify($storeId: String!, $pickedUpTo: DateTime!, $page: PaginationInput) {\n  invoices(\n    storeId: $storeId\n    filter: {status: {equalTo: PICKED}, pickedDatetime: {beforeOrEqualTo: $pickedUpTo}}\n    page: $page\n    type: [PRESCRIPTION]\n  ) {\n    ... on InvoiceConnector {\n      totalCount\n      nodes {\n        id\n      }\n    }\n  }\n}",
+  query: "query prescriptionsToVerify($storeId: String!, $pickedUpTo: DateTime!) {\n  invoices(\n    storeId: $storeId\n    filter: {status: {equalTo: PICKED}, pickedDatetime: {beforeOrEqualTo: $pickedUpTo}}\n    type: [PRESCRIPTION]\n  ) {\n    ... on InvoiceConnector {\n      nodes {\n        id\n        lines {\n          nodes {\n            type\n          }\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<PrescriptionsToVerifyResult, PrescriptionsToVerifyVariables>;
 
 export type VerifyPrescriptionsVariables = {

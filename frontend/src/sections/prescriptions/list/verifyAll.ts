@@ -1,11 +1,15 @@
 import type { GraphqlResult } from '@/api/graphql';
 import { calendarDateToInstant, type Instant } from '@/intl/calendarDate';
-import { localisedMonthYear } from '@/intl';
-import type { VerifyPrescriptionsResult } from './prescriptions.generated';
+import { formatNumber, localisedMonthYear, tPlural } from '@/intl';
+import type {
+  PrescriptionsToVerifyResult,
+  VerifyPrescriptionsResult,
+} from './prescriptions.generated';
+import { hasDispensedLines } from '../prescriptionStatus';
 
 // Verify all's pure half (spec/prescriptions rules › verifying the month's
-// records): which months it offers, where a month ends, and what a batch's
-// reply means. The dialog is VerifyAllAction.
+// records): which months it offers, where a month ends, which records it
+// verifies, and what a batch's reply means. The dialog is VerifyAllAction.
 
 /** A month as `YYYY-MM`, the value of the month select. */
 export type MonthKey = string;
@@ -55,6 +59,49 @@ export const monthLabel = (month: MonthKey): string => {
   const [year, monthIndex] = parts(month);
   return localisedMonthYear(new Date(year, monthIndex, 1));
 };
+
+/** The Picked records a read found: those Verify sends, and those it leaves. */
+export interface ToVerify {
+  /** Records with something dispensed: Verify verifies these. */
+  ids: string[];
+  /**
+   * Records with nothing dispensed (no lines, or only a prescribed-quantity
+   * placeholder), left Picked as the record screen leaves them
+   * (OMS-REG-DIS-12.322): verified, one holding a placeholder could never be
+   * cancelled.
+   */
+  leftOut: number;
+}
+
+/**
+ * Splits a read of the month's Picked records by the record screen's own
+ * rule for what can be verified (`hasDispensedLines`, OMS-REG-DIS-04.22).
+ */
+export const splitToVerify = (
+  nodes: PrescriptionsToVerifyResult['invoices']['nodes']
+): ToVerify => {
+  const ids: string[] = [];
+  let leftOut = 0;
+  for (const node of nodes) {
+    if (hasDispensedLines(node.lines.nodes)) ids.push(node.id);
+    else leftOut += 1;
+  }
+  return { ids, leftOut };
+};
+
+/** Verify all's messages that count records. */
+export type CountKey =
+  | 'messages.verify-all-count'
+  | 'messages.verify-all-done'
+  | 'messages.verify-all-left-out';
+
+/**
+ * A message counting `n` records of the month `month` names, the count in the
+ * language's own digits as the month's are: `tPlural` alone would put a Latin
+ * 7 beside an Arabic ٢٠٢٦ (CCS-20260911-F8).
+ */
+export const countMessage = (key: CountKey, n: number, month: string) =>
+  tPlural(key, n, { count: formatNumber(n), month });
 
 export type VerifyOutcome =
   | { kind: 'verified'; count: number }
