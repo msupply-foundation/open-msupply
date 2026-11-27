@@ -127,9 +127,8 @@ impl<'a> UserAccountService<'a> {
                     permission_repo.delete(id)?;
                 }
 
-                // Store joins absent from the input are removed. Like the
-                // previous wholesale delete this writes no changelog — store
-                // join removals don't sync (tracked in #12612).
+                // Store joins absent from the input are removed, with a Delete
+                // changelog so the removal syncs like the permissions' above.
                 let existing_joins: HashMap<String, UserStoreJoinRow> = user_store_repo
                     .find_many_by_user_id(&user.id)?
                     .into_iter()
@@ -143,7 +142,7 @@ impl<'a> UserAccountService<'a> {
                     .keys()
                     .filter(|id| !incoming_join_ids.contains(id.as_str()))
                 {
-                    user_store_repo.delete_by_id(id)?;
+                    user_store_repo.delete(id)?;
                 }
 
                 // The user row is rewritten only on material change.
@@ -588,6 +587,42 @@ mod user_account_test {
             changelogs_after(&connection, mark),
             vec![],
             "an unchanged login must write no changelog rows"
+        );
+    }
+
+    /// A login whose payload no longer names a store join removes it and
+    /// writes a Delete changelog, so the removal syncs (#2607).
+    #[actix_rt::test]
+    async fn upsert_user_removed_store_join_writes_delete_changelog() {
+        let (_, connection, _, _) = setup_all(
+            "upsert_user_removed_store_join_writes_delete_changelog",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+        let service = UserAccountService::new(&connection);
+
+        service
+            .upsert_user(reconcile_user(), store_a_permissions(both_permissions()))
+            .unwrap();
+        let mark = ChangelogRepository::new(&connection).max_cursor().unwrap();
+
+        // Central no longer lets the user log in to store_a.
+        service.upsert_user(reconcile_user(), vec![]).unwrap();
+
+        assert_eq!(
+            UserStoreJoinRowRepository::new(&connection)
+                .find_one_by_id("reconcile_join_a")
+                .unwrap(),
+            None
+        );
+        let join_deletes: Vec<_> = changelogs_after(&connection, mark)
+            .into_iter()
+            .filter(|r| r.table_name == ChangelogTableName::UserStoreJoin)
+            .map(|r| (r.record_id, r.row_action))
+            .collect();
+        assert_eq!(
+            join_deletes,
+            vec![("reconcile_join_a".to_string(), RowActionType::Delete)]
         );
     }
 
