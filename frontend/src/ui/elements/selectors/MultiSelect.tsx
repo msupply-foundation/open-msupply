@@ -11,6 +11,7 @@ import { usePortalMount } from '../../utils/portalMount';
 import { HighlightFirstMatch } from './HighlightFirstMatch';
 import { keepPopupOpenOnInsideContent } from './dismissInsideGuard';
 import styles from './MultiSelect.module.css';
+import popupHeight from './popupHeight.module.css';
 
 export interface MultiSelectProps<T> {
   label: string;
@@ -271,7 +272,7 @@ export const MultiSelect = <T,>(props: MultiSelectProps<T>) => {
       <KCombobox.Portal mount={portalMount?.()}>
         <KCombobox.Content
           ref={contentEl}
-          class={styles.content}
+          class={`${styles.content} ${popupHeight.fitHeight}`}
           // Keep the popup open when a pointerdown lands inside its own content
           // — as <Combobox>. Without it, an option click inside a Dialog is
           // read as a click-outside and dismisses before the pick commits (see

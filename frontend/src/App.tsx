@@ -85,6 +85,7 @@ import { StaleBundleModal } from './StaleBundleModal';
 import { ManualScanInput } from './platform/ManualScanInput';
 import { CameraScanOverlay } from './platform/CameraScanOverlay';
 import { startStaleBundleWatch } from './staleBundle';
+import { startKeepingFocusedFieldInView } from './ui/utils/keepFocusedFieldInView';
 import { PluginGate } from './plugins/PluginGate';
 import { pluginPageRoutes } from './plugins/pluginPages';
 import styles from './ui/styles/shared.module.css';
@@ -243,9 +244,13 @@ export const App: Component = () => {
     void runStartup();
     const stopTracking = startActivityTracking();
     const stopStaleBundleWatch = startStaleBundleWatch();
+    // The on-screen keyboard shrinking the page must not leave the focused
+    // field under it, however the field got focus (#2593).
+    const stopKeepingFieldInView = startKeepingFocusedFieldInView();
     onCleanup(() => {
       stopTracking();
       stopStaleBundleWatch();
+      stopKeepingFieldInView();
     });
   });
 

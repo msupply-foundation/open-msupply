@@ -244,10 +244,7 @@
   inline-size: 100%;
   min-inline-size: min-content;
   max-inline-size: var(--kb-popper-anchor-width, none);
-  /* The 18rem cap is load-bearing beyond this file: dialogs size their
-     minBodyHeightRem reservations to it (#1029 — "header + field + the
-     listbox's 18rem cap + padding"), so changing it means re-measuring those. */
-  max-height: min(18rem, var(--kb-popper-content-available-height));
+  /* Height: the shared popup cap (popupHeight.module.css), added in Combobox.tsx. */
   padding: var(--space-2);
   background: var(--surface-raised);
   border: 1px solid var(--color-border-value);
@@ -312,8 +309,9 @@
   padding: 0;
   list-style: none;
   /* The listbox owns the scroll (min-height:0 lets a flex child shrink below
-     its content so it actually scrolls within .content's max-height); server
-     mode fetches the next page from its onScroll near the bottom. */
+     its content so it actually scrolls within the panel's max-height, set by
+     popupHeight.module.css); server mode fetches the next page from its
+     onScroll near the bottom. */
   min-height: 0;
   overflow-y: auto;
   outline: none;
