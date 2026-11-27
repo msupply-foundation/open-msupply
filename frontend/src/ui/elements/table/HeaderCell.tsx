@@ -64,17 +64,19 @@ export function HeaderCell<T>(props: {
     props.header.getResizeHandler()(event);
   };
   const sorted = () => column().getIsSorted();
-  // The arrow slot is RESERVED on every sortable header (empty until sorted,
-  // fixed width — see .sortIndicator) so toggling a sort never shifts the
-  // header text. Decorative: aria-sort on the th carries the semantics.
+  // RESERVED on every sortable header so a sort never shifts the text; CSS
+  // draws a faint ↕ until sorted. Decorative: aria-sort carries the semantics.
   const indicator = () => {
     if (!canSort()) return null;
     const dir = sorted();
     // The spec's arrow glyphs (ui-standards § tables .sort-arrow): ↓ / ↑
-    // (U+2193 / U+2191), not filled triangles. Decorative — aria-sort on the
-    // th carries the semantics.
+    // (U+2193 / U+2191), not filled triangles.
     return (
-      <span class={styles.sortIndicator} aria-hidden="true">
+      <span
+        class={styles.sortIndicator}
+        aria-hidden="true"
+        data-testid={`column-sort-${column().id}`}
+      >
         {dir === 'desc' ? '↓' : dir === 'asc' ? '↑' : ''}
       </span>
     );
