@@ -108,8 +108,7 @@ export const quantityColumns = (
     c: { key: 'expiryDate' },
     header: () => t('label.expiry'),
     ...getCellDefinition('expiryDate'),
-    // An editable date, not the preset's read-only text: room for the date
-    // (13px), its calendar button and its clear button (#2054).
+    // Fits the date, its calendar button and its ✕.
     size: remToPx(11.25),
     // DateField, never a native date input (ui-standards § inputs → dates &
     // times): typed or picked, app-formatted, over the same plain ISO

@@ -77,10 +77,8 @@ export interface DateTimeFieldProps {
 }
 
 /*
- * The time segments' value while no time is held. Kobalte reads an `undefined`
- * value as uncontrolled and keeps showing the last time it had, so a cleared
- * field would still show one; an empty object stays controlled and shows each
- * segment's placeholder.
+ * No time. Kobalte treats `undefined` as uncontrolled and keeps the last time
+ * shown; `{}` stays controlled and shows the placeholders.
  */
 const NO_TIME: TimeValue = {};
 
@@ -95,19 +93,16 @@ const NO_TIME: TimeValue = {};
  * the DEVICE timezone (no store/server timezone). Editing the date (typed or
  * picked) or the time recombines the two local parts into the UTC instant;
  * nothing above sees anything but UTC. A date with a blank time defaults to
- * midnight; clearing the date emits null — by blanking the date text,
- * deselecting the day, or the ✕ button an optional field shows while it holds
- * anything (#2054), which empties the time too. A required field shows no ✕;
- * blanking it still empties it, so the form's own required check reports it
- * (a Save as visited on an encounter relies on that). Both parts are buffered
- * locally so the time survives being set before a date.
+ * midnight; clearing the date (or the ✕, which empties the time too) emits
+ * null. A required field has no ✕ but can still be blanked, so the form's
+ * required check reports it. Both parts are buffered locally so the time
+ * survives being set before a date.
  */
 export const DateTimeField = (props: DateTimeFieldProps) => {
   const autoId = createUniqueId();
   const dateId = () => props.id ?? autoId; // label focuses the date input
   const fmt = () => props.format ?? defaultDateFormat();
-  // The date input: the clear button removes itself on activation, so it hands
-  // focus here rather than letting it fall to <body>.
+  // Where the ✕ hands focus after a clear.
   let dateEl: HTMLInputElement | undefined;
 
   const parts = () => instantToLocalParts(props.value);
@@ -266,7 +261,7 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
               )}
             </KTimeField.Input>
           </KTimeField>
-          {/* At the end: it empties the date AND the time. */}
+          {/* Empties the date and the time. */}
           <Show
             when={
               (dateText() !== '' || time() !== undefined) &&

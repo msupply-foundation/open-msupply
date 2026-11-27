@@ -368,8 +368,7 @@ export const rnrFormLineColumns = ({
     sortKey: 'expiryDate',
     header: headerWithInfo('label.expiry', 'description.expiry'),
     ...getCellDefinition('expiryDate'),
-    // An editable date, not the preset's read-only text: room for the date
-    // (13px), its calendar button and its clear button (#2054).
+    // Fits the date, its calendar button and its ✕.
     size: remToPx(11.25),
     cardGroup: 'more',
     cell: info => {

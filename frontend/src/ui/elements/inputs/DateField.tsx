@@ -98,9 +98,8 @@ const MONTH_FORMAT = 'MMM yyyy';
  * Value IS the wire value: a calendar date, `YYYY-MM-DD` (schema `NaiveDate`, no
  * timezone) passes straight through. Typed text is parsed on blur/Enter
  * (invalid input reverts to the last value); picking from the calendar sets it
- * too; clearing emits null — by blanking the text, deselecting the day, or
- * the ✕ button an optional field shows while it holds a date (#2054).
- * `min`/`max` make out-of-range days unselectable.
+ * too; clearing (blank text, deselected day or ✕) emits null. `min`/`max`
+ * make out-of-range days unselectable.
  */
 export const DateField = (props: DateFieldProps) => {
   const autoId = createUniqueId();
@@ -116,8 +115,7 @@ export const DateField = (props: DateFieldProps) => {
   // it re-seeds its navigation view via this (DatePickerPanel's `openCount`).
   const [openCount, setOpenCount] = createSignal(0);
 
-  // The typed-entry input: the clear button removes itself on activation, so
-  // it hands focus here rather than letting it fall to <body>.
+  // Where the ✕ hands focus after a clear.
   let inputEl: HTMLInputElement | undefined;
 
   // Local text buffer for typing; resynced from the external value only when
@@ -232,9 +230,6 @@ export const DateField = (props: DateFieldProps) => {
               if (e.key === 'Enter') e.currentTarget.blur(); // commits via onBlur
             }}
           />
-          {/* Only an optional, enabled field holding something offers the
-              clear (ui-standards/inputs.md › constraints, empty, and
-              display). */}
           <Show when={text() !== '' && canClear() && !props.disabled}>
             <ClearButton
               fieldLabel={props.label}

@@ -2,13 +2,9 @@ import { createRoot, createSignal } from 'solid-js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 /*
- * The date fields' clear button (#2054; ui-standards/inputs.md › constraints,
- * empty, and display). The suite runs without a DOM (vitest.workspace.ts), so
- * the fields render into the stand-in document in ui/utils/fakeDom, imported
- * first: its import installs it before the fields register Solid's delegated
- * listeners. The calendar popover and Kobalte's time segments are stubbed:
- * neither is what these tests are about, and the time stub records what the
- * field hands the segments.
+ * No DOM here: fakeDom is imported first, so it's installed before Solid
+ * registers its delegated listeners. The calendar and time segments are
+ * stubbed; the time stub records the value it's given.
  */
 import '../../utils/fakeDom';
 import {
@@ -136,8 +132,7 @@ describe('OMS-REG-DIS-02.65 — a date field clears with a button', () => {
   it('clicking ✕ sends null once, empties the field and keeps focus in it', () => {
     const { input, clear, onChange } = mountDate();
     expect(input().value).toBe('01/03/2027');
-    // The key: no catalog loads here (the showcase's browser test reads the
-    // English, "Clear Expiry date").
+    // No catalog loads here, so the key shows.
     expect(clear()?.getAttribute('aria-label')).toBe('label.clear-field');
 
     press(clear()!);

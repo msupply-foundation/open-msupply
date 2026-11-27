@@ -7,11 +7,7 @@ export interface ClearButtonProps {
   fieldLabel: string;
   /** Empties the field. */
   onClear: () => void;
-  /**
-   * Where focus goes once cleared. The button is shown only while the field
-   * holds a value, so it removes itself, and focus left on it would fall to
-   * <body> and restart a keyboard user's Tab from the top.
-   */
+  /** Where focus goes after a clear: the button unmounts, dropping focus. */
   refocus?: () => void;
   /** `data-testid`, by convention `<fieldTestId>-clear` (e2e/TESTIDS.md). */
   testId?: string;
@@ -20,11 +16,8 @@ export interface ClearButtonProps {
 }
 
 /*
- * The ✕ inside an input that empties it (#2054). One look, name and focus
- * behaviour for every field that offers a clear, so they don't drift.
- *
- * Pressing it doesn't take focus: a date typed but not yet committed would
- * otherwise commit on the input's blur, a save sent just before the clear.
+ * The ✕ that empties a field. Pressing it doesn't take focus, so an uncommitted
+ * typed date isn't saved on blur just before the clear.
  */
 export const ClearButton = (props: ClearButtonProps) => (
   <button

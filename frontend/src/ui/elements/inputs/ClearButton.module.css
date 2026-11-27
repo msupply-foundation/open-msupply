@@ -1,9 +1,6 @@
 /*
- * The ✕ that empties a field (ClearButton). Select's and Combobox's clear
- * look, so the affordance reads the same wherever it appears: a 1rem ✕ in a
- * 1.5rem box (the WCAG 2.2 SC 2.5.8 target floor), muted at rest, full
- * strength when hovered or focused. Focus is shown as theirs is, by that
- * colour change, with no ring of its own inside the field's focus ring.
+ * Matches Select's ✕: a 1rem icon in a 1.5rem box (SC 2.5.8 target), muted
+ * until hovered or focused. Focus shows as that colour change, with no ring.
  */
 .clear {
   display: inline-flex;

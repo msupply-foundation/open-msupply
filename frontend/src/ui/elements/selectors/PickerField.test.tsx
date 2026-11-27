@@ -6,9 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
  * patient search, never typed): a field-shaped button showing the value, which
  * opens the owner's dialog. The suite runs without a DOM
  * (vitest.workspace.ts), and this component is nothing but elements, so it
- * renders into the stand-in document in ui/utils/fakeDom, imported first: its
- * import installs it before PickerField registers Solid's delegated click
- * listener.
+ * renders into ui/utils/fakeDom, imported first.
  */
 import '../../utils/fakeDom';
 import type { FakeElement } from '../../utils/fakeDom';

@@ -126,9 +126,7 @@
   max-width: var(--input-max-compact);
 }
 
-/* A compact field that can show a clear button (optional, enabled) is wider
-   by that button's 1.75rem, so a date still fits beside it at touch size
-   (#2054). */
+/* Wider by the ✕'s 1.75rem, so the date still fits beside it. */
 .field[data-width='compact'] .control[data-clearable] {
   max-width: calc(var(--input-max-compact) + 1.75rem);
 }

@@ -1,16 +1,10 @@
 import { vi } from 'vitest';
 
 /*
- * A small stand-in document for component tests. The suite runs without a DOM
- * (vitest.workspace.ts), so a component made of plain elements renders into
- * this instead: enough of the DOM for Solid to build its templates, set
- * attributes and properties, insert children, attach listeners and dispatch
- * events, and for a test to read the result back. Test-only; nothing in the
- * app imports it.
+ * A minimal DOM for component tests (the suite has none): enough for Solid to
+ * render, set attributes, attach listeners and dispatch events.
  *
- * IMPORTING IT INSTALLS IT. Solid registers its delegated listeners on the
- * document as a component module loads, so import this before the component
- * under test.
+ * Importing it installs it, so import it before the component under test.
  */
 
 export type Child = FakeElement | FakeText | FakeComment;
@@ -158,9 +152,8 @@ export class FakeElement extends FakeNodeBase {
 }
 
 /**
- * Dispatch `type` on `el` as the browser would reach Solid: its delegated
- * handler (`$$type`) if it has one, else its attached listeners. Returns the
- * event, so a caller can see whether a handler prevented its default.
+ * Dispatch `type` on `el`: its delegated handler (`$$type`), else its
+ * listeners. Returns the event, to check `defaultPrevented`.
  */
 export const fire = (
   el: FakeElement,
@@ -184,9 +177,8 @@ export const fire = (
 };
 
 /**
- * A mouse click on a button, as the browser runs it: mousedown first, which
- * takes focus from the focused element unless a handler prevents its default,
- * then click. Nothing happens on a disabled button.
+ * A click as a browser runs it: mousedown (blurs the focused element unless
+ * prevented), then click. A disabled button ignores it.
  */
 export const press = (button: FakeElement) => {
   if (button.disabled) return;
