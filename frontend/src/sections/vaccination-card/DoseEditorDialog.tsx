@@ -469,6 +469,7 @@ const DoseEditorForm: Component<
 
         <DateField
           label={t('label.date')}
+          required
           value={draft.date}
           onChange={value => setDraft('date', value ?? ctx.today)}
           max={ctx.today}

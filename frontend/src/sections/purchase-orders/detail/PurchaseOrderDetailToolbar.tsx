@@ -199,6 +199,8 @@ export const PurchaseOrderDetailToolbar: Component<
         label={t('label.requested-delivery-date')}
         size="small"
         testId="requested-delivery-date-field"
+        // Can't be emptied here (onChange drops null), so it offers no clear.
+        required
         value={
           draftFor('requestedDeliveryDate') ??
           props.node.requestedDeliveryDate ??
@@ -218,6 +220,7 @@ export const PurchaseOrderDetailToolbar: Component<
         label={t('label.expected-delivery-date')}
         size="small"
         testId="expected-delivery-date-field"
+        required
         value={draftFor('expectedDeliveryDate') ?? props.latestExpectedDate}
         error={dateErrors.expectedDeliveryDate}
         disabled={props.expectedDateDisabled || props.lineCount === 0}

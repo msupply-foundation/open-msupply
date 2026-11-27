@@ -180,6 +180,7 @@ export const InboundShipmentDetailToolbar: Component<
       <DateField
         label={t('label.received')}
         testId="received-date-field"
+        required
         size="small"
         value={
           draftReceivedDay() ??
