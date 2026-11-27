@@ -261,6 +261,7 @@ const ReportsPage: Component = () => {
 
   return (
     <Page
+      shaded
       sidePanelOpen={panelOpen()}
       sidePanelTitle={t('label.preferences')}
       onSidePanelClose={() => setPanelOpen(false)}
@@ -303,7 +304,8 @@ const ReportsPage: Component = () => {
         }
       >
         {/* One DashboardCard per category in the generic Card grid, mirroring
-            the landing dashboard (spec S1 layout): the category's captured
+            the landing dashboard (spec S1 layout) but as outlined panels on
+            the shaded body (#2224): the category's captured
             icon chip on the card title, its iconless report cards stacked as
             full-width rows inside. Keyed by the category's fixed definition,
             not the group object rebuilt on every toggle, so pressing Show more
@@ -315,6 +317,7 @@ const ReportsPage: Component = () => {
               const group = () => grouped().find(g => g.def === def)!;
               return (
                 <DashboardCard
+                  surface="panel"
                   title={t(def.titleKey)}
                   icon={def.icon()}
                   footer={

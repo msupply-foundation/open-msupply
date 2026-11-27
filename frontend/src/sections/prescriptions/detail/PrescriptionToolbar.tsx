@@ -10,7 +10,7 @@ import { CustomFieldsToolbar } from '../../../domain/customFields';
 import { instantToLocalParts } from '../../../ui/elements/inputs/dateTimeConvert';
 import { todayCalendarDate } from '../../../intl/calendarDate';
 import { prescriptionDateOf } from '../prescriptionStatus';
-import { shownPatientName } from '../patientName';
+import { isUnnamedPatientId, shownPatientName } from '../patientName';
 import {
   prescriptionDateInstant,
   type UpdateInput,
@@ -111,7 +111,7 @@ export const PrescriptionToolbar: Component<
     return patient
       ? {
           id: patient.id,
-          name: shownPatientName(patient.name, patient.isUnnamed),
+          name: shownPatientName(patient.name, patient.id),
         }
       : undefined;
   });
@@ -154,7 +154,9 @@ export const PrescriptionToolbar: Component<
           // Not for the unnamed patient: it has no details to edit, and every
           // walk-in shares it (rules › the unnamed patient).
           onEditPatient={
-            props.node.patient?.isUnnamed ? undefined : props.onEditPatient
+            isUnnamedPatientId(props.node.patient?.id)
+              ? undefined
+              : props.onEditPatient
           }
           saveLabel={t('button.save-and-dispense')}
           onChange={patient => props.onSave({ patientId: patient.id })}

@@ -1370,11 +1370,7 @@ describe('who a visit starts with', () => {
     expect(startsWithUnnamed(prefs(false, false))).toBe(false);
   });
 
-  const unnamed = {
-    id: 'unnamed_patient_s1',
-    name: 'Unnamed patient',
-    isUnnamed: true,
-  };
+  const unnamed = { id: 'unnamed_patient_s1', name: 'Unnamed patient' };
   const registered = { id: 'p1', name: 'Smith, Jo' };
 
   it('keeps the unnamed patient chosen after a visit to it, even without "Start with" (OMS-REG-DIS-12.204)', () => {

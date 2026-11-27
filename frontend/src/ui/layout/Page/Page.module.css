@@ -44,9 +44,9 @@
 
 /* Page `shaded`: the shade behind the body, so its field groups stand out as
    panels. A filling table keeps its own white fill over it.
-   TO-DO: an opt-in only the tender page and the Simple dispensing screen
-   set. Once stakeholders approve the look, make it the plain `.body`
-   background and drop the attribute (#2172). */
+   TO-DO: an opt-in only the tender page, the Simple dispensing screen and
+   the Reports page set. Once stakeholders approve the look, make it the
+   plain `.body` background and drop the attribute (#2172). */
 .body[data-shaded] {
   background: var(--page-body-shade);
 }

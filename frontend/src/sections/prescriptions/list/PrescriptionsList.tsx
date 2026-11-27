@@ -269,7 +269,7 @@ const PrescriptionsList: Component = () => {
               />
             </Show>
             <span>
-              {shownPatientName(row.otherPartyName, row.isForUnnamedPatient)}
+              {shownPatientName(row.otherPartyName, row.otherPartyId)}
             </span>
           </HStack>
         );

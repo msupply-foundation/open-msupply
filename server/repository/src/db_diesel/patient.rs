@@ -26,6 +26,8 @@ pub type Patient = NameRow;
 /// one patient record per store, `unnamed_patient_<storeId>`
 /// (spec/prescriptions rules › the unnamed patient, kdd/unnamed-patient).
 /// The id is the contract: changing it orphans every one already created.
+/// The Solid front end spells the same prefix to tell the record apart
+/// (frontend/src/sections/prescriptions/patientName.ts).
 pub const UNNAMED_PATIENT_ID_PREFIX: &str = "unnamed_patient_";
 
 /// The id of a store's unnamed patient.

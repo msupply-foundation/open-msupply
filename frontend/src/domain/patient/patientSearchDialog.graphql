@@ -16,7 +16,6 @@ fragment PatientFindRow on PatientNode {
   dateOfBirth
   isDeceased
   address1
-  phone
 }
 
 query patientFind(

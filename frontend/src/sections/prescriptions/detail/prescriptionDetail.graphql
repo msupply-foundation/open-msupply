@@ -29,7 +29,6 @@ fragment PrescriptionFields on InvoiceNode {
   patient {
     id
     name
-    isUnnamed
     code
     dateOfBirth
     gender

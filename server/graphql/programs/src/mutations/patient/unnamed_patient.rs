@@ -11,7 +11,10 @@ use service::{
 
 /// The store's unnamed patient, created on the first call
 /// (spec/prescriptions contract › the unnamed patient). Gated on dispensing,
-/// not on creating patients: any dispenser can dispense to it.
+/// not on creating patients: any dispenser can dispense to it. This is why
+/// the server creates it rather than the front end calling `insertPatient`,
+/// which needs the permission to add patients that a dispenser may not have,
+/// so their first walk-in visit couldn't be saved.
 pub fn get_or_create_unnamed_patient(ctx: &Context<'_>, store_id: String) -> Result<PatientNode> {
     let user = validate_auth(
         ctx,

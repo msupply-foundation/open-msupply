@@ -1,4 +1,5 @@
 use anyhow::Result;
+use unicode_normalization::char::is_combining_mark;
 
 use crate::settings::LabelPrinterSettingNode;
 
@@ -199,7 +200,7 @@ pub fn host_status(settings: LabelPrinterSettingNode) -> Result<String> {
 // Comments: The ^ and ~ characters can be printed by changing the prefix characters—see ^CD ~CD on
 // page 153 and ^CT ~CT on page 166. The new prefix characters cannot be printed.
 // We'll map them to a `-` so they can be printed as part of the field.
-// Any character codes > 127 will be replaced with a space, as they are not valid in ZPL.
+// Any other character codes > 127 will be replaced with a space, as they are not valid in ZPL.
 // ^CI13 must be selected to print a backslash (\).
 
 fn sanitise_fd_field(value: &str) -> String {
@@ -209,13 +210,14 @@ fn sanitise_fd_field(value: &str) -> String {
         .replace(['\n', '\r'], "\\&") // Carriage return characters are replaced with \&
         .chars()
         .map(|c| {
-            if c.is_ascii() || c.is_alphabetic() {
-                // Even though the ZPL manual says that only ASCII characters are allowed, some alphabetic chars such as á print fine, so I think safer to keep them
+            if c.is_ascii() || c.is_alphabetic() || is_combining_mark(c) {
+                // Even though the ZPL manual says that only ASCII characters are allowed, some alphabetic chars such as á print fine, so I think safer to keep them.
+                // Combining marks are kept with their letters: Lao and Thai tone marks aren't alphabetic, and a space in their place misspells the word.
                 c
             } else {
                 ' '
             }
-        }) // Non-ASCII characters are replaced with a space
+        }) // Other non-ASCII characters are replaced with a space
         .collect();
 
     if fd.len() > 3072 {
@@ -226,7 +228,13 @@ fn sanitise_fd_field(value: &str) -> String {
             fd.len()
         );
     }
-    fd.truncate(3072);
+    // At a character boundary: truncating inside a multi-byte character, such
+    // as Lao's three bytes, panics
+    let mut end = fd.len().min(3072);
+    while !fd.is_char_boundary(end) {
+        end -= 1;
+    }
+    fd.truncate(end);
     fd
 }
 
@@ -354,6 +362,23 @@ mod tests {
         let input = "a".repeat(4000);
         let output = sanitise_fd_field(&input);
         assert_eq!(output.len(), 3072);
+    }
+
+    #[test]
+    fn test_sanitise_fd_field_keeps_lao_tone_marks_and_vowel_signs() {
+        // ່ (U+0EC8) and ົ (U+0EBB) aren't alphabetic; a space in their place
+        // misspells the word
+        let input = "ຄົນເຈັບບໍ່ລະບຸຊື່";
+        assert_eq!(sanitise_fd_field(input), input);
+    }
+
+    #[test]
+    fn test_sanitise_fd_field_truncates_inside_no_character() {
+        // Lao is three bytes a character, so byte 3072 falls inside one
+        let input = format!("a{}", "ລ".repeat(1100));
+        let output = sanitise_fd_field(&input);
+        assert_eq!(output.len(), 3070);
+        assert!(output.ends_with('ລ'));
     }
 
     #[test]

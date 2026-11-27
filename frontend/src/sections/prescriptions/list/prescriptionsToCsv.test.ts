@@ -9,7 +9,7 @@ const row = {
   invoiceNumber: 2,
   status: 'VERIFIED' as const,
   otherPartyName: 'Malfoy, Draco',
-  isForUnnamedPatient: false,
+  otherPartyId: 'patient_1',
   colour: null,
   comment: 'a comment',
   theirReference: 'ref-1',
@@ -99,7 +99,11 @@ describe('prescriptionsToCsv (OMS-REG-DIS-03.52 — the list columns, in file fo
   // OMS-REG-DIS-12.212: its saved name is English on every site.
   it("names the unnamed patient's records by the translated label", () => {
     const csv = prescriptionsToCsv([
-      { ...row, otherPartyName: 'Unnamed patient', isForUnnamedPatient: true },
+      {
+        ...row,
+        otherPartyName: 'Unnamed patient',
+        otherPartyId: 'unnamed_patient_store_a',
+      },
     ]);
     const line = csv.trim().split(/\r?\n/)[1];
     expect(line.startsWith('label.unnamed-patient,')).toBe(true);

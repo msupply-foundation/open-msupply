@@ -36,6 +36,7 @@ import {
   unitsToMode,
   type EditorLine,
   monthsOfStockAfterOrder,
+  seriesInMode,
 } from './internalOrderLineEdit';
 
 vi.mock('@/api/graphql', () => ({
@@ -528,5 +529,57 @@ describe('OMS-REG-REPL-04.106 — months of stock after this order', () => {
         10
       )
     ).toBe(0);
+  });
+});
+
+// The context charts read in the editor's measure (OMS-REG-REPL-04.110, issue
+// 2757): a 2-dose vial with 35.33 vials of monthly demand shows 70.67 doses in
+// the editor, so its charts must too.
+describe('OMS-REG-REPL-04.110 — the charts follow the entry mode', () => {
+  const month = {
+    date: '2026-10-01',
+    consumption: 30,
+    averageMonthlyConsumption: 35.33,
+    isHistoric: true,
+    isCurrent: false,
+  };
+  const day = {
+    date: '2026-10-01',
+    stockOnHand: 40,
+    minimumStockOnHand: 10,
+    maximumStockOnHand: 60,
+    isHistoric: true,
+    isProjected: false,
+  };
+
+  it('re-expresses the consumption history in doses', () => {
+    const toDoses = (units: number) => unitsToMode(units, 'doses', 1, 2);
+    expect(
+      seriesInMode(
+        [month],
+        ['consumption', 'averageMonthlyConsumption'],
+        toDoses
+      )
+    ).toEqual([
+      { ...month, consumption: 60, averageMonthlyConsumption: 70.66 },
+    ]);
+  });
+
+  it('re-expresses the stock evolution in packs', () => {
+    const toPacks = (units: number) => unitsToMode(units, 'packs', 10, 2);
+    expect(
+      seriesInMode(
+        [day],
+        ['stockOnHand', 'minimumStockOnHand', 'maximumStockOnHand'],
+        toPacks
+      )
+    ).toEqual([
+      { ...day, stockOnHand: 4, minimumStockOnHand: 1, maximumStockOnHand: 6 },
+    ]);
+  });
+
+  it('leaves the other fields alone', () => {
+    const [converted] = seriesInMode([month], ['consumption'], n => n * 10);
+    expect(converted).toEqual({ ...month, consumption: 300 });
   });
 });

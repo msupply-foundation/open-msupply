@@ -145,6 +145,19 @@ export const statInMode = (
   return roundUp ? Math.ceil(raw) : Math.round(raw);
 };
 
+// A chart series with the named unit quantities passed through `toMode`, so
+// the context charts read in the same measure as the editor's statistics
+// (OMS-REG-REPL-04.110).
+export const seriesInMode = <K extends string, T extends Record<K, number>>(
+  nodes: T[],
+  keys: readonly K[],
+  toMode: (units: number) => number
+): T[] =>
+  nodes.map(node => ({
+    ...node,
+    ...Object.fromEntries(keys.map(key => [key, toMode(node[key])])),
+  }));
+
 // The store's default entry mode (OMS-REG-REPL-04.73): packs where the store
 // orders in packs (unconditionally — it does not check the item's pack size),
 // else doses for a dose-managed vaccine with a positive doses-per-unit, else

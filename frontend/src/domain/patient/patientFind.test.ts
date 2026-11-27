@@ -53,7 +53,6 @@ const row = (
   dateOfBirth: null,
   isDeceased: false,
   address1: null,
-  phone: null,
   ...more,
 });
 
@@ -285,14 +284,13 @@ describe('OMS-REG-DIS-01.57 — other facilities are searched for the same terms
     });
   });
 
-  it('names each row "Last, First", with the address and phone central sends (.81)', async () => {
+  it('names each row "Last, First", with the address central sends (.81)', async () => {
     searchCentralPatients.mockResolvedValue({
       kind: 'ok',
       nodes: [
         {
           ...centralNode('c1', 'Smith', 'Jo'),
           address1: '1 Main St',
-          phone: '555',
         },
         centralNode('c2', 'Brown', ''),
       ],
@@ -309,14 +307,12 @@ describe('OMS-REG-DIS-01.57 — other facilities are searched for the same terms
           id: 'c1',
           name: 'Smith, Jo',
           address1: '1 Main St',
-          phone: '555',
         }),
-        // An older central sends neither.
+        // An older central sends none.
         expect.objectContaining({
           id: 'c2',
           name: 'Brown',
           address1: null,
-          phone: null,
         }),
       ],
     });

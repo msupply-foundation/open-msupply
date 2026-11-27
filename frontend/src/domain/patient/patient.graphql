@@ -76,7 +76,6 @@ query centralPatientSearch(
         dateOfBirth
         isDeceased
         address1
-        phone
       }
     }
     ... on CentralPatientSearchError {

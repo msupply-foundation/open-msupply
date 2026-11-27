@@ -254,7 +254,6 @@ const row = (
   dateOfBirth: null,
   isDeceased: false,
   address1: null,
-  phone: null,
   ...more,
 });
 const here = (rows: PatientFindRow[]): FindResult => ({ rows, more: false });

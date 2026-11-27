@@ -340,14 +340,36 @@ export const targetStockCaption = (
   });
   const step = `${monthlyDemand} × ${months}`;
   if (!intervalAndBuffer) return step;
-  const params = {
-    supplyInterval: formatNumber(intervalAndBuffer.supplyIntervalMonths),
-    safetyBuffer: formatNumber(intervalAndBuffer.safetyBufferMonths),
-    leadTime: formatNumber(intervalAndBuffer.deliveryLeadTimeMonths),
-  };
-  const makeup =
-    intervalAndBuffer.deliveryLeadTimeMonths > 0
-      ? t('label.supply-interval-plus-buffer-plus-lead-time', params)
-      : t('label.supply-interval-plus-buffer', params);
-  return `${step} (${makeup})`;
+  return `${step} (${storeTargetMakeup(intervalAndBuffer)})`;
 };
+
+/** A store's interval, buffer and lead time as message params, to 2 dp. */
+export const intervalAndBufferParams = (
+  intervalAndBuffer: SupplyIntervalAndBufferFragment
+) => ({
+  supplyInterval: formatNumber(intervalAndBuffer.supplyIntervalMonths, {
+    maximumFractionDigits: 2,
+  }),
+  safetyBuffer: formatNumber(intervalAndBuffer.safetyBufferMonths, {
+    maximumFractionDigits: 2,
+  }),
+  leadTime: formatNumber(intervalAndBuffer.deliveryLeadTimeMonths, {
+    maximumFractionDigits: 2,
+  }),
+});
+
+/** Messages name the delivery lead time only where the store has one. */
+export const hasLeadTime = (
+  intervalAndBuffer: SupplyIntervalAndBufferFragment
+): boolean => intervalAndBuffer.deliveryLeadTimeMonths > 0;
+
+/** "supply interval 3 + safety buffer 0.5" (+ lead time where set). */
+export const storeTargetMakeup = (
+  intervalAndBuffer: SupplyIntervalAndBufferFragment
+): string =>
+  t(
+    hasLeadTime(intervalAndBuffer)
+      ? 'label.supply-interval-plus-buffer-plus-lead-time'
+      : 'label.supply-interval-plus-buffer',
+    intervalAndBufferParams(intervalAndBuffer)
+  );

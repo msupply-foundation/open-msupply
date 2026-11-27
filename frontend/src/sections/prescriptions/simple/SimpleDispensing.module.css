@@ -144,7 +144,14 @@
   gap: var(--space-1) var(--space-2);
 }
 
-.cardsColumn > .stepHeading {
+/* Step 2's heading, with Edit common medicines at the row's inline end,
+   wrapping under the heading where the row is too narrow. */
+.stepRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
   margin-block-end: var(--space-3);
 }
 
@@ -231,4 +238,41 @@ div.cards {
 /* In Correct the stock's place for staff who can't adjust stock: who can. */
 .correctHint {
   font-size: var(--text-xs);
+}
+
+/* The common medicines editor (ui-surface S9): the list, the search under it
+   and its notices, one column. */
+.medicinesEditor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* A medicine's three amount places and its unit, kept together on a row. */
+.editorAmounts {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* "Amounts", before the three places: says on screen what they are. */
+.editorAmountsLabel {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.editorUnit {
+  min-inline-size: 3rem;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.editorEmpty {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.editorCount {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
 }

@@ -53,7 +53,10 @@ import {
 } from '@/ui/icons';
 import { useIsCompact } from '@/ui/utils/createMediaQuery';
 import { generateUUID } from '@/uuid';
-import { SimpleDispensingItems } from './simpleDispensing.generated';
+import {
+  SimpleCommonMedicines,
+  SimpleDispensingItems,
+} from './simpleDispensing.generated';
 import {
   SimpleDispense,
   SimpleDispensedVisit,
@@ -61,6 +64,7 @@ import {
 } from './simpleDispense.generated';
 import { AmountDialog } from './AmountDialog';
 import { CorrectStockDialog } from './CorrectStockDialog';
+import { CommonMedicinesEditor } from './CommonMedicinesEditor';
 import {
   addAmount,
   buildCards,
@@ -114,7 +118,7 @@ import {
   type RecordLine,
   type RecordRead,
 } from './editVisit';
-import { shownPatientName } from '../patientName';
+import { isUnnamedPatientId, shownPatientName } from '../patientName';
 import { MedicineCardView } from './MedicineCard';
 import {
   DispensingList,
@@ -174,6 +178,8 @@ const SimpleDispensingPage: Component = () => {
     setSearchedRead,
     cardsRead,
     setCardsRead,
+    medicinesRead,
+    setMedicinesRead,
     checked,
     setChecked,
     dispensedCount,
@@ -206,9 +212,41 @@ const SimpleDispensingPage: Component = () => {
     return edited ? withKeptAmounts(built, edited.lines) : built;
   };
 
-  // Undefined until the store context resolves, so "loading" is never shown
-  // as "none set up".
-  const medicines = () => prescriptionPreferences().commonMedicines;
+  // The store's common medicines (spec/prescriptions › common medicines), in
+  // card order. Store data, read for the store the screen opened in rather
+  // than with the store's settings. In the background like the cards: a
+  // visit may already be on the screen, and the app's error dialog would
+  // offer a reload that loses it. Until this screen's read lands, and if it
+  // fails, the kept visit's last read: a visit kept across a trip keeps its
+  // cards and its lines' names, prices and stock (rules › Dispensing
+  // records). Undefined with neither, so "loading" is never shown as "none
+  // set up"; a read that fails with nothing kept says so in the card area.
+  const [medicineList, { refetch: refetchMedicines }] = createResource(
+    () => storeOpened,
+    async storeId => {
+      const result = await graphqlFetch(
+        SimpleCommonMedicines,
+        { storeId },
+        { background: true }
+      );
+      if (result.kind !== 'success') return undefined;
+      setMedicinesRead(result.data.commonMedicines);
+      return result.data.commonMedicines;
+    }
+  );
+  // Compared by value: the read landing sets the kept copy and then settles
+  // the resource, and the kept copy and a fresh read of the same list are
+  // equal. Each would otherwise start another read of the cards' stock
+  // (kdd/solid-reactivity-pitfalls §16).
+  const medicines = createMemo(
+    () => gated(medicineList) ?? medicinesRead(),
+    undefined,
+    { equals: sameFetchedValue }
+  );
+  // Read, and no list came back, now or kept: the list itself couldn't be
+  // read.
+  const medicinesUnread = () =>
+    medicineList.state === 'ready' && medicines() === undefined;
 
   // The cards' items with their default prices, in one request: on load, and
   // again when Dispense checks the stock. A price that couldn't be read fails
@@ -266,7 +304,11 @@ const SimpleDispensingPage: Component = () => {
   // Read, and none came back: the first read failed (a later one keeps the
   // cards it had). Not while it reads again, which shows as loading.
   const cardsUnread = () =>
-    items.state === 'ready' && gated(items) === undefined;
+    medicinesUnread() ||
+    (items.state === 'ready' && gated(items) === undefined);
+  // Reads again whichever failed: the list, or the cards' stock.
+  const readCardsAgain = () =>
+    void (medicinesUnread() ? refetchMedicines() : refetchItems());
 
   // Rebuilt per load, so compared by value: a refresh that returns the same
   // stock must not rebuild the cards.
@@ -510,7 +552,7 @@ const SimpleDispensingPage: Component = () => {
       severity: 'success',
       // "Unnamed patient" would read the same for every walk-in: when, not
       // who.
-      text: who.isUnnamed
+      text: isUnnamedPatientId(who.id)
         ? t('messages.dispensed-at', { time: localisedTime(new Date()) })
         : t('messages.dispensed-to', { name: who.name }),
       dispensedId,
@@ -596,10 +638,7 @@ const SimpleDispensingPage: Component = () => {
             ? missingPermissions(result.errors)
             : undefined,
       };
-    visitState.unnamedPatient = {
-      ...result.data.getOrCreateUnnamedPatient,
-      isUnnamed: true,
-    };
+    visitState.unnamedPatient = result.data.getOrCreateUnnamedPatient;
     return visitState.unnamedPatient;
   };
 
@@ -754,7 +793,7 @@ const SimpleDispensingPage: Component = () => {
       dispensedAt: dispensedAt(record),
       forName: whoFor(record),
       patientName: record.patient?.name,
-      unnamed: record.patient?.isUnnamed ?? false,
+      unnamed: isUnnamedPatientId(record.patient?.id),
       lines: record.lines.nodes,
       newLineIds: {},
     });
@@ -844,6 +883,11 @@ const SimpleDispensingPage: Component = () => {
       setDispensing(false);
     }
   };
+
+  // The common medicines editor (rules › setting up the common medicines):
+  // open or not. Saving it reads the list again, so the cards follow at once
+  // and a visit on the list keeps its lines.
+  const [settingUp, setSettingUp] = createSignal(false);
 
   // Delete dispensing record, for the visit being edited: a Picked record
   // can't be cancelled, only deleted. Asks first.
@@ -1059,7 +1103,7 @@ const SimpleDispensingPage: Component = () => {
   const whoFor = (record: DispensedRecord): string | undefined => {
     const who = record.patient;
     if (!who) return undefined;
-    if (who.isUnnamed) return shownPatientName(who.name, true);
+    if (isUnnamedPatientId(who.id)) return shownPatientName(who.name, who.id);
     return who.code ? `${who.name} · ${who.code}` : who.name;
   };
   const headingOf = (record: DispensedRecord): string => {
@@ -1234,7 +1278,7 @@ const SimpleDispensingPage: Component = () => {
   const crumbOf = (record: DispensedRecord | undefined): string => {
     if (!record) return t('heading.dispensing-record');
     const who = record.patient
-      ? shownPatientName(record.patient.name, record.patient.isUnnamed)
+      ? shownPatientName(record.patient.name, record.patient.id)
       : undefined;
     const when = localisedDateTime(dispensedAt(record));
     return who ? `${who} · ${when}` : when;
@@ -1404,21 +1448,38 @@ const SimpleDispensingPage: Component = () => {
     >
       <div class={styles.columns}>
         <div class={styles.cardsColumn}>
-          <StepHeading
-            n={2}
-            heading
-            label={t('heading.choose-medicines')}
-            // No hint over a dispensed visit: there is no one to choose and
-            // nothing to press (ui-surface S9).
-            hint={
-              viewingId() !== undefined
-                ? undefined
-                : !canPress()
-                  ? t('messages.choose-who-first')
-                  : t('messages.press-an-amount-or-search')
-            }
-            testId="choose-medicines-hint"
-          />
+          <div class={styles.stepRow}>
+            <StepHeading
+              n={2}
+              heading
+              label={t('heading.choose-medicines')}
+              // No hint over a dispensed visit: there is no one to choose and
+              // nothing to press (ui-surface S9).
+              hint={
+                viewingId() !== undefined
+                  ? undefined
+                  : !canPress()
+                    ? t('messages.choose-who-first')
+                    : t('messages.press-an-amount-or-search')
+              }
+              testId="choose-medicines-hint"
+            />
+            {/* Once the cards show; not over a dispensed visit, whose cards
+                are disabled (rules › setting up the common medicines). */}
+            <Show
+              when={(cards() ?? []).length > 0 && viewingId() === undefined}
+            >
+              <Button
+                variant="ghost"
+                icon={<EditIcon />}
+                disabled={locked()}
+                data-testid="edit-common-medicines-button"
+                onClick={() => setSettingUp(true)}
+              >
+                {t('button.edit-common-medicines')}
+              </Button>
+            </Show>
+          </div>
           <div class={styles.search}>
             <ItemSearch
               label={t('label.search-all-medicines')}
@@ -1462,7 +1523,36 @@ const SimpleDispensingPage: Component = () => {
                     : 'messages.no-common-medicines-dispensable'
                 )}
                 data-testid="nothing-here"
-              />
+              >
+                {/* Either way the fix starts in the editor; not over a
+                    dispensed visit (rules › setting up the common
+                    medicines). */}
+                <Show when={viewingId() === undefined}>
+                  <Button
+                    variant="ghost"
+                    icon={
+                      medicines()?.length === 0 ? (
+                        <PlusCircleIcon />
+                      ) : (
+                        <EditIcon />
+                      )
+                    }
+                    disabled={locked()}
+                    data-testid={
+                      medicines()?.length === 0
+                        ? 'add-common-medicines-button'
+                        : 'edit-common-medicines-button'
+                    }
+                    onClick={() => setSettingUp(true)}
+                  >
+                    {t(
+                      medicines()?.length === 0
+                        ? 'button.add-common-medicines'
+                        : 'button.edit-common-medicines'
+                    )}
+                  </Button>
+                </Show>
+              </EmptyState>
             }
           >
             <Match when={(cards() ?? []).length > 0}>
@@ -1493,13 +1583,17 @@ const SimpleDispensingPage: Component = () => {
             <Match when={cardsUnread()}>
               <EmptyState
                 graphic={false}
-                message={t('messages.common-medicines-not-read')}
+                message={t(
+                  medicinesUnread()
+                    ? 'messages.common-medicines-list-not-read'
+                    : 'messages.common-medicines-not-read'
+                )}
                 data-testid="cards-not-read"
               >
                 <Button
                   variant="ghost"
                   data-testid="cards-read-again-button"
-                  onClick={() => void refetchItems()}
+                  onClick={readCardsAgain}
                 >
                   {t('button.try-again')}
                 </Button>
@@ -1595,6 +1689,16 @@ const SimpleDispensingPage: Component = () => {
             onClose={closeAmount}
           />
         )}
+      </Show>
+      <Show when={settingUp()}>
+        <CommonMedicinesEditor
+          storeId={storeOpened}
+          onClose={() => setSettingUp(false)}
+          onSaved={() => {
+            setSettingUp(false);
+            void refetchMedicines();
+          }}
+        />
       </Show>
       {/* Over the amount box when opened from it, so it is rendered after. */}
       <Show when={correcting()} keyed>

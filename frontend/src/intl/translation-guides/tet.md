@@ -106,6 +106,7 @@ questions.
 | count (verb)           | sura                      | _sura_ 2, _konta_ 2                                                                 |
 | try again              | koko fila fali            | 2 of 4                                                                              |
 | server                 | servedor                  | 18 of 18                                                                            |
+| common medicines       | ai-moruk komún            | settled 2026-11-26 (Simple screen common medicines editor)                          |
 
 ## Open questions
 

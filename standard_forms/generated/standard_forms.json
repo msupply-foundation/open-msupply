@@ -612,7 +612,7 @@
       "excel_template_buffer": null
     },
     {
-      "id": "purchase-order_3_5_0_false",
+      "id": "purchase-order_3_5_1_false",
       "name": "Purchase Order",
       "description": null,
       "template": {
@@ -659,7 +659,7 @@
       "argument_schema_id": null,
       "comment": null,
       "is_custom": false,
-      "version": "3.5.0",
+      "version": "3.5.1",
       "code": "purchase-order",
       "form_schema": null,
       "excel_template_buffer": null

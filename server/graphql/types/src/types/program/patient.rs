@@ -9,7 +9,7 @@ use graphql_core::pagination::PaginationInput;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use repository::{
     DateFilter, EqualFilter, GenderType as GenderRepo, Pagination, PaginationOption, Patient,
-    PatientFilter, ProgramEnrolmentFilter, StringFilter, is_unnamed_patient_id,
+    PatientFilter, ProgramEnrolmentFilter, StringFilter,
 };
 use serde::Serialize;
 use service::programs::patient::main_patient_doc_name;
@@ -153,12 +153,6 @@ impl PatientNode {
 
     pub async fn code(&self) -> &str {
         &self.patient.code
-    }
-
-    /// Whether this is a store's unnamed patient, the one record its walk-in
-    /// visits are dispensed to. Search never returns it.
-    pub async fn is_unnamed(&self) -> bool {
-        is_unnamed_patient_id(&self.patient.id)
     }
 
     pub async fn code_2(&self) -> &Option<String> {

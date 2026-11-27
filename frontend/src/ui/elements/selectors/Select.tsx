@@ -11,6 +11,7 @@ import {
 import { usePortalMount } from '../../utils/portalMount';
 import type { FocusTarget } from '../../utils/createFocusTarget';
 import styles from './Select.module.css';
+import popupHeight from './popupHeight.module.css';
 
 export interface SelectOption {
   value: string;
@@ -336,7 +337,7 @@ export const Select = (props: SelectProps) => {
       <KSelect.Portal mount={portalMount?.()}>
         <KSelect.Content
           ref={contentEl}
-          class={styles.content}
+          class={`${styles.content} ${popupHeight.fitHeight}`}
           // Keep the listbox open only when a pointerdown lands inside this
           // popup's own content — Kobalte otherwise dismisses an option click
           // before it commits when the popup is mounted in a dialog (see

@@ -1,0 +1,33 @@
+/*
+ * The block-size cap for a Kobalte popup's content panel (Combobox, MultiSelect,
+ * Select) — one rule, so every picker's list fits the screen the same way.
+ *
+ * Kobalte positions these popups with Floating UI, which already FLIPS a popup
+ * to the other side of its field when it would overflow, and re-checks on every
+ * resize. The cap is what keeps a long list scrolling inside the screen rather
+ * than running off it: the space Kobalte measures on the popup's side
+ * (--kb-popper-content-available-height), under a ceiling.
+ *
+ * The cap has a FLOOR, and the floor is what keeps flipping working. Without it
+ * a popup that opened with room below and then lost it — a tablet's on-screen
+ * keyboard coming up and shrinking the page as the field takes focus — shrinks
+ * to fit the sliver left above the keyboard. Floating UI then measures the
+ * shrunk panel, finds it fits, and never moves it to the far roomier side above
+ * (#2593). Held at the floor, the panel overflows the short side and flips, and
+ * the cap then fits it to the side it lands on. 40dvh keeps the floor under the
+ * larger side of any field: the two sides share the viewport, so one of them has
+ * about half of it. (Our own Popover needs none of this: it measures the panel's
+ * natural size and never caps it to the space left — see Popover.tsx.)
+ *
+ * The ceiling is --popup-ceiling, 18rem by default. That 18rem is load-bearing
+ * beyond these files: dialogs size their minBodyHeightRem reservations to it
+ * (#1029 — "header + field + the listbox's 18rem cap + padding"), so changing it
+ * means re-measuring those. A picker of a small fixed set (Select) lifts the
+ * ceiling on its own content class instead.
+ */
+.fitHeight {
+  max-height: min(
+    var(--popup-ceiling, 18rem),
+    max(var(--kb-popper-content-available-height), min(10rem, 40dvh))
+  );
+}

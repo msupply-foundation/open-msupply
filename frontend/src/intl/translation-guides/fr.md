@@ -83,6 +83,7 @@ Where this file and the glossary disagree, the glossary wins. Fix this file to m
 | recorded consumption                               | consommation constatée                                         | avoids the Non utilisé verb _enregistrer_                                              |
 | delivery lead time                                 | délai de livraison                                             |                                                                                        |
 | tag (store tag)                                    | étiquette                                                      | from `label.tag-colour`; also the word for printed labels                              |
+| common medicines | articles courants | settled 2026-11-26 (Simple screen common medicines editor) |
 
 ## `fr-DJ` (Djibouti) watch list
 

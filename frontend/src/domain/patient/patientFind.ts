@@ -211,7 +211,6 @@ export const findOtherFacilityPatients = async (
     ...n,
     name: [n.lastName, n.firstName].filter(Boolean).join(', '),
     address1: n.address1 ?? null,
-    phone: n.phone ?? null,
   }));
   const previous = before ? central[0] : undefined;
   const page = central.slice(before);

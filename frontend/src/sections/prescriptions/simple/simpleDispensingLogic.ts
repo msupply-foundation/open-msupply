@@ -6,16 +6,19 @@ import {
   round9,
   type AllocationPreferences,
 } from '@/domain/allocation';
-import type { StoreContextResult } from '../../../store/storeContext.generated';
-import type { SimpleDispensingItemsResult } from './simpleDispensing.generated';
+import { isUnnamedPatientId } from '../patientName';
+import type {
+  SimpleCommonMedicinesResult,
+  SimpleDispensingItemsResult,
+} from './simpleDispensing.generated';
 import type {
   SimpleDispensedVisitResult,
   SimpleDispenseResult,
 } from './simpleDispense.generated';
 
-/** One of the store's common medicines, as the preference holds it. */
+/** One of the store's common medicines, as the screen reads it. */
 export type CommonMedicine =
-  StoreContextResult['preferences']['commonMedicines'][number];
+  SimpleCommonMedicinesResult['commonMedicines'][number];
 
 type ItemsResult = Extract<
   SimpleDispensingItemsResult['items'],
@@ -674,12 +677,11 @@ export interface VisitRecord {
 /**
  * Who a visit is dispensed to: a registered patient, or the store's unnamed
  * patient (rules › the unnamed patient), whose record the server gives once
- * Dispense is pressed.
+ * Dispense is pressed and which is told apart by its id.
  */
 export interface DispensedTo {
   id: string;
   name: string;
-  isUnnamed?: boolean;
 }
 
 /** The two dispensing preferences that decide who a visit starts with. */
@@ -717,7 +719,7 @@ export const unnamedAfterDispense = (
   prefs: UnnamedPreferences
 ): boolean =>
   prefs.useUnnamedPatient &&
-  (to.isUnnamed === true || prefs.startWithUnnamedPatient);
+  (isUnnamedPatientId(to.id) || prefs.startWithUnnamedPatient);
 
 /** What became of a save, as far as the screen can tell. */
 export type SaveReply =

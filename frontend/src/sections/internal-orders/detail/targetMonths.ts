@@ -1,6 +1,11 @@
 import { t, tPlural } from '../../../intl';
 import { formatNumber } from '../../../intl/formatNumber';
-import { storeTargetMonths } from '../../../domain/forecast/forecast';
+import {
+  hasLeadTime,
+  intervalAndBufferParams,
+  storeTargetMakeup,
+  storeTargetMonths,
+} from '../../../domain/forecast/forecast';
 import type { SelectOption } from '../../../ui/elements/selectors/Select';
 import type { InternalOrderInfoFragment } from './internalOrderDetail.generated';
 
@@ -14,6 +19,9 @@ type SupplyIntervalAndBuffer = NonNullable<
   InternalOrderInfoFragment['supplyIntervalAndBuffer']
 >;
 
+// Months equal to a hundredth (interval + buffer is a float sum).
+const sameMonths = (a: number, b: number) => Math.abs(a - b) < 0.005;
+
 // The standard choices, 1…6 months (label.number-months).
 export const MONTH_VALUES = [1, 2, 3, 4, 5, 6];
 
@@ -25,26 +33,49 @@ const monthsLabel = (months: number): string =>
     count: formatNumber(months, { maximumFractionDigits: 2 }),
   });
 
+// Disabled below the reorder threshold (UI-only guard).
+const targetOption = (months: number, threshold: number): SelectOption => ({
+  value: String(months),
+  label: monthsLabel(months),
+  disabled: threshold > 0 && months < threshold,
+});
+
+// The store's target, with its makeup as the description. Uses the order's
+// value when they match, so the select shows it selected.
+const storeTargetOption = (
+  target: number,
+  threshold: number,
+  intervalAndBuffer: SupplyIntervalAndBuffer,
+  storeMonths = storeTargetMonths(intervalAndBuffer)
+): SelectOption => ({
+  ...targetOption(
+    sameMonths(target, storeMonths) ? target : storeMonths,
+    threshold
+  ),
+  description: storeTargetMakeup(intervalAndBuffer),
+});
+
 /**
- * The target select's options: 1…6 months, plus the order's own target where
- * it is none of those — a store's supply interval + safety buffer such as 3.5
- * or 7 months (OMS-REG-REPL-17.16) — in numeric order. A target below the
- * reorder threshold can't be chosen (a UI-only guard; the server accepts any
- * values).
+ * 1…6 months plus the order's own target (OMS-REG-REPL-17.16). Given the
+ * store's interval, its target always comes first (OMS-REG-REPL-17.31).
  */
 export const targetMonthOptions = (
   target: number,
-  threshold: number
+  threshold: number,
+  intervalAndBuffer?: SupplyIntervalAndBuffer
 ): SelectOption[] => {
   const values =
     target > 0 && !MONTH_VALUES.includes(target)
       ? [...MONTH_VALUES, target].sort((a, b) => a - b)
       : MONTH_VALUES;
-  return values.map(n => ({
-    value: String(n),
-    label: monthsLabel(n),
-    disabled: threshold > 0 && n < threshold,
-  }));
+  if (!intervalAndBuffer) return values.map(n => targetOption(n, threshold));
+  const storeMonths = storeTargetMonths(intervalAndBuffer);
+  return [
+    storeTargetOption(target, threshold, intervalAndBuffer, storeMonths),
+    ...values
+      .filter(n => !sameMonths(n, storeMonths))
+      .map(n => targetOption(n, threshold)),
+  ];
 };
 
 /**
@@ -61,25 +92,25 @@ export const thresholdMonthOptions = (target: number): SelectOption[] => [
 ];
 
 /**
- * The store's supply interval and safety buffer when they FIX this order's
- * target (OMS-REG-REPL-17.18): the changing-target-months preference is off
- * (it is on unless set — pass the raw read, undefined while unresolved) on a
- * store with a supply interval, and the order is a general one (a program
- * order's thresholds are its order type's, locked anyway). Undefined → the
+ * The store's supply interval and safety buffer, on a general order only: a
+ * program order's thresholds are its order type's.
+ */
+export const generalOrderIntervalAndBuffer = (
+  node: Pick<InternalOrderInfoFragment, 'supplyIntervalAndBuffer' | 'program'>
+): SupplyIntervalAndBuffer | undefined =>
+  node.program ? undefined : (node.supplyIntervalAndBuffer ?? undefined);
+
+/**
+ * The general order's interval and buffer when they FIX its target
+ * (OMS-REG-REPL-17.18): the changing-target-months preference is off (on
+ * unless set — pass the raw read, undefined while unresolved). Undefined → the
  * target is changeable as usual.
  */
-export const storeFixedIntervalAndBuffer = (args: {
-  canChangeTargetMonths: boolean | undefined;
-  supplyIntervalAndBuffer: InternalOrderInfoFragment['supplyIntervalAndBuffer'];
-  isProgram: boolean;
-}): SupplyIntervalAndBuffer | undefined =>
-  args.canChangeTargetMonths === false && !args.isProgram
-    ? (args.supplyIntervalAndBuffer ?? undefined)
-    : undefined;
-
-// Months compared to a hundredth: interval + buffer is a float sum, the stored
-// target a float, and neither carries more precision than the store's setup.
-const sameMonths = (a: number, b: number) => Math.abs(a - b) < 0.005;
+export const storeFixedIntervalAndBuffer = (
+  canChangeTargetMonths: boolean | undefined,
+  intervalAndBuffer: SupplyIntervalAndBuffer | undefined
+): SupplyIntervalAndBuffer | undefined =>
+  canChangeTargetMonths === false ? intervalAndBuffer : undefined;
 
 /**
  * The store's supply interval and safety buffer the order's target came from,
@@ -94,14 +125,12 @@ export const intervalAndBufferBehindTarget = (
     'maxMonthsOfStock' | 'supplyIntervalAndBuffer' | 'program'
   >
 ): SupplyIntervalAndBuffer | undefined => {
-  const intervalAndBuffer = node.supplyIntervalAndBuffer;
-  if (!intervalAndBuffer || node.program) return undefined;
+  const intervalAndBuffer = generalOrderIntervalAndBuffer(node);
+  if (!intervalAndBuffer) return undefined;
   return sameMonths(node.maxMonthsOfStock, storeTargetMonths(intervalAndBuffer))
     ? intervalAndBuffer
     : undefined;
 };
-
-const totalMonths = storeTargetMonths;
 
 /**
  * Whether an order's target differs from the supply interval + safety buffer
@@ -112,43 +141,17 @@ const totalMonths = storeTargetMonths;
 export const targetDiffersFromFixed = (
   target: number,
   fixed: SupplyIntervalAndBuffer
-): boolean => !sameMonths(target, totalMonths(fixed));
+): boolean => !sameMonths(target, storeTargetMonths(fixed));
 
-/**
- * The target select's options on an order whose target differs from the one
- * the store fixes: its own target, and the store's to move it onto. A target
- * below the reorder threshold can't be chosen, as in targetMonthOptions.
- */
+/** A target that differs from the fixed one: the store's, then its own. */
 export const fixedTargetOptions = (
   target: number,
   threshold: number,
   fixed: SupplyIntervalAndBuffer
-): SelectOption[] =>
-  [target, totalMonths(fixed)]
-    .sort((a, b) => a - b)
-    .map(n => ({
-      value: String(n),
-      label: monthsLabel(n),
-      disabled: threshold > 0 && n < threshold,
-    }));
-
-const intervalAndBufferParams = (
-  intervalAndBuffer: SupplyIntervalAndBuffer
-) => ({
-  supplyInterval: formatNumber(intervalAndBuffer.supplyIntervalMonths, {
-    maximumFractionDigits: 2,
-  }),
-  safetyBuffer: formatNumber(intervalAndBuffer.safetyBufferMonths, {
-    maximumFractionDigits: 2,
-  }),
-  leadTime: formatNumber(intervalAndBuffer.deliveryLeadTimeMonths, {
-    maximumFractionDigits: 2,
-  }),
-});
-
-// The messages name the delivery lead time only where the store has one.
-const hasLeadTime = (intervalAndBuffer: SupplyIntervalAndBuffer): boolean =>
-  intervalAndBuffer.deliveryLeadTimeMonths > 0;
+): SelectOption[] => [
+  storeTargetOption(target, threshold, fixed),
+  targetOption(target, threshold),
+];
 
 /** The locked target's tooltip, naming the interval and buffer that set it. */
 export const targetSetByStoreMessage = (
@@ -174,7 +177,7 @@ export const targetDiffersFromStoreMessage = (
       : 'messages.target-mos-differs-from-store',
     {
       ...intervalAndBufferParams(intervalAndBuffer),
-      total: formatNumber(totalMonths(intervalAndBuffer), {
+      total: formatNumber(storeTargetMonths(intervalAndBuffer), {
         maximumFractionDigits: 2,
       }),
     }
