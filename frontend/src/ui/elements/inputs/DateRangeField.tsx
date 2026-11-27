@@ -141,7 +141,7 @@ export const DateRangeField = (props: DateRangeFieldProps) => {
       labelInfo={props.labelInfo}
       controlId={id()}
     >
-      {({ describedBy, invalid }) => (
+      {shell => (
         <div
           class={styles.control}
           data-size={props.size === 'small' ? 'small' : undefined}
@@ -155,8 +155,8 @@ export const DateRangeField = (props: DateRangeFieldProps) => {
             focusTarget={props.focusTarget}
             triggerProps={{
               id: id(),
-              'aria-describedby': describedBy,
-              'aria-invalid': invalid,
+              'aria-describedby': shell.describedBy,
+              'aria-invalid': shell.invalid,
               disabled: props.disabled,
             }}
             trigger={

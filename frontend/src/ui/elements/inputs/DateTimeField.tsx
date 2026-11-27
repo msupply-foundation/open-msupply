@@ -177,7 +177,7 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
       labelInfo={props.labelInfo}
       controlId={dateId()}
     >
-      {({ describedBy, invalid }) => (
+      {shell => (
         <div
           class={styles.control}
           data-size={props.size === 'small' ? 'small' : undefined}
@@ -198,8 +198,8 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
             placeholder={formatPlaceholder(fmt())}
             disabled={props.disabled}
             aria-label={t('label.field-date-part', { label: props.label })}
-            aria-describedby={describedBy}
-            aria-invalid={invalid}
+            aria-describedby={shell.describedBy}
+            aria-invalid={shell.invalid}
             onInput={e => setDateText(e.currentTarget.value)}
             onBlur={commitDate}
             onKeyDown={e => {

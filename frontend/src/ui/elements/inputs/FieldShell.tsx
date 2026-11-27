@@ -40,6 +40,7 @@ export interface FieldShellProps {
   controlId: string;
   /**
    * Renders the control, given the `aria-describedby`/`aria-invalid` to set.
+   * Both are live: read them in the control's attributes, don't destructure.
    */
   children: (a: {
     describedBy: string | undefined;
@@ -60,10 +61,16 @@ export const FieldShell = (props: FieldShellProps) => {
   // losing input focus — whenever a tracked prop it reads (e.g. a helperText
   // that interpolates the live value) changes. See
   // kdd/solid-reactivity-pitfalls.
+  // Getters, so a later error still updates the control's attributes.
   const control = props.children({
-    describedBy:
-      props.error || props.warning || props.helperText ? messageId : undefined,
-    invalid: props.error ? true : undefined,
+    get describedBy() {
+      return props.error || props.warning || props.helperText
+        ? messageId
+        : undefined;
+    },
+    get invalid() {
+      return props.error ? (true as const) : undefined;
+    },
   });
 
   // The <label for> itself (text + required asterisk). A local component so it

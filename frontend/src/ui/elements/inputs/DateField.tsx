@@ -186,7 +186,7 @@ export const DateField = (props: DateFieldProps) => {
       labelInfo={props.labelInfo}
       controlId={id()}
     >
-      {({ describedBy, invalid }) => (
+      {shell => (
         <div
           class={styles.control}
           data-size={props.size === 'small' ? 'small' : undefined}
@@ -207,8 +207,8 @@ export const DateField = (props: DateFieldProps) => {
             placeholder={formatPlaceholder(fmt())}
             disabled={props.disabled}
             required={props.required}
-            aria-describedby={describedBy}
-            aria-invalid={invalid}
+            aria-describedby={shell.describedBy}
+            aria-invalid={shell.invalid}
             onInput={e => setText(e.currentTarget.value)}
             onBlur={commit}
             onKeyDown={e => {
