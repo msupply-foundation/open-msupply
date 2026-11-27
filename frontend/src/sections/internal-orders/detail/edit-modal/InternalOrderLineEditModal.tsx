@@ -66,6 +66,7 @@ import {
   modeToUnits,
   unitsToMode,
   statInMode,
+  seriesInMode,
   monthsOfStockAfterOrder,
   saveNewLine,
   saveExistingLine,
@@ -498,6 +499,27 @@ const LineEditContent = (
     const doseCount = Math.round(units * doses());
     return `${roundedText(doseCount)} ${tPlural('label.doses-plural', doseCount)}`;
   };
+
+  // The context charts in the active mode, like the statistics, each heading
+  // naming its measure as the requisition editor's does (OMS-REG-REPL-04.110).
+  const chartFigure = (units: number) =>
+    unitsToMode(units, entryMode(), packSize(), doses());
+  const chartConsumption = createMemo(() =>
+    seriesInMode(
+      consumptionHistory()?.nodes ?? [],
+      ['consumption', 'averageMonthlyConsumption'],
+      chartFigure
+    )
+  );
+  const chartStockEvolution = createMemo(() =>
+    seriesInMode(
+      stockEvolution()?.nodes ?? [],
+      ['stockOnHand', 'minimumStockOnHand', 'maximumStockOnHand'],
+      chartFigure
+    )
+  );
+  const chartMeasure = () =>
+    measureWord(entryMode(), current()?.unitName ?? null);
 
   // The dose caption beneath the requested number (OMS-REG-REPL-04.75).
   const requestedCaption = () =>
@@ -1058,14 +1080,14 @@ const LineEditContent = (
               the saved line's, or an add-mode draft's preview; absent them —
               an order with no expected-delivery-date — they don't show. */}
             <div class={styles.charts}>
-              <Show when={consumptionHistory()?.nodes.length}>
+              <Show when={chartConsumption().length}>
                 <div class={styles.chartSection}>
                   <h3 class={styles.chartHeading}>
-                    {t('heading.consumption-history')}
+                    {t('heading.consumption-history-in-unit', {
+                      unit: chartMeasure(),
+                    })}
                   </h3>
-                  <ConsumptionHistoryChart
-                    data={consumptionHistory()?.nodes ?? []}
-                  />
+                  <ConsumptionHistoryChart data={chartConsumption()} />
                 </div>
               </Show>
               <Accordion
@@ -1089,14 +1111,20 @@ const LineEditContent = (
                     <div class={styles.additionalChartsBody}>
                       <div class={styles.breakdown}>
                         <h4 class={styles.chartHeading}>
-                          {t('heading.target-quantity')}
+                          {t('heading.target-quantity-in-unit', {
+                            unit: chartMeasure(),
+                          })}
                         </h4>
                         <TargetQuantityBreakdown
-                          averageMonthlyConsumption={editorLine().monthlyDemand}
-                          availableStockOnHand={
+                          averageMonthlyConsumption={chartFigure(
+                            editorLine().monthlyDemand
+                          )}
+                          availableStockOnHand={chartFigure(
                             editorLine().availableStockOnHand
-                          }
-                          suggestedQuantity={editorLine().suggestedQuantity}
+                          )}
+                          suggestedQuantity={chartFigure(
+                            editorLine().suggestedQuantity
+                          )}
                           thresholdMonths={props.minMonths}
                           targetMonths={props.maxMonths}
                           zeroMonthlyMessage={t('error.monthly-demand-is-zero')}
@@ -1105,10 +1133,12 @@ const LineEditContent = (
                       <Show when={evolution.loading && !stockEvolution()}>
                         <Spinner />
                       </Show>
-                      <Show when={stockEvolution()?.nodes.length}>
+                      <Show when={chartStockEvolution().length}>
                         <div class={styles.chartSection}>
                           <h4 class={styles.chartHeading}>
-                            {t('heading.stock-evolution')}
+                            {t('heading.stock-evolution-in-unit', {
+                              unit: chartMeasure(),
+                            })}
                           </h4>
                           {/* The server projects the SAVED line's forecast;
                             while the draft previews another method the chart
@@ -1119,9 +1149,7 @@ const LineEditContent = (
                               {t('messages.stock-evolution-saved-method')}
                             </p>
                           </Show>
-                          <StockEvolutionChart
-                            data={stockEvolution()?.nodes ?? []}
-                          />
+                          <StockEvolutionChart data={chartStockEvolution()} />
                         </div>
                       </Show>
                     </div>
