@@ -9,9 +9,10 @@ import { SectionTitle } from '../ui/elements/dashboard/SectionTitle';
 import { Statistic } from '../ui/elements/dashboard/Statistic';
 import { Button } from '../ui/elements/buttons/Button';
 import { PlusCircleIcon, StockIcon, ThermometerIcon } from '../ui/icons';
+import { Page } from '../ui/layout/Page/Page';
 import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
 import { Stack } from '../ui/layout/Stack/Stack';
-import { Lead, SectionTOC } from './common';
+import { Lead, PageFrame, SectionTOC } from './common';
 import type { PageMetadata } from './metadata';
 import styles from './StatisticsShowcase.module.css';
 
@@ -29,9 +30,13 @@ import styles from './StatisticsShowcase.module.css';
  */
 
 /* Reusable demo cards — one is shown alone under "DashboardCard", all four
-   under "Composition". Labels/values mirror the current app's dashboard. */
-const ReplenishmentCard = () => (
+   under "Composition", two again as outlined panels on a shaded page body.
+   Labels/values mirror the current app's dashboard. */
+type DemoCardProps = { surface?: 'raised' | 'panel' };
+
+const ReplenishmentCard = (props: DemoCardProps) => (
   <DashboardCard
+    surface={props.surface}
     title="Replenishment"
     footer={<Button icon={<PlusCircleIcon />}>New inbound shipment</Button>}
   >
@@ -55,8 +60,9 @@ const ReplenishmentCard = () => (
   </DashboardCard>
 );
 
-const DistributionCard = () => (
+const DistributionCard = (props: DemoCardProps) => (
   <DashboardCard
+    surface={props.surface}
     title="Distribution"
     footer={<Button icon={<PlusCircleIcon />}>New outbound shipment</Button>}
   >
@@ -421,6 +427,28 @@ const Demo = () => (
         <ColdChainCard />
       </CardGrid>
     </DashboardCard>
+
+    <DashboardCard
+      id="statistics-panel-surface"
+      title="DashboardCard on a shaded page body — panel surface"
+    >
+      <Lead>
+        On a <code>Page</code> with <code>shaded</code> (
+        <code>--page-body-shade</code>), a DashboardCard takes{' '}
+        <code>surface="panel"</code>: the same raised fill, a hairline outline,
+        the small radius and no shadow, as DetailCard's panel surface. The
+        default stays the shadowed card, so the Dashboard doesn't change. Only
+        the Reports page uses it so far (#2224).
+      </Lead>
+      <PageFrame>
+        <Page shaded>
+          <CardGrid maxColumnWidth="26rem">
+            <ReplenishmentCard surface="panel" />
+            <DistributionCard surface="panel" />
+          </CardGrid>
+        </Page>
+      </PageFrame>
+    </DashboardCard>
   </Stack>
 );
 
@@ -454,6 +482,11 @@ export const statisticsMetadata: PageMetadata = {
       id: 'statistics-composition',
       title: 'Composition',
       searchTerms: ['cardgrid', 'grid', 'layout', 'assembled'],
+    },
+    {
+      id: 'statistics-panel-surface',
+      title: 'Panel surface',
+      searchTerms: ['panel', 'shaded', 'outlined', 'surface', 'reports'],
     },
   ],
 };
