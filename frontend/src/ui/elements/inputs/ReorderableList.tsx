@@ -196,11 +196,19 @@ export const ReorderableList = (props: ReorderableListProps): JSX.Element => {
     else row.addEventListener('transitionend', clear, { once: true });
   };
 
-  // Hang the dragged row from the pointer, wherever its slot now is. Its
-  // shadow keeps the stylesheet's transition, so the lift fades in.
+  // Hang the dragged row from the pointer, wherever its slot now is, but
+  // never past the list's own ends: dragged beyond the last row it stops at
+  // the last slot. Unbounded, a row carried down would lengthen what scrolls
+  // it, and the auto-scroll would chase it down without end. Its shadow keeps
+  // the stylesheet's transition, so the lift fades in.
   const float = (row: HTMLElement) => {
+    const wanted = pointerY - grabOffset - listTop() - row.offsetTop;
+    const by = Math.min(
+      Math.max(wanted, -row.offsetTop),
+      list.clientHeight - row.offsetTop - row.offsetHeight
+    );
     row.style.transition = `box-shadow ${EASE}`;
-    row.style.transform = `translateY(${pointerY - grabOffset - listTop() - row.offsetTop}px)`;
+    row.style.transform = `translateY(${by}px)`;
   };
 
   // A row moved by a reorder starts where it was and slides to its new slot.
@@ -267,11 +275,20 @@ export const ReorderableList = (props: ReorderableListProps): JSX.Element => {
       3 * parseFloat(getComputedStyle(document.documentElement).fontSize);
     const top = Math.max(rect.top, 0);
     const bottom = Math.min(rect.bottom, window.innerHeight);
+    // Only toward list still out of view, and no further than its end: the
+    // scroll is for reaching rows, not for what lies past the list.
+    const shown = list.getBoundingClientRect();
     const by =
       pointerY < top + zone
-        ? -Math.ceil(((top + zone - pointerY) / zone) * 12)
+        ? Math.max(
+            -Math.ceil(((top + zone - pointerY) / zone) * 12),
+            Math.min(shown.top - top, 0)
+          )
         : pointerY > bottom - zone
-          ? Math.ceil(((pointerY - (bottom - zone)) / zone) * 12)
+          ? Math.min(
+              Math.ceil(((pointerY - (bottom - zone)) / zone) * 12),
+              Math.max(shown.bottom - bottom, 0)
+            )
           : 0;
     if (by !== 0) area.scrollBy(0, by);
     autoScroll = requestAnimationFrame(scrollStep);
