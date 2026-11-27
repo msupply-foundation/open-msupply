@@ -730,6 +730,7 @@
   "label.chargeCode": "تغيير الرمز",
   "label.chart": "الرسم البياني",
   "label.class": "الفئة",
+  "label.clear-field": "مسح {{label}}",
   "label.clear-filter": "مسح الفلتر",
   "label.clear-filter-detail": "إزالة عامل تصفية {{ name }}",
   "label.clear-selection": "مسح الاختيار",

@@ -1023,6 +1023,7 @@
   "label.charges-in-po-currency": "Encargos no câmbio da Ordem de Compra (A)",
   "label.chart": "Gráfico",
   "label.class": "Classe",
+  "label.clear-field": "Limpar {{label}}",
   "label.clear-filter": "Limpar o filtro",
   "label.clear-selection": "Limpar a seleção",
   "label.click-to-sort": "Clique para ordenar por ",

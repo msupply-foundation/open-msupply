@@ -1396,6 +1396,7 @@
   "label.class": "ټولګي",
   "label.clear-all-filters": "ټول پاک کړئ",
   "label.clear-dates": "تاریخونه روښانه کړئ",
+  "label.clear-field": "{{label}} پاک کړئ",
   "label.clear-filter": "فلټر پاک کړئ",
   "label.clear-filter-detail": "{{ name }} فلټر لرې کړئ",
   "label.clear-from-date": "له نیټې څخه پاک",

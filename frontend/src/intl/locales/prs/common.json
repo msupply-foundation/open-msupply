@@ -1396,6 +1396,7 @@
   "label.class": "کلاس",
   "label.clear-all-filters": "پاک کردن همه",
   "label.clear-dates": "پاک کردن تاریخ‌ها",
+  "label.clear-field": "پاک کردن {{label}}",
   "label.clear-filter": "پاک کردن فیلتر",
   "label.clear-filter-detail": "حذف فلتر {{ name }}",
   "label.clear-from-date": "پاک کردن تاریخ شروع",

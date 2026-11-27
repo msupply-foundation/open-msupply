@@ -707,6 +707,7 @@
   "label.chargeCode": "Centro de Costo",
   "label.chart": "Cuadro",
   "label.class": "Clase",
+  "label.clear-field": "Borrar {{label}}",
   "label.clear-filter": "Limpiar filtro",
   "label.clear-selection": "Borrar selección",
   "label.click-to-sort": "Haz clic para ordenar por ",

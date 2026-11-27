@@ -1428,6 +1428,7 @@
   "label.class": "Classe",
   "label.clear-all-filters": "Réinitialiser",
   "label.clear-dates": "Effacer les dates",
+  "label.clear-field": "Effacer {{label}}",
   "label.clear-filter": "Effacer le filtre",
   "label.clear-filter-detail": "Supprimer le filtre {{ name }}",
   "label.clear-from-date": "Effacer la date de début",
