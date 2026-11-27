@@ -48,15 +48,15 @@ export interface PurchaseOrderDetailToolbarProps {
   lineCount: number;
   onSaveField: (patch: PurchaseOrderPatch) => Promise<SaveFieldResult>;
   /**
-   * Write one day onto every line's date — and the other date where the lines
-   * agree on it, and the order's own requested date (the screen owns the
-   * cascade). Resolves once the whole cascade and its re-read are done, which
-   * is when the picked day can stop standing in for the value — with the first
-   * refusal, if any.
+   * Write a day (null clears) onto every line's date — and the other
+   * date where the lines agree on it, and the order's own requested date (the
+   * screen owns the cascade). Resolves once the whole cascade and its re-read
+   * are done, which is when the picked day can stop standing in for the value
+   * — with the first refusal, if any.
    */
   onCascadeDate: (
     field: DeliveryDateField,
-    date: string
+    date: string | null
   ) => Promise<SaveFieldResult>;
 }
 
@@ -80,12 +80,17 @@ export const PurchaseOrderDetailToolbar: Component<
   // alone).
   const [draft, setDraft] = createSignal<{
     field: DeliveryDateField;
-    date: string;
+    /** null = cleared. */
+    date: string | null;
     phase: 'saving' | 'refused';
   }>();
-  const draftFor = (field: DeliveryDateField) => {
+  // The pending pick (null = cleared) over the stored date.
+  const shownFor = (
+    field: DeliveryDateField,
+    stored: string | null | undefined
+  ) => {
     const pending = draft();
-    return pending?.field === field ? pending.date : undefined;
+    return pending?.field === field ? pending.date : stored;
   };
   const refused = () => {
     const pending = draft();
@@ -106,7 +111,7 @@ export const PurchaseOrderDetailToolbar: Component<
       : undefined;
   };
 
-  const onDateChange = (field: DeliveryDateField, date: string) => {
+  const onDateChange = (field: DeliveryDateField, date: string | null) => {
     if (props.datesVary(field)) {
       setDraft({ field, date, phase: 'refused' });
       return;
@@ -199,18 +204,13 @@ export const PurchaseOrderDetailToolbar: Component<
         label={t('label.requested-delivery-date')}
         size="small"
         testId="requested-delivery-date-field"
-        // Can't be emptied here (onChange drops null), so it offers no clear.
-        required
-        value={
-          draftFor('requestedDeliveryDate') ??
-          props.node.requestedDeliveryDate ??
-          undefined
-        }
+        value={shownFor(
+          'requestedDeliveryDate',
+          props.node.requestedDeliveryDate
+        )}
         error={dateErrors.requestedDeliveryDate}
         disabled={props.disabled}
-        onChange={value =>
-          value && onDateChange('requestedDeliveryDate', value)
-        }
+        onChange={value => onDateChange('requestedDeliveryDate', value)}
       />
 
       {/* No order-level field behind this one: it shows the LATEST expected
@@ -220,11 +220,10 @@ export const PurchaseOrderDetailToolbar: Component<
         label={t('label.expected-delivery-date')}
         size="small"
         testId="expected-delivery-date-field"
-        required
-        value={draftFor('expectedDeliveryDate') ?? props.latestExpectedDate}
+        value={shownFor('expectedDeliveryDate', props.latestExpectedDate)}
         error={dateErrors.expectedDeliveryDate}
         disabled={props.expectedDateDisabled || props.lineCount === 0}
-        onChange={value => value && onDateChange('expectedDeliveryDate', value)}
+        onChange={value => onDateChange('expectedDeliveryDate', value)}
       />
 
       <Show when={refused()}>

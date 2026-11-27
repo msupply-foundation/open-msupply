@@ -180,7 +180,8 @@ export const InboundShipmentDetailToolbar: Component<
       <DateField
         label={t('label.received')}
         testId="received-date-field"
-        required
+        // A backdate moves the received date; nothing removes it.
+        clearable={false}
         size="small"
         value={
           draftReceivedDay() ??

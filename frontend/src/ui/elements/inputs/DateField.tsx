@@ -69,6 +69,11 @@ export interface DateFieldProps {
    */
   labelInfo?: JSX.Element;
   required?: boolean;
+  /**
+   * `false`: the date can be moved but not removed (e.g. a received date). No
+   * ✕ and a blank reverts, as with `required`, but there's no asterisk.
+   */
+  clearable?: boolean;
   disabled?: boolean;
   size?: 'default' | 'small';
   /** Visually hide the label (kept for a11y) — for use inside a FieldRow. */
@@ -105,6 +110,7 @@ export const DateField = (props: DateFieldProps) => {
   // Month-only bounds compare by month (`YYYY-MM`): the month holding `min`
   // is in range though its 1st is earlier.
   const bound = (iso: string) => (props.monthOnly ? iso.slice(0, 7) : iso);
+  const canClear = () => !props.required && props.clearable !== false;
 
   // Bumped each time the picker popover opens — the panel survives close, so
   // it re-seeds its navigation view via this (DatePickerPanel's `openCount`).
@@ -162,11 +168,9 @@ export const DateField = (props: DateFieldProps) => {
     if (
       // Unparseable text: gibberish, or an impossible date (31 Feb).
       parsed === undefined ||
-      // Blanked a required field: a required value must always exist, so a
-      // blank reverts. (Non-required fields pass null through — the "cleared"
-      // path.) The calendar's deselect is guarded separately, via corvu's own
-      // required prop on DatePickerPanel.
-      (parsed === null && props.required) ||
+      // Blanked a field that can't be cleared. The calendar's deselect is
+      // guarded by DatePickerPanel's `required`.
+      (parsed === null && !canClear()) ||
       // A valid date, but TYPED earlier than min — the calendar already makes
       // such days unselectable; this closes the typed path.
       (parsed != null &&
@@ -202,7 +206,7 @@ export const DateField = (props: DateFieldProps) => {
           data-size={props.size === 'small' ? 'small' : undefined}
           data-error={props.error ? '' : undefined}
           data-disabled={props.disabled ? '' : undefined}
-          data-clearable={!props.required && !props.disabled ? '' : undefined}
+          data-clearable={canClear() && !props.disabled ? '' : undefined}
         >
           <input
             ref={el => {
@@ -231,7 +235,7 @@ export const DateField = (props: DateFieldProps) => {
           {/* Only an optional, enabled field holding something offers the
               clear (ui-standards/inputs.md › constraints, empty, and
               display). */}
-          <Show when={text() !== '' && !props.required && !props.disabled}>
+          <Show when={text() !== '' && canClear() && !props.disabled}>
             <ClearButton
               fieldLabel={props.label}
               testId={props.testId && `${props.testId}-clear`}
@@ -255,7 +259,7 @@ export const DateField = (props: DateFieldProps) => {
                 // Also stops the calendar DESELECTING (click the selected day
                 // again → null) — the commit() guard below only covers the
                 // typed path.
-                required={props.required}
+                required={!canClear()}
                 monthOnly={props.monthOnly}
                 openCount={openCount()}
                 onSelect={d => {

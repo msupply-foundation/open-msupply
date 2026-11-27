@@ -154,6 +154,16 @@ describe('OMS-REG-DIS-02.65 — a date field clears with a button', () => {
     expect(clear()).toBeUndefined();
   });
 
+  it('a field that can be moved but not emptied has no ✕ and is not required', () => {
+    const { input, clear, onChange } = mountDate({ clearable: false });
+    expect(clear()).toBeUndefined();
+    expect(input().getAttribute('required')).toBeNull();
+    type(input(), '');
+    input().blur();
+    expect(input().value).toBe('01/03/2027');
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
   it('a disabled field has no ✕', () => {
     const { clear } = mountDate({ disabled: true });
     expect(clear()).toBeUndefined();
