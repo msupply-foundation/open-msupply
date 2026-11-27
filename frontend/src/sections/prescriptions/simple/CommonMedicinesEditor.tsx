@@ -249,6 +249,29 @@ export const CommonMedicinesEditor = (props: {
                 {tPlural('messages.common-medicines-dropped', dropped())}
               </Alert>
             </Show>
+            {/* Above the list, so it stays put as medicines are added and its
+                results open down over the empty space, not up over the rows
+                being set up (ui-surface S9). */}
+            <ItemSearch
+              label={t('label.add-a-common-medicine')}
+              hideLabel
+              placeholder={t('label.add-a-common-medicine')}
+              storeId={props.storeId}
+              // The medicines the Simple screen's own search offers.
+              includeHiddenWithStock
+              width="full"
+              clearable={false}
+              value={searchValue()}
+              disabled={saving()}
+              presentInDocument={{
+                probe: ids =>
+                  Promise.resolve(ids.filter(id => listed().has(id))),
+                label: t('label.on-common-medicines'),
+              }}
+              onSelect={item => {
+                if (item) add(item);
+              }}
+            />
             <Show
               when={draft.rows.length > 0}
               fallback={
@@ -256,7 +279,7 @@ export const CommonMedicinesEditor = (props: {
                   class={styles.editorEmpty}
                   data-testid="common-medicines-none-yet"
                 >
-                  {t('messages.no-common-medicines-yet')}
+                  {t('messages.no-common-medicines-yet-search')}
                 </p>
               }
             >
@@ -279,6 +302,15 @@ export const CommonMedicinesEditor = (props: {
                         class={styles.editorAmounts}
                         data-testid="common-medicine-amounts"
                       >
+                        {/* What the three fields are, on screen. Each field
+                            keeps its own hidden label, naming the medicine and
+                            the place, so this is for the eye only. */}
+                        <span
+                          class={styles.editorAmountsLabel}
+                          aria-hidden="true"
+                        >
+                          {t('label.common-medicine-amounts')}
+                        </span>
                         <Index each={Array.from({ length: AMOUNT_PLACES })}>
                           {(_, place) => (
                             <NumberField
@@ -334,26 +366,6 @@ export const CommonMedicinesEditor = (props: {
                 }}
               />
             </Show>
-            <ItemSearch
-              label={t('label.add-a-common-medicine')}
-              hideLabel
-              placeholder={t('label.add-a-common-medicine')}
-              storeId={props.storeId}
-              // The medicines the Simple screen's own search offers.
-              includeHiddenWithStock
-              width="full"
-              clearable={false}
-              value={searchValue()}
-              disabled={saving()}
-              presentInDocument={{
-                probe: ids =>
-                  Promise.resolve(ids.filter(id => listed().has(id))),
-                label: t('label.on-common-medicines'),
-              }}
-              onSelect={item => {
-                if (item) add(item);
-              }}
-            />
             <Show when={draft.rows.length > COMFORTABLE_COUNT}>
               <Alert
                 severity="warning"

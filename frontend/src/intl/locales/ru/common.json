@@ -2103,7 +2103,6 @@
   "messages.no-bundled-items": "Нет настроенных связанных товаров",
   "messages.no-campaigns": "Нет доступных кампаний или программ",
   "messages.no-common-medicines": "Часто выдаваемые препараты не настроены",
-  "messages.no-common-medicines-yet": "Часто выдаваемых препаратов пока нет. Добавьте их через поиск ниже.",
   "messages.no-contact-traces": "У этого пациента нет контактных отслеживаний.",
   "messages.no-data-available": "Нет доступных данных",
   "messages.no-data-found": "Данные не найдены",

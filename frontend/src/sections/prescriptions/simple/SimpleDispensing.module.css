@@ -255,6 +255,12 @@ div.cards {
   gap: var(--space-2);
 }
 
+/* "Amounts", before the three places: says on screen what they are. */
+.editorAmountsLabel {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
 .editorUnit {
   min-inline-size: 3rem;
   color: var(--text-secondary);

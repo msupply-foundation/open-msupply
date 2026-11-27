@@ -1780,7 +1780,6 @@
   "messages.no-batch-selected": "لم تقم بتحديد دفعة لهذا التطعيم. لن يتم إنشاء أي معاملة مخزون. هل أنت متأكد من رغبتك في المتابعة؟",
   "messages.no-bundled-items": "لم يتم تكوين أي عناصر مجمعة",
   "messages.no-common-medicines": "لم يتم تكوين أي أدوية شائعة",
-  "messages.no-common-medicines-yet": "لا توجد أدوية شائعة بعد. أضف بعضها من خلال البحث أدناه.",
   "messages.no-contact-traces": "هذا المريض ليس لديه آثار مخالطة",
   "messages.no-data-available": "لا توجد بيانات متاحة",
   "messages.no-data-found": "لم يتم العثور على بيانات",

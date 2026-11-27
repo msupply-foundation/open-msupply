@@ -1617,7 +1617,6 @@
   "messages.no-batch-selected": "No has seleccionado un lote para esta vacunación. No se creará ninguna transacción de inventario. ¿Estás seguro de que deseas continuar?",
   "messages.no-bundled-items": "No se han configurado artículos agrupados",
   "messages.no-common-medicines": "No se han configurado medicamentos frecuentes",
-  "messages.no-common-medicines-yet": "Aún no hay medicamentos frecuentes. Agrega algunos con la búsqueda de abajo.",
   "messages.no-contact-traces": "Este paciente no tiene rastros de contacto",
   "messages.no-data-available": "No hay datos disponibles",
   "messages.no-data-found": "No se encontraron datos",

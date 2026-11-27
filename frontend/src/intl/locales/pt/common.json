@@ -2531,7 +2531,6 @@
   "messages.no-bundled-items": "Não foram configurados artigos agrupados",
   "messages.no-campaigns": "Não há campanhas disponíveis",
   "messages.no-common-medicines": "Não foram configurados medicamentos frequentes",
-  "messages.no-common-medicines-yet": "Ainda não há medicamentos frequentes. Adicione-os com a busca abaixo.",
   "messages.no-contact-traces": "Este paciente não possui rastros de contato.",
   "messages.no-data-available": "Nenhum dado disponível",
   "messages.no-data-found": "Nenhum dado encontrado",

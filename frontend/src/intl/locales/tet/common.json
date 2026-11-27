@@ -634,7 +634,6 @@
   "messages.native-mode-client": "Ne'e sei autoriza ita atu hili servedor ida ne'ebe mak ita atu konekta ba.",
   "messages.native-mode-server": "Hili opsaun ida ne'e sei inisia servedor lokal no sei konekta automatikamente. Ujuáriu seluk mos bele konekta ba iha servedor ida ne'e.",
   "messages.no-common-medicines": "Seidauk konfigura ai-moruk komún",
-  "messages.no-common-medicines-yet": "Seidauk iha ai-moruk komún. Aumenta balun liu husi buka iha okos.",
   "messages.no-data-available": "Laiha dadus ne'ebe disponivel",
   "messages.no-log-entries": "Laiha Log entrada ne'ebe disponivel",
   "messages.no-matches-at-other-stores": "Laiha rezultadu iha Store seluk",

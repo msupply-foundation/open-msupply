@@ -3525,7 +3525,6 @@
   "messages.no-campaigns": "Aucune campagne ou programme de disponible",
   "messages.no-common-medicines": "Aucun article courant n'est configuré pour ce dépôt.",
   "messages.no-common-medicines-dispensable": "Aucun des articles courants de ce dépôt ne peut plus être délivré ici.",
-  "messages.no-common-medicines-yet": "Aucun article courant pour l'instant. Ajoutez-en avec la recherche ci-dessous.",
   "messages.no-consumption-estimates": "Aucune estimation de consommation",
   "messages.no-contact-traces": "Ce patient n'a aucun contact répertorié.",
   "messages.no-custom-fields": "Aucun champ personnalisé défini",
