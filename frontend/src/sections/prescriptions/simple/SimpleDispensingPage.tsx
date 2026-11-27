@@ -114,7 +114,7 @@ import {
   type RecordLine,
   type RecordRead,
 } from './editVisit';
-import { shownPatientName } from '../patientName';
+import { isUnnamedPatientId, shownPatientName } from '../patientName';
 import { MedicineCardView } from './MedicineCard';
 import {
   DispensingList,
@@ -510,7 +510,7 @@ const SimpleDispensingPage: Component = () => {
       severity: 'success',
       // "Unnamed patient" would read the same for every walk-in: when, not
       // who.
-      text: who.isUnnamed
+      text: isUnnamedPatientId(who.id)
         ? t('messages.dispensed-at', { time: localisedTime(new Date()) })
         : t('messages.dispensed-to', { name: who.name }),
       dispensedId,
@@ -596,10 +596,7 @@ const SimpleDispensingPage: Component = () => {
             ? missingPermissions(result.errors)
             : undefined,
       };
-    visitState.unnamedPatient = {
-      ...result.data.getOrCreateUnnamedPatient,
-      isUnnamed: true,
-    };
+    visitState.unnamedPatient = result.data.getOrCreateUnnamedPatient;
     return visitState.unnamedPatient;
   };
 
@@ -754,7 +751,7 @@ const SimpleDispensingPage: Component = () => {
       dispensedAt: dispensedAt(record),
       forName: whoFor(record),
       patientName: record.patient?.name,
-      unnamed: record.patient?.isUnnamed ?? false,
+      unnamed: isUnnamedPatientId(record.patient?.id),
       lines: record.lines.nodes,
       newLineIds: {},
     });
@@ -1059,7 +1056,7 @@ const SimpleDispensingPage: Component = () => {
   const whoFor = (record: DispensedRecord): string | undefined => {
     const who = record.patient;
     if (!who) return undefined;
-    if (who.isUnnamed) return shownPatientName(who.name, true);
+    if (isUnnamedPatientId(who.id)) return shownPatientName(who.name, who.id);
     return who.code ? `${who.name} · ${who.code}` : who.name;
   };
   const headingOf = (record: DispensedRecord): string => {
@@ -1234,7 +1231,7 @@ const SimpleDispensingPage: Component = () => {
   const crumbOf = (record: DispensedRecord | undefined): string => {
     if (!record) return t('heading.dispensing-record');
     const who = record.patient
-      ? shownPatientName(record.patient.name, record.patient.isUnnamed)
+      ? shownPatientName(record.patient.name, record.patient.id)
       : undefined;
     const when = localisedDateTime(dispensedAt(record));
     return who ? `${who} · ${when}` : when;

@@ -59,6 +59,7 @@ import {
   prescriptionPreferences,
 } from '../../../store/storeContext';
 import { notFoundReturnMessage } from '../dispensingScreen';
+import { isUnnamedPatientId } from '../patientName';
 import { storeNameOf } from '../../../auth/authContext';
 import {
   asPrescriptionStatus,
@@ -657,7 +658,7 @@ const PrescriptionDetailView: Component = () => {
                   />
                   {/* The unnamed patient's recently dispensed items would be
                       every walk-in's (rules › the unnamed patient). */}
-                  <Show when={!node().patient?.isUnnamed}>
+                  <Show when={!isUnnamedPatientId(node().patient?.id)}>
                     <Button
                       variant="secondary"
                       icon={<InfoIcon />}

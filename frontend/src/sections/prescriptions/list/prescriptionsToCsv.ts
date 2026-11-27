@@ -49,7 +49,7 @@ export const prescriptionsToCsv = (
     ...cf.fields,
   ];
   const data = rows.map(row => [
-    shownPatientName(row.otherPartyName, row.isForUnnamedPatient),
+    shownPatientName(row.otherPartyName, row.otherPartyId),
     statusLabel(asPrescriptionStatus(row.status)),
     row.invoiceNumber,
     simple

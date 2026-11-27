@@ -2,6 +2,7 @@ import type { PrescriptionFieldsFragment } from './prescriptionDetail.generated'
 import { exportDate } from '../../../intl/formatDateTime';
 import { formatNumber } from '../../../intl/formatNumber';
 import { ROUNDED_MARK, decimalPlaces } from '../../../intl/numberDisplay';
+import { shownPatientName } from '../patientName';
 
 // What a dispensing label says (spec/prescriptions/rules.md § label printing;
 // OMS-REG-DIS-03.47): one label per dispensed ITEM — quantity summary +
@@ -52,8 +53,10 @@ export const buildLabels = (
   const clinician = node.clinician
     ? ` - ${node.clinician.lastName}, ${node.clinician.firstName}`
     : '';
+  // The unnamed patient by its translated label, as the screens show it
+  // (rules › the unnamed patient).
   const patientDetails = node.patient
-    ? `${node.patient.name} - ${node.patient.code}`
+    ? `${shownPatientName(node.patient.name, node.patient.id)} - ${node.patient.code}`
     : '';
   // The app's date format, as the side panel shows it — not the runtime's
   // toLocaleDateString, which follows the OS display language (internal #1838)

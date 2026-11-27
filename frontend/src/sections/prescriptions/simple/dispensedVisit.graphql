@@ -16,7 +16,6 @@ query simpleDispensedRecord($storeId: String!, $id: String!) {
         id
         name
         code
-        isUnnamed
       }
       pricing {
         totalAfterTax

@@ -12,8 +12,9 @@ use crate::{
 
 use super::patient_updated::activate_patient_name_store_join;
 
-/// The stored name and code of every store's unnamed patient. Screens show
-/// their own translated label rather than this name.
+/// The stored name and code of every store's unnamed patient. Kept in
+/// English for support and developers: the front end spots the record by its
+/// id and shows its own translated label on screens, exports and labels.
 pub const UNNAMED_PATIENT_NAME: &str = "Unnamed patient";
 pub const UNNAMED_PATIENT_CODE: &str = "UNNAMED";
 
@@ -35,7 +36,9 @@ impl From<RepositoryError> for GetOrCreateUnnamedPatientError {
 /// dispensed to (spec/prescriptions rules › the unnamed patient,
 /// kdd/unnamed-patient). Created on the first call, with the store's
 /// name_store_join; every later call, on any site, returns the same record,
-/// since its id comes from the store's.
+/// since its id comes from the store's. Created here, not by the front end
+/// calling `insertPatient`: that needs the permission to add patients, and a
+/// dispenser who lacks it still has to be able to dispense to it.
 pub fn get_or_create_unnamed_patient(
     ctx: &ServiceContext,
     store_id: &str,
