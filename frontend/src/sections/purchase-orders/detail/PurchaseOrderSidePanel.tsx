@@ -71,14 +71,13 @@ export const PurchaseOrderSidePanel: Component<
 > = props => {
   const currency = () => props.node.currency?.code;
 
-  // A save's refusal, keyed to the field it was made from; cleared by the next
-  // save of that field that lands. Nothing else reports it — the domain's
-  // rejection names no cause (contract ⚠️), so without this a refused date
-  // would simply fail to stick.
+  // A refused save's message, per field; nothing else reports it. Cleared on
+  // the next save, so a repeat refusal still reverts the field.
   const [saveErrors, setSaveErrors] = createStore<
     Partial<Record<ReportingField, string>>
   >({});
   const save = async (field: ReportingField, patch: PurchaseOrderPatch) => {
+    setSaveErrors(field, undefined);
     const result = await props.onSaveField(patch);
     // No message = already up in a global modal (permission or transport).
     setSaveErrors(field, result.ok ? undefined : result.message);

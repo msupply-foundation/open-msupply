@@ -117,30 +117,41 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
   const [time, setTime] = createSignal<TimeValue | undefined>(
     hhmmToTime(parts()?.time)
   );
+  // Typed in since the last shown date — see DateField's `edited`.
+  let edited = false;
+  const showDate = (dateIso: string | null | undefined) => {
+    setDateText(formatCalendarDate(dateIso, fmt()));
+    edited = false;
+  };
+  // The instant last shown as set: the parent's, or one sent.
+  let shown: string | null = null;
+  const showValue = () => {
+    const p = instantToLocalParts(props.value);
+    showDate(p?.date);
+    setTime(hhmmToTime(p?.time));
+    shown = props.value ?? null;
+  };
   // Resync both buffers from the external value only when IT (or the app
   // language — month names) changes.
-  // The instant last sent to (or received from) the parent — see DateField's
-  // `committed`. Compared as strings: the same instant in another spelling
-  // only sends a redundant save, never swallows a change. Set by the effect
-  // below, which runs on mount, before any input.
-  let committed: string | null = null;
+  createEffect(on([() => props.value, locale], showValue));
+  // A refused save reverts — see DateField.
   createEffect(
-    on([() => props.value, locale], () => {
-      committed = props.value ?? null;
-      const p = instantToLocalParts(props.value);
-      setDateText(formatCalendarDate(p?.date, fmt()));
-      setTime(hhmmToTime(p?.time));
-    })
+    on(
+      () => props.error,
+      error => {
+        if (error) showValue();
+      },
+      { defer: true }
+    )
   );
 
-  // An unchanged instant notifies nothing: blurring the date after a clear
-  // (which refocuses it) would otherwise send a second save of null (#2054).
   const emit = (dateIso: string | null, t: TimeValue | undefined) => {
     const next = dateIso
       ? localPartsToInstant(dateIso, timeToHhmm(t) ?? '')
       : null;
-    if (next === committed) return;
-    committed = next;
+    // Still empty: unsent typing cleared, or a time with no date.
+    if (next === null && shown === null) return;
+    shown = next;
     props.onChange?.(next);
   };
 
@@ -150,14 +161,15 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
   // already updates its own buffer) — keeps date and time symmetric, no extra
   // state.
   const applyDate = (dateIso: string | null) => {
-    setDateText(formatCalendarDate(dateIso, fmt()));
+    showDate(dateIso);
     emit(dateIso, time());
   };
 
   const commitDate = () => {
+    if (!edited) return;
     const parsed = parseDateInput(dateText(), fmt());
     if (parsed === undefined) {
-      setDateText(formatCalendarDate(parts()?.date, fmt())); // invalid → revert
+      showDate(parts()?.date); // invalid → revert
       return;
     }
     applyDate(parsed);
@@ -200,7 +212,10 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
             aria-label={t('label.field-date-part', { label: props.label })}
             aria-describedby={shell.describedBy}
             aria-invalid={shell.invalid}
-            onInput={e => setDateText(e.currentTarget.value)}
+            onInput={e => {
+              setDateText(e.currentTarget.value);
+              edited = true;
+            }}
             onBlur={commitDate}
             onKeyDown={e => {
               if (e.key === 'Enter') e.currentTarget.blur(); // commits via onBlur

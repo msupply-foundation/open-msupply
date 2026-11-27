@@ -66,8 +66,8 @@ const parts = (root: FakeElement, testId: string) => ({
 });
 
 /**
- * A DateField whose parent echoes each change back as its value, as every
- * caller in the app does, unless `echo` is false.
+ * The parent echoes each change back unless `echo` is false. `refuse(message)`
+ * sets `error`, as a parent does when a save fails.
  */
 const mountDate = (
   props: Partial<DateFieldProps> = {},
@@ -77,6 +77,7 @@ const mountDate = (
   const [value, setValue] = createSignal<string | null | undefined>(
     'value' in props ? props.value : '2027-03-01'
   );
+  const [error, setError] = createSignal<string>();
   const root = createRoot(d => {
     dispose = d;
     return (
@@ -85,6 +86,7 @@ const mountDate = (
         testId="dob"
         {...props}
         value={value()}
+        error={error()}
         onChange={v => {
           onChange(v);
           if (echo) setValue(v);
@@ -92,14 +94,18 @@ const mountDate = (
       />
     );
   }) as unknown as FakeElement;
-  return { ...parts(root, 'dob'), onChange };
+  return { ...parts(root, 'dob'), onChange, refuse: setError };
 };
 
-const mountDateTime = (props: Partial<DateTimeFieldProps> = {}) => {
+const mountDateTime = (
+  props: Partial<DateTimeFieldProps> = {},
+  { echo = true }: { echo?: boolean } = {}
+) => {
   const onChange = vi.fn();
   const [value, setValue] = createSignal<string | null | undefined>(
     '2026-07-17T08:30:00.000Z'
   );
+  const [error, setError] = createSignal<string>();
   const root = createRoot(d => {
     dispose = d;
     return (
@@ -108,14 +114,15 @@ const mountDateTime = (props: Partial<DateTimeFieldProps> = {}) => {
         testId="to"
         {...props}
         value={value()}
+        error={error()}
         onChange={v => {
           onChange(v);
-          setValue(v);
+          if (echo) setValue(v);
         }}
       />
     );
   }) as unknown as FakeElement;
-  return { ...parts(root, 'to'), onChange };
+  return { ...parts(root, 'to'), onChange, refuse: setError };
 };
 
 /** Type into the field without entering it. */
@@ -176,8 +183,6 @@ describe('OMS-FUN-PO-04.45 — a clear is one change', () => {
     expect(onChange.mock.calls).toEqual([[null]]);
   });
 
-  // The guard compares against what the field last sent, not `props.value`:
-  // a parent that doesn't echo the change back must still hear the clear.
   it('a parent that does not echo the value still hears the clear', () => {
     const { input, clear, onChange } = mountDate(
       { value: null },
@@ -187,6 +192,77 @@ describe('OMS-FUN-PO-04.45 — a clear is one change', () => {
     input().blur();
     press(clear()!);
     expect(onChange.mock.calls).toEqual([['2027-04-15'], [null]]);
+  });
+
+  it('a day typed into an empty field, then cleared, sends nothing', () => {
+    const { input, clear, onChange } = mountDate({ value: null });
+    type(input(), '15/04/2027');
+    press(clear()!);
+    input().blur();
+    expect(input().value).toBe('');
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('leaving a field that was not typed in sends nothing', () => {
+    const { input, onChange } = mountDate();
+    input().focus();
+    fire(input(), 'keydown', { key: 'Enter' });
+    input().blur();
+    expect(onChange).not.toHaveBeenCalled();
+  });
+});
+
+describe('OMS-FUN-PO-04.46 — a refused save can be tried again', () => {
+  it('entering the same day again sends it again', () => {
+    const { input, onChange } = mountDate({}, { echo: false });
+    type(input(), '15/04/2027');
+    input().blur();
+    type(input(), '15/04/2027');
+    input().blur();
+    expect(onChange.mock.calls).toEqual([['2027-04-15'], ['2027-04-15']]);
+  });
+
+  it('a refused clear puts the date and its ✕ back, and clears again', () => {
+    const { input, clear, onChange, refuse } = mountDate({}, { echo: false });
+    press(clear()!);
+    expect(input().value).toBe('');
+    refuse('Not saved');
+    expect(input().value).toBe('01/03/2027');
+    expect(input().getAttribute('aria-invalid')).toBe('true');
+    press(clear()!);
+    expect(onChange.mock.calls).toEqual([[null], [null]]);
+  });
+
+  it('a refused typed day goes back to the saved one', () => {
+    const { input, refuse } = mountDate({}, { echo: false });
+    type(input(), '15/04/2027');
+    input().blur();
+    refuse('Not saved');
+    expect(input().value).toBe('01/03/2027');
+  });
+
+  it('a date and time: the same date entered again sends again', () => {
+    const { input, onChange } = mountDateTime({}, { echo: false });
+    type(input(), '20/07/2026');
+    input().blur();
+    type(input(), '20/07/2026');
+    input().blur();
+    expect(onChange).toHaveBeenCalledTimes(2);
+    expect(onChange.mock.calls[1]).toEqual(onChange.mock.calls[0]);
+  });
+
+  it('a date and time: a refused clear puts the date and time back', () => {
+    const { input, clear, onChange, refuse } = mountDateTime(
+      {},
+      { echo: false }
+    );
+    const shown = input().value;
+    press(clear()!);
+    refuse('Not saved');
+    expect(input().value).toBe(shown);
+    expect(time.props?.value?.hour).toBeDefined();
+    press(clear()!);
+    expect(onChange.mock.calls).toEqual([[null], [null]]);
   });
 });
 
