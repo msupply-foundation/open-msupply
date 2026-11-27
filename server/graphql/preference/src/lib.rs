@@ -8,8 +8,10 @@ use service::{
     preference::PreferenceType,
 };
 
+mod common_medicine;
 mod consumption_estimate;
 mod upsert;
+pub use common_medicine::{CommonMedicineMutations, CommonMedicineQueries};
 use consumption_estimate::*;
 use upsert::*;
 

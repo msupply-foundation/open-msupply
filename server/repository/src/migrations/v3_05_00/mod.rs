@@ -1,6 +1,7 @@
 use super::{Migration, MigrationFragment, version::Version};
 use crate::StorageConnection;
 
+mod add_common_medicine_table;
 mod add_consumption_estimate_table;
 mod add_instant_to_calendar_date_function;
 mod add_item_trim_code_index;
@@ -49,6 +50,7 @@ impl Migration for V3_05_00 {
             Box::new(add_instant_to_calendar_date_function::Migrate),
             Box::new(move_standalone_central_sites_to_v7::Migrate),
             Box::new(requeue_failed_v7_central_data_deletes::Migrate),
+            Box::new(add_common_medicine_table::Migrate),
         ]
     }
 }

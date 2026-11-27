@@ -12,6 +12,7 @@ import type { PatientOption } from '../../../domain/patient';
 import type { EditedVisit } from './editVisit';
 import type {
   CardItem,
+  CommonMedicine,
   DispensedTo,
   ListLine,
   MedicineCard,
@@ -99,6 +100,13 @@ export interface KeptVisit {
   cardsRead: Accessor<CardItem[] | undefined>;
   setCardsRead: Setter<CardItem[] | undefined>;
   /**
+   * The last read of the store's common medicines that came back, so a visit
+   * kept across a trip shows its cards, and its lines' names, prices and
+   * stock, before the screen reads the list again, and if that read fails.
+   */
+  medicinesRead: Accessor<CommonMedicine[] | undefined>;
+  setMedicinesRead: Setter<CommonMedicine[] | undefined>;
+  /**
    * The list's medicines as Dispense's last check found them: until the visit
    * is dispensed, the stock and prices the screen shows for them.
    */
@@ -148,6 +156,7 @@ const newVisit = (key: string, startsWithUnnamed: boolean): KeptVisit => {
   const [searchedIds, setSearchedIds] = createSignal<string[]>([]);
   const [searchedRead, setSearchedRead] = createSignal<CardItem[]>();
   const [cardsRead, setCardsRead] = createSignal<CardItem[]>();
+  const [medicinesRead, setMedicinesRead] = createSignal<CommonMedicine[]>();
   const [checked, setChecked] = createSignal<MedicineCard[]>([]);
   const [dispensedCount, setDispensedCount] = createSignal(0);
   const [notice, setNotice] = createSignal<Notice | undefined>();
@@ -169,6 +178,8 @@ const newVisit = (key: string, startsWithUnnamed: boolean): KeptVisit => {
     setSearchedRead,
     cardsRead,
     setCardsRead,
+    medicinesRead,
+    setMedicinesRead,
     checked,
     setChecked,
     dispensedCount,
