@@ -16,6 +16,7 @@ import {
   hasFilters,
   importOutcome,
   pickRefusalMessage,
+  previewNotice,
   refusalMessage,
   totals,
   unwrap,
@@ -224,6 +225,32 @@ describe('the preview card counts', () => {
   it('counts every change but unchanged rows for the Import button', () => {
     if (summary.__typename !== 'CentralDataImportNode') throw new Error();
     expect(changeCount(summary)).toBe(4);
+  });
+});
+
+describe('OMS-REG-CDIO-01.212 — the preview card notice', () => {
+  if (summary.__typename !== 'CentralDataImportNode') throw new Error();
+  const unchanged = {
+    ...summary,
+    tables: summary.tables.map(table => ({
+      ...table,
+      inserted: 0,
+      updated: 0,
+      deleted: 0,
+    })),
+  };
+
+  it('with changes and no errors, says the upload is ready to import', () => {
+    expect(previewNotice(summary)).toBe('ready');
+  });
+
+  it('with no changes and no errors, says there is nothing to import', () => {
+    expect(previewNotice(unchanged)).toBe('nothing-to-import');
+  });
+
+  it('with any row error, shows the errors instead', () => {
+    expect(previewNotice({ ...summary, errorCount: 1 })).toBe('errors');
+    expect(previewNotice({ ...unchanged, errorCount: 1 })).toBe('errors');
   });
 });
 

@@ -1,4 +1,4 @@
-use crate::user_on_store::{UserOnStoreError, check_new_user_and_store, check_not_protected};
+use crate::user_on_store::{is_deleted_user, is_protected};
 use repository::{
     EqualFilter, KeyType, KeyValueStoreRepository, PermissionType, RepositoryError,
     StorageConnection, UserFilter, UserPermissionFilter, UserPermissionRepository,
@@ -8,38 +8,15 @@ use repository::{
 
 #[derive(Debug, PartialEq)]
 pub enum UpsertUserStoreJoinError {
-    UserNotFound,
     UserDeleted,
     /// See `protected_user_ids`.
     Protected,
-    StoreNotFound,
     /// Another join already gives the user the store.
     DuplicateJoin {
         other_id: String,
     },
     /// A saved join's user or store. Delete it and add another.
     RecordChanged,
-    DatabaseError(RepositoryError),
-}
-
-impl From<UserOnStoreError> for UpsertUserStoreJoinError {
-    fn from(error: UserOnStoreError) -> Self {
-        match error {
-            UserOnStoreError::Protected => UpsertUserStoreJoinError::Protected,
-            UserOnStoreError::UserNotFound => UpsertUserStoreJoinError::UserNotFound,
-            UserOnStoreError::UserDeleted => UpsertUserStoreJoinError::UserDeleted,
-            UserOnStoreError::StoreNotFound => UpsertUserStoreJoinError::StoreNotFound,
-            UserOnStoreError::DatabaseError(error) => {
-                UpsertUserStoreJoinError::DatabaseError(error)
-            }
-        }
-    }
-}
-
-impl From<RepositoryError> for UpsertUserStoreJoinError {
-    fn from(error: RepositoryError) -> Self {
-        UpsertUserStoreJoinError::DatabaseError(error)
-    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -57,23 +34,19 @@ impl From<RepositoryError> for DeleteUserStoreJoinError {
     }
 }
 
-/// Gives a user a store, or changes whether it's their default. A new join also gives store access
-/// there, so the user can log in to it. Never refuses a second default store: the caller checks
-/// each user has at most one, with `default_stores`, once all its saves are made, so a batch such
-/// as an import can move a default in either order. Joins the caller's transaction, so an
-/// import's earlier rows count.
-/// `protected` is `protected_user_ids`, read once by a caller that saves many.
-pub fn upsert_user_store_join_unchecked_default(
+/// Gives a user a store, or changes whether it's their default. `row` has passed
+/// `user_store_join_errors`, and `saved` is the join with `row.id`. A new join also gives store
+/// access there, so the user can log in to it. Never refuses a second default store: the caller
+/// checks each user has at most one, with `default_stores`, once all its saves are made, so a
+/// batch such as an import can move a default in either order.
+pub fn upsert_user_store_join_unchecked(
     connection: &StorageConnection,
-    protected: &[String],
+    saved: Option<&UserStoreJoinRow>,
     row: &UserStoreJoinRow,
-) -> Result<(), UpsertUserStoreJoinError> {
+) -> Result<(), RepositoryError> {
     connection
-        .transaction_sync(|connection| -> Result<(), UpsertUserStoreJoinError> {
-            let repo = UserStoreJoinRowRepository::new(connection);
-            let saved = repo.find_one_by_id(&row.id)?;
-            validate(connection, protected, saved.as_ref(), row)?;
-            repo.upsert_one(row)?;
+        .transaction_sync(|connection| {
+            UserStoreJoinRowRepository::new(connection).upsert_one(row)?;
             if saved.is_none() {
                 give_store_access(connection, &row.user_id, &row.store_id)?;
             }
@@ -86,8 +59,8 @@ pub fn upsert_user_store_join_unchecked_default(
 /// they can no longer log in to it; a duplicate join, as legacy mSupply can send, keeps both.
 /// Their other permissions there are kept. A default store leaves the user none, as in legacy
 /// mSupply. `deleting_user_id` can't lock themselves out. Returns whether the store was taken
-/// away: false for an id already gone, or when a duplicate join keeps it. `protected` is as for
-/// `upsert_user_store_join_unchecked_default`.
+/// away: false for an id already gone, or when a duplicate join keeps it. `protected` is
+/// `protected_user_ids`, read once by a caller that saves many.
 pub fn delete_user_store_join(
     connection: &StorageConnection,
     protected: &[String],
@@ -100,8 +73,9 @@ pub fn delete_user_store_join(
             let Some(saved) = repo.find_one_by_id(id)? else {
                 return Ok(false);
             };
-            check_not_protected(protected, &saved.user_id, None)
-                .map_err(|_| DeleteUserStoreJoinError::Protected)?;
+            if is_protected(protected, &saved.user_id, None) {
+                return Err(DeleteUserStoreJoinError::Protected);
+            }
             let removes_store = find_user_store_join(connection, &saved.user_id, &saved.store_id)?
                 .iter()
                 .all(|join| join.id == saved.id);
@@ -172,35 +146,41 @@ pub(crate) fn is_last_store_on_site(
     }))
 }
 
-/// A saved join can change only its default flag: a new user or store would leave the store
-/// access behind and skip the lock-out check `delete_user_store_join` makes. So it stays editable
-/// even if it no longer passes as new, such as one whose user was deleted.
-fn validate(
+/// Every rule `row` breaks. A saved join can change only its default flag: a new user or store
+/// would leave the store access behind and skip the lock-out check `delete_user_store_join` makes.
+/// So it stays editable even if it no longer passes as new, such as one whose user was deleted.
+/// `protected` is `protected_user_ids`, read once by a caller that saves many.
+pub fn user_store_join_errors(
     connection: &StorageConnection,
     protected: &[String],
     saved: Option<&UserStoreJoinRow>,
     row: &UserStoreJoinRow,
-) -> Result<(), UpsertUserStoreJoinError> {
-    check_not_protected(
+) -> Result<Vec<UpsertUserStoreJoinError>, RepositoryError> {
+    let mut errors = Vec::new();
+    if is_protected(
         protected,
         &row.user_id,
         saved.map(|saved| saved.user_id.as_str()),
-    )?;
+    ) {
+        errors.push(UpsertUserStoreJoinError::Protected);
+    }
     if let Some(saved) = saved {
         if saved.user_id != row.user_id || saved.store_id != row.store_id {
-            return Err(UpsertUserStoreJoinError::RecordChanged);
+            errors.push(UpsertUserStoreJoinError::RecordChanged);
         }
-        return Ok(());
+        return Ok(errors);
     }
 
-    check_new_user_and_store(connection, &row.user_id, &row.store_id)?;
+    if is_deleted_user(connection, &row.user_id)? {
+        errors.push(UpsertUserStoreJoinError::UserDeleted);
+    }
     if let Some(other) = find_user_store_join(connection, &row.user_id, &row.store_id)?
         .into_iter()
         .find(|other| other.id != row.id)
     {
-        return Err(UpsertUserStoreJoinError::DuplicateJoin { other_id: other.id });
+        errors.push(UpsertUserStoreJoinError::DuplicateJoin { other_id: other.id });
     }
-    Ok(())
+    Ok(errors)
 }
 
 /// Whether the user can get into the store once login offers it.
@@ -251,12 +231,27 @@ fn give_store_access(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_helpers::save_checked;
     use crate::user_account::upsert::protected_user_ids;
     use chrono::NaiveDate;
     use repository::{
         StoreRow, StoreRowRepository, UserAccountRow, UserAccountRowRepository,
         mock::MockDataInserts, test_db::setup_all,
     };
+
+    fn save(
+        connection: &StorageConnection,
+        protected: &[String],
+        row: &UserStoreJoinRow,
+    ) -> Result<(), Vec<UpsertUserStoreJoinError>> {
+        let saved = UserStoreJoinRowRepository::new(connection)
+            .find_one_by_id(&row.id)
+            .unwrap();
+        save_checked(
+            user_store_join_errors(connection, protected, saved.as_ref(), row),
+            || upsert_user_store_join_unchecked(connection, saved.as_ref(), row),
+        )
+    }
 
     fn protected(connection: &StorageConnection) -> Vec<String> {
         protected_user_ids(connection).unwrap()
@@ -336,7 +331,7 @@ mod tests {
     #[actix_rt::test]
     async fn a_new_store_gives_store_access_so_the_user_can_log_in() {
         let connection = setup("user_store_join_gives_store_access").await;
-        upsert_user_store_join_unchecked_default(
+        save(
             &connection,
             &protected(&connection),
             &join("a", "anna", "first", true),
@@ -353,7 +348,7 @@ mod tests {
             )]
         );
         // Not given twice, nor again on an update.
-        upsert_user_store_join_unchecked_default(
+        save(
             &connection,
             &protected(&connection),
             &join("a", "anna", "first", false),
@@ -361,28 +356,22 @@ mod tests {
         .unwrap();
         assert_eq!(access(&connection, "anna", "first").len(), 1);
 
-        let refused = |row: UserStoreJoinRow| {
-            upsert_user_store_join_unchecked_default(&connection, &protected(&connection), &row)
-        };
+        let refused = |row: UserStoreJoinRow| save(&connection, &protected(&connection), &row);
         assert_eq!(
             refused(join("b", "anna", "first", false)),
-            Err(UpsertUserStoreJoinError::DuplicateJoin {
+            Err(vec![UpsertUserStoreJoinError::DuplicateJoin {
                 other_id: "a".to_string()
-            })
-        );
-        assert_eq!(
-            refused(join("b", "nobody", "first", false)),
-            Err(UpsertUserStoreJoinError::UserNotFound)
+            }])
         );
         assert_eq!(
             refused(join("b", "carl", "first", false)),
-            Err(UpsertUserStoreJoinError::UserDeleted)
+            Err(vec![UpsertUserStoreJoinError::UserDeleted])
         );
         // A saved one stays editable.
         UserStoreJoinRowRepository::new(&connection)
             .upsert_one(&join("carls", "carl", "first", false))
             .unwrap();
-        upsert_user_store_join_unchecked_default(
+        save(
             &connection,
             &protected(&connection),
             &join("carls", "carl", "first", true),
@@ -390,18 +379,14 @@ mod tests {
         .unwrap();
         assert_eq!(
             refused(join("b", "admin", "first", false)),
-            Err(UpsertUserStoreJoinError::Protected)
-        );
-        assert_eq!(
-            refused(join("b", "anna", "nowhere", false)),
-            Err(UpsertUserStoreJoinError::StoreNotFound)
+            Err(vec![UpsertUserStoreJoinError::Protected])
         );
     }
 
     #[actix_rt::test]
     async fn a_saved_store_can_change_only_its_default_flag() {
         let connection = setup("user_store_join_record_changed").await;
-        upsert_user_store_join_unchecked_default(
+        save(
             &connection,
             &protected(&connection),
             &join("a", "anna", "first", true),
@@ -412,12 +397,8 @@ mod tests {
             join("a", "carl", "first", true),
         ] {
             assert_eq!(
-                upsert_user_store_join_unchecked_default(
-                    &connection,
-                    &protected(&connection),
-                    &changed
-                ),
-                Err(UpsertUserStoreJoinError::RecordChanged),
+                save(&connection, &protected(&connection), &changed),
+                Err(vec![UpsertUserStoreJoinError::RecordChanged]),
                 "{changed:?}"
             );
         }
@@ -427,7 +408,7 @@ mod tests {
         assert_eq!(access(&connection, "anna", "second").len(), 0);
 
         // A second default is the caller's to check.
-        upsert_user_store_join_unchecked_default(
+        save(
             &connection,
             &protected(&connection),
             &join("b", "anna", "second", true),
@@ -446,13 +427,13 @@ mod tests {
     #[actix_rt::test]
     async fn taking_a_store_away_takes_its_store_access_and_leaves_no_default() {
         let connection = setup("user_store_join_delete").await;
-        upsert_user_store_join_unchecked_default(
+        save(
             &connection,
             &protected(&connection),
             &join("a", "anna", "first", true),
         )
         .unwrap();
-        upsert_user_store_join_unchecked_default(
+        save(
             &connection,
             &protected(&connection),
             &join("b", "anna", "second", false),
@@ -486,7 +467,7 @@ mod tests {
     #[actix_rt::test]
     async fn a_duplicate_join_keeps_the_store_and_its_store_access() {
         let connection = setup("user_store_join_duplicate").await;
-        upsert_user_store_join_unchecked_default(
+        save(
             &connection,
             &protected(&connection),
             &join("a", "anna", "first", true),
@@ -529,7 +510,7 @@ mod tests {
             })
             .unwrap();
         for (id, store_id) in [("a", "first"), ("b", "second"), ("c", "elsewhere")] {
-            upsert_user_store_join_unchecked_default(
+            save(
                 &connection,
                 &protected(&connection),
                 &join(id, "anna", store_id, false),

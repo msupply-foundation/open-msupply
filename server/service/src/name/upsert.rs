@@ -1,8 +1,6 @@
 use crate::record_key::{KeyCase, other_active_with_key};
 use chrono::Utc;
-use repository::{
-    CurrencyRowRepository, NameRow, NameRowRepository, NameUser, RepositoryError, StorageConnection,
-};
+use repository::{NameRow, NameRowRepository, NameUser, RepositoryError, StorageConnection};
 
 #[derive(Debug, PartialEq)]
 pub enum UpsertNameError {
@@ -14,17 +12,9 @@ pub enum UpsertNameError {
     },
     /// A system name, which the server relies on.
     Protected,
-    /// The currency and `custom_data` are checked only when the save changes them. The supplying
-    /// store isn't checked, as sync doesn't: a name can arrive before its store.
-    CurrencyNotFound,
+    /// Checked only when the save changes it. The currency and supplying store aren't checked: the
+    /// caller finds the currency, and sync saves a name before its store arrives.
     InvalidCustomData,
-    DatabaseError(RepositoryError),
-}
-
-impl From<RepositoryError> for UpsertNameError {
-    fn from(error: RepositoryError) -> Self {
-        UpsertNameError::DatabaseError(error)
-    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -41,22 +31,18 @@ impl From<RepositoryError> for DeleteNameError {
     }
 }
 
-/// Joins the caller's transaction, so an import's earlier rows count. A new name without a
-/// `created_datetime` gets the current time.
-pub fn upsert_name(connection: &StorageConnection, row: &NameRow) -> Result<(), UpsertNameError> {
-    connection
-        .transaction_sync(|connection| -> Result<(), UpsertNameError> {
-            let repo = NameRowRepository::new(connection);
-            let saved = repo.find_one_by_id(&row.id)?;
-            validate(connection, saved.as_ref(), row)?;
-            let mut row = row.clone();
-            if saved.is_none() && row.created_datetime.is_none() {
-                row.created_datetime = Some(Utc::now().naive_utc());
-            }
-            repo.upsert_one(&row)?;
-            Ok(())
-        })
-        .map_err(|error| error.to_inner_error())
+/// Adds or updates one name, which `name_errors` has passed. `saved` is the name with `row.id`. A
+/// new name without a `created_datetime` gets the current time.
+pub fn upsert_name_unchecked(
+    connection: &StorageConnection,
+    saved: Option<&NameRow>,
+    row: &NameRow,
+) -> Result<(), RepositoryError> {
+    let mut row = row.clone();
+    if saved.is_none() && row.created_datetime.is_none() {
+        row.created_datetime = Some(Utc::now().naive_utc());
+    }
+    NameRowRepository::new(connection).upsert_one(&row)
 }
 
 /// Marks the name deleted, so what refers to it still finds it. Deleting a deleted name keeps
@@ -79,19 +65,21 @@ pub fn delete_name(connection: &StorageConnection, name_id: &str) -> Result<(), 
         .map_err(|error| error.to_inner_error())
 }
 
-fn validate(
+/// Every rule `row` breaks.
+pub fn name_errors(
     connection: &StorageConnection,
     saved: Option<&NameRow>,
     row: &NameRow,
-) -> Result<(), UpsertNameError> {
+) -> Result<Vec<UpsertNameError>, RepositoryError> {
+    let mut errors = Vec::new();
     if saved.is_some_and(NameRow::is_system_name) || row.is_system_name() {
-        return Err(UpsertNameError::Protected);
+        errors.push(UpsertNameError::Protected);
     }
     if row.code.trim().is_empty() {
-        return Err(UpsertNameError::CodeRequired);
+        errors.push(UpsertNameError::CodeRequired);
     }
     if row.name.trim().is_empty() {
-        return Err(UpsertNameError::NameRequired);
+        errors.push(UpsertNameError::NameRequired);
     }
     let repo = NameRowRepository::new(connection);
     let is_live = |name: &NameRow| name.deleted_datetime.is_none();
@@ -113,7 +101,7 @@ fn validate(
         |name| &name.code,
         is_live,
     )? {
-        return Err(UpsertNameError::DuplicateCode { other_id });
+        errors.push(UpsertNameError::DuplicateCode { other_id });
     }
     // A saved value that's no longer valid stays editable.
     let changed = |value: fn(&NameRow) -> &Option<String>| {
@@ -121,29 +109,32 @@ fn validate(
             .as_ref()
             .filter(|new| saved.is_none_or(|saved| value(saved).as_ref() != Some(*new)))
     };
-    if let Some(currency_id) = changed(|name| &name.currency_id)
-        && CurrencyRowRepository::new(connection)
-            .find_one_by_id(currency_id)?
-            .is_none()
-    {
-        return Err(UpsertNameError::CurrencyNotFound);
-    }
     if let Some(custom_data) = changed(|name| &name.custom_data_string)
         && serde_json::from_str::<serde_json::Value>(custom_data).is_err()
     {
-        return Err(UpsertNameError::InvalidCustomData);
+        errors.push(UpsertNameError::InvalidCustomData);
     }
-    Ok(())
+    Ok(errors)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_helpers::save_checked;
     use repository::{
         InvoiceRow, InvoiceRowRepository, NameRowType,
         mock::{MockDataInserts, mock_store_a},
         test_db::setup_all,
     };
+
+    fn save(connection: &StorageConnection, row: &NameRow) -> Result<(), Vec<UpsertNameError>> {
+        let saved = NameRowRepository::new(connection)
+            .find_one_by_id(&row.id)
+            .unwrap();
+        save_checked(name_errors(connection, saved.as_ref(), row), || {
+            upsert_name_unchecked(connection, saved.as_ref(), row)
+        })
+    }
 
     fn facility(id: &str, code: &str) -> NameRow {
         NameRow {
@@ -168,16 +159,16 @@ mod tests {
     async fn a_code_is_unique_within_a_type() {
         let (_, connection, _, _) =
             setup_all("upsert_name_duplicate_code", MockDataInserts::none()).await;
-        upsert_name(&connection, &facility("a", "CL1")).unwrap();
+        save(&connection, &facility("a", "CL1")).unwrap();
 
         assert_eq!(
-            upsert_name(&connection, &facility("b", " CL1 ")),
-            Err(UpsertNameError::DuplicateCode {
+            save(&connection, &facility("b", " CL1 ")),
+            Err(vec![UpsertNameError::DuplicateCode {
                 other_id: "a".to_string()
-            })
+            }])
         );
         // Another type may share it.
-        upsert_name(
+        save(
             &connection,
             &NameRow {
                 r#type: NameRowType::Patient,
@@ -187,69 +178,59 @@ mod tests {
         .unwrap();
         // Changing the patient's type to the facility's brings in the clash.
         assert_eq!(
-            upsert_name(&connection, &facility("b", "CL1")),
-            Err(UpsertNameError::DuplicateCode {
+            save(&connection, &facility("b", "CL1")),
+            Err(vec![UpsertNameError::DuplicateCode {
                 other_id: "a".to_string()
-            })
+            }])
         );
         // A deleted name doesn't hold on to its code.
         NameRowRepository::new(&connection)
             .mark_deleted("a")
             .unwrap();
-        upsert_name(&connection, &facility("b", "CL1")).unwrap();
+        save(&connection, &facility("b", "CL1")).unwrap();
     }
 
     #[actix_rt::test]
     async fn a_new_name_gets_its_created_time() {
         let (_, connection, _, _) =
             setup_all("upsert_name_created_datetime", MockDataInserts::none()).await;
-        upsert_name(&connection, &facility("a", "CL1")).unwrap();
+        save(&connection, &facility("a", "CL1")).unwrap();
         let created = find(&connection, "a").created_datetime;
         assert!(created.is_some());
 
         assert_eq!(
-            upsert_name(&connection, &facility("b", "")),
-            Err(UpsertNameError::CodeRequired)
+            save(&connection, &facility("b", "")),
+            Err(vec![UpsertNameError::CodeRequired])
         );
         assert_eq!(
-            upsert_name(
+            save(
                 &connection,
                 &NameRow {
                     name: " ".to_string(),
                     ..facility("b", "CL2")
                 }
             ),
-            Err(UpsertNameError::NameRequired)
+            Err(vec![UpsertNameError::NameRequired])
         );
     }
 
     // covers: OMS-REG-CDIO-01.133
 
     #[actix_rt::test]
-    async fn references_and_custom_data_are_checked() {
+    async fn custom_data_is_checked_but_not_the_supplying_store() {
         let (_, connection, _, _) =
             setup_all("upsert_name_references", MockDataInserts::none()).await;
-        for (name, error) in [
-            (
-                NameRow {
-                    currency_id: Some("nowhere".to_string()),
-                    ..facility("a", "CL1")
-                },
-                UpsertNameError::CurrencyNotFound,
-            ),
-            (
-                NameRow {
-                    custom_data_string: Some("{not json".to_string()),
-                    ..facility("a", "CL1")
-                },
-                UpsertNameError::InvalidCustomData,
-            ),
-        ] {
-            assert_eq!(upsert_name(&connection, &name), Err(error));
-        }
+        let name = NameRow {
+            custom_data_string: Some("{not json".to_string()),
+            ..facility("a", "CL1")
+        };
+        assert_eq!(
+            save(&connection, &name),
+            Err(vec![UpsertNameError::InvalidCustomData])
+        );
 
         // A supplying store that hasn't arrived yet is saved, as sync saves it.
-        upsert_name(
+        save(
             &connection,
             &NameRow {
                 supplying_store_id: Some("not_synced_yet".to_string()),
@@ -269,8 +250,8 @@ mod tests {
         )
         .await;
         assert_eq!(
-            upsert_name(&connection, &facility("new_invad", "invad")),
-            Err(UpsertNameError::Protected)
+            save(&connection, &facility("new_invad", "invad")),
+            Err(vec![UpsertNameError::Protected])
         );
 
         let store = mock_store_a();
@@ -280,7 +261,7 @@ mod tests {
         );
         assert_eq!(find(&connection, &store.name_id).deleted_datetime, None);
 
-        upsert_name(&connection, &facility("customer", "CL2")).unwrap();
+        save(&connection, &facility("customer", "CL2")).unwrap();
         InvoiceRowRepository::new(&connection)
             .upsert_one(&InvoiceRow {
                 id: "shipment".to_string(),
@@ -294,7 +275,7 @@ mod tests {
             Err(DeleteNameError::InUse(NameUser::Invoice))
         );
 
-        upsert_name(&connection, &facility("a", "CL1")).unwrap();
+        save(&connection, &facility("a", "CL1")).unwrap();
         delete_name(&connection, "a").unwrap();
         assert!(find(&connection, "a").deleted_datetime.is_some());
     }

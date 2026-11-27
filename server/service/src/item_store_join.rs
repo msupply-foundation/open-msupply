@@ -1,14 +1,10 @@
 use repository::{
-    ItemRowRepository, ItemStoreJoinRow, ItemStoreJoinRowRepository,
-    ItemStoreJoinRowRepositoryTrait, LocationRowRepository, RepositoryError, StorageConnection,
-    StoreRowRepository,
+    ItemStoreJoinRow, ItemStoreJoinRowRepository, ItemStoreJoinRowRepositoryTrait,
+    LocationRowRepository, RepositoryError, StorageConnection,
 };
 
 #[derive(Debug, PartialEq)]
 pub enum UpsertItemStoreJoinError {
-    ItemNotFound,
-    StoreNotFound,
-    LocationNotFound,
     /// The default location belongs to another store.
     LocationInAnotherStore {
         location_code: String,
@@ -19,30 +15,15 @@ pub enum UpsertItemStoreJoinError {
     DuplicateJoin {
         other_id: String,
     },
-    DatabaseError(RepositoryError),
-}
-
-impl From<RepositoryError> for UpsertItemStoreJoinError {
-    fn from(error: RepositoryError) -> Self {
-        UpsertItemStoreJoinError::DatabaseError(error)
-    }
 }
 
 /// Saves an item's properties in a store: its default sell price, margin, default location and
-/// whether orders ignore it. Joins the caller's transaction, so an import's earlier rows count.
-pub fn upsert_item_store_join(
+/// whether orders ignore it. `row` has passed `item_store_join_errors`.
+pub fn upsert_item_store_join_unchecked(
     connection: &StorageConnection,
     row: &ItemStoreJoinRow,
-) -> Result<(), UpsertItemStoreJoinError> {
-    connection
-        .transaction_sync(|connection| -> Result<(), UpsertItemStoreJoinError> {
-            let repo = ItemStoreJoinRowRepository::new(connection);
-            let saved = repo.find_one_by_id(&row.id)?;
-            validate(connection, saved.as_ref(), row)?;
-            repo.upsert_one(row)?;
-            Ok(())
-        })
-        .map_err(|error| error.to_inner_error())
+) -> Result<(), RepositoryError> {
+    ItemStoreJoinRowRepository::new(connection).upsert_one(row)
 }
 
 /// Removes the item's properties in the store, so it takes the defaults.
@@ -53,46 +34,34 @@ pub fn delete_item_store_join(
     ItemStoreJoinRowRepository::new(connection).delete(id)
 }
 
-/// Only what the save changes is checked, so a saved join that no longer passes, such as one with
-/// a negative price, stays editable.
-fn validate(
+/// Every rule `row` breaks. Only what the save changes is checked, so a saved join that no longer
+/// passes, such as one with a negative price, stays editable. The caller finds its item, store and
+/// location, so a missing one isn't checked here.
+pub fn item_store_join_errors(
     connection: &StorageConnection,
     saved: Option<&ItemStoreJoinRow>,
     row: &ItemStoreJoinRow,
-) -> Result<(), UpsertItemStoreJoinError> {
+) -> Result<Vec<UpsertItemStoreJoinError>, RepositoryError> {
+    let mut errors = Vec::new();
     let item_changes = saved.is_none_or(|saved| saved.item_id != row.item_id);
     let store_changes = saved.is_none_or(|saved| saved.store_id != row.store_id);
     let location_changes = store_changes
         || saved.is_none_or(|saved| saved.default_location_id != row.default_location_id);
     let price_changes = saved
         .is_none_or(|saved| saved.default_sell_price_per_pack != row.default_sell_price_per_pack);
-    if item_changes
-        && ItemRowRepository::new(connection)
-            .find_one_by_id_without_legacy_record(&row.item_id)?
-            .is_none()
+    if location_changes
+        && let Some(location_id) = &row.default_location_id
+        && let Some(location) =
+            LocationRowRepository::new(connection).find_one_by_id(location_id)?
+        && location.store_id != row.store_id
     {
-        return Err(UpsertItemStoreJoinError::ItemNotFound);
-    }
-    if store_changes
-        && StoreRowRepository::new(connection)
-            .find_one_by_id(&row.store_id)?
-            .is_none()
-    {
-        return Err(UpsertItemStoreJoinError::StoreNotFound);
-    }
-    if location_changes && let Some(location_id) = &row.default_location_id {
-        let location = LocationRowRepository::new(connection)
-            .find_one_by_id(location_id)?
-            .ok_or(UpsertItemStoreJoinError::LocationNotFound)?;
-        if location.store_id != row.store_id {
-            return Err(UpsertItemStoreJoinError::LocationInAnotherStore {
-                location_code: location.code,
-                location_store_id: location.store_id,
-            });
-        }
+        errors.push(UpsertItemStoreJoinError::LocationInAnotherStore {
+            location_code: location.code,
+            location_store_id: location.store_id,
+        });
     }
     if price_changes && row.default_sell_price_per_pack < 0.0 {
-        return Err(UpsertItemStoreJoinError::NegativePrice);
+        errors.push(UpsertItemStoreJoinError::NegativePrice);
     }
     if (item_changes || store_changes)
         && let Some(other) = ItemStoreJoinRowRepository::new(connection)
@@ -100,18 +69,32 @@ fn validate(
             .into_iter()
             .find(|other| other.id != row.id)
     {
-        return Err(UpsertItemStoreJoinError::DuplicateJoin { other_id: other.id });
+        errors.push(UpsertItemStoreJoinError::DuplicateJoin { other_id: other.id });
     }
-    Ok(())
+    Ok(errors)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_helpers::save_checked;
     use repository::{
-        ItemRow, LocationRow, NameRow, NameRowRepository, StoreRow, mock::MockDataInserts,
-        test_db::setup_all,
+        ItemRow, ItemRowRepository, LocationRow, NameRow, NameRowRepository, StoreRow,
+        StoreRowRepository, mock::MockDataInserts, test_db::setup_all,
     };
+
+    fn save(
+        connection: &StorageConnection,
+        row: &ItemStoreJoinRow,
+    ) -> Result<(), Vec<UpsertItemStoreJoinError>> {
+        let saved = ItemStoreJoinRowRepository::new(connection)
+            .find_one_by_id(&row.id)
+            .unwrap();
+        save_checked(
+            item_store_join_errors(connection, saved.as_ref(), row),
+            || upsert_item_store_join_unchecked(connection, row),
+        )
+    }
 
     fn join(id: &str, item_id: &str) -> ItemStoreJoinRow {
         ItemStoreJoinRow {
@@ -162,7 +145,7 @@ mod tests {
                 .unwrap();
         }
 
-        upsert_item_store_join(
+        save(
             &connection,
             &ItemStoreJoinRow {
                 default_location_id: Some("shelf".to_string()),
@@ -171,57 +154,33 @@ mod tests {
         )
         .unwrap();
         assert_eq!(
-            upsert_item_store_join(&connection, &join("b", "para")),
-            Err(UpsertItemStoreJoinError::DuplicateJoin {
+            save(&connection, &join("b", "para")),
+            Err(vec![UpsertItemStoreJoinError::DuplicateJoin {
                 other_id: "a".to_string()
-            })
+            }])
         );
         assert_eq!(
-            upsert_item_store_join(&connection, &join("b", "nothing")),
-            Err(UpsertItemStoreJoinError::ItemNotFound)
-        );
-        assert_eq!(
-            upsert_item_store_join(
-                &connection,
-                &ItemStoreJoinRow {
-                    store_id: "no_store".to_string(),
-                    ..join("b", "ibu")
-                }
-            ),
-            Err(UpsertItemStoreJoinError::StoreNotFound)
-        );
-        assert_eq!(
-            upsert_item_store_join(
-                &connection,
-                &ItemStoreJoinRow {
-                    default_location_id: Some("no_shelf".to_string()),
-                    ..join("b", "ibu")
-                }
-            ),
-            Err(UpsertItemStoreJoinError::LocationNotFound)
-        );
-        assert_eq!(
-            upsert_item_store_join(
+            save(
                 &connection,
                 &ItemStoreJoinRow {
                     default_location_id: Some("other_shelf".to_string()),
                     ..join("b", "ibu")
                 }
             ),
-            Err(UpsertItemStoreJoinError::LocationInAnotherStore {
+            Err(vec![UpsertItemStoreJoinError::LocationInAnotherStore {
                 location_code: "OTHER_SHELF".to_string(),
                 location_store_id: "other".to_string()
-            })
+            }])
         );
         assert_eq!(
-            upsert_item_store_join(
+            save(
                 &connection,
                 &ItemStoreJoinRow {
                     default_sell_price_per_pack: -1.0,
                     ..join("b", "ibu")
                 }
             ),
-            Err(UpsertItemStoreJoinError::NegativePrice)
+            Err(vec![UpsertItemStoreJoinError::NegativePrice])
         );
 
         // A saved negative price stays editable while the save leaves it as it is.
@@ -231,7 +190,7 @@ mod tests {
                 ..join("b", "ibu")
             })
             .unwrap();
-        upsert_item_store_join(
+        save(
             &connection,
             &ItemStoreJoinRow {
                 default_sell_price_per_pack: -1.0,

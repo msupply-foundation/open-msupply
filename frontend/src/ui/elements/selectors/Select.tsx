@@ -219,7 +219,7 @@ export const Select = (props: SelectProps) => {
         option.value !== NO_OPTIONS_VALUE &&
         props.onValueChange?.(option.value)
       }
-      placeholder={props.placeholder ?? 'Select…'}
+      placeholder={props.placeholder ?? t('placeholder.select')}
       disabled={props.disabled}
       validationState={props.error ? 'invalid' : 'valid'}
       itemComponent={itemProps => (
@@ -299,7 +299,7 @@ export const Select = (props: SelectProps) => {
           <button
             type="button"
             class={styles.clear}
-            aria-label="Clear selection"
+            aria-label={t('label.clear-selection')}
             // Clearing removes this button (showClear turns false), so focus
             // must be handed to the trigger — dropped, it falls to <body> and
             // a keyboard user's next Tab restarts from the document top.

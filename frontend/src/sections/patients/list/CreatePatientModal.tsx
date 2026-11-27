@@ -320,6 +320,8 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
           setChooseError(
             linked.message || t('messages.failed-to-reach-central')
           );
+        else if (linked.kind === 'notHereYet')
+          setChooseError(t('messages.patient-arrives-next-sync'));
         return;
       }
     }
@@ -670,7 +672,9 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
       actionsLead={duplicateLine}
       actions={actions()}
     >
-      <Show when={formError() ?? chooseError()}>
+      {/* `||`, not `??`: the plain path's save error is '' when there's
+          none, which would hide a choose error. */}
+      <Show when={formError() || chooseError()}>
         {message => <Alert severity="error">{message()}</Alert>}
       </Show>
       <Show when={reviewing()}>

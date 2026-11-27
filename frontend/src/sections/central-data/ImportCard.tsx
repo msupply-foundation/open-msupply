@@ -252,7 +252,12 @@ export const ImportCard = (props: { state: ImportState }) => (
 
     {/* Keyed, so each preview's lists start on page 1. */}
     <Show when={props.state.preview()} keyed>
-      {current => <ImportPreviewCard preview={current} />}
+      {current => (
+        <ImportPreviewCard
+          preview={current}
+          rechecked={props.state.rechecked()}
+        />
+      )}
     </Show>
   </Stack>
 );

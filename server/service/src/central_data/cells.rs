@@ -43,6 +43,12 @@ pub fn and_list(items: &[impl AsRef<str>]) -> String {
     }
 }
 
+/// `one of A, B, C`: the choices as a row error lists them.
+pub fn one_of<T>(choices: &[(&str, T)]) -> String {
+    let listed: Vec<&str> = choices.iter().map(|(choice, _)| *choice).collect();
+    format!("one of {}", listed.join(", "))
+}
+
 /// The value, or its default with the error added to `errors`.
 pub fn collect<T: Default>(errors: &mut Vec<RowError>, result: Result<T, RowError>) -> T {
     result.unwrap_or_else(|error| {
@@ -50,6 +56,9 @@ pub fn collect<T: Default>(errors: &mut Vec<RowError>, result: Result<T, RowErro
         T::default()
     })
 }
+
+/// Builds a choice column's `one_of` text, only when an error needs it.
+pub type Choices = fn() -> String;
 
 pub struct Row<'a> {
     pub sheet: &'a str,
@@ -171,13 +180,7 @@ impl<'a> Row<'a> {
             .find(|(choice, _)| choice.eq_ignore_ascii_case(&text))
         {
             Some((_, value)) => Ok(Some(value.clone())),
-            None => {
-                let listed: Vec<&str> = choices.iter().map(|(choice, _)| *choice).collect();
-                Err(self.error(
-                    column,
-                    format!("\"{text}\" must be one of {}", listed.join(", ")),
-                ))
-            }
+            None => Err(self.error(column, format!("\"{text}\" must be {}", one_of(choices)))),
         }
     }
 
@@ -188,10 +191,33 @@ impl<'a> Row<'a> {
         record: &str,
         columns: &[(&str, bool)],
     ) {
+        self.require_for_new_with_choices(errors, record, columns, &[]);
+    }
+
+    /// As `require_for_new`, and a missing column in `choices` lists its choices, as its `one_of`
+    /// call words them. Only called for a missing column, so a row with the cell builds nothing.
+    pub fn require_for_new_with_choices(
+        &self,
+        errors: &mut Vec<RowError>,
+        record: &str,
+        columns: &[(&str, bool)],
+        choices: &[(&str, Choices)],
+    ) {
+        debug_assert!(
+            choices
+                .iter()
+                .all(|(choice, _)| columns.iter().any(|(column, _)| column == choice)),
+            "every choice column is one of the required columns"
+        );
         for (column, missing) in columns {
-            if *missing && !errors.iter().any(|e| e.column.as_deref() == Some(column)) {
-                errors.push(self.error(column, format!("{column} is required for a new {record}")));
+            if !*missing || errors.iter().any(|e| e.column.as_deref() == Some(column)) {
+                continue;
             }
+            let mut message = format!("{column} is required for a new {record}");
+            if let Some((_, one_of)) = choices.iter().find(|(choice, _)| choice == column) {
+                message.push_str(&format!(" and must be {}", one_of()));
+            }
+            errors.push(self.error(column, message));
         }
     }
 

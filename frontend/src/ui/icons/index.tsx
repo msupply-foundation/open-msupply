@@ -686,6 +686,15 @@ export const ArrowRightIcon = (props: IconProps) => (
   </Stroke>
 );
 
+/* Points back, to the inline start: mirrors in RTL like ArrowRight. */
+/* Hugeicons: ArrowLeft02Icon */
+export const ArrowLeftIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" data-flip-rtl="" {...props}>
+    <path d="M5.5 12L19 12" />
+    <path d="M11 18C11 18 5 13.5811 5 12C5 10.4188 11 6 11 6" />
+  </Stroke>
+);
+
 /* Pagination pager arrows — data-flip-rtl mirrors them in RTL. */
 /* Hugeicons: ArrowLeft01Icon */
 export const NavigateBeforeIcon = (props: IconProps) => (

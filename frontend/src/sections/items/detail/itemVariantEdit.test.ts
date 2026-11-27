@@ -4,6 +4,7 @@ import {
   emptyForm,
   formFromVariant,
   isFormValid,
+  packagingRowErrors,
   rejectionMessage,
   saveRejection,
   type DraftItemVariant,
@@ -79,6 +80,7 @@ describe('formFromVariant', () => {
       packSize: 1,
       volumePerUnit: 0.5,
       barcode: '5012345678900',
+      initialName: 'Primary',
     });
   });
 
@@ -170,6 +172,7 @@ const validForm = (): DraftItemVariant => ({
       packagingLevel: 1,
       packSize: 1,
       volumePerUnit: 0.5,
+      initialName: 'Primary',
     },
   ],
 });
@@ -227,6 +230,130 @@ describe('isFormValid', () => {
   it('is valid with a name and every packaging row positive', () => {
     expect(isFormValid(validForm())).toBe(true);
   });
+
+  // OMS-REG-CAT-05.32 — renaming a level enters it, so it's checked, not
+  // silently dropped as blank.
+  it('is invalid when a seeded row is renamed but has no pack size or volume', () => {
+    const form = emptyForm();
+    form.name = 'Renamed';
+    form.packaging[0].packSize = 10;
+    form.packaging[0].volumePerUnit = 1;
+    form.packaging[1].name = 'Box';
+    expect(isFormValid(form)).toBe(false);
+    form.packaging[1].packSize = 5;
+    form.packaging[1].volumePerUnit = 2;
+    expect(isFormValid(form)).toBe(true);
+  });
+
+  // An otherwise blank row whose name is cleared hasn't been entered.
+  it('skips a blank row whose name was cleared', () => {
+    const form = emptyForm();
+    form.name = 'One level';
+    form.packaging[0].packSize = 10;
+    form.packaging[0].volumePerUnit = 1;
+    form.packaging[2].name = '';
+    expect(isFormValid(form)).toBe(true);
+  });
+
+  it("doesn't treat spaces added to a seeded name as a rename", () => {
+    const form = emptyForm();
+    form.name = 'One level';
+    form.packaging[0].packSize = 10;
+    form.packaging[0].volumePerUnit = 1;
+    form.packaging[1].name = `${form.packaging[1].name} `;
+    expect(isFormValid(form)).toBe(true);
+  });
+
+  // A row saved with no name and no values (possible before .33) is blank:
+  // it doesn't block Save, and the save removes it.
+  it('drops a saved row that has no name and no values', () => {
+    const form = formFromVariant(
+      variantRow({
+        packagingVariants: [
+          {
+            id: 'pv-1',
+            name: 'Primary',
+            packagingLevel: 1,
+            packSize: 1,
+            volumePerUnit: 0.5,
+            barcode: null,
+          },
+          {
+            id: 'pv-empty',
+            name: '',
+            packagingLevel: 2,
+            packSize: null,
+            volumePerUnit: null,
+            barcode: null,
+          },
+        ],
+      })
+    );
+    expect(isFormValid(form)).toBe(true);
+    const input = buildUpsertInput(form, ITEM_ID, 'variant-1');
+    expect(input.packagingVariants?.map(row => row.id)).not.toContain(
+      'pv-empty'
+    );
+  });
+
+  // OMS-REG-CAT-05.33
+  it('is invalid when an entered packaging row has a blank name', () => {
+    const form = validForm();
+    form.packaging[0].name = '   ';
+    expect(isFormValid(form)).toBe(false);
+  });
+});
+
+// OMS-REG-CAT-05.31, .33 — each cell that blocks Save says why.
+describe('packagingRowErrors', () => {
+  const row = () => validForm().packaging[0];
+
+  it('flags nothing on a valid row or a blank seeded row', () => {
+    expect(packagingRowErrors(row())).toEqual({});
+    expect(packagingRowErrors(emptyForm().packaging[1])).toEqual({});
+  });
+
+  it('flags the missing value on a half-entered row', () => {
+    const seeded = emptyForm().packaging[1];
+    seeded.packSize = 10;
+    expect(packagingRowErrors(seeded)).toEqual({
+      volumePerUnit: 'error.field-required',
+    });
+  });
+
+  it('flags a zero value as not greater than zero', () => {
+    expect(packagingRowErrors({ ...row(), packSize: 0 })).toEqual({
+      packSize: 'error.must-be-greater-than-zero',
+    });
+  });
+
+  it('flags both values on a renamed row with none', () => {
+    const seeded = emptyForm().packaging[2];
+    seeded.name = 'Pallet';
+    expect(packagingRowErrors(seeded)).toEqual({
+      packSize: 'error.field-required',
+      volumePerUnit: 'error.field-required',
+    });
+  });
+
+  it('flags a blank name on an entered row', () => {
+    expect(packagingRowErrors({ ...row(), name: '' })).toEqual({
+      name: 'error.field-required',
+    });
+  });
+
+  it('lets a row holding a barcode leave values blank but not zero', () => {
+    const barcodeRow = {
+      ...row(),
+      barcode: 'gtin:05012345678900',
+      packSize: undefined,
+      volumePerUnit: undefined,
+    };
+    expect(packagingRowErrors(barcodeRow)).toEqual({});
+    expect(packagingRowErrors({ ...barcodeRow, volumePerUnit: 0 })).toEqual({
+      volumePerUnit: 'error.must-be-greater-than-zero',
+    });
+  });
 });
 
 describe('buildUpsertInput', () => {
@@ -243,6 +370,7 @@ describe('buildUpsertInput', () => {
           packagingLevel: 1,
           packSize: 1,
           volumePerUnit: 0.5,
+          initialName: 'Primary',
         },
       ],
     };

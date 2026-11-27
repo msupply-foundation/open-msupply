@@ -23,11 +23,12 @@ Runbook for the box that runs the containerised CI jobs and hosts the deployment
 | `docker-compose-v2` | the deploy runs `docker compose`; without the plugin `docker compose -f ...` fails as `unknown shorthand flag: 'f'` |
 | `qemu-user-static`, `binfmt-support` | arm64 image builds on release tags — see below |
 | `git`, `curl`, `tar`, `jq` | `actions/checkout`, and fetching the runner |
+| `python3` | the [light lanes](#lanes)' stdlib-only checks (the mirror dry run, the spec anchors). Ubuntu ships it; listed so a minimal image doesn't lose it |
 
 ```bash
 sudo apt-get update
 sudo apt-get install -y docker.io docker-buildx docker-compose-v2 \
-  qemu-user-static binfmt-support git curl tar jq
+  qemu-user-static binfmt-support git curl tar jq python3
 sudo systemctl enable --now docker
 ```
 
@@ -61,7 +62,7 @@ Rule #0 must read `Filters: type==exec.cachemount` with `Keep Duration: 336h0m0s
 
 ## Sizing
 
-Roughly **4 cores and 4–8 GB RAM per lane**, plus a small server's worth of RAM per deployment. RAM is what gets under-bought: rustc peaks while linking, and several lanes peaking together triggers the OOM killer.
+Roughly **4 cores and 4–8 GB RAM per build lane**, plus a small server's worth of RAM per deployment. RAM is what gets under-bought: rustc peaks while linking, and several lanes peaking together triggers the OOM killer. [Light lanes](#lanes) don't count: an idle runner is about 100 MB and their jobs run git, bash and python3 for seconds. Each does keep a full clone of the repo under its own `_work` (the mirror dry run fetches all history), so count a few GB of disk apiece.
 
 **Nothing on the host caps a lane's memory.** A job's real work does not run in the runner's process tree: `docker buildx build` compiles inside dockerd's BuildKit, and `docker run` containers run under containerd. A limit on the runner's systemd unit only ever covers the runner and the `docker` client, so it cannot stop a build. What bounds memory is how much each build runs at once (cargo's job count) and limits set on the containers themselves — add lanes only as far as the busiest days leave headroom, and watch available memory when you do.
 
@@ -111,6 +112,7 @@ A lane carries exactly one role:
 | `build` | `actions-runner-1` … `-4` | the image build — CPU-bound, ~19 minutes cold |
 | `deploy` | `actions-runner-deploy` | every plan, deploy and teardown job of the deployment workflows — about a minute each |
 | `e2e` | `actions-runner-e2e` | the nightly front-end e2e suite (`frontend-e2e-nightly.yaml`), which also asks for `x64` |
+| `light` | `actions-runner-light1` | jobs of a few seconds (a couple of minutes at most): every PR workflow's `changes / Detect`, `Server CI result`, the spec and report-version checks, the mirror dry run, and the label, issue and deployment-status housekeeping. GitHub bills each as a whole minute on its hosted runners, where together they were about half the org's hosted minutes. The mac mini has a light lane too, and these jobs ask for `[self-hosted, light]` with no OS, so they take whichever is free. Only `Spec references` asks for `Linux` as well, for the box's docker |
 
 A label nothing carries makes its jobs queue for ever with no error.
 
@@ -127,7 +129,7 @@ Then, per lane — the registration token expires after an hour, so mint one eac
 
 ```bash
 OWNER_REPO=msupply-foundation/open-msupply-internal
-lane=1; labels=build          # deploy lane: lane=deploy labels=deploy; e2e: lane=e2e labels=e2e
+lane=1; labels=build          # deploy lane: lane=deploy labels=deploy; e2e: lane=e2e labels=e2e; light: lane=light1 labels=light
 mkdir -p ~/actions-runner-$lane && tar xzf /tmp/runner.tar.gz -C ~/actions-runner-$lane
 TOKEN=$(gh api -X POST repos/$OWNER_REPO/actions/runners/registration-token -q .token)
 ~/actions-runner-$lane/config.sh --unattended --replace \
@@ -137,7 +139,7 @@ TOKEN=$(gh api -X POST repos/$OWNER_REPO/actions/runners/registration-token -q .
 
 ### systemd
 
-The units are tracked in [`.github/deploy/host/`](https://github.com/msupply-foundation/open-msupply-internal/tree/develop/.github/deploy/host): one template for the build and e2e lanes (`actions-runner@.service`, `%i` is the lane) and one for the deploy lane, with `@USER@` and `@HOME@` standing for the runner user's.
+The units are tracked in [`.github/deploy/host/`](https://github.com/msupply-foundation/open-msupply-internal/tree/develop/.github/deploy/host): one template for the build, e2e and light lanes (`actions-runner@.service`, `%i` is the lane) and one for the deploy lane, with `@USER@` and `@HOME@` standing for the runner user's.
 
 **`docker-deploy-services.yaml` checks the box against them on its daily run.** When they differ, its job summary shows the diff and the commands to apply it — the files written out in full, so they paste onto a box with no checkout — with the restarts they need left for a moment when nothing is running. Nothing is applied automatically. To change a unit, change the repo's copy, merge, then paste what the next run's summary gives; an edit made only on the box is reported until the repo agrees. A lane running under a unit set up by hand (`actions-runner-<lane>.service`) shows as `UNTRACKED`, and the commands move it onto `actions-runner@<lane>`. A lane that is installed but not enabled is left alone: lanes are switched off on purpose, to keep the box within its memory.
 
@@ -145,7 +147,8 @@ On a new box, before any lane can run that workflow, copy the two files from the
 
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable --now actions-runner@1 actions-runner@2 actions-runner@3 actions-runner@4 actions-runner@e2e actions-runner-deploy
+sudo systemctl enable --now actions-runner@1 actions-runner@2 actions-runner@3 actions-runner@4 actions-runner@e2e \
+  actions-runner@light1 actions-runner-deploy
 ```
 
 ```bash
@@ -153,7 +156,7 @@ systemctl status 'actions-runner*'
 journalctl -u actions-runner@1 -f
 ```
 
-Adding a build lane is installing and registering `actions-runner-5`, then `systemctl enable --now actions-runner@5`. A second deploy lane is also safe — nothing publishes a host port, so there is nothing for two lanes to collide on.
+Adding a build lane is installing and registering `actions-runner-5`, then `systemctl enable --now actions-runner@5`. One light lane here and one on the mac are enough: their jobs take seconds, so a burst of PR pushes clears in well under a minute. If they start to queue, a second is the same steps with `light2`, and an idle lane costs almost nothing. A second deploy lane is also safe — nothing publishes a host port, so there is nothing for two lanes to collide on.
 
 **Not used: JIT runners.** GitHub can mint a one-shot config per job (`generate-jitconfig`), which makes lanes ephemeral and removes registration entirely. It needs a token with **Administration: write** held on the box, which we do not want there, so the lanes are registered once by hand instead.
 
@@ -178,6 +181,7 @@ Each is its own compose project — one container running the server and its own
 | `DEPLOY_REFERENCE_FILE` | `e2e` | the dataset a new deployment is seeded from. `reference1` does not load on current servers. |
 | `DEPLOY_SHARED_DAEMON` | unset | see above |
 | `DEPLOY_BUNDLES_DIR` | `/opt/omsupply/bundles` | the Launchpad's store of plugin bundles, report bundles and schemas; must exist |
+| `DATASET_MAX_GB` | `50` | the biggest dataset that can be uploaded on the dashboard's Datasets page |
 | `BUNDLE_RETAIN_DAYS` | `30` | how long a branch's plugin bundles are kept on the dashboard — see [Plugin bundles](#plugin-bundles) |
 
 ### Deployment state
@@ -345,7 +349,7 @@ Two more tabs: **Plugin bundles** (see [below](#plugin-bundles)) and **Downloads
 
 **The B2 key.** Listing the bucket takes a key: the repository secrets `B2_LIST_KEY_ID` and `B2_LIST_APPLICATION_KEY`, which the workflow hands only to its lookup container, for the length of the run. Nothing is stored on the box. Make the key in Backblaze under **App Keys → Add a New Application Key**: restricted to `msupply-releases`, **Read Only**, without **Allow List All Bucket Names**. Don't reuse the release workflows' `B2_KEY_ID`: that one can write to the bucket. Without the secrets, or with a key that can't list the bucket, the run fails and the last good list stays.
 
-Its files are in `.github/deploy/dashboard/`. How it works and why — the container split around the docker socket, sign-in and access, where each field comes from — is in the header comments of `compose.dashboard.yaml`, `snapshot.mjs`, `releases.mjs`, `web.mjs` and `publish-launchpad.yaml`. The page itself is a Solid app in `ui/`, built into the image by the `Dockerfile`'s first stage; `ui/README.md` says how to run it locally.
+Its files are in `.github/deploy/dashboard/`. How it works and why — the container split around the docker socket, sign-in and access, where each field comes from — is in the header comments of `compose.dashboard.yaml`, `snapshot.mjs`, `releases.mjs`, `web.mjs`, `datasets.mjs` and `publish-launchpad.yaml`. The page itself is a Solid app in `ui/`, built into the image by the `Dockerfile`'s first stage; `ui/README.md` says how to run it locally.
 
 **1. Create the GitHub App** people sign in through, once, under the organisation (Settings → Developer settings → GitHub Apps → New):
 
@@ -381,7 +385,7 @@ They come from **`publish-bundles.yaml`**:
 - **RC branches and release tags** release a version the same way, once the branch has this workflow. RC branches cut before it can be published by running the workflow by hand from `develop` on the RC; a plugin whose halves still disagree there (CIV before 3.0.0) is skipped with a warning and the rest publish.
 - **Pre-releases:** build a branch from the dashboard's Plugins page (its **Build from a branch** button, or **Build plugin bundles** on a server's own page, for anyone with write access), or run the workflow by hand from Actions. The Plugins page shows builds in flight and any that failed in the last day. Anything that differs from a release shows as a pre-release, the newest per branch, pruned after `BUNDLE_RETAIN_DAYS` (default 30).
 - **Compatibility** is recorded beside each version, not as part of it. Today it is derived from the version (the server loads a plugin whose major.minor is at most its own) and from the frontend half's host runtime; see `compatOf` in `.github/scripts/publish-bundles.mjs`.
-- **How:** the build runs `pnpm build:plugins` on a hosted runner and drops the `plugins/examples` bundles. A short job on the `deploy` lane then runs `publish-bundles.mjs` in a throwaway `node` container, which writes into the **Launchpad store** (`DEPLOY_BUNDLES_DIR`, see [User and directories](#user-and-directories)): `index.json` plus one file per distinct bundle, named by its sha256. The dashboard mounts it read-only.
+- **How:** the build runs `pnpm build:plugins` on the mac mini and drops the `plugins/examples` bundles. A short job on the `deploy` lane then runs `publish-bundles.mjs` in a throwaway `node` container, which writes into the **Launchpad store** (`DEPLOY_BUNDLES_DIR`, see [User and directories](#user-and-directories)): `index.json` plus one file per distinct bundle, named by its sha256. The dashboard mounts it read-only, all but `datasets/` (see [Datasets](#datasets)), which it writes.
 
 **The store is a cache, not the record.** The plugin build is reproducible (the same commit gives byte-identical bundles), so a pruned bundle, or a lost store, is rebuilt by running the workflow on the commit it came from. Nothing on the box needs backing up for this.
 
@@ -403,7 +407,8 @@ The store is a cache here too: the report build is reproducible, so anything los
 
 A new server, or one being reset, can start with more than the small sample data built into the image (`e2e`, `reference1`): any postgres custom-format dump (`pg_dump -Fc`) of an open-mSupply database added to the Launchpad, such as the reference system's (<https://reference.msupply.foundation>, 3 months, 12 months or 3 years of a fictional country's supply chain) or an anonymised client database.
 
-- **Adding one:** run **`publish-dataset.yaml`** by hand with a name (e.g. `reference-3-months`), the dump's URL - or `file:///path` for one you have copied onto the box - a label and a line of description. It downloads the dump into the store under `datasets/<name>/`, and reads the open-mSupply version it was taken at and its users straight out of it with `pg_restore` — nothing is restored. It must be a custom-format dump without privileges (`pg_dump -Fc --no-owner --no-privileges`); anything else is refused. Restoring any dump runs the SQL it holds, so only add dumps from somewhere you trust. Adding a name that exists replaces it; removing one (`remove`) deletes its file. Servers started from either keep their data.
+- **Adding one:** on the dashboard's **Datasets** page, **Add a dataset** (for anyone with write access): upload a dump from your machine with a name (e.g. `reference-3-months`), a label and a line of description. Uploads go in chunks and pick up where they stopped, after a dropped connection, a reload or a dashboard restart: pick the same file under the same name again. The dashboard reads the open-mSupply version it was taken at and its users straight out of it with `pg_restore` (the image's postgres 17, the servers' own) — nothing is restored — and files it under `datasets/<name>/` in the store. It must be a custom-format dump without privileges (`pg_dump -Fc --no-owner --no-privileges`) that has been through the anonymiser (`private/internal/anonymise/anonymise.sh`, or with `--credentials-only` for a database with no real people in it, such as the reference system's); anything else is refused, and the page says why. The anonymiser leaves a mark in the database (`anonymisation_report`), and the dashboard takes only a dump that has it. The anonymiser has by then set every login and site to `pass`, cleared site tokens and hardware ids and plugins' logins to other systems, and turned sync off, so a dataset added this way is safe to download and start locally. The dashboard does not check those itself: the mark is written with them, and repeating the anonymiser's rules here would only drift from them. One added before the mark was required, through the old workflow, shows as **Not checked** and has no such promise. It stops a raw production dump going up by mistake, not someone set on getting round it. Restoring any dump runs the SQL it holds, so only add dumps from somewhere you trust. Adding a name that exists replaces it, if you tick **Replace**; **Remove** deletes its file. Servers started from either keep their data. 50 GB at most (the `DATASET_MAX_GB` repository variable).
+- **Who did what:** the dashboard checks with GitHub that you still have write access before each change, and writes a line per add, replace, edit and removal to `datasets/.audit.jsonl` in the store, as well as its log. There is no workflow run to look back at.
 - **Choosing one:** the new-server form lists every dataset under **With example data**, and a server's **Reset data** has the same list, so a reset can switch data. Migrations only go forward, so a dataset is offered only to versions at least as new as the one it was taken at; the others are listed greyed out with why. A branch, a pull request or develop not yet deployed counts as current.
 - **Logins:** every user's password is set to `pass` as the server is seeded, as in the sample data, whatever the dump's own passwords were. A server's **Log in** card lists the dataset's users.
 - **How it is seeded:** `docker-deploy.yaml` restores the dump in a one-off container of the server's own image, on its new database volume, before the server first starts: the image's `entry-postgres.sh` restores it (images from v3.2 can), its migrations run, every password becomes `pass`, then `refresh-dates` (which also turns outgoing sync off) - see `.github/scripts/seed-from-dump.sh`. A seed that fails removes the volume, so the next deploy starts again rather than keeping a half-restored database.
@@ -427,7 +432,7 @@ Why the box is set up this way, so nobody has to rediscover it. Decisions record
 - **No dedicated runner account.** On a box that does nothing but CI it buys no isolation worth the extra moving part, and every path then has to be written for a user you are not logged in as, which is where runbooks rot.
 - **Lanes registered by hand, not JIT.** JIT runners are ephemeral and never need registering, but minting their config needs a token with Administration: write living on the box. Registration is a one-off per lane; the token is a standing credential.
 - **Distro `docker.io`, not Docker's own repo.** Nothing these jobs do is version-sensitive, and the distro package updates through normal `apt` with no third-party repo or GPG key on a machine that holds registry credentials.
-- **Lane roles are exclusive.** A lane carries one label so a 19-minute build never queues ahead of a one-minute deploy or teardown. That is why `e2e` became a role of its own rather than borrowing `build`; the reasoning is in the header of `frontend-e2e-nightly.yaml`.
+- **Lane roles are exclusive.** A lane carries one label so a 19-minute build never queues ahead of a one-minute deploy or teardown. That is why `e2e` became a role of its own rather than borrowing `build`; the reasoning is in the header of `frontend-e2e-nightly.yaml`. It is also why `light` exists: the few-second jobs once ran on GitHub's hosted runners to stay out of the build queue, and each was billed as a whole minute. They ask for no OS, and both this box and the mac mini carry light lanes, because every PR's required checks run on them (`changes / Detect` feeds every PR workflow, and `Server CI result` is required): on one machine, that machine being down, rebooting or out of disk would hold up every PR. So a light job uses only what both machines have - git, bash 3.2, python3 3.9 and the runner's own Node - or asks for `Linux` as well, as `Spec references` does for docker. Restarting `actions-runner@*` here cancels this box's light jobs along with its builds; a re-run takes the mac's.
 - **One machine-id per deployment**, not the host's: two deployments sharing one collide when both pair to the same central server. See `docker-deploy.yaml`.
 - **Local HTTPS with a self-signed CA, not a real certificate.** The office and the VPN reach deployments without the edge, so the edge's certificate is not there. A private CA is the only certificate the box can issue itself. It was removed once, when the edge took over TLS and nobody had installed its root; but office and VPN users still followed `https://` deployment links and got nothing. A warning to click through beats a page that doesn't load.
 - **Two front doors split by port, not by client address.** Every request reaches the proxy from the edge's address, so telling the internet from the office there would mean trusting `X-Forwarded-For`, and a mistake in that is a way past the gate. The edge knows the real client and picks the port. The open door is 80 because people reach it directly and type its addresses; the gated door is 8080 because only the edge connects to it, and is told the port once. See the header of `.github/deploy/proxy/proxy.Caddyfile`.
@@ -436,7 +441,7 @@ Why the box is set up this way, so nobody has to rediscover it. Decisions record
 - **The proxy's host port is read back, not configured.** A `PROXY_PORT` repository variable used to duplicate what the proxy already knew, and a mismatch reported every deployment as unroutable. If it is still set on the repository it is inert. See `docker-deploy.yaml`.
 - **`DEPLOY_SHARED_DAEMON` skips the registry rather than adding a local one.** The image then exists only on this box's disk: a prune or a rebuilt box means recompiling rather than pulling, but costs no data, since databases are volumes. `skip_if_exists` probes the daemon instead of the registry while it is set. See `docker-named-deployment.yaml`.
 - **`e2e`, not `reference1`, as the default dataset.** `reference1` is a 2023 V5/V6 export, and `SyncBufferRow.source_site_id` is a plain `i32` with no `#[serde(default)]`, so it fails to deserialise (`missing field 'source_site_id'`) before integration. Fixing it is a server change: that `#[serde(default)]` plus a re-export. `e2e` is exercised nightly, so it cannot rot unnoticed.
-- **The dashboard's design** — the socket-holding container with no network and no listener, sign-in with the viewer's own token, and buttons that dispatch the existing workflows so there is one writer — is in the header comments of `.github/deploy/dashboard/compose.dashboard.yaml`, `snapshot.mjs` and `web.mjs`.
+- **The dashboard's design** — the socket-holding container with no network and no listener, sign-in with the viewer's own token, and buttons that dispatch the existing workflows so there is one writer, except for datasets, which it writes itself — is in the header comments of `.github/deploy/dashboard/compose.dashboard.yaml`, `snapshot.mjs`, `web.mjs` and `datasets.mjs`.
 - **Plugin bundles are organised by each plugin's own version, not by branch or commit**, and released by bumping the version, with no git tags yet. Compatibility with core is kept as a separate field so it can stop being tied to the version number later.
 - **Plugin bundles live on this box, not in git** (#645). Committing them back from CI would put a bot commit on `develop` and the RC branches after every plugin change, and would leave QA's branch builds with nowhere to go. A reproducible build means the box only ever holds a cache. They are served by the dashboard because it already has the sign-in and the route. See [Plugin bundles](#plugin-bundles).
 - **How deployments are deployed** — compose files from the running workflow's commit, version overrides for old releases, and why the workflows are not split into `@develop` run files — is Fork 4 of `frontend/kdd/server-image-build/draft-kdd.md`.

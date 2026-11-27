@@ -42,6 +42,7 @@ import {
   formFromVariant,
   isFormValid,
   locationTypeLabel,
+  packagingRowErrors,
   rejectionMessage,
   saveRejection,
   type ItemVariantRow,
@@ -270,43 +271,51 @@ export const ItemVariantEditModal: Component<
                 {t('label.volume-per-unit')}
               </span>
               <For each={form.packaging}>
-                {row => (
-                  <>
-                    <span class={styles.level}>{row.packagingLevel}</span>
-                    <TextField
-                      data-testid="packaging-name-input"
-                      label={t('label.name')}
-                      hideLabel
-                      disabled={saving()}
-                      value={row.name}
-                      onInput={e =>
-                        setPackaging(row.id, { name: e.currentTarget.value })
-                      }
-                    />
-                    <NumberField
-                      data-testid="packaging-pack-size-input"
-                      label={t('label.pack-size')}
-                      hideLabel
-                      min={0}
-                      decimalLimit={2}
-                      disabled={saving()}
-                      value={row.packSize}
-                      onChange={packSize => setPackaging(row.id, { packSize })}
-                    />
-                    <NumberField
-                      data-testid="packaging-volume-per-unit-input"
-                      label={t('label.volume-per-unit')}
-                      hideLabel
-                      min={0}
-                      decimalLimit={4}
-                      disabled={saving()}
-                      value={row.volumePerUnit}
-                      onChange={volumePerUnit =>
-                        setPackaging(row.id, { volumePerUnit })
-                      }
-                    />
-                  </>
-                )}
+                {row => {
+                  const errors = () => packagingRowErrors(row);
+                  return (
+                    <>
+                      <span class={styles.level}>{row.packagingLevel}</span>
+                      <TextField
+                        data-testid="packaging-name-input"
+                        label={t('label.name')}
+                        hideLabel
+                        error={errors().name}
+                        disabled={saving()}
+                        value={row.name}
+                        onInput={e =>
+                          setPackaging(row.id, { name: e.currentTarget.value })
+                        }
+                      />
+                      <NumberField
+                        data-testid="packaging-pack-size-input"
+                        label={t('label.pack-size')}
+                        hideLabel
+                        min={0}
+                        decimalLimit={2}
+                        error={errors().packSize}
+                        disabled={saving()}
+                        value={row.packSize}
+                        onChange={packSize =>
+                          setPackaging(row.id, { packSize })
+                        }
+                      />
+                      <NumberField
+                        data-testid="packaging-volume-per-unit-input"
+                        label={t('label.volume-per-unit')}
+                        hideLabel
+                        min={0}
+                        decimalLimit={4}
+                        error={errors().volumePerUnit}
+                        disabled={saving()}
+                        value={row.volumePerUnit}
+                        onChange={volumePerUnit =>
+                          setPackaging(row.id, { volumePerUnit })
+                        }
+                      />
+                    </>
+                  );
+                }}
               </For>
             </div>
           </FormSection>

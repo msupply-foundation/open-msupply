@@ -69,3 +69,12 @@ export const dateOfBirthWithAge = (dob: string): string => {
   const date = localisedDate(dob);
   return age ? `${date} (${age})` : date;
 };
+
+/**
+ * A patient's age as a list column states it — "37 years", "3 months, 13
+ * days" — by the same rule as the header (spec/patients rules › age), so a
+ * patient under a year old doesn't read a bare 0. Empty where no age can be
+ * given (no date of birth, or one in the future).
+ */
+export const displayAge = (dob: string | null): string =>
+  dob ? getDisplayAge(dob) : '';

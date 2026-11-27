@@ -34,6 +34,7 @@ const seed = (): DraftItemVariant => ({
       packagingLevel: 1,
       packSize: undefined,
       volumePerUnit: undefined,
+      initialName: 'Primary',
     },
     {
       id: 'p2',
@@ -41,6 +42,7 @@ const seed = (): DraftItemVariant => ({
       packagingLevel: 2,
       packSize: undefined,
       volumePerUnit: undefined,
+      initialName: 'Secondary',
     },
     {
       id: 'p3',
@@ -48,6 +50,7 @@ const seed = (): DraftItemVariant => ({
       packagingLevel: 3,
       packSize: undefined,
       volumePerUnit: undefined,
+      initialName: 'Tertiary',
     },
   ],
 });

@@ -1,9 +1,9 @@
 use super::{
     Added, CentralDataTable, Change, ExportFilter, ImportTable, RecordCount, RowFailure,
-    RowOutcome, SheetImport, SheetStart,
+    RowOutcome, SheetImport, SheetStart, add_error,
     cells::{Row, RowError, choice_cell, collect},
     delete::{DELETE_COLUMN, already_deleted, check_delete, is_delete},
-    field_changes,
+    fail_if_any, field_changes,
     lookup::{
         Found, InMemory, KeyPart, differs, find_by_id_or_composite_key, find_reference,
         key_conflict, key_or,
@@ -16,7 +16,10 @@ use super::{
 };
 use crate::{
     i64_to_u32,
-    name_store_join::{UpsertNameStoreJoinError, delete_name_store_join, upsert_name_store_join},
+    name_store_join::{
+        UpsertNameStoreJoinError, delete_name_store_join, name_store_join_errors,
+        upsert_name_store_join_unchecked,
+    },
 };
 use repository::{
     EqualFilter, NameRow, NameRowRepository, NameRowType, NameStoreJoin, NameStoreJoinFilter,
@@ -191,8 +194,7 @@ impl SheetImport for NameStoreJoinSheet {
             .as_ref()
             .and_then(|name| name_error(row, name, name_type.as_ref(), "which stores see"))
         {
-            errors.push(error);
-            return Err(RowFailure::Invalid(errors));
+            add_error(&mut errors, error);
         }
         if delete {
             return self.delete(connection, row, existing, name.as_ref(), errors);
@@ -208,18 +210,18 @@ impl SheetImport for NameStoreJoinSheet {
         let store_id = store_id.or(saved.map(|join| join.store_id.clone()));
         let is_customer = is_customer.or(saved.map(|join| join.name_is_customer));
         let is_supplier = is_supplier.or(saved.map(|join| join.name_is_supplier));
-        row.require_for_new(
-            &mut errors,
-            "name in a store",
-            &[
-                (STORE_CODE, store_id.is_none() && !store_failed),
-                (NAME_CODE, name_id.is_none() && !name_failed),
-                (NAME_IS_CUSTOMER, is_customer.is_none()),
-                (NAME_IS_SUPPLIER, is_supplier.is_none()),
-            ],
-        );
-        if !errors.is_empty() {
-            return Err(RowFailure::Invalid(errors));
+        // Whether the row adds a join is known once its store and name are found.
+        if !store_failed && !name_failed {
+            row.require_for_new(
+                &mut errors,
+                "name in a store",
+                &[
+                    (STORE_CODE, store_id.is_none()),
+                    (NAME_CODE, name_id.is_none()),
+                    (NAME_IS_CUSTOMER, is_customer.is_none()),
+                    (NAME_IS_SUPPLIER, is_supplier.is_none()),
+                ],
+            );
         }
 
         let new = NameStoreJoinRow {
@@ -237,12 +239,25 @@ impl SheetImport for NameStoreJoinSheet {
 
         let store = self.stores.get(&new.store_id);
         let change = Change::between_upserts(saved, &new);
+        if change != Change::Unchanged {
+            for error in name_store_join_errors(connection, saved, &new)? {
+                // The join the row replaces is deleted first.
+                if let UpsertNameStoreJoinError::DuplicateJoin { other_id } = &error
+                    && replaced
+                        .as_ref()
+                        .is_some_and(|replaced| &replaced.id == other_id)
+                {
+                    continue;
+                }
+                upsert_failure(row, &new, name.as_ref(), store, error).add_to(&mut errors)?;
+            }
+        }
+        fail_if_any(&mut errors)?;
         if let Some(replaced) = &replaced {
             delete_name_store_join(connection, &replaced.id)?;
         }
         if change != Change::Unchanged {
-            upsert_name_store_join(connection, &new)
-                .map_err(|error| upsert_failure(row, &new, name.as_ref(), store, error))?;
+            upsert_name_store_join_unchecked(connection, &new)?;
         }
         Ok(RowOutcome {
             fields: existing
@@ -317,7 +332,7 @@ impl NameStoreJoinSheet {
         )
     }
 
-    /// The join `upsert_store` gave a store this import adds, for the store's own name.
+    /// The join `upsert_store_unchecked` gave a store this import adds, for the store's own name.
     fn added_own_name(&self, join: &NameStoreJoinRow) -> bool {
         self.added.borrow().stores.contains(&join.store_id)
             && self
@@ -369,11 +384,6 @@ fn upsert_failure(
         |name| name_with_code(&name.name, &name.code),
     );
     match error {
-        // Not checked here: `find_reference` finds them among the saved records.
-        UpsertNameStoreJoinError::StoreNotFound => row
-            .not_found(row.reference_column(STORE_CODE, STORE_ID))
-            .into(),
-        UpsertNameStoreJoinError::NameNotFound => row.not_found(name_column).into(),
         UpsertNameStoreJoinError::NameDeleted => row
             .error(
                 name_column,
@@ -390,7 +400,6 @@ fn upsert_failure(
                 ),
             )
             .into(),
-        UpsertNameStoreJoinError::DatabaseError(error) => RowFailure::Database(error),
     }
 }
 

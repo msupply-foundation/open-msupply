@@ -1,12 +1,13 @@
 use super::{
     CentralDataTable, Change, ExportFilter, ImportTable, RecordCount, RowFailure, RowOutcome,
-    SheetImport, SheetStart,
+    SheetImport, SheetStart, add_error,
     cells::{Row, RowError, choice_cell, collect},
     delete::{DELETE_COLUMN, already_deleted_by, check_delete, is_delete},
-    lookup::{InMemory, find_by_id_or_composite_key, key_conflict},
+    fail_if_any,
+    lookup::{InMemory, find_by_id_or_composite_key, find_saved, key_conflict},
     master_list_refs::{
         MASTER_LIST_ID, MASTER_LIST_NAME, check_not_placeholder, find_master_list,
-        master_list_part, not_found_error, not_placeholder, protected_error, read_master_lists,
+        master_list_part, not_placeholder, protected_error, read_master_lists,
     },
     name::{TYPES as NAME_TYPES, type_label},
     name_refs::{NAME_CODE, NAME_ID, NAME_NAME, NAME_TYPE, find_name, name_error, name_part},
@@ -18,7 +19,7 @@ use crate::{
     i64_to_u32,
     master_list::upsert_name_join::{
         UpsertMasterListNameJoinError, delete_master_list_name_join, find_master_list_name_joins,
-        upsert_master_list_name_join,
+        master_list_name_join_errors, upsert_master_list_name_join_unchecked,
     },
 };
 use repository::{
@@ -147,29 +148,36 @@ impl SheetImport for MasterListNameJoinSheet {
         let master_list_id = find_master_list(&self.master_lists, row)?;
         let name_type = row.choice(NAME_TYPE, NAME_TYPES);
         let name_id = find_name(connection, row, name_type.clone().ok().flatten())?;
+        let references_found = master_list_id.is_ok() && name_id.is_ok();
         let master_list_id = collect(&mut errors, master_list_id).flatten();
         let name_type = collect(&mut errors, name_type);
         let name_id = collect(&mut errors, name_id).flatten();
-        // Then a missing reference is that error, not "required".
-        if !errors.is_empty() {
-            return Err(RowFailure::Invalid(errors));
-        }
 
         let id = row.text(ID);
-        let existing = self.find_join(
-            connection,
-            row,
+        let existing = find_saved(
+            references_found,
             id.as_deref(),
-            master_list_id.as_deref(),
-            name_id.as_deref(),
-        )??;
+            &mut errors,
+            || {
+                self.find_join(
+                    connection,
+                    row,
+                    id.as_deref(),
+                    master_list_id.as_deref(),
+                    name_id.as_deref(),
+                )
+            },
+            |id| MasterListNameJoinRepository::new(connection).find_one_by_id(id),
+        )?;
         let saved = existing.as_ref();
-        check_not_placeholder(
+        if let Err(error) = check_not_placeholder(
             row,
             saved.map(|join| join.master_list_id.as_str()),
             master_list_id.as_deref(),
             PROTECTED,
-        )?;
+        ) {
+            add_error(&mut errors, error);
+        }
         // The saved join's when the row leaves it blank, so a row with only an id can't change a
         // patient's or a system name's join. Read once: `find_join` makes another name a conflict.
         let name_id = name_id.or(saved.map(|join| join.name_id.clone()));
@@ -185,9 +193,10 @@ impl SheetImport for MasterListNameJoinSheet {
                 "which master lists are given to",
             )
         }) {
-            return Err(error.into());
+            add_error(&mut errors, error);
         }
         if delete {
+            fail_if_any(&mut errors)?;
             let Some(saved) = existing else {
                 // Named by the row's master list and name, as found.
                 return already_deleted_by(
@@ -201,6 +210,7 @@ impl SheetImport for MasterListNameJoinSheet {
         // `find_join` makes another master list or name a conflict, so a saved join is kept as
         // it is.
         if let Some(saved) = existing {
+            fail_if_any(&mut errors)?;
             return Ok(RowOutcome {
                 record: self.record(&saved.master_list_id, name.as_ref(), &saved.name_id),
                 record_id: saved.id,
@@ -209,16 +219,15 @@ impl SheetImport for MasterListNameJoinSheet {
             });
         }
 
-        row.require_for_new(
-            &mut errors,
-            "name on a master list",
-            &[
-                (MASTER_LIST_NAME, master_list_id.is_none()),
-                (NAME_CODE, name_id.is_none()),
-            ],
-        );
-        if !errors.is_empty() {
-            return Err(RowFailure::Invalid(errors));
+        if references_found {
+            row.require_for_new(
+                &mut errors,
+                "name on a master list",
+                &[
+                    (MASTER_LIST_NAME, master_list_id.is_none()),
+                    (NAME_CODE, name_id.is_none()),
+                ],
+            );
         }
 
         let new = MasterListNameJoinRow {
@@ -226,8 +235,12 @@ impl SheetImport for MasterListNameJoinSheet {
             master_list_id: master_list_id.unwrap_or_default(),
             name_id: name_id.unwrap_or_default(),
         };
-        upsert_master_list_name_join(connection, &new)
-            .map_err(|error| self.upsert_failure(row, &new, name.as_ref(), error))?;
+        for error in master_list_name_join_errors(connection, None, &new)? {
+            self.upsert_failure(row, &new, name.as_ref(), error)
+                .add_to(&mut errors)?;
+        }
+        fail_if_any(&mut errors)?;
+        upsert_master_list_name_join_unchecked(connection, &new)?;
         Ok(RowOutcome {
             record: self.record(&new.master_list_id, name.as_ref(), &new.name_id),
             record_id: new.id,
@@ -320,17 +333,13 @@ impl MasterListNameJoinSheet {
             |name| name_with_code(&name.name, &name.code),
         );
         match error {
-            // Not reached here: `find_reference` and `find_name` find them among the saved
-            // records.
-            UpsertMasterListNameJoinError::MasterListNotFound => not_found_error(row).into(),
-            UpsertMasterListNameJoinError::NameNotFound => row.not_found(name_column).into(),
             UpsertMasterListNameJoinError::NameDeleted => row
                 .error(
                     name_column,
                     format!("{name_label} is deleted, so it can't be given a master list"),
                 )
                 .into(),
-            // Unreachable here: `import_row` refuses it first.
+            // Also refused by `check_not_placeholder`, on the same column.
             UpsertMasterListNameJoinError::Protected => protected_error(row, PROTECTED).into(),
             // Unreachable here: `find_join` turns a saved master list and name into a match or a
             // conflict.
@@ -343,7 +352,6 @@ impl MasterListNameJoinSheet {
                     ),
                 )
                 .into(),
-            UpsertMasterListNameJoinError::DatabaseError(error) => RowFailure::Database(error),
         }
     }
 }

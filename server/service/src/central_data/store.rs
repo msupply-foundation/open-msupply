@@ -1,15 +1,15 @@
 use super::{
     Added, CentralDataTable, Change, ExportFilter, ImportTable, RecordCount, RowFailure,
     RowOutcome, SheetImport, SheetStart,
-    cells::{Row, RowError, choice_cell, collect, keep_or_saved},
-    field_changes,
+    cells::{Row, RowError, choice_cell, collect, keep_or_saved, one_of},
+    fail_if_any, field_changes,
     lookup::{NamesOfType, active_first, find_record, find_reference},
     name::{TYPES as NAME_TYPES, type_label},
     name_refs::{NAME_CODE, NAME_ID, NAME_NAME, NAME_TYPE},
     name_with_code,
     sheet::Value,
 };
-use crate::store::{UpsertStoreError, upsert_store};
+use crate::store::{UpsertStoreError, store_errors, upsert_store_unchecked};
 use chrono::NaiveDate;
 use repository::{
     NameRow, NameRowRepository, NameRowType, Pagination, RepositoryError, Sort, StorageConnection,
@@ -180,7 +180,7 @@ impl SheetImport for StoreSheet {
         let name_id = name_id
             .flatten()
             .or(saved.map(|store| store.name_id.clone()));
-        row.require_for_new(
+        row.require_for_new_with_choices(
             &mut errors,
             "store",
             &[
@@ -190,10 +190,8 @@ impl SheetImport for StoreSheet {
                 (IS_DISABLED, is_disabled.is_none()),
                 (NAME_CODE, name_id.is_none() && !name_failed),
             ],
+            &[(STORE_MODE, || one_of(MODES))],
         );
-        if !errors.is_empty() {
-            return Err(RowFailure::Invalid(errors));
-        }
 
         let new = StoreRow {
             id: saved
@@ -216,8 +214,14 @@ impl SheetImport for StoreSheet {
         let new_name = names.find_one_by_id(&new.name_id)?;
         let change = Change::between(saved, &new, |store| !store.is_disabled);
         if change != Change::Unchanged {
-            upsert_store(connection, &new)
-                .map_err(|error| upsert_failure(row, &new, new_name.as_ref(), error))?;
+            for error in store_errors(connection, saved, &new)? {
+                let reads = reads(&error);
+                upsert_failure(row, &new, new_name.as_ref(), error).add_rule(reads, &mut errors)?;
+            }
+        }
+        fail_if_any(&mut errors)?;
+        if change != Change::Unchanged {
+            upsert_store_unchecked(connection, saved, &new)?;
             if saved.is_none() {
                 self.added.borrow_mut().stores.insert(new.id.clone());
             }
@@ -251,7 +255,7 @@ impl SheetImport for StoreSheet {
 
 /// As `find_reference`. `name_code` finds the name within `r#type`. When it's blank, `STORE`, or
 /// every type beside a `name_id`, which settles the name: an export writes a patient's type blank,
-/// and must still find a saved store's name. `upsert_store` checks the type of a name the row
+/// and must still find a saved store's name. `store_errors` checks the type of a name the row
 /// changes, whichever column found it.
 fn find_name(
     connection: &StorageConnection,
@@ -265,6 +269,17 @@ fn find_name(
     find_reference(&names, row, NAME_CODE, NAME_ID, |names| {
         active_first(names, |name| name.deleted_datetime.is_none())
     })
+}
+
+/// The columns `error`'s rule reads beside the one it's reported on.
+fn reads(error: &UpsertStoreError) -> &'static [&'static str] {
+    match error {
+        // The name the row's name cells found.
+        UpsertStoreError::NameNotStore
+        | UpsertStoreError::NameDeleted
+        | UpsertStoreError::NameHasStore { .. } => &[NAME_CODE, NAME_ID, NAME_TYPE],
+        _ => &[],
+    }
 }
 
 fn upsert_failure(
@@ -287,8 +302,6 @@ fn upsert_failure(
         UpsertStoreError::DuplicateCode { other_code, .. } => row
             .error(CODE, format!("Store {other_code} already has this code"))
             .into(),
-        // Not checked here: `find_name` finds it among the saved names.
-        UpsertStoreError::NameNotFound => row.not_found(name_column).into(),
         UpsertStoreError::NameNotStore => row
             .error(
                 name_column,
@@ -315,7 +328,6 @@ fn upsert_failure(
                 format!("Site {} isn't on this server", store.site_id),
             )
             .into(),
-        UpsertStoreError::DatabaseError(error) => RowFailure::Database(error),
     }
 }
 

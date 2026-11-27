@@ -12,7 +12,12 @@ vi.mock('../../../auth/authContext', async () => {
   return { authUser: user };
 });
 
-import { forgetKeptVisits, leaveVisit, visitFor } from './keptVisit';
+import {
+  forgetKeptVisits,
+  leaveVisit,
+  visitFor,
+  withNoticeLinks,
+} from './keptVisit';
 
 const line = { itemId: 'item-1', units: 2 } as never;
 const off = () => false;
@@ -157,5 +162,48 @@ describe('the Simple screen’s kept visit', () => {
     await Promise.resolve();
     auth.setUser({ userId: 'u1' });
     expect(visitFor('store-a', off).lines).toHaveLength(0);
+  });
+});
+
+// spec/prescriptions ui-surface S9 › dispensed
+describe('the list’s notice', () => {
+  const links = {
+    visitHref: (id: string) => `/s/dispensary/dispensing/simple/${id}`,
+    recordsHref: '/s/dispensary/dispensing/records',
+  };
+
+  // OMS-REG-DIS-12.275, .363, .364
+  it('after Dispense, offers View and Dispensing records', () => {
+    expect(
+      withNoticeLinks(
+        {
+          severity: 'success',
+          text: 'Dispensed to Malfoy, Draco',
+          dispensedId: 'r1',
+          dispensed: true,
+        },
+        links
+      )
+    ).toMatchObject({
+      viewHref: '/s/dispensary/dispensing/simple/r1',
+      recordsHref: '/s/dispensary/dispensing/records',
+    });
+  });
+
+  // OMS-REG-DIS-12.287: saved changes name the visit, but the list was not
+  // just dispensed, so it isn't ready for the next patient.
+  it('after Save changes, offers View alone', () => {
+    const shown = withNoticeLinks(
+      { severity: 'success', text: 'Changes saved', dispensedId: 'r1' },
+      links
+    );
+    expect(shown?.viewHref).toBe('/s/dispensary/dispensing/simple/r1');
+    expect(shown?.recordsHref).toBeUndefined();
+  });
+
+  it('naming no visit, offers neither', () => {
+    const notice = { severity: 'error' as const, text: 'Not dispensed' };
+    expect(withNoticeLinks(notice, links)).toBe(notice);
+    expect(withNoticeLinks(undefined, links)).toBeUndefined();
   });
 });

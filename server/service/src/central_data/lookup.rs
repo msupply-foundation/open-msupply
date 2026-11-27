@@ -1,4 +1,7 @@
-use super::cells::{Row, RowError};
+use super::{
+    RowFailure,
+    cells::{Row, RowError},
+};
 use repository::{
     ContextRow, ContextRowRepository, CurrencyRow, CurrencyRowRepository, ItemRow,
     ItemRowRepository, LocationRow, LocationRowRepository, LocationTypeRow,
@@ -498,6 +501,28 @@ pub fn key_conflict<D>(
         ),
         _ => new_id_conflict(row, &record, record_id, id),
     }))
+}
+
+/// The saved record a row with a composite key changes. A missing reference is that error, not a
+/// conflict or "required", so with every reference found `find` looks by id or key; otherwise
+/// only `by_id` looks, by id. A conflict joins `errors` and fails the row.
+pub(super) fn find_saved<R>(
+    references_found: bool,
+    id: Option<&str>,
+    errors: &mut Vec<RowError>,
+    find: impl FnOnce() -> Result<Result<Option<R>, RowError>, RepositoryError>,
+    by_id: impl FnOnce(&str) -> Result<Option<R>, RepositoryError>,
+) -> Result<Option<R>, RowFailure> {
+    if !references_found {
+        return Ok(id.map(by_id).transpose()?.flatten());
+    }
+    match find()? {
+        Ok(saved) => Ok(saved),
+        Err(conflict) => {
+            errors.push(conflict);
+            Err(RowFailure::Invalid(std::mem::take(errors)))
+        }
+    }
 }
 
 /// The saved record a row changes: by `id`, else among `by_key`, the records its key finds, read

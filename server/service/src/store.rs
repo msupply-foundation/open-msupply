@@ -42,7 +42,6 @@ pub enum UpsertStoreError {
         other_id: String,
         other_code: String,
     },
-    NameNotFound,
     /// A store's name must be a `STORE` name, so never a patient's or a system name.
     NameNotStore,
     NameDeleted,
@@ -52,27 +51,19 @@ pub enum UpsertStoreError {
         other_code: String,
     },
     SiteNotFound,
-    DatabaseError(RepositoryError),
 }
 
-impl From<RepositoryError> for UpsertStoreError {
-    fn from(error: RepositoryError) -> Self {
-        UpsertStoreError::DatabaseError(error)
-    }
-}
-
-/// Joins the caller's transaction, so an import's earlier rows count. Leaves the logo as saved. A
-/// new store sees its own name, as the store a standalone central server makes at setup does.
-pub fn upsert_store(
+/// Adds or updates one store, which `store_errors` has passed. `saved` is the store with `row.id`.
+/// Leaves the logo as saved. A new store sees its own name, as the store a standalone central
+/// server makes at setup does.
+pub fn upsert_store_unchecked(
     connection: &StorageConnection,
+    saved: Option<&StoreRow>,
     row: &StoreRow,
-) -> Result<(), UpsertStoreError> {
+) -> Result<(), RepositoryError> {
     connection
-        .transaction_sync(|connection| -> Result<(), UpsertStoreError> {
-            let repo = StoreRowRepository::new(connection);
-            let saved = repo.find_one_by_id(&row.id)?;
-            validate(connection, saved.as_ref(), row)?;
-            repo.upsert_one(row)?;
+        .transaction_sync(|connection| {
+            StoreRowRepository::new(connection).upsert_one(row)?;
             if saved.is_none() {
                 NameStoreJoinRepository::new(connection).upsert_one(&NameStoreJoinRow {
                     id: uuid(),
@@ -88,14 +79,16 @@ pub fn upsert_store(
         .map_err(|error| error.to_inner_error())
 }
 
-/// Only what the save changes is checked, so a saved store that no longer passes stays editable.
-fn validate(
+/// Every rule `row` breaks. Only what the save changes is checked, so a saved store that no longer
+/// passes stays editable. The caller finds its name, so a missing one isn't checked here.
+pub fn store_errors(
     connection: &StorageConnection,
     saved: Option<&StoreRow>,
     row: &StoreRow,
-) -> Result<(), UpsertStoreError> {
+) -> Result<Vec<UpsertStoreError>, RepositoryError> {
+    let mut errors = Vec::new();
     if row.code.trim().is_empty() {
-        return Err(UpsertStoreError::CodeRequired);
+        errors.push(UpsertStoreError::CodeRequired);
     }
     let repo = StoreRowRepository::new(connection);
     if let Some(other) = other_with_key(
@@ -106,26 +99,25 @@ fn validate(
         |code| repo.find_by_trimmed_code(code),
         |store| &store.id,
     )? {
-        return Err(UpsertStoreError::DuplicateCode {
+        errors.push(UpsertStoreError::DuplicateCode {
             other_id: other.id,
             other_code: other.code,
         });
     }
-    if saved.is_none_or(|saved| saved.name_id != row.name_id) {
-        let name = NameRowRepository::new(connection)
-            .find_one_by_id(&row.name_id)?
-            .ok_or(UpsertStoreError::NameNotFound)?;
+    if saved.is_none_or(|saved| saved.name_id != row.name_id)
+        && let Some(name) = NameRowRepository::new(connection).find_one_by_id(&row.name_id)?
+    {
         if name.r#type != NameRowType::Store {
-            return Err(UpsertStoreError::NameNotStore);
+            errors.push(UpsertStoreError::NameNotStore);
         }
         if name.deleted_datetime.is_some() {
-            return Err(UpsertStoreError::NameDeleted);
+            errors.push(UpsertStoreError::NameDeleted);
         }
         if let Some(other) = repo
             .find_one_by_name_id(&row.name_id)?
             .filter(|other| other.id != row.id)
         {
-            return Err(UpsertStoreError::NameHasStore {
+            errors.push(UpsertStoreError::NameHasStore {
                 other_id: other.id,
                 other_code: other.code,
             });
@@ -136,18 +128,28 @@ fn validate(
             .find_one_by_id(row.site_id)?
             .is_none()
     {
-        return Err(UpsertStoreError::SiteNotFound);
+        errors.push(UpsertStoreError::SiteNotFound);
     }
-    Ok(())
+    Ok(errors)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_helpers::save_checked;
     use repository::{
         EqualFilter, NameRow, NameStoreJoinFilter, SiteRow, mock::MockDataInserts,
         test_db::setup_all,
     };
+
+    fn save(connection: &StorageConnection, row: &StoreRow) -> Result<(), Vec<UpsertStoreError>> {
+        let saved = StoreRowRepository::new(connection)
+            .find_one_by_id(&row.id)
+            .unwrap();
+        save_checked(store_errors(connection, saved.as_ref(), row), || {
+            upsert_store_unchecked(connection, saved.as_ref(), row)
+        })
+    }
 
     fn store(id: &str, code: &str, name_id: &str) -> StoreRow {
         StoreRow {
@@ -198,12 +200,12 @@ mod tests {
                 .collect::<Vec<_>>()
         };
 
-        upsert_store(&connection, &store("main", "MS", "main_name")).unwrap();
+        save(&connection, &store("main", "MS", "main_name")).unwrap();
         let own = vec![("main_name".to_string(), true, false, false)];
         assert_eq!(joins(), own);
 
         // An update adds none.
-        upsert_store(
+        save(
             &connection,
             &StoreRow {
                 is_disabled: true,
@@ -234,21 +236,21 @@ mod tests {
                 })
                 .unwrap();
         }
-        upsert_store(&connection, &store("main", "MS", "main_name")).unwrap();
+        save(&connection, &store("main", "MS", "main_name")).unwrap();
 
         assert_eq!(
-            upsert_store(&connection, &store("ward", " MS ", "ward_name")),
-            Err(UpsertStoreError::DuplicateCode {
+            save(&connection, &store("ward", " MS ", "ward_name")),
+            Err(vec![UpsertStoreError::DuplicateCode {
                 other_id: "main".to_string(),
                 other_code: "MS".to_string(),
-            })
+            }])
         );
         assert_eq!(
-            upsert_store(&connection, &store("ward", "W1", "main_name")),
-            Err(UpsertStoreError::NameHasStore {
+            save(&connection, &store("ward", "W1", "main_name")),
+            Err(vec![UpsertStoreError::NameHasStore {
                 other_id: "main".to_string(),
                 other_code: "MS".to_string(),
-            })
+            }])
         );
     }
 }

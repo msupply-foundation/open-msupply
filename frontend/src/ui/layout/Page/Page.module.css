@@ -42,6 +42,15 @@
   background: var(--bg-white);
 }
 
+/* Page `shaded`: the shade behind the body, so its field groups stand out as
+   panels. A filling table keeps its own white fill over it.
+   TO-DO: an opt-in only the tender page and the Simple dispensing screen
+   set. Once stakeholders approve the look, make it the plain `.body`
+   background and drop the attribute (#2172). */
+.body[data-shaded] {
+  background: var(--page-body-shade);
+}
+
 /* The details-panel slot. The panel stays MOUNTED whether open or closed — it
    parks off-frame rather than unmounting — so form state survives open/close
    with no remount and the shared e2e suites can assert on panel content before

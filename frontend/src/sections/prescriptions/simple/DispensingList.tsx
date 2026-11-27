@@ -20,8 +20,10 @@ import { IconButton } from '@/ui/elements/buttons/IconButton';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { Popover } from '@/ui/elements/feedback/Popover';
 import {
+  ArrowLeftIcon,
   CheckCircleIcon,
   ChevronDownIcon,
+  ClockIcon,
   MoreHorizontalIcon,
   TrashIcon,
 } from '@/ui/icons';
@@ -35,6 +37,7 @@ import {
 } from './simpleDispensingLogic';
 import type { VisitLine } from './dispensedVisit';
 import { StepHeading } from './StepHeading';
+import { whoTheListIsFor } from './listHead';
 import { CorrectStockAction } from './CorrectStockDialog';
 import styles from './DispensingList.module.css';
 
@@ -135,6 +138,12 @@ export const DispensingList = (props: {
     text: string;
     /** Where View goes: the visit the message says was dispensed. */
     viewHref?: string;
+    /**
+     * Just dispensed: where Dispensing records goes. The list says it is
+     * ready for the next patient and offers Dispensing records in its foot,
+     * as long as the message shows (ui-surface S9 › dispensed).
+     */
+    recordsHref?: string;
   };
   /** A phone: the list is the bottom bar and its sheet. */
   isPhone: boolean;
@@ -155,6 +164,13 @@ export const DispensingList = (props: {
     return sum;
   };
   const hasLines = () => props.lines.length > 0;
+  // Nothing to check yet: the head's band is muted.
+  const nothingListed = () =>
+    props.visit ? !props.visit.lines?.length : !hasLines();
+  // Just dispensed, with the list docked or wrapped: Dispensing records in
+  // the foot. Not on a phone, where the page action is in view.
+  const recordsHref = () =>
+    props.isPhone ? undefined : props.notice?.recordsHref;
   // The total the panel shows: the dispensed visit's once it is read, else
   // the list's once something is on it.
   const shownTotal = (): number | undefined =>
@@ -290,23 +306,35 @@ export const DispensingList = (props: {
             with the sheet closed; under the head where the list is docked. */}
         <Show when={props.notice}>
           {notice => (
-            <div class={styles.notice}>
+            /* A notice naming a visit (just dispensed, or its changes saved
+             * or discarded) is the panel's news: a full-width box, with View
+             * inside it at its end. Any other is the compact chip.
+             */
+            <div
+              class={styles.notice}
+              data-boxed={notice().viewHref ? '' : undefined}
+              data-severity={notice().severity}
+            >
               <Alert
                 severity={notice().severity}
-                compact
+                compact={!notice().viewHref}
+                icon={
+                  notice().viewHref && notice().severity === 'success'
+                    ? CheckCircleIcon
+                    : undefined
+                }
                 class={styles.noticeAlert}
                 testId="dispense-notice"
               >
                 {notice().text}
               </Alert>
               {/* Beside the message, not in it: the alert is a message
-                  panel, with no controls of its own. */}
+                  panel, with no controls of its own. The box holds both. */}
               <Show when={notice().viewHref}>
                 {href => (
                   <LinkButton
                     href={href()}
                     variant="ghost"
-                    size="small"
                     data-testid="view-dispensed-visit-button"
                   >
                     {t('button.view')}
@@ -320,7 +348,13 @@ export const DispensingList = (props: {
         {/* The list itself: the panel's whole content where it is docked,
             the sheet the bar opens on a phone. */}
         <div id={sheetId} class={styles.sheet}>
-          <header class={styles.head}>
+          {/* A band in the inverse of the page's colours, so the list is
+              found from across the counter; muted while there is nothing on
+              it to check. */}
+          <header
+            class={styles.head}
+            data-empty={nothingListed() ? '' : undefined}
+          >
             <Show
               when={props.visit}
               fallback={
@@ -388,13 +422,10 @@ export const DispensingList = (props: {
                     </span>
                   </div>
                   <p class={styles.for} data-testid="dispensing-list-for">
-                    {props.editing
-                      ? t('label.for-patient', {
-                          name: props.editing.forName ?? '',
-                        })
-                      : props.forName === undefined
-                        ? t('label.for-not-chosen-yet')
-                        : t('label.for-patient', { name: props.forName })}
+                    {(() => {
+                      const who = whoTheListIsFor(props);
+                      return t(who.key, { name: who.name ?? '' });
+                    })()}
                   </p>
                 </>
               }
@@ -476,7 +507,37 @@ export const DispensingList = (props: {
               <Show
                 when={hasLines()}
                 fallback={
-                  <p class={styles.empty}>{t('messages.no-medicines-added')}</p>
+                  <Show
+                    when={props.notice?.recordsHref}
+                    fallback={
+                      <p
+                        class={styles.empty}
+                        data-testid="dispensing-list-empty"
+                      >
+                        {t('messages.nothing-yet-press-an-amount')}
+                      </p>
+                    }
+                  >
+                    {/* Just dispensed: the next visit starts on the cards,
+                        which the arrow points to. */}
+                    <div
+                      class={styles.ready}
+                      data-testid="ready-for-next-patient"
+                    >
+                      <ArrowLeftIcon
+                        class={styles.readyArrow}
+                        aria-hidden="true"
+                      />
+                      <div>
+                        <p class={styles.readyHeading}>
+                          {t('heading.ready-for-next-patient')}
+                        </p>
+                        <p class={styles.readyHint}>
+                          {t('messages.press-an-amount-to-start')}
+                        </p>
+                      </div>
+                    </div>
+                  </Show>
                 }
               >
                 <table class={styles.lines}>
@@ -703,6 +764,21 @@ export const DispensingList = (props: {
             </Show>
             <Show when={!props.visit}>
               <div class={styles.actions}>
+                {/* Just dispensed: the way to past visits, at the inline
+                    start, away from Dispense. */}
+                <Show when={recordsHref()}>
+                  {href => (
+                    <LinkButton
+                      href={href()}
+                      variant="ghost"
+                      icon={<ClockIcon />}
+                      class={styles.recordsLink}
+                      data-testid="list-dispensing-records-button"
+                    >
+                      {t('button.dispensing-records')}
+                    </LinkButton>
+                  )}
+                </Show>
                 {/* Hidden, not disabled, with nothing to clear (ui-surface S9).
                     While editing it discards the changes, so it is always
                     there. */}

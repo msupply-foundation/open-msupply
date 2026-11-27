@@ -2854,6 +2854,68 @@ async fn an_item_export_searches_code_and_name_and_filters_by_status() {
     assert_eq!(matching(Some(""), None), 2);
 }
 
+// covers: OMS-REG-CDIO-01.211
+
+#[actix_rt::test]
+async fn a_new_name_missing_its_type_lists_the_types() {
+    let (_, service_provider, dir) = name_setup("central_data_name_missing_type").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let path = write_file(
+        dir.path(),
+        name_sheet(vec![new_name_row(&[
+            ("code", "NEWN"),
+            ("name", "New name"),
+        ])]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(
+            2,
+            Some("type"),
+            "type is required for a new name and must be one of FACILITY, BUILD, INVAD, REPACK, STORE, OTHERS"
+        )]
+    );
+}
+
+// covers: OMS-REG-CDIO-01.211
+
+#[actix_rt::test]
+async fn a_missing_choice_cell_lists_its_choices() {
+    let (_, service_provider, dir) = item_setup("central_data_item_missing_choice").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let path = write_file(
+        dir.path(),
+        item_sheet(vec![item_row([
+            "",
+            "AMOX",
+            "Amoxicillin",
+            "",
+            "",
+            "",
+            "",
+            "20",
+            "",
+            "TRUE",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+        ])]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(
+            2,
+            Some("type"),
+            "type is required for a new item and must be one of STOCK, SERVICE, NON_STOCK"
+        )]
+    );
+}
+
 // covers: OMS-REG-CDIO-01.12, .35, .37, .58, .63, .81, .84, .86, .87
 
 #[actix_rt::test]
@@ -2915,6 +2977,11 @@ async fn item_rows_add_and_update_by_code() {
             ),
             (4, Some("name"), "name is required for a new item"),
             (4, Some("is_active"), "is_active is required for a new item"),
+            (
+                4,
+                Some("volume_per_pack"),
+                "volume_per_pack can't be negative"
+            ),
             (
                 5,
                 Some("default_pack_size"),
@@ -3128,6 +3195,81 @@ async fn an_item_code_is_not_changed_or_taken_by_import() {
         ]
     );
     assert_eq!(find_item(&connection, "PARA"), paracetamol());
+}
+
+// covers: OMS-REG-CDIO-01.208
+
+#[actix_rt::test]
+async fn an_item_row_lists_all_its_errors_at_once() {
+    let (_, service_provider, dir) = item_setup("central_data_item_all_errors").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let path = write_file(
+        dir.path(),
+        item_sheet(vec![
+            item_row([
+                "", "BAD1", "Bad one", "", "", "", "", "0", "STOCK", "maybe", "TRUE", "-2", "", "",
+                "-1", "",
+            ]),
+            // A cell that isn't a number is that error, not also "must be above 0".
+            item_row([
+                "", "BAD2", "Bad two", "", "", "", "", "abc", "STOCK", "TRUE", "FALSE", "", "", "",
+                "-1", "",
+            ]),
+            // A blank key hides no other error.
+            item_row([
+                "",
+                "",
+                "Bad three",
+                "",
+                "",
+                "",
+                "",
+                "0",
+                "STOCK",
+                "TRUE",
+                "FALSE",
+                "",
+                "",
+                "",
+                "",
+                "",
+            ]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                2,
+                Some("is_active"),
+                "\"maybe\" must be TRUE, FALSE, 1 or 0"
+            ),
+            (
+                2,
+                Some("default_pack_size"),
+                "default_pack_size must be above 0"
+            ),
+            (2, Some("vaccine_doses"), "vaccine_doses can't be negative"),
+            (
+                2,
+                Some("volume_per_pack"),
+                "volume_per_pack can't be negative"
+            ),
+            (3, Some("default_pack_size"), "\"abc\" must be a number"),
+            (
+                3,
+                Some("volume_per_pack"),
+                "volume_per_pack can't be negative"
+            ),
+            (4, Some("code"), "code is required for a new item"),
+            (
+                4,
+                Some("default_pack_size"),
+                "default_pack_size must be above 0"
+            ),
+        ]
+    );
 }
 
 // covers: OMS-REG-CDIO-01.80
@@ -3640,7 +3782,7 @@ async fn a_user_export_searches_usernames_and_filters_by_status() {
     assert_eq!(counts(None, Some(false)).matching, 1);
 }
 
-// covers: OMS-REG-CDIO-01.12, .37, .58, .63, .87, .93, .94, .97
+// covers: OMS-REG-CDIO-01.12, .37, .58, .63, .87, .93, .94, .97, .211
 
 #[actix_rt::test]
 async fn user_rows_add_and_update_by_username_and_hash_passwords() {
@@ -3659,9 +3801,17 @@ async fn user_rows_add_and_update_by_username_and_hash_passwords() {
         row_errors(&summary),
         vec![
             (2, Some("password"), "password is required for a new user"),
-            (2, Some("language"), "language is required for a new user"),
+            (
+                2,
+                Some("language"),
+                "language is required for a new user and must be one of ENGLISH, FRENCH, SPANISH, LAOS, KHMER, PORTUGUESE, RUSSIAN, TETUM"
+            ),
             (3, Some("username"), "username is required for a new user"),
-            (3, Some("language"), "language is required for a new user"),
+            (
+                3,
+                Some("language"),
+                "language is required for a new user and must be one of ENGLISH, FRENCH, SPANISH, LAOS, KHMER, PORTUGUESE, RUSSIAN, TETUM"
+            ),
         ]
     );
 
@@ -4579,6 +4729,7 @@ async fn an_inactive_master_list_does_not_hold_on_to_its_name() {
             id: "old_eml".to_string(),
             code: String::new(),
             is_active: false,
+            is_default_price_list: false,
             ..essential_medicines()
         })
         .unwrap();
@@ -4641,6 +4792,176 @@ async fn an_inactive_master_list_does_not_hold_on_to_its_name() {
         Some("Changed".to_string())
     );
     assert!(find_master_list(&connection, "older_eml").is_some());
+}
+
+// covers: OMS-REG-CDIO-01.209
+
+#[actix_rt::test]
+async fn a_master_list_sheet_leaves_at_most_one_default_price_list() {
+    // Essential medicines is the default price list.
+    let (connection, service_provider, dir) =
+        master_list_setup("central_data_master_list_default_price_list").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let hiv = ["hiv", "", "HIV program", "", "TRUE", "TRUE", ""];
+    let clinic = ["clinic", "", "Clinic", "", "FALSE", "TRUE", ""];
+
+    // A new default beside the saved one, active or not, is an error on each row that made one.
+    let path = write_file(
+        dir.path(),
+        master_list_sheet(vec![master_list_row(hiv), master_list_row(clinic)]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                2,
+                Some("is_default_price_list"),
+                "HIV program would be the default price list, and so would Clinic and Essential medicines, but there can be only one. Set is_default_price_list to FALSE for all but one"
+            ),
+            (
+                3,
+                Some("is_default_price_list"),
+                "Clinic would be the default price list, and so would Essential medicines and HIV program, but there can be only one. Set is_default_price_list to FALSE for all but one"
+            ),
+        ]
+    );
+
+    // Moving the default to another list imports in either row order.
+    let take_default = ["eml", "", "", "", "", "FALSE", ""];
+    for rows in [[hiv, take_default], [take_default, hiv]] {
+        let path = write_file(
+            dir.path(),
+            master_list_sheet(rows.into_iter().map(master_list_row).collect()),
+        );
+        let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+        assert_eq!(summary.errors, vec![]);
+    }
+    let path = write_file(
+        dir.path(),
+        master_list_sheet(vec![master_list_row(hiv), master_list_row(take_default)]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert!(
+        find_master_list(&connection, "hiv")
+            .unwrap()
+            .is_default_price_list
+    );
+    assert!(
+        !find_master_list(&connection, "eml")
+            .unwrap()
+            .is_default_price_list
+    );
+
+    // No default price list is fine.
+    let path = write_file(
+        dir.path(),
+        master_list_sheet(vec![master_list_row(["hiv", "", "", "", "", "FALSE", ""])]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+
+    // Lists that already share it must be put right in the same sheet, even by a row that doesn't
+    // touch them: no row is to blame, so the sheet gets the error.
+    let repo = MasterListRowRepository::new(&connection);
+    for id in ["eml", "hiv"] {
+        repo.upsert_one(&MasterListRow {
+            is_default_price_list: true,
+            ..find_master_list(&connection, id).unwrap()
+        })
+        .unwrap();
+    }
+    let path = write_file(
+        dir.path(),
+        master_list_sheet(vec![master_list_row([
+            "eml", "", "", "Changed", "", "", "",
+        ])]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        summary.errors,
+        vec![RowError {
+            sheet: "master_list".to_string(),
+            row: None,
+            column: Some("is_default_price_list".to_string()),
+            message: "Essential medicines and HIV program are each the default price list, but there can be only one. Set is_default_price_list to FALSE for all but one".to_string(),
+        }]
+    );
+}
+
+// covers: OMS-REG-CDIO-01.210
+
+#[actix_rt::test]
+async fn a_master_list_discount_is_from_0_to_100() {
+    // Essential medicines gives 12.5%.
+    let (connection, service_provider, dir) =
+        master_list_setup("central_data_master_list_discount").await;
+    let ctx = service_provider.basic_context().unwrap();
+
+    let path = write_file(
+        dir.path(),
+        master_list_sheet(vec![
+            master_list_row(["eml", "", "", "", "", "", "-1"]),
+            master_list_row(["", "", "HIV program", "", "TRUE", "FALSE", "100.5"]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                2,
+                Some("discount_percentage"),
+                "discount_percentage must be from 0 to 100"
+            ),
+            (
+                3,
+                Some("discount_percentage"),
+                "discount_percentage must be from 0 to 100"
+            ),
+        ]
+    );
+
+    let path = write_file(
+        dir.path(),
+        master_list_sheet(vec![
+            master_list_row(["eml", "", "", "", "", "", "0"]),
+            master_list_row(["", "", "HIV program", "", "TRUE", "FALSE", "100"]),
+        ]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
+    assert_eq!(
+        find_master_list(&connection, "eml")
+            .unwrap()
+            .discount_percentage,
+        Some(0.0)
+    );
+
+    // A saved discount out of range stays editable while the row leaves it as it is.
+    MasterListRowRepository::new(&connection)
+        .upsert_one(&MasterListRow {
+            discount_percentage: Some(150.0),
+            ..essential_medicines()
+        })
+        .unwrap();
+    let path = write_file(
+        dir.path(),
+        master_list_sheet(vec![master_list_row([
+            "eml", "", "", "Changed", "", "", "150",
+        ])]),
+    );
+    let summary = CentralDataService
+        .import(&ctx, &path, &no_sessions(), today())
+        .unwrap();
+    assert_eq!(summary.errors, vec![]);
 }
 
 // covers: OMS-REG-CDIO-01.123
@@ -4735,6 +5056,7 @@ async fn a_shared_master_list_name_asks_for_the_id() {
     MasterListRowRepository::new(&connection)
         .upsert_one(&MasterListRow {
             id: "eml_copy".to_string(),
+            is_default_price_list: false,
             ..essential_medicines()
         })
         .unwrap();
@@ -5761,7 +6083,7 @@ async fn a_store_export_searches_name_and_code_and_filters_by_status() {
     assert_eq!(count(Some("ward"), Some(true)).matching, 0);
 }
 
-// covers: OMS-REG-CDIO-01.12, .37, .138, .141, .142
+// covers: OMS-REG-CDIO-01.12, .37, .138, .141, .142, .211
 
 #[actix_rt::test]
 async fn store_rows_add_and_update_by_code() {
@@ -5789,7 +6111,7 @@ async fn store_rows_add_and_update_by_code() {
             (
                 4,
                 Some("store_mode"),
-                "store_mode is required for a new store"
+                "store_mode is required for a new store and must be one of STORE, DISPENSARY"
             ),
             (
                 4,
@@ -7471,7 +7793,7 @@ async fn a_user_permission_export_searches_username_and_store_code() {
     assert_eq!(count(Some("REPORT")).matching, 0);
 }
 
-// covers: OMS-REG-CDIO-01.12, .25, .36, .154, .155
+// covers: OMS-REG-CDIO-01.12, .25, .36, .154, .155, .211
 
 #[actix_rt::test]
 async fn user_permission_rows_add_and_delete_by_user_store_permission_and_context() {
@@ -7493,6 +7815,14 @@ async fn user_permission_rows_add_and_delete_by_user_store_permission_and_contex
         ]),
     );
     let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    // Every permission this server knows.
+    let permissions: Vec<String> = PermissionType::known_iter()
+        .map(|permission| permission.as_ref().to_string())
+        .collect();
+    let permission_required = format!(
+        "permission is required for a new user permission and must be one of {}",
+        permissions.join(", ")
+    );
     assert_eq!(
         row_errors(&summary),
         vec![
@@ -7501,11 +7831,7 @@ async fn user_permission_rows_add_and_delete_by_user_store_permission_and_contex
                 Some("store_code"),
                 "store_code is required for a new user permission"
             ),
-            (
-                2,
-                Some("permission"),
-                "permission is required for a new user permission"
-            ),
+            (2, Some("permission"), permission_required.as_str()),
             (
                 3,
                 Some("username"),
@@ -8677,6 +9003,37 @@ async fn a_user_store_row_can_give_the_setup_admin_a_store_but_not_take_one_away
         )]
     );
     assert_eq!(store_joins_of(&connection, "admin").len(), 2);
+
+    // One they already have there is refused only when the row changes it.
+    UserStoreJoinRowRepository::new(&connection)
+        .upsert_one(&UserStoreJoinRow {
+            id: "admin_store_b".to_string(),
+            user_id: "admin".to_string(),
+            store_id: "store_b".to_string(),
+            is_default: false,
+        })
+        .unwrap();
+    let path = write_file(
+        dir.path(),
+        user_store_sheet(vec![
+            user_store_row(&[
+                ("username", "admin"),
+                ("store_id", "store_b"),
+                ("is_default", "FALSE"),
+            ]),
+            user_store_row(&[("id", "admin_store_b"), ("is_default", "TRUE")]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![(
+            3,
+            Some("store_id"),
+            "admin is only on this server, so import can't give them stores in another site's store: code is on site 2"
+        )]
+    );
+    assert_eq!(summary.tables[0].unchanged, 1);
 }
 
 // covers: OMS-REG-CDIO-01.167
@@ -11571,6 +11928,13 @@ async fn an_item_store_join_row_lists_all_its_errors_at_once() {
                 ("default_location_code", "FRIDGE"),
                 ("default_sell_price_per_pack", "-3"),
             ]),
+            // Found by id, with a store not found: not a duplicate of Ibuprofen in the saved
+            // join's store.
+            item_store_row(&[
+                ("id", "isj_main_para"),
+                ("item_code", "IBU"),
+                ("store_code", "NOPE"),
+            ]),
         ]),
     );
     let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
@@ -11587,11 +11951,17 @@ async fn an_item_store_join_row_lists_all_its_errors_at_once() {
             (2, Some("default_location_code"), fridge),
             (2, Some("default_sell_price_per_pack"), negative),
             (3, Some("margin"), "\"x\" must be a number"),
+            (
+                3,
+                Some("ignore_for_orders"),
+                "ignore_for_orders is required for a new item in a store"
+            ),
             (3, Some("default_location_id"), fridge),
             (3, Some("default_sell_price_per_pack"), negative),
             (4, Some("item_code"), "item_code \"NOPE\" not found"),
             (4, Some("default_location_code"), fridge),
             (4, Some("default_sell_price_per_pack"), negative),
+            (5, Some("store_code"), "store_code \"NOPE\" not found"),
         ]
     );
 }
@@ -11778,6 +12148,513 @@ async fn two_saved_item_store_joins_for_one_item_and_store_are_found_by_id() {
         [
             ("isj_main_ibu".to_string(), "ibuprofen".to_string()),
             shared("isj_main_para"),
+        ]
+    );
+}
+
+// One upload shows every error on a row, on every sheet.
+
+// covers: OMS-REG-CDIO-01.208
+
+#[actix_rt::test]
+async fn a_unit_row_lists_all_its_errors_at_once() {
+    let (_, connection, connection_manager, _) =
+        setup_all("central_data_unit_all_errors", MockDataInserts::none()).await;
+    let ctx = ServiceProvider::new(connection_manager)
+        .basic_context()
+        .unwrap();
+    let dir = TempDir::new().unwrap();
+    for (id, name) in [("box", "Box"), ("bag", "Bag")] {
+        UnitRowRepository::new(&connection)
+            .upsert_one(&UnitRow {
+                id: id.to_string(),
+                name: name.to_string(),
+                index: 1,
+                is_active: true,
+                ..Default::default()
+            })
+            .unwrap();
+    }
+    // Renaming Bag to Box, with an index that isn't a number.
+    let path = write_file(
+        dir.path(),
+        unit_sheet(
+            vec!["id", "name", "description", "index", "is_active"],
+            vec![
+                vec![
+                    "bag".to_string().into(),
+                    "Box".to_string().into(),
+                    Value::Empty,
+                    "x".to_string().into(),
+                    true.into(),
+                ],
+                // A blank name is only "required", not also a duplicate.
+                vec![
+                    Value::Empty,
+                    Value::Empty,
+                    Value::Empty,
+                    "x".to_string().into(),
+                    true.into(),
+                ],
+                // Not a duplicate by the is_active its cell's error left.
+                vec![
+                    "bag".to_string().into(),
+                    "Box".to_string().into(),
+                    Value::Empty,
+                    Value::Empty,
+                    "maybe".to_string().into(),
+                ],
+            ],
+        ),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (2, Some("index"), "\"x\" must be a whole number"),
+            (
+                2,
+                Some("name"),
+                "Unit box is already named Box. Give this unit another name, or make one of them inactive"
+            ),
+            (3, Some("index"), "\"x\" must be a whole number"),
+            (3, Some("name"), "name is required for a new unit"),
+            (
+                4,
+                Some("is_active"),
+                "\"maybe\" must be TRUE, FALSE, 1 or 0"
+            )
+        ]
+    );
+}
+
+// covers: OMS-REG-CDIO-01.208
+
+#[actix_rt::test]
+async fn a_location_type_row_lists_all_its_errors_at_once() {
+    let (_, service_provider, dir) = location_type_setup("central_data_lt_all_errors").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let path = write_file(
+        dir.path(),
+        location_type_sheet(vec![
+            // Max isn't compared with a min its cell's error left.
+            location_type_row(["", "LT1", "Cold", "x", "-5", ""]),
+            location_type_row(["", "LT2", "Warm", "8", "2", "REMOVE"]),
+            // A blank key hides no other error.
+            location_type_row(["", "", "Chilly", "8", "2", ""]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (2, Some("min_temperature"), "\"x\" must be a number"),
+            (
+                3,
+                Some("delete"),
+                "\"REMOVE\" is not valid. Type DELETE to delete this row, or leave it blank"
+            ),
+            (
+                3,
+                Some("max_temperature"),
+                "max_temperature 2 is below min_temperature 8"
+            ),
+            (4, Some("code"), "code is required for a new location type"),
+            (
+                4,
+                Some("max_temperature"),
+                "max_temperature 2 is below min_temperature 8"
+            )
+        ]
+    );
+}
+
+// covers: OMS-REG-CDIO-01.208
+
+#[actix_rt::test]
+async fn a_currency_row_lists_all_its_errors_at_once() {
+    let (_, service_provider, dir) = currency_setup("central_data_currency_all_errors").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let path = write_file(
+        dir.path(),
+        currency_sheet(vec![
+            currency_row(["", "USD", "-1", "maybe", "", "TRUE"]),
+            // A blank key hides no other error.
+            currency_row(["", "", "-1", "FALSE", "", "TRUE"]),
+            // At most one error per column: not also "a home currency's rate must be 1".
+            currency_row(["", "EUR", "-1", "TRUE", "", "TRUE"]),
+            // The saved home currency: its rate and is_active aren't checked against the flag
+            // the bad cell left.
+            currency_row(["", "USD", "1.2", "maybe", "", "FALSE"]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                2,
+                Some("is_home_currency"),
+                "\"maybe\" must be TRUE, FALSE, 1 or 0"
+            ),
+            (2, Some("rate"), "rate must be above 0"),
+            (3, Some("code"), "code is required for a new currency"),
+            (3, Some("rate"), "rate must be above 0"),
+            (4, Some("rate"), "rate must be above 0"),
+            (
+                5,
+                Some("is_home_currency"),
+                "\"maybe\" must be TRUE, FALSE, 1 or 0"
+            )
+        ]
+    );
+}
+
+// covers: OMS-REG-CDIO-01.208
+
+#[actix_rt::test]
+async fn a_master_list_row_lists_all_its_errors_at_once() {
+    let (connection, service_provider, dir) =
+        master_list_setup("central_data_master_list_all_errors").await;
+    let ctx = service_provider.basic_context().unwrap();
+    MasterListRowRepository::new(&connection)
+        .upsert_one(&MasterListRow {
+            id: "coded".to_string(),
+            name: "Coded list".to_string(),
+            code: "CODED".to_string(),
+            is_active: true,
+            ..Default::default()
+        })
+        .unwrap();
+    let path = write_file(
+        dir.path(),
+        master_list_sheet(vec![
+            master_list_row(["", "CODED", "Another list", "", "TRUE", "FALSE", "abc"]),
+            // A blank key hides no other error.
+            master_list_row(["", "CODED", "", "", "TRUE", "FALSE", ""]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (2, Some("discount_percentage"), "\"abc\" must be a number"),
+            (2, Some("code"), "Master list coded already has code CODED"),
+            (3, Some("name"), "name is required for a new master list"),
+            (3, Some("code"), "Master list coded already has code CODED")
+        ]
+    );
+}
+
+// covers: OMS-REG-CDIO-01.208
+
+#[actix_rt::test]
+async fn a_name_row_lists_all_its_errors_at_once() {
+    let (_, service_provider, dir) = name_setup("central_data_name_all_errors").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let path = write_file(
+        dir.path(),
+        name_sheet(vec![
+            new_name_row(&[
+                ("code", "N1"),
+                ("type", "FACILITY"),
+                ("name", "Clinic X"),
+                ("on_hold", "maybe"),
+                ("custom_data", "{bad"),
+            ]),
+            // A blank key hides no other error.
+            new_name_row(&[
+                ("type", "FACILITY"),
+                ("name", "Clinic Y"),
+                ("custom_data", "{bad"),
+            ]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (2, Some("on_hold"), "\"maybe\" must be TRUE, FALSE, 1 or 0"),
+            (2, Some("custom_data"), "custom_data must be JSON, or blank"),
+            (3, Some("code"), "code is required for a new name"),
+            (3, Some("custom_data"), "custom_data must be JSON, or blank")
+        ]
+    );
+}
+
+// covers: OMS-REG-CDIO-01.208
+
+#[actix_rt::test]
+async fn a_store_row_lists_all_its_errors_at_once() {
+    let (_, service_provider, dir) = store_setup("central_data_store_all_errors").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let path = write_file(
+        dir.path(),
+        store_sheet(vec![
+            new_store_row(&[
+                ("code", "NEW"),
+                ("site_id", "99"),
+                ("is_disabled", "maybe"),
+                ("name_code", "WARD"),
+                ("name_type", "STORE"),
+            ]),
+            // A blank key hides no other error.
+            new_store_row(&[
+                ("site_id", "99"),
+                ("name_code", "WARD"),
+                ("name_type", "STORE"),
+            ]),
+            // A missing name is only "required", not also "not found".
+            new_store_row(&[("code", "NEW2"), ("site_id", "99")]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                2,
+                Some("is_disabled"),
+                "\"maybe\" must be TRUE, FALSE, 1 or 0"
+            ),
+            (2, Some("site_id"), "Site 99 isn't on this server"),
+            (3, Some("code"), "code is required for a new store"),
+            (3, Some("site_id"), "Site 99 isn't on this server"),
+            (
+                4,
+                Some("name_code"),
+                "name_code is required for a new store"
+            ),
+            (4, Some("site_id"), "Site 99 isn't on this server")
+        ]
+    );
+}
+
+// covers: OMS-REG-CDIO-01.208
+
+#[actix_rt::test]
+async fn a_name_store_join_row_lists_all_its_errors_at_once() {
+    let (connection, service_provider, dir) = join_setup("central_data_join_all_errors").await;
+    let ctx = service_provider.basic_context().unwrap();
+    StoreRowRepository::new(&connection)
+        .upsert_one(&StoreRow {
+            id: "store_ward".to_string(),
+            code: "W1".to_string(),
+            name_id: "ward_name".to_string(),
+            site_id: 1,
+            ..Default::default()
+        })
+        .unwrap();
+    let path = write_file(
+        dir.path(),
+        join_sheet(vec![
+            join_row(&[
+                ("store_code", "W1"),
+                ("name_id", "closed"),
+                ("name_is_customer", "maybe"),
+            ]),
+            // Without its store, whether the row adds a join isn't known: no "required".
+            join_row(&[("store_code", "NOPE"), ("name_id", "clinic")]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                2,
+                Some("name_is_customer"),
+                "\"maybe\" must be TRUE, FALSE, 1 or 0"
+            ),
+            (
+                2,
+                Some("name_is_supplier"),
+                "name_is_supplier is required for a new name in a store"
+            ),
+            (
+                2,
+                Some("name_id"),
+                "Closed clinic (CL2) is deleted, so a store can't be given it"
+            ),
+            (3, Some("store_code"), "store_code \"NOPE\" not found")
+        ]
+    );
+}
+
+// covers: OMS-REG-CDIO-01.208
+
+#[actix_rt::test]
+async fn a_user_permission_row_lists_all_its_errors_at_once() {
+    let (_, service_provider, dir) = permission_setup("central_data_permission_all_errors").await;
+    let ctx = as_user(&service_provider, IMPORTER);
+    let path = write_file(
+        dir.path(),
+        permission_sheet(vec![permission_row(&[
+            ("username", "carl"),
+            ("store_code", "MS"),
+            ("permission", "STORE_ACCESS"),
+            ("context_name", "Nope"),
+        ])]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (2, Some("context_name"), "context_name \"Nope\" not found"),
+            (
+                2,
+                Some("username"),
+                "carl is deleted, so they can't be given a permission"
+            )
+        ]
+    );
+}
+
+// covers: OMS-REG-CDIO-01.208
+
+#[actix_rt::test]
+async fn a_user_store_row_lists_all_its_errors_at_once() {
+    let (_, service_provider, dir) = user_store_setup("central_data_user_store_all_errors").await;
+    let ctx = as_user(&service_provider, IMPORTER);
+    let path = write_file(
+        dir.path(),
+        user_store_sheet(vec![user_store_row(&[
+            ("username", "carl"),
+            ("store_id", &mock_store_a().id),
+            ("is_default", "maybe"),
+        ])]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                2,
+                Some("is_default"),
+                "\"maybe\" must be TRUE, FALSE, 1 or 0"
+            ),
+            (
+                2,
+                Some("username"),
+                "carl is deleted, so they can't be given a store"
+            )
+        ]
+    );
+}
+
+// covers: OMS-REG-CDIO-01.208
+
+#[actix_rt::test]
+async fn a_master_list_line_row_lists_all_its_errors_at_once() {
+    let (_, service_provider, dir) = line_setup("central_data_line_all_errors").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let path = write_file(
+        dir.path(),
+        line_sheet(vec![line_row(&[
+            ("master_list_name", "Clinic list"),
+            ("item_code", "NOPE"),
+            ("price_per_unit", "-1"),
+        ])]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (2, Some("item_code"), "item_code \"NOPE\" not found"),
+            (
+                2,
+                Some("price_per_unit"),
+                "price_per_unit can't be negative"
+            )
+        ]
+    );
+}
+
+// covers: OMS-REG-CDIO-01.208
+
+#[actix_rt::test]
+async fn a_master_list_name_join_row_lists_all_its_errors_at_once() {
+    let (_, service_provider, dir) = name_join_setup("central_data_name_join_all_errors").await;
+    let ctx = service_provider.basic_context().unwrap();
+    let path = write_file(
+        dir.path(),
+        name_join_sheet(vec![
+            name_join_row(&[("master_list_name", "Nope"), ("name_id", "patient")]),
+            name_join_row(&[("master_list_id", MISSING_PROGRAM), ("name_code", "CL2")]),
+            // Found by id when a reference isn't: its saved patient and placeholder master list
+            // aren't errors on the column that already has one.
+            name_join_row(&[("id", "mlnj_eml_patient"), ("name_code", "NOPE")]),
+            name_join_row(&[("id", "mlnj_missing"), ("master_list_name", "Nope")]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                2,
+                Some("master_list_name"),
+                "master_list_name \"Nope\" not found"
+            ),
+            (
+                2,
+                Some("name_id"),
+                "Moreau, Anna (P001) is a patient, so import doesn't change which master lists are given to a patient"
+            ),
+            (
+                3,
+                Some("master_list_id"),
+                "missing_program is protected, as the server needs it, so import can't change which names it's given to"
+            ),
+            (
+                3,
+                Some("name_code"),
+                "Closed clinic (CL2) is deleted, so it can't be given a master list"
+            ),
+            (4, Some("name_code"), "name_code \"NOPE\" not found"),
+            (
+                5,
+                Some("master_list_name"),
+                "master_list_name \"Nope\" not found"
+            )
+        ]
+    );
+}
+
+// covers: OMS-REG-CDIO-01.208
+
+#[actix_rt::test]
+async fn a_user_row_lists_all_its_errors_at_once() {
+    let (_, service_provider, dir, _) = user_setup("central_data_user_all_errors").await;
+    let ctx = as_user(&service_provider, IMPORTER);
+    let path = write_file(
+        dir.path(),
+        user_sheet(vec![
+            user_row("", "\tbob", &[(2, "secret12"), (4, "KLINGON")]),
+            // A blank username is only "required".
+            user_row("", "", &[(2, "secret12"), (4, "KLINGON")]),
+        ]),
+    );
+    let summary = CentralDataService.preview_import(&ctx, &path).unwrap();
+    assert_eq!(
+        row_errors(&summary),
+        vec![
+            (
+                2,
+                Some("language"),
+                "\"KLINGON\" must be one of ENGLISH, FRENCH, SPANISH, LAOS, KHMER, PORTUGUESE, RUSSIAN, TETUM"
+            ),
+            (
+                2,
+                Some("username"),
+                "username can't start or end with a tab or line break"
+            ),
+            (
+                3,
+                Some("language"),
+                "\"KLINGON\" must be one of ENGLISH, FRENCH, SPANISH, LAOS, KHMER, PORTUGUESE, RUSSIAN, TETUM"
+            ),
+            (3, Some("username"), "username is required for a new user")
         ]
     );
 }

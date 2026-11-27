@@ -319,6 +319,8 @@ export const PatientSearchDialog = (
       setLink({ kind: 'idle' });
       return;
     }
+    // Not here yet (a site syncing over v5/v6): Retry, after the next sync,
+    // finds them.
     setLink(
       outcome.kind === 'unreachable'
         ? {
@@ -326,7 +328,13 @@ export const PatientSearchDialog = (
             patient,
             message: outcome.message || t('messages.failed-to-reach-central'),
           }
-        : { kind: 'idle' }
+        : outcome.kind === 'notHereYet'
+          ? {
+              kind: 'failed',
+              patient,
+              message: t('messages.patient-arrives-next-sync'),
+            }
+          : { kind: 'idle' }
     );
   };
 
