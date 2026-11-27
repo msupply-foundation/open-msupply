@@ -9713,6 +9713,7 @@ dependencies = [
  "topological-sort",
  "ts-rs",
  "umya-spreadsheet",
+ "unicode-normalization",
  "url",
  "util",
  "walkdir",

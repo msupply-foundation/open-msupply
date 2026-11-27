@@ -88,7 +88,7 @@ const record = (fields: Partial<DispensedRecord> = {}): DispensedRecord => ({
   createdDatetime: '2026-11-20T09:24:00Z',
   backdatedDatetime: null,
   cancelledDatetime: null,
-  patient: { id: 'p1', name: 'Somchai', code: 'NHF0102', isUnnamed: false },
+  patient: { id: 'p1', name: 'Somchai', code: 'NHF0102' },
   pricing: { totalAfterTax: 0 },
   lines: { nodes: [] },
   ...fields,

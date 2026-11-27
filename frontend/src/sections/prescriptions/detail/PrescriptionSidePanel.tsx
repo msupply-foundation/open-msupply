@@ -299,10 +299,7 @@ export const PrescriptionSidePanel: Component<
         <FieldRow label={t('label.patient-name')}>
           <Text variant="body">
             {props.node.patient
-              ? shownPatientName(
-                  props.node.patient.name,
-                  props.node.patient.isUnnamed
-                )
+              ? shownPatientName(props.node.patient.name, props.node.patient.id)
               : '—'}
           </Text>
         </FieldRow>

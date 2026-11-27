@@ -21,7 +21,6 @@ export type SimpleDispensedRecordResult = {
   id: string;
   name: string;
   code: string;
-  isUnnamed: boolean;
 } | null;
   pricing: {
   totalAfterTax: number;
@@ -67,7 +66,7 @@ export type SimpleDispensedRecordResult = {
 };
 
 export const SimpleDispensedRecord = {
-  query: "query simpleDispensedRecord($storeId: String!, $id: String!) {\n  invoice(storeId: $storeId, id: $id, type: PRESCRIPTION) {\n    __typename\n    ... on InvoiceNode {\n      id\n      status\n      isCancellation\n      createdDatetime\n      backdatedDatetime\n      cancelledDatetime\n      patient {\n        id\n        name\n        code\n        isUnnamed\n      }\n      pricing {\n        totalAfterTax\n      }\n      lines {\n        nodes {\n          id\n          type\n          itemId\n          itemName\n          packSize\n          numberOfPacks\n          totalAfterTax\n          sellPricePerPack\n          stockLine {\n            id\n            availableNumberOfPacks\n            packSize\n            sellPricePerPack\n            expiryDate\n            onHold\n            location {\n              onHold\n            }\n            vvmStatus {\n              unusable\n              priority\n            }\n          }\n          item {\n            id\n            unitName\n          }\n        }\n      }\n    }\n    ... on NodeError {\n      error {\n        __typename\n      }\n    }\n  }\n}",
+  query: "query simpleDispensedRecord($storeId: String!, $id: String!) {\n  invoice(storeId: $storeId, id: $id, type: PRESCRIPTION) {\n    __typename\n    ... on InvoiceNode {\n      id\n      status\n      isCancellation\n      createdDatetime\n      backdatedDatetime\n      cancelledDatetime\n      patient {\n        id\n        name\n        code\n      }\n      pricing {\n        totalAfterTax\n      }\n      lines {\n        nodes {\n          id\n          type\n          itemId\n          itemName\n          packSize\n          numberOfPacks\n          totalAfterTax\n          sellPricePerPack\n          stockLine {\n            id\n            availableNumberOfPacks\n            packSize\n            sellPricePerPack\n            expiryDate\n            onHold\n            location {\n              onHold\n            }\n            vvmStatus {\n              unusable\n              priority\n            }\n          }\n          item {\n            id\n            unitName\n          }\n        }\n      }\n    }\n    ... on NodeError {\n      error {\n        __typename\n      }\n    }\n  }\n}",
 } as TypedDocument<SimpleDispensedRecordResult, SimpleDispensedRecordVariables>;
 
 export type SimpleSaveChangesVariables = {

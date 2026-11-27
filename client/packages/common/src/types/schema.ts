@@ -6131,12 +6131,6 @@ export type InvoiceNode = {
   insurancePolicy?: Maybe<InsurancePolicyNode>;
   invoiceNumber: Scalars['Int']['output'];
   isCancellation: Scalars['Boolean']['output'];
-  /**
-   * Whether the invoice is for a store's unnamed patient, so a list can show
-   * its translated label without loading each row's patient
-   * (spec/prescriptions rules › the unnamed patient)
-   */
-  isForUnnamedPatient: Scalars['Boolean']['output'];
   lines: InvoiceLineConnector;
   /** Inbound Shipment <-> Outbound Shipment, where Inbound Shipment originated from Outbound Shipment */
   linkedShipment?: Maybe<InvoiceNode>;
@@ -8652,11 +8646,6 @@ export type PatientNode = {
   gender?: Maybe<GenderTypeNode>;
   id: Scalars['String']['output'];
   isDeceased: Scalars['Boolean']['output'];
-  /**
-   * Whether this is a store's unnamed patient, the one record its walk-in
-   * visits are dispensed to. Search never returns it.
-   */
-  isUnnamed: Scalars['Boolean']['output'];
   lastName?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
   nextOfKin?: Maybe<PatientNode>;

@@ -97,7 +97,7 @@ const record = (
   createdDatetime: '2026-11-20T09:24:00Z',
   backdatedDatetime: null,
   cancelledDatetime: null,
-  patient: { id: 'p', name: 'Somchai', code: 'P1', isUnnamed: false },
+  patient: { id: 'p', name: 'Somchai', code: 'P1' },
   pricing: { totalAfterTax: 0 },
   lines: { nodes: lines },
 });
