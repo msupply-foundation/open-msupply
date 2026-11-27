@@ -284,14 +284,15 @@ export const cascadedDateFields = (
 };
 
 /**
- * Write one day onto the given delivery dates of EVERY line. The server does
- * not cascade a bare date change (`update_lines` fills a line's requested date
- * only alongside a status), so the screen issues the per-line writes itself.
+ * Write a day (null clears) onto the given delivery dates of EVERY line. The
+ * server does not cascade a bare date change (`update_lines` fills a line's
+ * requested date only alongside a status), so the screen issues the per-line
+ * writes itself.
  */
 export const cascadeDeliveryDates = (
   storeId: string,
   lines: { id: string }[],
-  date: string,
+  date: string | null,
   fields: DeliveryDateField[]
 ): Promise<LinesOutcome> =>
   foldLineUpdates(

@@ -368,6 +368,8 @@ export const rnrFormLineColumns = ({
     sortKey: 'expiryDate',
     header: headerWithInfo('label.expiry', 'description.expiry'),
     ...getCellDefinition('expiryDate'),
+    // Fits the date, its calendar button and its ✕.
+    size: remToPx(11.25),
     cardGroup: 'more',
     cell: info => {
       const line = info.row.original;

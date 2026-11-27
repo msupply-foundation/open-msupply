@@ -169,10 +169,11 @@ export const CreatePrescriptionRequestModal: Component<
           }
         />
       </FieldRow>
-      <FieldRow label={t('label.date')}>
+      <FieldRow label={t('label.date')} required>
         <DateField
           label={t('label.date')}
           hideLabel
+          required
           testId="date-field"
           value={date()}
           max={todayCalendarDate()}

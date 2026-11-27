@@ -354,11 +354,12 @@ const AdjustContent = (props: {
         {/* Date: only when the backdating preference allows inventory
             adjustments, bounded to the max-days window. */}
         <Show when={backdating().inventoryAdjustmentsEnabled}>
-          <FieldRow label={t('label.adjustment-date')}>
+          <FieldRow label={t('label.adjustment-date')} required>
             <DateField
               label={t('label.adjustment-date')}
               testId="adjust-date"
               hideLabel
+              required
               min={minDate()}
               max={today}
               value={date()}

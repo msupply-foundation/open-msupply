@@ -469,7 +469,7 @@ const PurchaseOrderDetailView: Component = () => {
   // then travels alone — the agreed requested date is not dragged with it.
   const cascadeDate = async (
     field: DeliveryDateField,
-    date: string
+    date: string | null
   ): Promise<SaveFieldResult> => {
     const fields = cascadedDateFields(lineSet(), field, !isDisabled());
     const orderWrite = fields.includes('requestedDeliveryDate')

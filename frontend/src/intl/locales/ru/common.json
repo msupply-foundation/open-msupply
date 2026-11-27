@@ -849,6 +849,7 @@
   "label.chargeCode": "Код Сбора",
   "label.chart": "Диаграмма",
   "label.class": "Класс",
+  "label.clear-field": "Очистить поле «{{label}}»",
   "label.clear-filter": "Очистить фильтр",
   "label.clear-selection": "Очистить выбор",
   "label.click-to-sort": "Нажмите, чтобы отсортировать по: ",

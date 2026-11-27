@@ -94,6 +94,7 @@ export const TemperatureMappingModal: Component<
           // datetime in the future.
           max={todayCalendarDate()}
           testId="mapping-date-input"
+          required
           disabled={saving()}
           value={date() || null}
           onChange={value => setDate(value ?? '')}

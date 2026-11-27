@@ -175,11 +175,14 @@ export const InputsShowcase = () => {
   );
   const [expiringBefore, setExpiringBefore] = createSignal<string | null>(null);
   const [manufacture, setManufacture] = createSignal<string | null>(null);
-  const [countDate, setCountDate] = createSignal<string | null>(null);
+  const [countDate, setCountDate] = createSignal<string | null>('2026-11-02');
   const [reportMonth, setReportMonth] = createSignal<string | null>(null);
   const [cutoff, setCutoff] = createSignal<string | null>('17:30');
   const [appointment, setAppointment] = createSignal<string | null>(
     '2026-07-17T02:30:00.000Z'
+  );
+  const [checkIn, setCheckIn] = createSignal<string | null>(
+    '2026-07-17T08:00:00.000Z'
   );
   const [period, setPeriod] = createSignal<CalendarDateRange>({
     start: '2026-07-01',
@@ -695,12 +698,15 @@ export const InputsShowcase = () => {
             am/pm. <code>DateTimeField</code> puts the typed date and segmented
             time in <strong>one input</strong>, storing a{' '}
             <strong>UTC instant</strong> while the user edits{' '}
-            <strong>local wall-clock</strong> time.
+            <strong>local wall-clock</strong> time. An optional field holding a
+            value shows a <strong>✕</strong> (<code>ClearButton</code>) that
+            empties it; a required one shows none.
           </Lead>
           <div class={styles.grid}>
             <Field caption="Default — the language's numeric short date">
               <DateField
                 label="Expiry date"
+                testId="showcase-date-optional"
                 value={expiry()}
                 onChange={setExpiry}
                 helperText={`Type e.g. 12/08/2027, or pick. Stored: ${
@@ -761,10 +767,11 @@ export const InputsShowcase = () => {
             <Field caption="Required">
               <DateField
                 label="Count date"
+                testId="showcase-date-required"
                 required
                 value={countDate()}
                 onChange={setCountDate}
-                helperText="Asterisk on label — not placeholder"
+                helperText="Asterisk on label, and no ✕: it can't be emptied"
               />
             </Field>
             <Field caption="Error">
@@ -788,11 +795,22 @@ export const InputsShowcase = () => {
             >
               <DateTimeField
                 label="Appointment"
+                testId="showcase-datetime-optional"
                 value={appointment()}
                 onChange={setAppointment}
                 helperText={`You edit local wall-clock; stored as UTC: ${
                   appointment() ?? '(empty)'
                 }`}
+              />
+            </Field>
+            <Field caption="Date & time — required">
+              <DateTimeField
+                label="Check-in"
+                testId="showcase-datetime-required"
+                required
+                value={checkIn()}
+                onChange={setCheckIn}
+                helperText="Required: no ✕"
               />
             </Field>
           </div>

@@ -1350,6 +1350,7 @@
   "label.class": "ຊັ້ນ",
   "label.clear-all-filters": "ລ້າງທັງໝົດ",
   "label.clear-dates": "ລ້າງວັນທີ",
+  "label.clear-field": "ລ້າງ {{label}}",
   "label.clear-filter": "ລ້າງຕົວກັ່ນຕອງ",
   "label.clear-filter-detail": "ເອົາຕົວກັ່ນຕອງ {{ name }} ອອກ",
   "label.clear-from-date": "ລ້າງວັນທີເລີ່ມຕົ້ນ",

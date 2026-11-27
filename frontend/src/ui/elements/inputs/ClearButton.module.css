@@ -1,0 +1,25 @@
+/*
+ * Matches Select's ✕: a 1rem icon in a 1.5rem box (SC 2.5.8 target), muted
+ * until hovered or focused. Focus shows as that colour change, with no ring.
+ */
+.clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  padding: 0;
+  margin-inline-start: var(--space-1);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-size: 1rem;
+  color: var(--gray-main);
+  cursor: pointer;
+}
+
+.clear:hover,
+.clear:focus-visible {
+  color: var(--text-body);
+}

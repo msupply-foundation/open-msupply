@@ -128,6 +128,7 @@ export const PrescriptionRequestToolbar: Component<
           label={t('label.date')}
           size="small"
           testId="date-field"
+          required
           value={shownDay()}
           max={todayCalendarDate()}
           disabled={props.disabled}

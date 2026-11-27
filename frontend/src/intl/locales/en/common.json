@@ -1366,6 +1366,7 @@
   "label.class": "Class",
   "label.clear-all-filters": "Clear all",
   "label.clear-dates": "Clear dates",
+  "label.clear-field": "Clear {{label}}",
   "label.clear-filter": "Clear filter",
   "label.clear-filter-detail": "Remove {{ name }} filter",
   "label.clear-from-date": "Clear from date",

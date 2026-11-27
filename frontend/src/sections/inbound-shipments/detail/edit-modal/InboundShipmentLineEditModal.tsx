@@ -1520,7 +1520,9 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { key: 'expiryDate' },
       header: () => t('label.expiry'),
       cardGroup: 'batch',
-      meta: { cardWidth: { min: 10, max: 11.5, weight: 1 } },
+      // Min fits a small date beside its two buttons; a wider max pushes
+      // Location off the row on a 1280px tablet.
+      meta: { cardWidth: { min: 10.75, max: 11.5, weight: 1 } },
       cell: info => {
         const b = info.row.original;
         return (
@@ -1896,7 +1898,9 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { key: 'manufactureDate' },
       header: () => t('label.manufacture-date'),
       cardGroup: 'pricing',
-      meta: { cardWidth: { min: 10, max: 11.5, weight: 1 } },
+      // Min fits a small date beside its two buttons; a wider max pushes
+      // Location off the row on a 1280px tablet.
+      meta: { cardWidth: { min: 10.75, max: 11.5, weight: 1 } },
       cell: info => {
         const b = info.row.original;
         return (

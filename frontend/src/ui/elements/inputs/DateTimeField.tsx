@@ -3,6 +3,7 @@ import {
   createSignal,
   createUniqueId,
   on,
+  Show,
   type JSX,
 } from 'solid-js';
 import { TimeField as KTimeField } from '@kobalte/core/time-field';
@@ -10,6 +11,7 @@ import { locale, t } from '../../../intl';
 import { CalendarIcon } from '../../icons';
 import { Popover } from '../feedback/Popover';
 import type { FocusTarget } from '../../utils/createFocusTarget';
+import { ClearButton } from './ClearButton';
 import { FieldShell } from './FieldShell';
 import { DatePickerPanel } from './DatePickerPanel';
 import {
@@ -66,12 +68,19 @@ export interface DateTimeFieldProps {
   labelInfo?: JSX.Element;
   id?: string;
   /** `data-testid` stamped on the DATE input — the field's first focusable and
-   *  the part a test types into (e2e/TESTIDS.md). */
+   *  the part a test types into (e2e/TESTIDS.md). The clear button takes
+   *  `<testId>-clear`. */
   testId?: string;
   /** Focus destination (kdd/focus-targets) — lands on the date input, where
    *  entry starts. */
   focusTarget?: FocusTarget;
 }
+
+/*
+ * No time. Kobalte treats `undefined` as uncontrolled and keeps the last time
+ * shown; `{}` stays controlled and shows the placeholders.
+ */
+const NO_TIME: TimeValue = {};
 
 /*
  * Date-and-time input (spec: ui-standards/inputs.md § Dates & times). Date and
@@ -84,13 +93,17 @@ export interface DateTimeFieldProps {
  * the DEVICE timezone (no store/server timezone). Editing the date (typed or
  * picked) or the time recombines the two local parts into the UTC instant;
  * nothing above sees anything but UTC. A date with a blank time defaults to
- * midnight; clearing the date emits null. Both parts are buffered locally so
- * the time survives being set before a date.
+ * midnight; clearing the date (or the ✕, which empties the time too) emits
+ * null. A required field has no ✕ but can still be blanked, so the form's
+ * required check reports it. Both parts are buffered locally so the time
+ * survives being set before a date.
  */
 export const DateTimeField = (props: DateTimeFieldProps) => {
   const autoId = createUniqueId();
   const dateId = () => props.id ?? autoId; // label focuses the date input
   const fmt = () => props.format ?? defaultDateFormat();
+  // Where the ✕ hands focus after a clear.
+  let dateEl: HTMLInputElement | undefined;
 
   const parts = () => instantToLocalParts(props.value);
   const [dateText, setDateText] = createSignal(
@@ -99,20 +112,43 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
   const [time, setTime] = createSignal<TimeValue | undefined>(
     hhmmToTime(parts()?.time)
   );
+  // Typed in since the last shown date — see DateField's `edited`.
+  let edited = false;
+  const showDate = (dateIso: string | null | undefined) => {
+    setDateText(formatCalendarDate(dateIso, fmt()));
+    edited = false;
+  };
+  // The instant last shown as set: the parent's, or one sent.
+  let shown: string | null = null;
+  const showValue = () => {
+    const p = instantToLocalParts(props.value);
+    showDate(p?.date);
+    setTime(hhmmToTime(p?.time));
+    shown = props.value ?? null;
+  };
   // Resync both buffers from the external value only when IT (or the app
   // language — month names) changes.
+  createEffect(on([() => props.value, locale], showValue));
+  // A refused save reverts — see DateField.
   createEffect(
-    on([() => props.value, locale], () => {
-      const p = instantToLocalParts(props.value);
-      setDateText(formatCalendarDate(p?.date, fmt()));
-      setTime(hhmmToTime(p?.time));
-    })
+    on(
+      () => props.error,
+      error => {
+        if (error) showValue();
+      },
+      { defer: true }
+    )
   );
 
-  const emit = (dateIso: string | null, t: TimeValue | undefined) =>
-    props.onChange?.(
-      dateIso ? localPartsToInstant(dateIso, timeToHhmm(t) ?? '') : null
-    );
+  const emit = (dateIso: string | null, t: TimeValue | undefined) => {
+    const next = dateIso
+      ? localPartsToInstant(dateIso, timeToHhmm(t) ?? '')
+      : null;
+    // Still empty: unsent typing cleared, or a time with no date.
+    if (next === null && shown === null) return;
+    shown = next;
+    props.onChange?.(next);
+  };
 
   // Apply a committed date: write the local date buffer directly AND emit the
   // recombined UTC instant, so a picked/typed date shows even when the parent
@@ -120,14 +156,15 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
   // already updates its own buffer) — keeps date and time symmetric, no extra
   // state.
   const applyDate = (dateIso: string | null) => {
-    setDateText(formatCalendarDate(dateIso, fmt()));
+    showDate(dateIso);
     emit(dateIso, time());
   };
 
   const commitDate = () => {
+    if (!edited) return;
     const parsed = parseDateInput(dateText(), fmt());
     if (parsed === undefined) {
-      setDateText(formatCalendarDate(parts()?.date, fmt())); // invalid → revert
+      showDate(parts()?.date); // invalid → revert
       return;
     }
     applyDate(parsed);
@@ -147,16 +184,20 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
       labelInfo={props.labelInfo}
       controlId={dateId()}
     >
-      {({ describedBy, invalid }) => (
+      {shell => (
         <div
           class={styles.control}
           data-size={props.size === 'small' ? 'small' : undefined}
           data-error={props.error ? '' : undefined}
           data-disabled={props.disabled ? '' : undefined}
+          data-clearable={!props.required && !props.disabled ? '' : undefined}
         >
           <input
             id={dateId()}
-            ref={(el: HTMLInputElement) => props.focusTarget?.ref(el)}
+            ref={(el: HTMLInputElement) => {
+              dateEl = el;
+              props.focusTarget?.ref(el);
+            }}
             type="text"
             class={styles.dateInput}
             data-testid={props.testId}
@@ -164,9 +205,12 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
             placeholder={formatPlaceholder(fmt())}
             disabled={props.disabled}
             aria-label={t('label.field-date-part', { label: props.label })}
-            aria-describedby={describedBy}
-            aria-invalid={invalid}
-            onInput={e => setDateText(e.currentTarget.value)}
+            aria-describedby={shell.describedBy}
+            aria-invalid={shell.invalid}
+            onInput={e => {
+              setDateText(e.currentTarget.value);
+              edited = true;
+            }}
             onBlur={commitDate}
             onKeyDown={e => {
               if (e.key === 'Enter') e.currentTarget.blur(); // commits via onBlur
@@ -194,7 +238,7 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
           <span class={styles.divider} aria-hidden="true" />
           <KTimeField
             class={styles.timeRoot}
-            value={time()}
+            value={time() ?? NO_TIME}
             onChange={(t: TimeValue | null) => {
               setTime(t ?? undefined);
               emit(parts()?.date ?? null, t ?? undefined);
@@ -217,6 +261,24 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
               )}
             </KTimeField.Input>
           </KTimeField>
+          {/* Empties the date and the time. */}
+          <Show
+            when={
+              (dateText() !== '' || time() !== undefined) &&
+              !props.required &&
+              !props.disabled
+            }
+          >
+            <ClearButton
+              fieldLabel={props.label}
+              testId={props.testId && `${props.testId}-clear`}
+              onClear={() => {
+                setTime(undefined);
+                applyDate(null);
+              }}
+              refocus={() => dateEl?.focus()}
+            />
+          </Show>
         </div>
       )}
     </FieldShell>

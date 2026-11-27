@@ -126,6 +126,11 @@
   max-width: var(--input-max-compact);
 }
 
+/* Wider by the ✕'s 1.75rem, so the date still fits beside it. */
+.field[data-width='compact'] .control[data-clearable] {
+  max-width: calc(var(--input-max-compact) + 1.75rem);
+}
+
 /* The date portion: a bare button filling the free space, calendar icon at the
    inline-end. */
 .dateTrigger {
