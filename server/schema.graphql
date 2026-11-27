@@ -5839,7 +5839,11 @@ type ItemNode {
 	outerPackSize: Int!
 	volumePerOuterPack: Float!
 	volumePerPack: Float!
-	margin: Float!
+	"""
+	Legacy mSupply moved margin to the store's item settings in 6.06 and
+	zeroes the item's own, so this is always 0 for current mSupply data.
+	"""
+	margin: Float! @deprecated(reason: "Since 3.5.0. Always 0: margin is per store. Use itemStoreProperties.margin instead")
 	weight: Float!
 	atcCategory: String!
 	ddd: String!

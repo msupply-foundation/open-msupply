@@ -539,18 +539,6 @@ const ItemDetailView: Component = () => {
                           </LabelledValue>
                         </FormRow>
                       </FormSection>
-                      <FormSection title={t('title.pricing')}>
-                        <FormRow>
-                          <LabelledValue
-                            variant="field"
-                            data-testid="item-field-margin"
-                            label={t('label.margin')}
-                          >
-                            {/* A percentage — its own precision, not the configured places. */}
-                            <Num value={formatUnits(i().margin, 2)} />
-                          </LabelledValue>
-                        </FormRow>
-                      </FormSection>
                     </FormColumn>
                   </FormColumns>
                 </ContentContainer>
@@ -572,6 +560,23 @@ const ItemDetailView: Component = () => {
                               i().itemStoreProperties
                                 ?.defaultSellPricePerPack ?? 0
                             )}
+                          </LabelledValue>
+                        </FormRow>
+                        <FormRow>
+                          <LabelledValue
+                            variant="field"
+                            data-testid="item-field-margin"
+                            label={t('label.margin')}
+                          >
+                            {/* The store's margin, not the item's: legacy mSupply
+                                keeps margin per store. A percentage — its own
+                                precision, not the configured places. */}
+                            <Num
+                              value={formatUnits(
+                                i().itemStoreProperties?.margin ?? 0,
+                                2
+                              )}
+                            />
                           </LabelledValue>
                         </FormRow>
                       </FormSection>

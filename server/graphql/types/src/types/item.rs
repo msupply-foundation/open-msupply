@@ -356,6 +356,11 @@ impl ItemNode {
         self.row().volume_per_pack
     }
 
+    /// Legacy mSupply moved margin to the store's item settings in 6.06 and
+    /// zeroes the item's own, so this is always 0 for current mSupply data.
+    #[graphql(
+        deprecation = "Since 3.5.0. Always 0: margin is per store. Use itemStoreProperties.margin instead"
+    )]
     pub async fn margin(&self) -> f64 {
         self.legacy_f64("margin")
     }

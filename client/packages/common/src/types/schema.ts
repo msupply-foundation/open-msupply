@@ -6470,6 +6470,11 @@ export type ItemNode = {
   isVaccine: Scalars['Boolean']['output'];
   itemDirections: Array<ItemDirectionNode>;
   itemStoreProperties?: Maybe<ItemStorePropertiesNode>;
+  /**
+   * Legacy mSupply moved margin to the store's item settings in 6.06 and
+   * zeroes the item's own, so this is always 0 for current mSupply data.
+   * @deprecated Since 3.5.0. Always 0: margin is per store. Use itemStoreProperties.margin instead
+   */
   margin: Scalars['Float']['output'];
   masterLists?: Maybe<Array<MasterListNode>>;
   /** @deprecated Since 2.16.0. Use universalCode instead */

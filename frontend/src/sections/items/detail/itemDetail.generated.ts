@@ -36,7 +36,6 @@ export type ItemDetailResult = {
   volumePerPack: number;
   volumePerOuterPack: number;
   weight: number;
-  margin: number;
   customFields: unknown | null;
   restrictedLocationType: {
   id: string;
@@ -44,6 +43,7 @@ export type ItemDetailResult = {
 } | null;
   itemStoreProperties: {
   defaultSellPricePerPack: number;
+  margin: number;
   ignoreForOrders: boolean;
 } | null;
   masterLists: Array<{
@@ -69,5 +69,5 @@ export type ItemDetailResult = {
 };
 
 export const ItemDetail = {
-  query: "query itemDetail($storeId: String!, $id: EqualFilterStringInput) {\n  items(storeId: $storeId, filter: {id: $id, isActive: true}) {\n    ... on ItemConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        code\n        name\n        unitName\n        type\n        strength\n        ddd\n        isVaccine\n        doses\n        atcCategory\n        universalCode\n        msupplyUniversalName\n        defaultPackSize\n        outerPackSize\n        volumePerPack\n        volumePerOuterPack\n        weight\n        margin\n        customFields\n        restrictedLocationType {\n          id\n          name\n        }\n        itemStoreProperties(storeId: $storeId) {\n          defaultSellPricePerPack\n          ignoreForOrders\n        }\n        masterLists(storeId: $storeId) {\n          id\n          code\n          name\n          description\n        }\n        stats(storeId: $storeId) {\n          stockOnHand\n          averageMonthlyConsumption\n          monthsOfStockOnHand\n        }\n        variants {\n          id\n          name\n        }\n        ancillaryItems {\n          id\n        }\n      }\n    }\n  }\n}",
+  query: "query itemDetail($storeId: String!, $id: EqualFilterStringInput) {\n  items(storeId: $storeId, filter: {id: $id, isActive: true}) {\n    ... on ItemConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        code\n        name\n        unitName\n        type\n        strength\n        ddd\n        isVaccine\n        doses\n        atcCategory\n        universalCode\n        msupplyUniversalName\n        defaultPackSize\n        outerPackSize\n        volumePerPack\n        volumePerOuterPack\n        weight\n        customFields\n        restrictedLocationType {\n          id\n          name\n        }\n        itemStoreProperties(storeId: $storeId) {\n          defaultSellPricePerPack\n          margin\n          ignoreForOrders\n        }\n        masterLists(storeId: $storeId) {\n          id\n          code\n          name\n          description\n        }\n        stats(storeId: $storeId) {\n          stockOnHand\n          averageMonthlyConsumption\n          monthsOfStockOnHand\n        }\n        variants {\n          id\n          name\n        }\n        ancillaryItems {\n          id\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<ItemDetailResult, ItemDetailVariables>;
