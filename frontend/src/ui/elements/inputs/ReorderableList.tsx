@@ -1,8 +1,11 @@
 import {
+  createEffect,
   createMemo,
   createSignal,
   For,
+  onCleanup,
   Show,
+  untrack,
   type Component,
   type JSX,
 } from 'solid-js';
@@ -156,6 +159,9 @@ export const ReorderableList = (props: ReorderableListProps): JSX.Element => {
   // How far below the dragged row's top edge it was picked up, so it hangs
   // from the pointer at that point rather than jumping to it.
   let grabOffset = 0;
+  // Where the pointer last was: a scroll moves the rows under a still
+  // pointer, so the row is placed again from here without a pointer event.
+  let pointerY = 0;
 
   /*
    * The drag is drawn, not just committed: the row in hand follows the
@@ -169,9 +175,31 @@ export const ReorderableList = (props: ReorderableListProps): JSX.Element => {
     list.querySelector<HTMLElement>(`[data-reorder-id="${CSS.escape(id)}"]`);
   const listTop = () => list.getBoundingClientRect().top + list.clientTop;
 
-  // Hang the dragged row from the pointer, wherever its slot now is.
-  const float = (row: HTMLElement, pointerY: number) => {
-    row.style.transition = 'none';
+  const EASE = 'var(--motion-fast) ease';
+  // Animate a row's transform back to nothing, then leave no inline style
+  // behind, so the stylesheet's own transition (the lift's shadow) applies
+  // again. Under reduced motion --motion-fast is 0s and no transitionend
+  // fires, so it is cleared at once.
+  const settle = (row: HTMLElement, transition: string) => {
+    row.style.transition = transition;
+    row.style.transform = '';
+    const clear = () => {
+      if (row.dataset.dragging !== undefined) return;
+      row.style.transition = '';
+    };
+    if (
+      getComputedStyle(row)
+        .transitionDuration.split(',')
+        .every(d => parseFloat(d) === 0)
+    )
+      clear();
+    else row.addEventListener('transitionend', clear, { once: true });
+  };
+
+  // Hang the dragged row from the pointer, wherever its slot now is. Its
+  // shadow keeps the stylesheet's transition, so the lift fades in.
+  const float = (row: HTMLElement) => {
+    row.style.transition = `box-shadow ${EASE}`;
     row.style.transform = `translateY(${pointerY - grabOffset - listTop() - row.offsetTop}px)`;
   };
 
@@ -182,8 +210,90 @@ export const ReorderableList = (props: ReorderableListProps): JSX.Element => {
     row.style.transition = 'none';
     row.style.transform = `translateY(${by}px)`;
     void row.offsetHeight; // start the slide from there, not from the slot
-    row.style.transition = 'transform var(--motion-fast) ease';
-    row.style.transform = '';
+    settle(row, `transform ${EASE}`);
+  };
+
+  // The dragged row's slot for where the pointer is now, and the row hung
+  // there: on every pointer move, and on every scroll while it drags.
+  const place = () => {
+    const dragged = draggingId();
+    if (dragged === undefined || props.disabled) return;
+    const row = rowEl(dragged);
+    if (!row) return;
+    const top = listTop();
+    const others = ids().flatMap(id => {
+      const el = id === dragged ? null : rowEl(id);
+      return el ? [{ el, top: el.offsetTop }] : [];
+    });
+    const slot = slotAmong(
+      others.map(other => top + other.top + other.el.offsetHeight / 2),
+      pointerY - grabOffset + row.offsetHeight / 2
+    );
+    commit(reorderBy(ids(), dragged, slot));
+    // Solid has moved the rows by now; those that moved slide there.
+    for (const other of others) slide(other.el, other.top);
+    float(row);
+  };
+
+  /*
+   * Near the top or bottom edge of whatever scrolls the list (the dialog body
+   * of a long list, or the page), it scrolls, faster the closer the pointer:
+   * the handle holds the touch, so a finger can't scroll the list itself, and
+   * a long list's far end is otherwise out of reach of a drag. The scroll
+   * re-places the row through the scroll listener below.
+   */
+  let autoScroll: number | undefined;
+  const scroller = (): HTMLElement => {
+    for (let el = list.parentElement; el; el = el.parentElement) {
+      const overflow = getComputedStyle(el).overflowY;
+      if (
+        (overflow === 'auto' || overflow === 'scroll') &&
+        el.scrollHeight > el.clientHeight
+      )
+        return el;
+    }
+    return document.scrollingElement as HTMLElement;
+  };
+  const scrollStep = () => {
+    autoScroll = undefined;
+    if (draggingId() === undefined) return;
+    const area = scroller();
+    const isPage = area === document.scrollingElement;
+    const rect = isPage
+      ? { top: 0, bottom: window.innerHeight }
+      : area.getBoundingClientRect();
+    // The edge zone, three lines of text tall, in px from the root size.
+    const zone =
+      3 * parseFloat(getComputedStyle(document.documentElement).fontSize);
+    const top = Math.max(rect.top, 0);
+    const bottom = Math.min(rect.bottom, window.innerHeight);
+    const by =
+      pointerY < top + zone
+        ? -Math.ceil(((top + zone - pointerY) / zone) * 12)
+        : pointerY > bottom - zone
+          ? Math.ceil(((pointerY - (bottom - zone)) / zone) * 12)
+          : 0;
+    if (by !== 0) area.scrollBy(0, by);
+    autoScroll = requestAnimationFrame(scrollStep);
+  };
+
+  const onScroll = () => place();
+
+  const stopDrag = () => {
+    const dragged = draggingId();
+    if (dragged === undefined) return;
+    if (dragPointer !== undefined && list.hasPointerCapture(dragPointer))
+      list.releasePointerCapture(dragPointer);
+    dragPointer = undefined;
+    if (autoScroll !== undefined) cancelAnimationFrame(autoScroll);
+    autoScroll = undefined;
+    document.removeEventListener('scroll', onScroll, true);
+    setDraggingId(undefined);
+    // Set down: the row settles from under the pointer into its slot, its
+    // shadow fading as it does. Whatever order it reached stays — a release
+    // and a cancelled pointer alike.
+    const row = rowEl(dragged);
+    if (row) settle(row, `transform ${EASE}, box-shadow ${EASE}`);
   };
 
   const startDrag = (event: PointerEvent, id: string) => {
@@ -197,42 +307,32 @@ export const ReorderableList = (props: ReorderableListProps): JSX.Element => {
     dragPointer = event.pointerId;
     list.setPointerCapture(event.pointerId);
     grabOffset = event.clientY - row.getBoundingClientRect().top;
+    pointerY = event.clientY;
     setDraggingId(id);
-    float(row, event.clientY);
+    float(row);
+    // Capture phase: a scroll doesn't bubble, and the scroller may be any
+    // ancestor, the dialog body or the page.
+    document.addEventListener('scroll', onScroll, true);
+    autoScroll = requestAnimationFrame(scrollStep);
   };
 
   const dragOver = (event: PointerEvent) => {
-    const dragged = draggingId();
-    if (event.pointerId !== dragPointer || dragged === undefined) return;
-    const row = rowEl(dragged);
-    if (!row) return;
-    const top = listTop();
-    const others = ids().flatMap(id => {
-      const el = id === dragged ? null : rowEl(id);
-      return el ? [{ el, top: el.offsetTop }] : [];
-    });
-    const slot = slotAmong(
-      others.map(other => top + other.top + other.el.offsetHeight / 2),
-      event.clientY - grabOffset + row.offsetHeight / 2
-    );
-    const next = reorderBy(ids(), dragged, slot);
-    commit(next);
-    // Solid has moved the rows by now; those that moved slide there.
-    for (const other of others) slide(other.el, other.top);
-    float(row, event.clientY);
+    if (event.pointerId !== dragPointer) return;
+    pointerY = event.clientY;
+    place();
   };
 
   const endDrag = (event: PointerEvent) => {
-    if (event.pointerId !== dragPointer) return;
-    dragPointer = undefined;
-    const dragged = draggingId();
-    setDraggingId(undefined);
-    // Set down: the row settles from under the pointer into its slot.
-    const row = dragged === undefined ? null : rowEl(dragged);
-    if (!row) return;
-    row.style.transition = 'transform var(--motion-fast) ease';
-    row.style.transform = '';
+    if (event.pointerId === dragPointer) stopDrag();
   };
+
+  // Disabled mid-drag — a save started with the row still in hand: the drag
+  // ends where it is, so nothing reorders the list after the save has read
+  // it. And a list torn down mid-drag leaves no listener behind.
+  createEffect(() => {
+    if (props.disabled) untrack(stopDrag);
+  });
+  onCleanup(stopDrag);
 
   // Keyed by direction, so a move button reads its own name; a memo because
   // every row reads this and the object is otherwise rebuilt per read.
@@ -291,8 +391,10 @@ export const ReorderableList = (props: ReorderableListProps): JSX.Element => {
           >
             <span
               class={styles.handle}
-              title={names().dragHandle}
+              // No grab hint on a handle that can't be grabbed.
+              title={props.disabled ? undefined : names().dragHandle}
               aria-hidden="true"
+              data-testid="reorder-drag-handle"
               data-disabled={props.disabled ? '' : undefined}
               onPointerDown={event => startDrag(event, item.id)}
             >
