@@ -85,6 +85,9 @@ Don't introduce new abbreviations (_Qtd._, _Cód._, _Ref._): none appear in the 
 
 ## Open questions
 
+- **reason: _razão_ vs _motivo_**: the stocktake editor uses both — `label.reason`,
+  `label.needs-a-reason`, `stocktake.line-error.reason-not-provided` _razão_;
+  `label.select-reason`, `error.provide-valid-reason` _motivo_.
 - **_registro_ vs _registo_** (24 vs 21 keys overall): the same feature uses both:
   `label.records-to-push_other` _registros_ and `label.no-records-to-push` _registos_.
 - **_usuário_ vs _utilizador_** (10 vs 6): `label.users` _Usuários_; `heading.user-guide`,

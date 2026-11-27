@@ -1,4 +1,11 @@
-import { createSignal, Match, Show, Switch, type Component } from 'solid-js';
+import {
+  createSignal,
+  For,
+  Match,
+  Show,
+  Switch,
+  type Component,
+} from 'solid-js';
 import { t, tPlural } from '@/intl';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
@@ -9,7 +16,7 @@ import {
   runBatchStocktakeLines,
   type LineEditCommit,
 } from '../lines/stocktakeLineUpdate';
-import type { LineErrors } from '../lines/stocktakeLineErrors';
+import { lineErrorCauses, type LineErrors } from '../lines/stocktakeLineErrors';
 
 export interface DeleteLinesActionProps {
   storeId: string;
@@ -70,7 +77,7 @@ type Phase = 'confirm' | 'working' | 'error';
 
 const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
   const [phase, setPhase] = createSignal<Phase>('confirm');
-  const [errorCount, setErrorCount] = createSignal(0);
+  const [errors, setErrors] = createSignal<LineErrors>(new Map());
   // Count snapshotted on open (Body mounts once per open) so the confirm
   // message can't shift.
   const count = props.selectedIds().length;
@@ -86,7 +93,7 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
     // Clean delete: close — the rows are already gone behind the dialog.
     if (outcome.errors.size === 0) return props.onClose();
     props.onError(outcome.errors); // stamp so the rows show the errors too
-    setErrorCount(outcome.errors.size);
+    setErrors(outcome.errors);
     setPhase('error');
   };
 
@@ -109,8 +116,12 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
           fallback={tPlural('messages.confirm-delete-stocktake_lines', count)}
         >
           <Match when={phase() === 'error'}>
+            {/* The count, then why (OMS-REG-INV-03.99). */}
             <Alert severity="error">
-              {tPlural('messages.line-errors', errorCount())}
+              <p>{tPlural('messages.line-errors', errors().size)}</p>
+              <For each={lineErrorCauses(errors().values())}>
+                {cause => <p>{cause}</p>}
+              </For>
             </Alert>
           </Match>
         </Switch>

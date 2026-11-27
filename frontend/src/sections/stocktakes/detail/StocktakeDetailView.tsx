@@ -69,7 +69,10 @@ import {
 } from './actions';
 import { saveStocktakeFields } from './stocktakeUpdate';
 import type { LineEditCommit } from './lines/stocktakeLineUpdate';
-import type { LineErrors } from './lines/stocktakeLineErrors';
+import {
+  lineErrorShortMessage,
+  type LineErrors,
+} from './lines/stocktakeLineErrors';
 import type { StocktakeLineFilter } from './stocktakeLineFilter';
 import { createDebouncedEdit } from '@/domain/debouncedEdit';
 import {
@@ -204,19 +207,37 @@ const StocktakeDetailView: Component = () => {
   // an explicit choice.
   const [sidePanelOpen, setSidePanelOpen] = createSidePanelOpen();
   // Per-line errors from the last failed finalise/bulk action, keyed by line
-  // id → the error's __typename (the shared LineErrors shape, kept raw). The
-  // Snapshot and Counted columns render it inline; cleared when a line change
-  // commits (clearLineErrors, below).
+  // id → the error's __typename (the shared LineErrors shape, kept raw). It
+  // marks the row, rings the cell it's about, and Counted states it in words
+  // (lineErrorMessage); cleared when a line change commits (clearLineErrors,
+  // below).
   const [lineErrors, setLineErrors] = createSignal<LineErrors>(new Map());
   // The stamped error line ids — what the "show error lines" filter (showError)
   // resolves to at query time (id.equalAny). Empty when nothing is stamped, so
   // the filter is treated as absent rather than sending an empty equalAny
   // (which the server reads as "match nothing").
   const errorLineIds = (): string[] => [...lineErrors().keys()];
-  // The line's count was refused for taking available stock below zero — the
-  // Counted cell's ring and message (table) and the card's body field.
+  // The line's count was refused for taking available stock below zero —
+  // Counted's ring.
   const reducedBelowZero = (line: Line): boolean =>
     lineErrors().get(line.id) === 'StockLineReducedBelowZero';
+  // The line's stock moved since its snapshot was taken — Snapshot's ring.
+  const stockChanged = (line: Line): boolean =>
+    lineErrors().get(line.id) === 'SnapshotCountCurrentCountMismatchLine';
+  // The line's error in a few words, for the Counted cell (see
+  // lineErrorCauses for why there). The outcome dialog gave the full cause.
+  const lineErrorMessage = (line: Line): string | undefined => {
+    const error = lineErrors().get(line.id);
+    return error && lineErrorShortMessage(error);
+  };
+  // The row and card marking: a line an outcome refused (red) over an
+  // uncounted one (teal).
+  const lineMarking = (line: Line): 'error' | 'unfinished' | undefined =>
+    lineErrors().has(line.id)
+      ? 'error'
+      : isUncounted(line)
+        ? 'unfinished'
+        : undefined;
   const hasErrors = (): boolean => lineErrors().size > 0;
   // Column config (order/sizing/visibility) persists per user/store. The extra
   // editable columns start HIDDEN by default so the table isn't overwhelming —
@@ -817,35 +838,13 @@ const StocktakeDetailView: Component = () => {
             sortKey: 'snapshotNumberOfPacks',
             header: () => t('label.snapshot-num-of-packs'),
             cardGroup: 'more',
+            // Ringed while the line's stock has moved since this snapshot;
+            // the words are under Counted (lineErrorMessage), which can't be
+            // hidden. The count formats like every other number column.
             ...getCellDefinition('snapshotNumberOfPacks', {
               cellTone: (line: Line) =>
-                lineErrors().get(line.id) ===
-                'SnapshotCountCurrentCountMismatchLine'
-                  ? 'error'
-                  : undefined,
+                stockChanged(line) ? 'error' : undefined,
             }),
-            // Snapshot cell also carries the line's error beneath the count (a
-            // snapshot/current-count mismatch is a "recount this line" message
-            // about the snapshot), and is ringed while it does (cellTone
-            // above); the count itself formats like every other number column.
-            cell: info => {
-              const value = info.getValue<number | null | undefined>();
-              return (
-                <>
-                  {value == null ? '' : <Num value={value} />}
-                  <Show
-                    when={
-                      lineErrors().get(info.row.original.id) ===
-                      'SnapshotCountCurrentCountMismatchLine'
-                    }
-                  >
-                    <span class={styles.lineError}>
-                      {t('error.snapshot-total-mismatch')}
-                    </span>
-                  </Show>
-                </>
-              );
-            },
           } satisfies Column<Line, SortKey, GroupKey>,
         ]),
     {
@@ -865,8 +864,12 @@ const StocktakeDetailView: Component = () => {
         align: 'right',
         headerPosition: 'badge',
         hideFromColumnSettings: true,
+        // Ringed for its own error, and for a moved snapshot while Snapshot
+        // is omitted (blind stocktake), since it then holds the only mark.
         cellTone: (line: Line) =>
-          reducedBelowZero(line) ? 'error' : undefined,
+          reducedBelowZero(line) || (stockChanged(line) && hideSnapshotStock())
+            ? 'error'
+            : undefined,
       }),
       // An uncounted line has no counted value, and a blank cell says nothing —
       // it reads as "zero" or "still loading" as readily as "not counted yet",
@@ -881,11 +884,11 @@ const StocktakeDetailView: Component = () => {
       // The accessor above keeps the raw number as the cell's VALUE, so
       // sorting, the hover-reveal and any export are unchanged.
       //
-      // A count that would take the batch's available stock below zero (a
-      // reduce-to-zero the server refused) says so beneath the value, and the
-      // cell is ringed while it does (cellTone above). On a card this cell is
-      // the header badge, which has no room for a sentence: the badge drops
-      // the message (data-cell-message) and the card-only field below
+      // A line an outcome refused says why beneath the value, in a few words
+      // (lineErrorMessage) — a count that would take available stock below
+      // zero, stock that moved since the snapshot, and so on. On a card this
+      // cell is the header badge, which has no room for a sentence: the badge
+      // drops the message (data-cell-message) and the card-only field below
       // carries it.
       cell: info => (
         <>
@@ -894,28 +897,30 @@ const StocktakeDetailView: Component = () => {
           ) : (
             <Num value={info.getValue<number | null | undefined>() ?? 0} />
           )}
-          <Show when={reducedBelowZero(info.row.original)}>
-            <span class={styles.lineError} data-cell-message>
-              {t('stocktake.line-error.stock-reserved')}
-            </span>
+          <Show when={lineErrorMessage(info.row.original)}>
+            {message => (
+              <span class={styles.lineError} data-cell-message>
+                {message()}
+              </span>
+            )}
           </Show>
         </>
       ),
     },
-    // CARD-ONLY: the Counted badge's below-zero message, in the card body at
-    // full width, on the lines that carry it. Captioned with Counted's own
-    // label so it reads as that figure's error.
+    // CARD-ONLY: the Counted badge's error message, in the card body at full
+    // width, on the lines that carry one. Captioned with Counted's own label
+    // so it reads as that figure's error.
     {
       c: { id: 'countedNumberOfPacksError' },
       header: () => t('label.counted-num-of-packs'),
       meta: {
         hideOnTable: true,
         hideFromColumnSettings: true,
-        hideOnCardWhen: (line: Line) => !reducedBelowZero(line),
+        hideOnCardWhen: (line: Line) => !lineErrorMessage(line),
       },
-      cell: () => (
+      cell: info => (
         <span class={styles.lineError}>
-          {t('stocktake.line-error.stock-reserved')}
+          {lineErrorMessage(info.row.original)}
         </span>
       ),
     },
@@ -1259,21 +1264,27 @@ const StocktakeDetailView: Component = () => {
                   // are the lines trimmed on finalise. Flat table, so a
                   // leaf-row predicate is enough (no grouped parents to
                   // propagate to). See CARD_TABLE_MODEL.md § rowAccent.
-                  rowTint={line =>
-                    isUncounted(line) ? 'unfinished' : undefined
-                  }
+                  //
+                  // A line the last finalise or bulk action refused takes the
+                  // error marking instead, red over teal (see lineErrorCauses).
+                  // Counted says why.
+                  rowTint={lineMarking}
                   // Same predicate on both channels: the tint colours the row,
                   // the bar makes the uncounted lines legible down one edge as
                   // the user scrolls a long count.
-                  rowAccent={line =>
-                    isUncounted(line) ? 'unfinished' : undefined
-                  }
+                  rowAccent={lineMarking}
                   // Cards have neither a row background nor a leading edge to
                   // mark, so they keep the TEXT tone on the card's identity
                   // title (the teal is a 3:1 graphic colour — below the 4.5:1
                   // text floor — so it can't cross over to text). The word is
                   // there too: the Counted field is the card's badge.
-                  cardTone={line => (isUncounted(line) ? 'info' : undefined)}
+                  cardTone={line =>
+                    lineErrors().has(line.id)
+                      ? 'error'
+                      : isUncounted(line)
+                        ? 'info'
+                        : undefined
+                  }
                   emptyMessage={t('error.no-stocktake-items')}
                   empty={
                     isDisabled(node()) ? undefined : (

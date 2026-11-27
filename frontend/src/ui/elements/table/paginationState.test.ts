@@ -6,7 +6,7 @@ import { paginationState, type PaginationExtent } from './paginationState';
 // stay loose and the rule is pinned by this test instead (e2e/AUTHORING.md §
 // divergences). Behaviours:
 //   OMS-REG-INV-05.24/.25  — stocktakes list: the pager exists only past one page
-//   OMS-REG-INV-03.77      — stocktake detail: the pager rides the status bar
+//   OMS-REG-INV-03.100     — stocktake detail: the pager rides the status bar
 //   OMS-REG-REPL-01.5/.26  — inbound shipments list
 //   OMS-REG-REPL-03.24     — inbound shipment detail
 //

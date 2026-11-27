@@ -1,4 +1,11 @@
-import { createSignal, Match, Show, Switch, type Component } from 'solid-js';
+import {
+  createSignal,
+  For,
+  Match,
+  Show,
+  Switch,
+  type Component,
+} from 'solid-js';
 import { t, tPlural } from '@/intl';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { createFocusTarget } from '@/ui/utils/createFocusTarget';
@@ -15,7 +22,7 @@ import {
   runBatchStocktakeLines,
   type LineEditCommit,
 } from '../lines/stocktakeLineUpdate';
-import type { LineErrors } from '../lines/stocktakeLineErrors';
+import { lineErrorCauses, type LineErrors } from '../lines/stocktakeLineErrors';
 
 export interface ChangeLocationActionProps {
   storeId: string;
@@ -82,7 +89,7 @@ type Phase = 'confirm' | 'working' | 'error';
 const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
   const [locationId, setLocationId] = createSignal<string | null>(null);
   const [phase, setPhase] = createSignal<Phase>('confirm');
-  const [errorCount, setErrorCount] = createSignal(0);
+  const [errors, setErrors] = createSignal<LineErrors>(new Map());
 
   const run = async () => {
     if (phase() !== 'confirm') return; // re-entry guard
@@ -97,7 +104,7 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
     // Clean apply: close — the rows already show their new location.
     if (outcome.errors.size === 0) return props.onClose();
     props.onError(outcome.errors); // stamp so the rows show the errors too
-    setErrorCount(outcome.errors.size);
+    setErrors(outcome.errors);
     setPhase('error');
   };
 
@@ -134,8 +141,12 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
           }
         >
           <Match when={phase() === 'error'}>
+            {/* The count, then why (OMS-REG-INV-03.99). */}
             <Alert severity="error">
-              {tPlural('messages.line-errors', errorCount())}
+              <p>{tPlural('messages.line-errors', errors().size)}</p>
+              <For each={lineErrorCauses(errors().values())}>
+                {cause => <p>{cause}</p>}
+              </For>
             </Alert>
           </Match>
         </Switch>

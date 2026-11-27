@@ -1,5 +1,14 @@
 import { generateUUID } from '@/uuid';
-import { createMemo, createSignal, onMount, Show, type JSX } from 'solid-js';
+import {
+  createMemo,
+  createSignal,
+  For,
+  Match,
+  onMount,
+  Show,
+  Switch,
+  type JSX,
+} from 'solid-js';
 import { createStore, produce, reconcile, unwrap } from 'solid-js/store';
 import { graphqlFetch } from '@/api/graphql';
 import { round, t, tPlural } from '@/intl';
@@ -66,6 +75,7 @@ import {
   type ReasonRequirement,
 } from '../lines/stocktakeLine';
 import {
+  AlertCircleIcon,
   AlertTriangleIcon,
   PlusCircleIcon,
   TrashIcon,
@@ -89,7 +99,11 @@ import {
   type BatchStocktakeLinesInput,
   type LineEditCommit,
 } from '../lines/stocktakeLineUpdate';
-import type { LineErrors } from '../lines/stocktakeLineErrors';
+import {
+  lineErrorCauses,
+  type LineErrorTypename,
+  type LineErrors,
+} from '../lines/stocktakeLineErrors';
 import styles from './StocktakeLineEditModal.module.css';
 
 // The stocktake line-edit modal (kdd/edit-line-card-table +
@@ -631,6 +645,27 @@ const StocktakeLineEditContent = (
       (lineErrors().get(line.id) === 'AdjustmentReasonNotProvided' &&
         !line.reasonOption &&
         !!lineDifference(line)));
+
+  // Which of the last save's refusals count as errors in this editor: all but
+  // a missing reason, which is the awaiting-a-reason warning above instead
+  // (OMS-REG-INV-03.86). The one rule for the row and card marking and the
+  // footer's count.
+  const isSaveError = (error: LineErrorTypename | undefined): boolean =>
+    !!error && error !== 'AdjustmentReasonNotProvided';
+
+  // A batch the last save refused with an error, marked on its whole row or
+  // card (see lineErrorCauses for why).
+  const lineRefused = (line: DraftLine): boolean =>
+    isSaveError(lineErrors().get(line.id));
+
+  // A batch's one marking, the same on its table row and its card: refused by
+  // the last save (red) over awaiting a reason (amber).
+  const lineMarking = (line: DraftLine): 'error' | 'warning' | undefined =>
+    lineRefused(line)
+      ? 'error'
+      : lineAwaitingReason(line)
+        ? 'warning'
+        : undefined;
 
   // A difference's size for display, at the 2 dp a count is entered to — or
   // "<0.01" for one finer than that, never "0" (see differenceSize).
@@ -1331,7 +1366,9 @@ const StocktakeLineEditContent = (
                   error={
                     lineErrors().get(line.id) ===
                     'SnapshotCountCurrentCountMismatchLine'
-                      ? t('error.snapshot-total-mismatch')
+                      ? // Short: a narrow field. The footer gives the full
+                        // cause and what to do (lineErrorCauses).
+                        t('stocktake.line-error.stock-changed')
                       : undefined
                   }
                   errorTestId="stocktake-line-error"
@@ -1367,7 +1404,8 @@ const StocktakeLineEditContent = (
             onFocusOut={() => settleCount.flush()}
             error={
               lineErrors().get(line.id) === 'StockLineReducedBelowZero'
-                ? t('error.reduced-below-zero')
+                ? // Short, like the snapshot one; the footer has the rest.
+                  t('stocktake.line-error.stock-reserved')
                 : undefined
             }
             errorTestId="stocktake-line-error"
@@ -1954,14 +1992,15 @@ const StocktakeLineEditContent = (
         );
       },
     },
-    // The CARD's awaiting-a-reason marker (OMS-REG-INV-03.86): a warning chip
-    // in the card's badge slot, ahead of the row actions. Cards can't take the
-    // table row's tint + edge bar, and a card's tone only tints a TEXT identity
-    // title (here the batch input) — toned card borders were dropped from the
-    // library on purpose, leaving the corner badges as the card-status
-    // vocabulary. Card-only: table view already marks the row, and the chip
-    // there would only repeat it past the scroll edge. Structural, so out of
-    // the Columns popover.
+    // The CARD's marking (lineMarking): a chip in the card's badge slot, ahead
+    // of the row actions — "Error" for a batch the last save refused
+    // (OMS-REG-INV-03.99), otherwise "Needs a reason" (OMS-REG-INV-03.86).
+    // Cards can't take the table row's tint + edge bar, and a card's tone only
+    // tints a TEXT identity title (here the batch input) — toned card borders
+    // were dropped from the library on purpose, leaving the corner badges as
+    // the card-status vocabulary. Card-only: table view already marks the row,
+    // and the chip there would only repeat it past the scroll edge. Structural,
+    // so out of the Columns popover.
     //
     // Built by hand, NOT with getFlagCell (outbound's card-only "Not issued"
     // chip), for two reasons that don't apply to that read-only table:
@@ -1971,23 +2010,34 @@ const StocktakeLineEditContent = (
     // - its hidden [data-flag] marker switches the card header to the
     //   "title · statuses" layout (DataTable.module.css § STATUS flag
     //   badges), so the row actions sharing this badge slot would jump out
-    //   of the corner every time a line started or stopped awaiting a reason.
+    //   of the corner every time a line's marking came or went.
     {
-      c: { id: 'awaitingReason' },
-      header: () => t('label.needs-a-reason'),
+      c: { id: 'lineState' },
+      header: () => t('label.status'),
       meta: {
         headerPosition: 'badge',
         hideOnTable: true,
         hideFromColumnSettings: true,
       },
+      // Switch, not a ternary in a Show callback: that runs once, so a line
+      // going from amber to red would keep its amber chip.
       cell: info => (
-        <Show when={lineAwaitingReason(info.row.original)}>
-          <StatusBadge
-            label={t('label.needs-a-reason')}
-            tone="warning"
-            icon={<AlertTriangleIcon />}
-          />
-        </Show>
+        <Switch>
+          <Match when={lineMarking(info.row.original) === 'error'}>
+            <StatusBadge
+              label={t('label.error')}
+              tone="error"
+              icon={<AlertCircleIcon />}
+            />
+          </Match>
+          <Match when={lineMarking(info.row.original) === 'warning'}>
+            <StatusBadge
+              label={t('label.needs-a-reason')}
+              tone="warning"
+              icon={<AlertTriangleIcon />}
+            />
+          </Match>
+        </Switch>
       ),
     },
     {
@@ -2028,18 +2078,20 @@ const StocktakeLineEditContent = (
   ]);
 
   // The footer banner (OMS-REG-INV-03.87). Save errors take it — every refused
-  // line EXCEPT a missing reason, which is not an error here — and otherwise it
-  // counts the batches still awaiting a reason, amber, from before the first
-  // Save. Both are derived, so each falls as the user fixes lines.
+  // line EXCEPT a missing reason, which is not an error here — counted, then
+  // each distinct cause in words on its own line, so two different errors
+  // read as two sentences (OMS-REG-INV-03.99); otherwise it counts the batches
+  // still awaiting a reason, amber, from before the first Save. Both are
+  // derived, so each falls as the user fixes lines.
   const footerSummary = ():
-    { severity: 'error' | 'warning'; message: string } | undefined => {
-    const errorCount = [...lineErrors().values()].filter(
-      error => error !== 'AdjustmentReasonNotProvided'
-    ).length;
-    if (errorCount > 0)
+    | { severity: 'error' | 'warning'; message: string; causes?: string[] }
+    | undefined => {
+    const errors = [...lineErrors().values()].filter(isSaveError);
+    if (errors.length > 0)
       return {
         severity: 'error',
-        message: tPlural('messages.line-errors', errorCount),
+        message: tPlural('messages.line-errors', errors.length),
+        causes: lineErrorCauses(errors),
       };
     const awaitingCount = rows().filter(lineAwaitingReason).length;
     if (awaitingCount > 0)
@@ -2190,7 +2242,9 @@ const StocktakeLineEditContent = (
               severity={summary().severity}
               testId="stocktake-line-summary"
             >
-              {summary().message}
+              {/* Block lines, not <p>: no paragraph margins in the footer. */}
+              <div>{summary().message}</div>
+              <For each={summary().causes}>{cause => <div>{cause}</div>}</For>
             </Alert>
           )}
         </Show>
@@ -2265,10 +2319,13 @@ const StocktakeLineEditContent = (
           //
           // No cardTone: a card's tone tints only a TEXT identity title, and
           // this card's identity is the batch input, so it would paint
-          // nothing. Cards carry the state as the "Needs a reason" chip in
-          // their badge slot instead (the awaitingReason column).
-          rowTint={line => (lineAwaitingReason(line) ? 'warning' : undefined)}
-          rowAccent={line => (lineAwaitingReason(line) ? 'warning' : undefined)}
+          // nothing. Cards carry the same marking as a chip in their badge
+          // slot instead (the lineState column).
+          //
+          // A batch the last save refused is marked the same way in red
+          // (OMS-REG-INV-03.99), which wins over amber.
+          rowTint={lineMarking}
+          rowAccent={lineMarking}
         />
       </Show>
     </Dialog>
