@@ -97,8 +97,9 @@ const NO_TIME: TimeValue = {};
  * nothing above sees anything but UTC. A date with a blank time defaults to
  * midnight; clearing the date emits null — by blanking the date text,
  * deselecting the day, or the ✕ button an optional field shows while it holds
- * anything (#2054), which empties the time too. A required field offers none of
- * the three. Both parts are buffered locally so the time survives being set
+ * anything (#2054), which empties the time too. A required field shows no ✕;
+ * blanking it still empties it, so the form's own required check reports it
+ * (a Save as visited on an encounter relies on that). Both parts are buffered locally so the time survives being set
  * before a date.
  */
 export const DateTimeField = (props: DateTimeFieldProps) => {
@@ -143,8 +144,7 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
 
   const commitDate = () => {
     const parsed = parseDateInput(dateText(), fmt());
-    // Unparseable text, or a required field blanked: revert, as DateField.
-    if (parsed === undefined || (parsed === null && props.required)) {
+    if (parsed === undefined) {
       setDateText(formatCalendarDate(parts()?.date, fmt())); // invalid → revert
       return;
     }
@@ -205,9 +205,6 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
                 value={calendarDateToDate(parts()?.date)}
                 min={boundDate(props.min)}
                 max={boundDate(props.max)}
-                // Stops the calendar deselecting a required date (the typed
-                // path's guard is in commitDate).
-                required={props.required}
                 onSelect={d => {
                   applyDate(d ? dateToCalendarDate(d) : null);
                   close();
