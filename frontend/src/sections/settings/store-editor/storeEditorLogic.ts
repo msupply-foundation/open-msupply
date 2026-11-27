@@ -557,9 +557,6 @@ export type EveryStorePreferenceHandled<
     | 'useUnnamedPatientStoreOverride'
     | 'startWithUnnamedPatientStoreOverride'
     | 'askForPatientTypeStoreOverride'
-    // Not in the server's preference list, so the panel never renders it:
-    // its own editor opens from the Simple dispensing screen (#2188).
-    | 'commonMedicines'
   >,
 > = Unhandled;
 

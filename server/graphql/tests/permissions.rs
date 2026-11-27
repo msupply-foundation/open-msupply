@@ -15,6 +15,7 @@ use graphql_general::{GeneralMutations, GeneralQueries};
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::InvoiceLineMutations;
 use graphql_location::{LocationMutations, LocationQueries};
+use graphql_preference::{CommonMedicineMutations, CommonMedicineQueries};
 use graphql_reports::ReportQueries;
 use graphql_requisition::{RequisitionMutations, RequisitionQueries};
 use graphql_requisition_line::RequisitionLineMutations;
@@ -33,6 +34,7 @@ pub struct FullQuery(
     pub GeneralQueries,
     pub RequisitionQueries,
     pub ReportQueries,
+    pub CommonMedicineQueries,
 );
 
 #[derive(MergedObject, Default, Clone)]
@@ -47,6 +49,7 @@ pub struct FullMutation(
     pub RequisitionMutations,
     pub RequisitionLineMutations,
     pub GeneralMutations,
+    pub CommonMedicineMutations,
 );
 
 pub fn full_query() -> FullQuery {
@@ -58,6 +61,7 @@ pub fn full_query() -> FullQuery {
         GeneralQueries,
         RequisitionQueries,
         ReportQueries,
+        CommonMedicineQueries,
     )
 }
 
@@ -73,6 +77,7 @@ pub fn full_mutation() -> FullMutation {
         RequisitionMutations,
         RequisitionLineMutations,
         GeneralMutations,
+        CommonMedicineMutations,
     )
 }
 
@@ -90,6 +95,19 @@ struct TestData {
 
 fn resource_mapping_query_test_data() -> Vec<TestData> {
     vec![
+        TestData {
+            name: "commonMedicines",
+            query: r#"query Query {
+                  commonMedicines(storeId: "") {
+                    itemId
+                  }
+                }"#,
+            expected: ResourceAccessRequest {
+                resource: Resource::QueryCommonMedicines,
+                store_id: Some("some".to_string()),
+                require_central_standalone: false,
+            },
+        },
         TestData {
             name: "invoice",
             query: r#"query Query {
@@ -486,6 +504,21 @@ fn resource_mapping_query_test_data() -> Vec<TestData> {
 
 fn resource_mapping_mutation_test_data() -> Vec<TestData> {
     vec![
+        // OMS-REG-DIS-12.237, .238: the dispensing records permission at the
+        // store, at the store's own site (auth.rs maps the resource)
+        TestData {
+            name: "upsertCommonMedicines",
+            query: r#"mutation Mutation {
+                  upsertCommonMedicines(storeId: "", input: []) {
+                    __typename
+                  }
+                }"#,
+            expected: ResourceAccessRequest {
+                resource: Resource::MutateCommonMedicines,
+                store_id: Some("some".to_string()),
+                require_central_standalone: false,
+            },
+        },
         TestData {
             name: "addFromMasterList",
             query: r#"mutation Mutation {

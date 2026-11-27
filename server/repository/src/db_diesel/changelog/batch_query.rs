@@ -21,6 +21,7 @@ pub enum Row {
     BarcodeProposal(BarcodeProposalRow),
     Clinician(ClinicianRow),
     ClinicianStoreJoin(ClinicianStoreJoinRow),
+    CommonMedicine(CommonMedicineRow),
     ConsumptionEstimate(ConsumptionEstimateRow),
     Currency(CurrencyRow),
     Document(DocumentRow),
@@ -294,6 +295,11 @@ fn fetch_rows_for_table(
             ChangelogTableName::ClinicianStoreJoin => {
                 for r in ClinicianStoreJoinRowRepository::new(connection).find_many_by_id(chunk)? {
                     out.insert(r.id.clone(), Row::ClinicianStoreJoin(r));
+                }
+            }
+            ChangelogTableName::CommonMedicine => {
+                for r in CommonMedicineRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::CommonMedicine(r));
                 }
             }
             ChangelogTableName::ConsumptionEstimate => {

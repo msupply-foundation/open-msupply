@@ -100,7 +100,6 @@ export type CentralPatientSearchResult = {
   dateOfBirth: string | null;
   isDeceased: boolean;
   address1: string | null;
-  phone: string | null;
 }>;
 }) | ({
   __typename: "CentralPatientSearchError";
@@ -113,7 +112,7 @@ export type CentralPatientSearchResult = {
 };
 
 export const CentralPatientSearch = {
-  query: "query centralPatientSearch($storeId: String!, $input: CentralPatientSearchInput!) {\n  centralPatientSearch(storeId: $storeId, input: $input) {\n    __typename\n    ... on CentralPatientSearchConnector {\n      totalCount\n      nodes {\n        id\n        code\n        code2\n        firstName\n        lastName\n        gender\n        dateOfBirth\n        isDeceased\n        address1\n        phone\n      }\n    }\n    ... on CentralPatientSearchError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}",
+  query: "query centralPatientSearch($storeId: String!, $input: CentralPatientSearchInput!) {\n  centralPatientSearch(storeId: $storeId, input: $input) {\n    __typename\n    ... on CentralPatientSearchConnector {\n      totalCount\n      nodes {\n        id\n        code\n        code2\n        firstName\n        lastName\n        gender\n        dateOfBirth\n        isDeceased\n        address1\n      }\n    }\n    ... on CentralPatientSearchError {\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}",
 } as TypedDocument<CentralPatientSearchResult, CentralPatientSearchVariables>;
 
 export type LinkPatientToStoreVariables = {

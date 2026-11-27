@@ -1742,6 +1742,10 @@ type CodeRequired implements UpsertSiteErrorInterface {
 
 input CommonMedicineInput {
 	itemId: String!
+	"""
+	Up to three amounts, in the item's own unit; empty for a card that asks
+	for the amount
+	"""
 	amounts: [Float!]!
 }
 
@@ -1752,11 +1756,6 @@ type CommonMedicineNode {
 	for the amount instead.
 	"""
 	amounts: [Float!]!
-}
-
-input CommonMedicinesInput {
-	storeId: String!
-	value: [CommonMedicineInput!]!
 }
 
 union ConfigureNamePropertiesResponse = Success
@@ -6597,6 +6596,12 @@ type Mutations {
 	updatePurchaseOrderLine(storeId: String!, input: UpdatePurchaseOrderLineInput!): UpdatePurchaseOrderLineResponse!
 	deletePurchaseOrderLines(storeId: String!, ids: [String!]!): [DeletePurchaseOrderLineResponseWithId!]!
 	insertSyncMessage(storeId: String!, input: InsertSyncMessageInput!): InsertSyncMessageResponse!
+	"""
+	Replaces a store's common medicines with this list, in this order
+	(#2188). Saved at the store's own site, by staff who can change
+	dispensing records there.
+	"""
+	upsertCommonMedicines(storeId: String!, input: [CommonMedicineInput!]!): OkResponse!
 }
 
 """
@@ -7408,7 +7413,6 @@ enum PreferenceKey {
 	showIndicativePriceInRequisitions
 	doNotPrintPlaceholderLineLabels
 	promptForBatchAndExpiryOnInboundShipments
-	commonMedicines
 	dispensingScreen
 	useUnnamedPatient
 	startWithUnnamedPatient
@@ -7447,7 +7451,6 @@ enum PreferenceValueNodeType {
 	STRING
 	COLOUR
 	IMAGE
-	COMMON_MEDICINES
 	DISPENSING_SCREEN
 }
 
@@ -7502,10 +7505,6 @@ type PreferencesNode {
 	invoiceStatusOptions: [InvoiceNodeStatus!]!
 	doNotPrintPlaceholderLineLabels: Boolean!
 	promptForBatchAndExpiryOnInboundShipments: Boolean!
-	"""
-	The medicines shown as cards on the Simple dispensing screen, in order.
-	"""
-	commonMedicines: [CommonMedicineNode!]!
 	"""
 	Which screen dispensing opens on: the store's own value where it has
 	one, else the global value.
@@ -8993,6 +8992,11 @@ type Queries {
 	history of its own and added on top of real consumption when calculating AMC
 	"""
 	consumptionEstimates(storeId: String!, forStoreId: String!): ConsumptionEstimatesNode!
+	"""
+	The medicines a store shows as cards on the Simple dispensing screen,
+	in card order (#2188)
+	"""
+	commonMedicines(storeId: String!): [CommonMedicineNode!]!
 	centralServer: CentralServerQueryNode!
 	activeVvmStatuses(storeId: String!): VvmstatusesResponse!
 	getVvmStatusLogByStockLine(storeId: String!, stockLineId: String!): VvmstatusLogResponse!
@@ -12531,7 +12535,6 @@ input UpsertPreferencesInput {
 	showIndicativePriceInRequisitions: [BoolStorePrefInput!]
 	doNotPrintPlaceholderLineLabels: [BoolStorePrefInput!]
 	promptForBatchAndExpiryOnInboundShipments: [BoolStorePrefInput!]
-	commonMedicines: [CommonMedicinesInput!]
 	dispensingScreen: DispensingScreenNode
 	dispensingScreenStoreOverride: [DispensingScreenStoreOverrideInput!]
 	useUnnamedPatient: Boolean

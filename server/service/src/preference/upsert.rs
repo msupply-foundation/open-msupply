@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use super::{Preference, PreferenceProvider, UpsertPreferenceError, get_preference_provider};
 use crate::{
     preference::{
-        BackdatingData, CommonMedicine, CustomTranslationsV2Value, DispensingScreenOption,
+        BackdatingData, CustomTranslationsV2Value, DispensingScreenOption,
         WarnWhenMissingRecentStocktakeData,
     },
     service_provider::ServiceContext,
@@ -82,7 +82,6 @@ pub struct UpsertPreferences {
     pub show_indicative_price_in_requisitions: Option<Vec<StorePrefUpdate<bool>>>,
     pub do_not_print_placeholder_line_labels: Option<Vec<StorePrefUpdate<bool>>>,
     pub prompt_for_batch_and_expiry_on_inbound_shipments: Option<Vec<StorePrefUpdate<bool>>>,
-    pub common_medicines: Option<Vec<StorePrefUpdate<Vec<CommonMedicine>>>>,
 
     // Dispensing (#2188): the global value, and a store's own value (a None
     // value removes it)
@@ -158,7 +157,6 @@ pub fn upsert_preferences(
         do_not_print_placeholder_line_labels: do_not_print_placeholder_line_labels_input,
         prompt_for_batch_and_expiry_on_inbound_shipments:
             prompt_for_batch_and_expiry_on_inbound_shipments_input,
-        common_medicines: common_medicines_input,
         dispensing_screen: dispensing_screen_input,
         dispensing_screen_store_override: dispensing_screen_store_override_input,
         use_unnamed_patient: use_unnamed_patient_input,
@@ -219,7 +217,6 @@ pub fn upsert_preferences(
         show_indicative_price_in_requisitions,
         do_not_print_placeholder_line_labels,
         prompt_for_batch_and_expiry_on_inbound_shipments,
-        common_medicines,
         dispensing_screen,
         use_unnamed_patient,
         start_with_unnamed_patient,
@@ -450,10 +447,6 @@ pub fn upsert_preferences(
 
             if let Some(input) = prompt_for_batch_and_expiry_on_inbound_shipments_input {
                 upsert_store_input(connection, prompt_for_batch_and_expiry_on_inbound_shipments, input)?;
-            }
-
-            if let Some(input) = common_medicines_input {
-                upsert_store_input(connection, common_medicines, input)?;
             }
 
             // Dispensing (#2188)

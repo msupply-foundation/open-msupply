@@ -149,13 +149,6 @@ export type SaveGlobalTableConfigsVariables = {
     storeId: string;
     value: boolean;
   }> | null;
-    commonMedicines?: Array<{
-    storeId: string;
-    value: Array<{
-    itemId: string;
-    amounts: Array<number>;
-  }>;
-  }> | null;
     dispensingScreen?: "STANDARD" | "SIMPLE" | null;
     dispensingScreenStoreOverride?: Array<{
     storeId: string;

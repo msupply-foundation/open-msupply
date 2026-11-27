@@ -42,7 +42,6 @@ const prefs = (overrides: Partial<Preferences> = {}): Preferences => ({
   firstThresholdForExpiringItems: 0,
   secondThresholdForExpiringItems: 0,
   warnWhenMissingRecentStocktake: { enabled: false, maxAge: 0, minItems: 0 },
-  commonMedicines: [],
   dispensingScreen: 'STANDARD',
   useUnnamedPatient: false,
   startWithUnnamedPatient: false,

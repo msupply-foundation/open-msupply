@@ -37,6 +37,7 @@ pub mod central_data;
 pub mod clinician;
 pub mod cold_chain;
 mod common;
+pub mod common_medicine;
 pub mod consumption_estimate;
 pub mod contact;
 pub mod contact_form;

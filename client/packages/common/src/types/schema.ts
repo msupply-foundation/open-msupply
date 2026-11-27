@@ -2139,6 +2139,10 @@ export type CodeRequired = UpsertSiteErrorInterface & {
 };
 
 export type CommonMedicineInput = {
+  /**
+   * Up to three amounts, in the item's own unit; empty for a card that asks
+   * for the amount
+   */
   amounts: Array<Scalars['Float']['input']>;
   itemId: Scalars['String']['input'];
 };
@@ -2151,11 +2155,6 @@ export type CommonMedicineNode = {
    */
   amounts: Array<Scalars['Float']['output']>;
   itemId: Scalars['String']['output'];
-};
-
-export type CommonMedicinesInput = {
-  storeId: Scalars['String']['input'];
-  value: Array<CommonMedicineInput>;
 };
 
 export type ConfigureNamePropertiesResponse = Success;
@@ -7302,6 +7301,12 @@ export type Mutations = {
   updateTemperatureBreach: UpdateTemperatureBreachResponse;
   updateVaccination: UpdateVaccinationResponse;
   updateVvmStatusLog: UpdateVvmStatusResponse;
+  /**
+   * Replaces a store's common medicines with this list, in this order
+   * (#2188). Saved at the store's own site, by staff who can change
+   * dispensing records there.
+   */
+  upsertCommonMedicines: OkResponse;
   upsertPrescriptionRequestLine: UpsertPrescriptionRequestLineResponse;
   /** Set requested for each line in request requisition to calculated */
   useSuggestedQuantity: UseSuggestedQuantityResponse;
@@ -8114,6 +8119,11 @@ export type MutationsUpdateVvmStatusLogArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type MutationsUpsertCommonMedicinesArgs = {
+  input: Array<CommonMedicineInput>;
+  storeId: Scalars['String']['input'];
+};
+
 export type MutationsUpsertPrescriptionRequestLineArgs = {
   input: UpsertPrescriptionRequestLineInput;
   storeId: Scalars['String']['input'];
@@ -8908,7 +8918,6 @@ export enum PreferenceKey {
   BlindStocktake = 'blindStocktake',
   CanChangeTargetMonthsOfStock = 'canChangeTargetMonthsOfStock',
   CanCreateInternalOrderFromARequisition = 'canCreateInternalOrderFromARequisition',
-  CommonMedicines = 'commonMedicines',
   CustomTranslations = 'customTranslations',
   CustomTranslationsV2 = 'customTranslationsV2',
   DaysInMonth = 'daysInMonth',
@@ -8993,7 +9002,6 @@ export enum PreferenceValueNodeType {
   BackdatingData = 'BACKDATING_DATA',
   Boolean = 'BOOLEAN',
   Colour = 'COLOUR',
-  CommonMedicines = 'COMMON_MEDICINES',
   CustomTranslations = 'CUSTOM_TRANSLATIONS',
   CustomTranslationsV2 = 'CUSTOM_TRANSLATIONS_V2',
   DispensingScreen = 'DISPENSING_SCREEN',
@@ -9019,8 +9027,6 @@ export type PreferencesNode = {
   blindStocktake: Scalars['Boolean']['output'];
   canChangeTargetMonthsOfStock: Scalars['Boolean']['output'];
   canCreateInternalOrderFromARequisition: Scalars['Boolean']['output'];
-  /** The medicines shown as cards on the Simple dispensing screen, in order. */
-  commonMedicines: Array<CommonMedicineNode>;
   customTranslations: Scalars['JSONObject']['output'];
   customTranslationsV2: Scalars['JSON']['output'];
   daysInMonth: Scalars['Float']['output'];
@@ -9811,6 +9817,11 @@ export type Queries = {
   centralServer: CentralServerQueryNode;
   clinicians: CliniciansResponse;
   /**
+   * The medicines a store shows as cards on the Simple dispensing screen,
+   * in card order (#2188)
+   */
+  commonMedicines: Array<CommonMedicineNode>;
+  /**
    * The store's estimated consumption, entered for a store without consumption
    * history of its own and added on top of real consumption when calculating AMC
    */
@@ -10176,6 +10187,10 @@ export type QueriesCliniciansArgs = {
   filter?: InputMaybe<ClinicianFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<ClinicianSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesCommonMedicinesArgs = {
   storeId: Scalars['String']['input'];
 };
 
@@ -14600,7 +14615,6 @@ export type UpsertPreferencesInput = {
   canCreateInternalOrderFromARequisition?: InputMaybe<
     Array<BoolStorePrefInput>
   >;
-  commonMedicines?: InputMaybe<Array<CommonMedicinesInput>>;
   customTranslations?: InputMaybe<Scalars['JSONObject']['input']>;
   /**
    * v2 custom translations, shape: `language -> namespace -> key -> value`.

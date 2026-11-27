@@ -77,9 +77,6 @@ pub trait PreferenceServiceTrait: Sync + Send {
             invoice_status_options,
             do_not_print_placeholder_line_labels,
             prompt_for_batch_and_expiry_on_inbound_shipments,
-            // Hidden from the preferences edit UI until it has an editor (#2188)
-            common_medicines: _,
-
             // Dispensing (#2188)
             dispensing_screen,
             use_unnamed_patient,

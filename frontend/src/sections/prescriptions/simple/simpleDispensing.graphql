@@ -60,3 +60,14 @@ query simpleDispensingItems(
     }
   }
 }
+
+# The store's common medicines (spec/prescriptions › common medicines): its
+# cards, in order, with their usual amounts. Store data written at the store's
+# own site, so the screen reads it itself rather than with the store's
+# settings.
+query simpleCommonMedicines($storeId: String!) {
+  commonMedicines(storeId: $storeId) {
+    itemId
+    amounts
+  }
+}
