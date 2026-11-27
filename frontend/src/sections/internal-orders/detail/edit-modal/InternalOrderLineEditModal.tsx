@@ -10,7 +10,7 @@ import {
 } from 'solid-js';
 import { graphqlFetch } from '../../../../api/graphql';
 import { gated } from '../../../../api/gated';
-import { measureWord, t, tPlural, type LocaleKey } from '../../../../intl';
+import { measureWord, t, tPlural } from '../../../../intl';
 import { roundedText } from '../../../../intl/numberDisplay';
 import { formatCurrency } from '../../../../intl/currency';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
@@ -520,7 +520,6 @@ const LineEditContent = (
   );
   const chartMeasure = () =>
     measureWord(entryMode(), current()?.unitName ?? null);
-  const chartHeading = (key: LocaleKey) => `${t(key)} (${chartMeasure()})`;
 
   // The dose caption beneath the requested number (OMS-REG-REPL-04.75).
   const requestedCaption = () =>
@@ -1112,7 +1111,9 @@ const LineEditContent = (
                     <div class={styles.additionalChartsBody}>
                       <div class={styles.breakdown}>
                         <h4 class={styles.chartHeading}>
-                          {chartHeading('heading.target-quantity')}
+                          {t('heading.target-quantity-in-unit', {
+                            unit: chartMeasure(),
+                          })}
                         </h4>
                         <TargetQuantityBreakdown
                           averageMonthlyConsumption={chartFigure(
@@ -1135,7 +1136,9 @@ const LineEditContent = (
                       <Show when={chartStockEvolution().length}>
                         <div class={styles.chartSection}>
                           <h4 class={styles.chartHeading}>
-                            {chartHeading('heading.stock-evolution')}
+                            {t('heading.stock-evolution-in-unit', {
+                              unit: chartMeasure(),
+                            })}
                           </h4>
                           {/* The server projects the SAVED line's forecast;
                             while the draft previews another method the chart
