@@ -102,7 +102,8 @@ mod finalise {
                 snapshot_quantity_received: 5.0,
                 snapshot_quantity_consumed: 7.0,
                 snapshot_adjustments: 1.0,
-                calculated_requested_quantity: 10.0,
+                // Unrounded, as the front end stores it
+                calculated_requested_quantity: 9.871,
                 ..Default::default()
             }
         }
@@ -198,7 +199,8 @@ mod finalise {
             .unwrap()
             .requisition_line_row;
 
-        // Requisition line populated using the snapshot data
+        // Requisition line populated using the snapshot data; requested rounded
+        // to the whole number the form shows (OMS-REG-REPL-07.34)
         assert_eq!(auto_populated_line.requested_quantity, 10.0);
         assert_eq!(auto_populated_line.incoming_units, 5.0);
         assert_eq!(auto_populated_line.outgoing_units, 7.0);

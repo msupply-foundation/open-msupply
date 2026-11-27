@@ -216,9 +216,12 @@ fn generate(
                     requisition_id: requisition_row.id.clone(),
                     item_id: rnr_form_line_row.item_id.clone(),
                     item_name: item_row.name,
+                    // Whole number, as the form's Requested field shows it: the
+                    // calculated quantity is stored unrounded (e.g. 3.871).
                     requested_quantity: rnr_form_line_row
                         .entered_requested_quantity
-                        .unwrap_or(rnr_form_line_row.calculated_requested_quantity),
+                        .unwrap_or(rnr_form_line_row.calculated_requested_quantity)
+                        .round(),
                     suggested_quantity: rnr_form_line_row.maximum_quantity,
                     supply_quantity: 0.0,
                     available_stock_on_hand: rnr_form_line_row.final_balance,
