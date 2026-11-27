@@ -2,7 +2,7 @@ import type { PrescriptionFieldsFragment } from './prescriptionDetail.generated'
 import { exportDate } from '../../../intl/formatDateTime';
 import { formatNumber } from '../../../intl/formatNumber';
 import { ROUNDED_MARK, decimalPlaces } from '../../../intl/numberDisplay';
-import { shownPatientName } from '../patientName';
+import { isUnnamedPatientId, shownPatientName } from '../patientName';
 
 // What a dispensing label says (spec/prescriptions/rules.md § label printing;
 // OMS-REG-DIS-03.47): one label per dispensed ITEM — quantity summary +
@@ -53,11 +53,15 @@ export const buildLabels = (
   const clinician = node.clinician
     ? ` - ${node.clinician.lastName}, ${node.clinician.firstName}`
     : '';
-  // The unnamed patient by its translated label, as the screens show it
+  // The unnamed patient by its translated label alone, as the screens show
+  // it: its code is the English `UNNAMED`, the same for every walk-in
   // (rules › the unnamed patient).
-  const patientDetails = node.patient
-    ? `${shownPatientName(node.patient.name, node.patient.id)} - ${node.patient.code}`
-    : '';
+  const patient = node.patient;
+  const patientDetails = !patient
+    ? ''
+    : isUnnamedPatientId(patient.id)
+      ? shownPatientName(patient.name, patient.id)
+      : `${patient.name} - ${patient.code}`;
   // The app's date format, as the side panel shows it — not the runtime's
   // toLocaleDateString, which follows the OS display language (internal #1838)
   // — in Latin digits, as above.

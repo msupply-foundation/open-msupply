@@ -59,9 +59,9 @@ describe('buildLabels (.47 — one label per dispensed item)', () => {
     expect(labels[0].details).toContain('Franco, Steve');
   });
 
-  // OMS-REG-DIS-12.397: its saved name is English on every site. In node the
-  // catalog isn't loaded, so t() returns the key.
-  it('names the unnamed patient by the translated label, not its saved name', () => {
+  // OMS-REG-DIS-12.397: its saved name and code are English on every site. In
+  // node the catalog isn't loaded, so t() returns the key.
+  it('names the unnamed patient by the translated label alone, not its saved name and code', () => {
     const labels = buildLabels(
       {
         ...prescription,
@@ -73,7 +73,7 @@ describe('buildLabels (.47 — one label per dispensed item)', () => {
       } as PrescriptionFieldsFragment,
       'Central Store'
     );
-    expect(labels[0].patientDetails).toBe('label.unnamed-patient - UNNAMED');
+    expect(labels[0].patientDetails).toBe('label.unnamed-patient');
   });
 
   it("dates the label in the app's format, not the runtime's locale", () => {
