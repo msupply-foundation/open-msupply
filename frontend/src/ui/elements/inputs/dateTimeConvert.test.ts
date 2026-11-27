@@ -9,7 +9,6 @@ import {
   defaultDateFormat,
   formatCalendarDate,
   formatPlaceholder,
-  offersDateClear,
   parseDateInput,
   startOfWeek,
 } from './dateTimeConvert';
@@ -167,23 +166,5 @@ describe('default date format (numeric, #774)', () => {
     } finally {
       setLocale('en');
     }
-  });
-});
-
-// OMS-REG-DIS-02.65, OMS-REG-CAT-04.49 (#2054): an optional date or
-// date-and-time field can be cleared with a button; a required one cannot.
-describe('offersDateClear', () => {
-  it('offers the clear on an optional, enabled field holding a value', () => {
-    expect(offersDateClear({ hasValue: true })).toBe(true);
-    expect(offersDateClear({ hasValue: true, required: false })).toBe(true);
-  });
-
-  it('never offers it on a required field', () => {
-    expect(offersDateClear({ hasValue: true, required: true })).toBe(false);
-  });
-
-  it('offers nothing to clear on an empty or disabled field', () => {
-    expect(offersDateClear({ hasValue: false })).toBe(false);
-    expect(offersDateClear({ hasValue: true, disabled: true })).toBe(false);
   });
 });

@@ -8,9 +8,10 @@ import {
 } from 'solid-js';
 import { TimeField as KTimeField } from '@kobalte/core/time-field';
 import { locale, t } from '../../../intl';
-import { CalendarIcon, CloseIcon } from '../../icons';
+import { CalendarIcon } from '../../icons';
 import { Popover } from '../feedback/Popover';
 import type { FocusTarget } from '../../utils/createFocusTarget';
+import { ClearButton } from './ClearButton';
 import { FieldShell } from './FieldShell';
 import { DatePickerPanel } from './DatePickerPanel';
 import {
@@ -19,7 +20,6 @@ import {
   formatPlaceholder,
   hhmmToTime,
   localPartsToInstant,
-  offersDateClear,
   parseDateInput,
   timeToHhmm,
   instantToLocalParts,
@@ -99,8 +99,8 @@ const NO_TIME: TimeValue = {};
  * deselecting the day, or the ✕ button an optional field shows while it holds
  * anything (#2054), which empties the time too. A required field shows no ✕;
  * blanking it still empties it, so the form's own required check reports it
- * (a Save as visited on an encounter relies on that). Both parts are buffered locally so the time survives being set
- * before a date.
+ * (a Save as visited on an encounter relies on that). Both parts are buffered
+ * locally so the time survives being set before a date.
  */
 export const DateTimeField = (props: DateTimeFieldProps) => {
   const autoId = createUniqueId();
@@ -119,18 +119,30 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
   );
   // Resync both buffers from the external value only when IT (or the app
   // language — month names) changes.
+  // The instant last sent to (or received from) the parent — see DateField's
+  // `committed`. Compared as strings: the same instant in another spelling
+  // only sends a redundant save, never swallows a change. Set by the effect
+  // below, which runs on mount, before any input.
+  let committed: string | null = null;
   createEffect(
     on([() => props.value, locale], () => {
+      committed = props.value ?? null;
       const p = instantToLocalParts(props.value);
       setDateText(formatCalendarDate(p?.date, fmt()));
       setTime(hhmmToTime(p?.time));
     })
   );
 
-  const emit = (dateIso: string | null, t: TimeValue | undefined) =>
-    props.onChange?.(
-      dateIso ? localPartsToInstant(dateIso, timeToHhmm(t) ?? '') : null
-    );
+  // An unchanged instant notifies nothing: blurring the date after a clear
+  // (which refocuses it) would otherwise send a second save of null (#2054).
+  const emit = (dateIso: string | null, t: TimeValue | undefined) => {
+    const next = dateIso
+      ? localPartsToInstant(dateIso, timeToHhmm(t) ?? '')
+      : null;
+    if (next === committed) return;
+    committed = next;
+    props.onChange?.(next);
+  };
 
   // Apply a committed date: write the local date buffer directly AND emit the
   // recombined UTC instant, so a picked/typed date shows even when the parent
@@ -171,6 +183,7 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
           data-size={props.size === 'small' ? 'small' : undefined}
           data-error={props.error ? '' : undefined}
           data-disabled={props.disabled ? '' : undefined}
+          data-clearable={!props.required && !props.disabled ? '' : undefined}
         >
           <input
             id={dateId()}
@@ -240,25 +253,21 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
           </KTimeField>
           {/* At the end: it empties the date AND the time. */}
           <Show
-            when={offersDateClear({
-              hasValue: dateText() !== '' || time() !== undefined,
-              required: props.required,
-              disabled: props.disabled,
-            })}
+            when={
+              (dateText() !== '' || time() !== undefined) &&
+              !props.required &&
+              !props.disabled
+            }
           >
-            <button
-              type="button"
-              class={styles.clearBtn}
-              aria-label={t('label.clear-field', { label: props.label })}
-              data-testid={props.testId && `${props.testId}-clear`}
-              onClick={() => {
+            <ClearButton
+              fieldLabel={props.label}
+              testId={props.testId && `${props.testId}-clear`}
+              onClear={() => {
                 setTime(undefined);
                 applyDate(null);
-                dateEl?.focus();
               }}
-            >
-              <CloseIcon />
-            </button>
+              refocus={() => dateEl?.focus()}
+            />
           </Show>
         </div>
       )}

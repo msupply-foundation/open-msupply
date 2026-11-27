@@ -7,15 +7,15 @@ import {
   type JSX,
 } from 'solid-js';
 import { locale, t } from '../../../intl';
-import { CalendarIcon, CloseIcon } from '../../icons';
+import { CalendarIcon } from '../../icons';
 import { Popover } from '../feedback/Popover';
+import { ClearButton } from './ClearButton';
 import { FieldShell } from './FieldShell';
 import { DatePickerPanel } from './DatePickerPanel';
 import {
   defaultDateFormat,
   formatCalendarDate,
   formatPlaceholder,
-  offersDateClear,
   parseDateInput,
 } from './dateTimeConvert';
 import {
@@ -118,19 +118,29 @@ export const DateField = (props: DateFieldProps) => {
   // IT (or the app language — month names, ui-standards/inputs.md) changes,
   // never mid-typing, so keystrokes don't get clobbered.
   const [text, setText] = createSignal(formatCalendarDate(props.value, fmt()));
+  // The value last sent to (or received from) the parent. Not `props.value`:
+  // a parent that doesn't echo `value` back (uncontrolled use) would leave it
+  // stale, and a clear after a typed date would then never be sent. Set by the
+  // effect below, which runs on mount, before any input.
+  let committed: string | null = null;
   createEffect(
-    on([() => props.value, locale], ([v]) =>
-      setText(formatCalendarDate(v, fmt()))
-    )
+    on([() => props.value, locale], ([v]) => {
+      committed = v ?? null;
+      setText(formatCalendarDate(v, fmt()));
+    })
   );
 
   // Apply a committed value: notify the parent AND write the local text buffer
   // directly, so a selection shows even when the parent doesn't echo `value`
-  // back (uncontrolled use). Shared by the typed-commit and calendar-pick paths
-  // so the two stay symmetric — reuses the existing buffer, no extra state.
+  // back (uncontrolled use). Shared by the typed-commit, calendar-pick and
+  // clear paths so they stay symmetric. An unchanged value notifies nothing:
+  // blurring the input after a clear (which refocuses it) or re-typing the same
+  // day would otherwise send a second save of it (#2054).
   const apply = (iso: string | null) => {
-    props.onChange?.(iso);
     setText(formatCalendarDate(iso, fmt()));
+    if (iso === committed) return;
+    committed = iso;
+    props.onChange?.(iso);
   };
 
   const commit = () => {
@@ -182,6 +192,7 @@ export const DateField = (props: DateFieldProps) => {
           data-size={props.size === 'small' ? 'small' : undefined}
           data-error={props.error ? '' : undefined}
           data-disabled={props.disabled ? '' : undefined}
+          data-clearable={!props.required && !props.disabled ? '' : undefined}
         >
           <input
             ref={el => {
@@ -204,25 +215,16 @@ export const DateField = (props: DateFieldProps) => {
               if (e.key === 'Enter') e.currentTarget.blur(); // commits via onBlur
             }}
           />
-          <Show
-            when={offersDateClear({
-              hasValue: text() !== '',
-              required: props.required,
-              disabled: props.disabled,
-            })}
-          >
-            <button
-              type="button"
-              class={styles.clearBtn}
-              aria-label={t('label.clear-field', { label: props.label })}
-              data-testid={props.testId && `${props.testId}-clear`}
-              onClick={() => {
-                apply(null);
-                inputEl?.focus();
-              }}
-            >
-              <CloseIcon />
-            </button>
+          {/* Only an optional, enabled field holding something offers the
+              clear (ui-standards/inputs.md › constraints, empty, and
+              display). */}
+          <Show when={text() !== '' && !props.required && !props.disabled}>
+            <ClearButton
+              fieldLabel={props.label}
+              testId={props.testId && `${props.testId}-clear`}
+              onClear={() => apply(null)}
+              refocus={() => inputEl?.focus()}
+            />
           </Show>
           <Popover
             placement="bottom-end"

@@ -126,6 +126,13 @@
   max-width: var(--input-max-compact);
 }
 
+/* A compact field that can show a clear button (optional, enabled) is wider
+   by that button's 1.75rem, so a date still fits beside it at touch size
+   (#2054). */
+.field[data-width='compact'] .control[data-clearable] {
+  max-width: calc(var(--input-max-compact) + 1.75rem);
+}
+
 /* The date portion: a bare button filling the free space, calendar icon at the
    inline-end. */
 .dateTrigger {
@@ -227,39 +234,6 @@
 
 .control[data-disabled] .iconBtn {
   cursor: not-allowed;
-}
-
-/* The clear (✕) an optional date or date-and-time field shows while it holds a
-   value (#2054). A 1rem ✕ in a 1.5rem box, the WCAG 2.2 SC 2.5.8 target floor,
-   as Select's and Combobox's clear. Never rendered while disabled, so it needs
-   no disabled state. */
-.clearBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  inline-size: 1.5rem;
-  block-size: 1.5rem;
-  padding: 0;
-  margin-inline-start: var(--space-1);
-  border: none;
-  border-radius: var(--radius-sm);
-  background: none;
-  font-size: 1rem;
-  color: var(--gray-main);
-  cursor: pointer;
-}
-
-.clearBtn:hover,
-.clearBtn:focus-visible {
-  color: var(--text-body);
-}
-
-/* Its own ring, not only the frame's: with the calendar button beside it, the
-   frame's :focus-within ring can't say which of the two has focus. */
-.clearBtn:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
 }
 
 /* Divider between the date and time portions of DateTimeField. */
