@@ -151,7 +151,7 @@ pub fn invoice_lines(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::QueryStocktake,
+            resource: Resource::QueryInvoice,
             store_id: Some(store_id.to_string()),
             require_central_standalone: false,
         },
