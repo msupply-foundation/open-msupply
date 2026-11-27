@@ -2,13 +2,17 @@
  * ReorderableList — a plain <ol> of bordered rows: drag handle, optional
  * position, the two text lines, then the four move buttons trailing. Row order
  * is the list's content, so nothing here positions by index. The dragged row
- * fades rather than lifting: a transform would move it out from under the
- * pointer that is driving the native drag.
+ * stays at full strength and lifts — a shadow and an accent edge — since it
+ * is the row in hand, and a faded one reads as going away. It follows the
+ * pointer while the rows it passes slide out of its way, and settles into its
+ * slot when let go; the component sets those transforms from measured layout.
  *
  * The only px are the hairline borders and the focus outline (the sizing rule's
  * exceptions).
  */
 .root {
+  /* The rows' offsetTop is measured against the list. */
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
@@ -25,23 +29,62 @@
   border: 1px solid var(--color-divider);
   border-radius: var(--radius-md);
   background: var(--surface-raised);
-  transition: opacity var(--motion-fast) ease;
+  transition: box-shadow var(--motion-fast) ease;
 }
 
 .row[data-dragging] {
-  opacity: 0.4;
+  position: relative;
+  z-index: 1;
+  border-color: var(--secondary-main);
+  box-shadow: var(--shadow-3);
 }
 
 /* Pointer-only affordance (the buttons are the keyboard path), so it never
-   takes focus and shows the grab cursor instead. */
+   takes focus and shows the grab cursor instead. It claims the touch: a finger
+   on it drags the row rather than scrolling the page, and selects no text.
+   A box a little larger than the move buttons' around the glyph, so it is an
+   easy mouse target, bled into the row's padding by the negative margin so
+   the text doesn't move along; it tints on hover, as they do. */
 .handle {
   display: flex;
   flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: 2rem;
+  min-block-size: 2rem;
+  margin-inline-start: calc(-1 * var(--space-2));
+  border-radius: var(--radius-sm);
   color: var(--text-secondary);
+  font-size: var(--text-md);
   cursor: grab;
+  touch-action: none;
+  user-select: none;
 }
 
-.row[data-dragging] .handle {
+.handle:hover:not([data-disabled]) {
+  background: color-mix(in srgb, var(--text-body) 6%, transparent);
+  color: var(--text-body);
+}
+
+/* Touch: the shared tap-target size around the glyph, so a finger finds it.
+   The negative margin bleeds the growth outward into the row's padding
+   rather than pushing the row's text along (Breadcrumb's shape). */
+@media (pointer: coarse) {
+  .handle {
+    min-inline-size: var(--touch-target);
+    min-block-size: var(--touch-target);
+    margin-inline-start: calc(-1 * var(--space-3));
+  }
+}
+
+.handle[data-disabled] {
+  cursor: default;
+}
+
+/* The pointer is captured by the list while it drags, so the list carries the
+   grabbing cursor wherever the pointer goes. */
+.root[data-dragging],
+.root[data-dragging] .handle {
   cursor: grabbing;
 }
 

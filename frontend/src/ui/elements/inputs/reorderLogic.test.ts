@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { keepIdentities, moveTo, reorderBy } from './reorderLogic';
+import { keepIdentities, moveTo, reorderBy, slotAmong } from './reorderLogic';
 
 const ids = ['a', 'b', 'c', 'd'];
 
@@ -19,6 +19,28 @@ describe('reorderBy', () => {
 
   it('leaves the order alone for an id it does not hold', () => {
     expect(reorderBy(ids, 'z', 0)).toEqual(ids);
+  });
+});
+
+describe('slotAmong', () => {
+  // The other rows' middles, top to bottom: rows at 0–40, 40–80, 80–200.
+  const middles = [20, 60, 140];
+
+  it('goes first while its middle is above every other middle', () => {
+    expect(slotAmong(middles, 10)).toBe(0);
+  });
+
+  it('goes after each row whose middle it has passed', () => {
+    expect(slotAmong(middles, 61)).toBe(2);
+    expect(slotAmong(middles, 500)).toBe(3);
+  });
+
+  it('stays put on a middle it has only reached', () => {
+    expect(slotAmong(middles, 60)).toBe(1);
+  });
+
+  it('has nowhere else to go when it is the only row', () => {
+    expect(slotAmong([], 42)).toBe(0);
   });
 });
 

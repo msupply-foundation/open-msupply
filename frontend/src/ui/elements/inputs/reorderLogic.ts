@@ -17,6 +17,18 @@ export const reorderBy = (
   return [...rest.slice(0, to), id, ...rest.slice(to)];
 };
 
+/**
+ * Where a dragged row belongs among the others: after every other row whose
+ * middle is above the dragged row's own middle. The index `reorderBy` takes.
+ * Middles rather than the pointer, so rows of different heights don't swap
+ * back and forth: a row passed moves the dragged row's height the other way,
+ * which only takes its middle further past.
+ */
+export const slotAmong = (
+  otherMiddles: readonly number[],
+  draggedMiddle: number
+): number => otherMiddles.filter(middle => middle < draggedMiddle).length;
+
 /** `ids` with `id` moved one step, or all the way, in one direction. */
 export const moveTo = (
   ids: readonly string[],
