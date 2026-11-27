@@ -1520,7 +1520,11 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { key: 'expiryDate' },
       header: () => t('label.expiry'),
       cardGroup: 'batch',
-      meta: { cardWidth: { min: 10, max: 11.5, weight: 1 } },
+      // At its narrowest the card still holds a date beside its calendar and
+      // clear buttons (#2054): 10.75rem leaves 73px for the small size's 13px
+      // `01/03/2027` (71px), where 10 clipped it. The max stays put: any wider
+      // and Location no longer fits beside it on a 1280px tablet.
+      meta: { cardWidth: { min: 10.75, max: 11.5, weight: 1 } },
       cell: info => {
         const b = info.row.original;
         return (
@@ -1896,7 +1900,11 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { key: 'manufactureDate' },
       header: () => t('label.manufacture-date'),
       cardGroup: 'pricing',
-      meta: { cardWidth: { min: 10, max: 11.5, weight: 1 } },
+      // At its narrowest the card still holds a date beside its calendar and
+      // clear buttons (#2054): 10.75rem leaves 73px for the small size's 13px
+      // `01/03/2027` (71px), where 10 clipped it. The max stays put: any wider
+      // and Location no longer fits beside it on a 1280px tablet.
+      meta: { cardWidth: { min: 10.75, max: 11.5, weight: 1 } },
       cell: info => {
         const b = info.row.original;
         return (
