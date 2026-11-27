@@ -3,11 +3,12 @@ import {
   createSignal,
   createUniqueId,
   on,
+  Show,
   type JSX,
 } from 'solid-js';
 import { TimeField as KTimeField } from '@kobalte/core/time-field';
 import { locale, t } from '../../../intl';
-import { CalendarIcon } from '../../icons';
+import { CalendarIcon, CloseIcon } from '../../icons';
 import { Popover } from '../feedback/Popover';
 import type { FocusTarget } from '../../utils/createFocusTarget';
 import { FieldShell } from './FieldShell';
@@ -18,6 +19,7 @@ import {
   formatPlaceholder,
   hhmmToTime,
   localPartsToInstant,
+  offersDateClear,
   parseDateInput,
   timeToHhmm,
   instantToLocalParts,
@@ -66,12 +68,21 @@ export interface DateTimeFieldProps {
   labelInfo?: JSX.Element;
   id?: string;
   /** `data-testid` stamped on the DATE input — the field's first focusable and
-   *  the part a test types into (e2e/TESTIDS.md). */
+   *  the part a test types into (e2e/TESTIDS.md). The clear button takes
+   *  `<testId>-clear`. */
   testId?: string;
   /** Focus destination (kdd/focus-targets) — lands on the date input, where
    *  entry starts. */
   focusTarget?: FocusTarget;
 }
+
+/*
+ * The time segments' value while no time is held. Kobalte reads an `undefined`
+ * value as uncontrolled and keeps showing the last time it had, so a cleared
+ * field would still show one; an empty object stays controlled and shows each
+ * segment's placeholder.
+ */
+const NO_TIME: TimeValue = {};
 
 /*
  * Date-and-time input (spec: ui-standards/inputs.md § Dates & times). Date and
@@ -84,13 +95,19 @@ export interface DateTimeFieldProps {
  * the DEVICE timezone (no store/server timezone). Editing the date (typed or
  * picked) or the time recombines the two local parts into the UTC instant;
  * nothing above sees anything but UTC. A date with a blank time defaults to
- * midnight; clearing the date emits null. Both parts are buffered locally so
- * the time survives being set before a date.
+ * midnight; clearing the date emits null — by blanking the date text,
+ * deselecting the day, or the ✕ button an optional field shows while it holds
+ * anything (#2054), which empties the time too. A required field offers none of
+ * the three. Both parts are buffered locally so the time survives being set
+ * before a date.
  */
 export const DateTimeField = (props: DateTimeFieldProps) => {
   const autoId = createUniqueId();
   const dateId = () => props.id ?? autoId; // label focuses the date input
   const fmt = () => props.format ?? defaultDateFormat();
+  // The date input: the clear button removes itself on activation, so it hands
+  // focus here rather than letting it fall to <body>.
+  let dateEl: HTMLInputElement | undefined;
 
   const parts = () => instantToLocalParts(props.value);
   const [dateText, setDateText] = createSignal(
@@ -126,7 +143,8 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
 
   const commitDate = () => {
     const parsed = parseDateInput(dateText(), fmt());
-    if (parsed === undefined) {
+    // Unparseable text, or a required field blanked: revert, as DateField.
+    if (parsed === undefined || (parsed === null && props.required)) {
       setDateText(formatCalendarDate(parts()?.date, fmt())); // invalid → revert
       return;
     }
@@ -156,7 +174,10 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
         >
           <input
             id={dateId()}
-            ref={(el: HTMLInputElement) => props.focusTarget?.ref(el)}
+            ref={(el: HTMLInputElement) => {
+              dateEl = el;
+              props.focusTarget?.ref(el);
+            }}
             type="text"
             class={styles.dateInput}
             data-testid={props.testId}
@@ -184,6 +205,9 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
                 value={calendarDateToDate(parts()?.date)}
                 min={boundDate(props.min)}
                 max={boundDate(props.max)}
+                // Stops the calendar deselecting a required date (the typed
+                // path's guard is in commitDate).
+                required={props.required}
                 onSelect={d => {
                   applyDate(d ? dateToCalendarDate(d) : null);
                   close();
@@ -194,7 +218,7 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
           <span class={styles.divider} aria-hidden="true" />
           <KTimeField
             class={styles.timeRoot}
-            value={time()}
+            value={time() ?? NO_TIME}
             onChange={(t: TimeValue | null) => {
               setTime(t ?? undefined);
               emit(parts()?.date ?? null, t ?? undefined);
@@ -217,6 +241,28 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
               )}
             </KTimeField.Input>
           </KTimeField>
+          {/* At the end: it empties the date AND the time. */}
+          <Show
+            when={offersDateClear({
+              hasValue: dateText() !== '' || time() !== undefined,
+              required: props.required,
+              disabled: props.disabled,
+            })}
+          >
+            <button
+              type="button"
+              class={styles.clearBtn}
+              aria-label={t('label.clear-field', { label: props.label })}
+              data-testid={props.testId && `${props.testId}-clear`}
+              onClick={() => {
+                setTime(undefined);
+                applyDate(null);
+                dateEl?.focus();
+              }}
+            >
+              <CloseIcon />
+            </button>
+          </Show>
         </div>
       )}
     </FieldShell>

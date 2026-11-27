@@ -254,3 +254,14 @@ export const timeToHhmm = (t: TimeValue | null | undefined): string | null => {
   if (!t || t.hour == null || t.minute == null) return null;
   return `${pad(t.hour)}:${pad(t.minute)}`;
 };
+
+/**
+ * Whether a date or date-and-time field shows its clear (✕) button: only while
+ * it holds something, and never on a required or disabled field
+ * (ui-standards/inputs.md › Constraints, empty, and display; #2054).
+ */
+export const offersDateClear = (field: {
+  hasValue: boolean;
+  required?: boolean;
+  disabled?: boolean;
+}): boolean => field.hasValue && !field.required && !field.disabled;

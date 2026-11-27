@@ -3,10 +3,11 @@ import {
   createSignal,
   createUniqueId,
   on,
+  Show,
   type JSX,
 } from 'solid-js';
 import { locale, t } from '../../../intl';
-import { CalendarIcon } from '../../icons';
+import { CalendarIcon, CloseIcon } from '../../icons';
 import { Popover } from '../feedback/Popover';
 import { FieldShell } from './FieldShell';
 import { DatePickerPanel } from './DatePickerPanel';
@@ -14,6 +15,7 @@ import {
   defaultDateFormat,
   formatCalendarDate,
   formatPlaceholder,
+  offersDateClear,
   parseDateInput,
 } from './dateTimeConvert';
 import {
@@ -74,7 +76,7 @@ export interface DateFieldProps {
   id?: string;
   /**
    * `data-testid` for the typed-entry text input (locale-stable test hook,
-   * e2e/TESTIDS.md).
+   * e2e/TESTIDS.md). The clear button takes `<testId>-clear`.
    */
   testId?: string;
 }
@@ -91,7 +93,9 @@ const MONTH_FORMAT = 'MMM yyyy';
  * Value IS the wire value: a calendar date, `YYYY-MM-DD` (schema `NaiveDate`, no
  * timezone) passes straight through. Typed text is parsed on blur/Enter
  * (invalid input reverts to the last value); picking from the calendar sets it
- * too; clearing emits null. `min`/`max` make out-of-range days unselectable.
+ * too; clearing emits null — by blanking the text, deselecting the day, or
+ * the ✕ button an optional field shows while it holds a date (#2054).
+ * `min`/`max` make out-of-range days unselectable.
  */
 export const DateField = (props: DateFieldProps) => {
   const autoId = createUniqueId();
@@ -105,6 +109,10 @@ export const DateField = (props: DateFieldProps) => {
   // Bumped each time the picker popover opens — the panel survives close, so
   // it re-seeds its navigation view via this (DatePickerPanel's `openCount`).
   const [openCount, setOpenCount] = createSignal(0);
+
+  // The typed-entry input: the clear button removes itself on activation, so
+  // it hands focus here rather than letting it fall to <body>.
+  let inputEl: HTMLInputElement | undefined;
 
   // Local text buffer for typing; resynced from the external value only when
   // IT (or the app language — month names, ui-standards/inputs.md) changes,
@@ -176,7 +184,10 @@ export const DateField = (props: DateFieldProps) => {
           data-disabled={props.disabled ? '' : undefined}
         >
           <input
-            ref={el => props.ref?.(el)}
+            ref={el => {
+              inputEl = el;
+              props.ref?.(el);
+            }}
             id={id()}
             type="text"
             class={styles.dateInput}
@@ -193,6 +204,26 @@ export const DateField = (props: DateFieldProps) => {
               if (e.key === 'Enter') e.currentTarget.blur(); // commits via onBlur
             }}
           />
+          <Show
+            when={offersDateClear({
+              hasValue: text() !== '',
+              required: props.required,
+              disabled: props.disabled,
+            })}
+          >
+            <button
+              type="button"
+              class={styles.clearBtn}
+              aria-label={t('label.clear-field', { label: props.label })}
+              data-testid={props.testId && `${props.testId}-clear`}
+              onClick={() => {
+                apply(null);
+                inputEl?.focus();
+              }}
+            >
+              <CloseIcon />
+            </button>
+          </Show>
           <Popover
             placement="bottom-end"
             triggerClass={styles.iconBtn}
