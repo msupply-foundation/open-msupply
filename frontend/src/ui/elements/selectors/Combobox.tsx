@@ -29,6 +29,7 @@ import {
 } from './comboboxLogic';
 import { isNearScrollEnd } from '../../utils/createPaginatedSearch';
 import styles from './Combobox.module.css';
+import popupHeight from './popupHeight.module.css';
 
 /*
  * Client mode: how many matching options are MOUNTED at once (see
@@ -857,8 +858,8 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
           ref={contentEl}
           class={
             props.matchTriggerWidth === false
-              ? `${styles.content} ${styles.contentGrow}`
-              : styles.content
+              ? `${styles.content} ${styles.contentGrow} ${popupHeight.fitHeight}`
+              : `${styles.content} ${popupHeight.fitHeight}`
           }
           // Keep the listbox open only when a pointerdown lands inside this
           // popup's own content — Kobalte otherwise dismisses an option click
